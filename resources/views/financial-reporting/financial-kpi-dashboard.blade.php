@@ -20,10 +20,42 @@
     </div>
   </div>
   <div class="row g-3 mb-4">
-    <div class="col-md-3"><div class="card border-0 shadow-sm rounded-3 p-3"><span class="text-muted small">Days Sales Outstanding (DSO)</span><h4 class="fw-bold text-primary mb-0">42.5 Days</h4></div></div>
-    <div class="col-md-3"><div class="card border-0 shadow-sm rounded-3 p-3"><span class="text-muted small">Operating Profit Margin</span><h4 class="fw-bold text-success mb-0">34.4%</h4></div></div>
-    <div class="col-md-3"><div class="card border-0 shadow-sm rounded-3 p-3"><span class="text-muted small">Average Revenue Per Bed</span><h4 class="fw-bold text-info mb-0">₱12,400.00</h4></div></div>
-    <div class="col-md-3"><div class="card border-0 shadow-sm rounded-3 p-3"><span class="text-muted small">Current Working Ratio</span><h4 class="fw-bold text-dark mb-0">2.4x</h4></div></div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">Days Sales Outstanding (DSO)</span>
+          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold text-dark mb-0">42.5 Days</h4>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">Operating Profit Margin</span>
+          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-trend-up fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold text-dark mb-0">34.4%</h4>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">Average Revenue Per Bed</span>
+          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-bed fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold text-dark mb-0">₱12,400.00</h4>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">Current Working Ratio</span>
+          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-scales fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold text-dark mb-0">2.4x</h4>
+      </div>
+    </div>
   </div>
 </div>
 @endsection

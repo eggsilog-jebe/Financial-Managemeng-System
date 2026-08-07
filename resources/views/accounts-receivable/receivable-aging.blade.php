@@ -26,29 +26,41 @@
   <div class="row g-3 mb-4">
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">Days Sales Outstanding (DSO)</span>
-        <h4 class="fw-bold text-primary mb-1">42.5 Days</h4>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">Days Sales Outstanding (DSO)</span>
+          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold text-dark mb-1">42.5 Days</h4>
         <span class="fs-xs text-success"><i class="ph ph-trend-down"></i> -3.2 Days vs Last Month</span>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">0-30 Days (Under Review)</span>
-        <h4 class="fw-bold text-success mb-1">₱770,000.00</h4>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">0-30 Days (Under Review)</span>
+          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold text-dark mb-1">₱770,000.00</h4>
         <span class="fs-xs text-muted">Fresh HMO &amp; Patient Invoices</span>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">31-60 Days (Submitted)</span>
-        <h4 class="fw-bold text-warning mb-1">₱330,000.00</h4>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">31-60 Days (Submitted)</span>
+          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-hourglass fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold text-dark mb-1">₱330,000.00</h4>
         <span class="fs-xs text-muted">Awaiting HMO Remittance Batch</span>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">61-90+ Days (High Risk)</span>
-        <h4 class="fw-bold text-danger mb-1">₱120,000.00</h4>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">61-90+ Days (High Risk)</span>
+          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-warning fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold text-dark mb-1">₱120,000.00</h4>
         <span class="fs-xs text-danger"><i class="ph ph-warning"></i> Delayed Government Claims</span>
       </div>
     </div>

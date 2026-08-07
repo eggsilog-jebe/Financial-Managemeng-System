@@ -26,22 +26,31 @@
   <div class="row g-3 mb-4">
     <div class="col-md-4">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">Senior Citizen Discounts (RA 9994)</span>
-        <h4 class="fw-bold mb-0 text-danger">₱174,000.00</h4>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">Senior Citizen Discounts (RA 9994)</span>
+          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-percent fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold mb-0 text-dark">₱174,000.00</h4>
         <span class="fs-xs text-muted">20% Statutory Reduction</span>
       </div>
     </div>
     <div class="col-md-4">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">PWD Statutory Discounts (RA 10754)</span>
-        <h4 class="fw-bold mb-0 text-warning">₱68,500.00</h4>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">PWD Statutory Discounts (RA 10754)</span>
+          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-percent fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold mb-0 text-dark">₱68,500.00</h4>
         <span class="fs-xs text-muted">20% Mandatory Exemption</span>
       </div>
     </div>
     <div class="col-md-4">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">Cancelled Procedure Refunds</span>
-        <h4 class="fw-bold mb-0 text-info">₱32,000.00</h4>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">Cancelled Procedure Refunds</span>
+          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-arrows-counter-clockwise fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold mb-0 text-dark">₱32,000.00</h4>
         <span class="fs-xs text-muted">Radiology &amp; Surgery Reversals</span>
       </div>
     </div>

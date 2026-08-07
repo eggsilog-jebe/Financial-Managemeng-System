@@ -31,7 +31,7 @@
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
           <span class="text-muted small">Total Active Vendors</span>
-          <span class="badge bg-primary-subtle text-primary"><i class="ph ph-buildings"></i></span>
+          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-buildings fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">48 Suppliers</h4>
         <span class="fs-xs text-muted">Across 6 Operational Categories</span>
@@ -41,9 +41,9 @@
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
           <span class="text-muted small">Total AP Liabilities</span>
-          <span class="badge bg-danger-subtle text-danger"><i class="ph ph-trend-down"></i></span>
+          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-trend-down fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-danger">₱1,240,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱1,240,000.00</h4>
         <span class="fs-xs text-muted">18 Pending AP Vouchers</span>
       </div>
     </div>
@@ -51,9 +51,9 @@
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
           <span class="text-muted small">Avg Payment Terms</span>
-          <span class="badge bg-info-subtle text-info"><i class="ph ph-clock"></i></span>
+          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-info">Net 30 Days</h4>
+        <h4 class="fw-bold mb-0 text-dark">Net 30 Days</h4>
         <span class="fs-xs text-muted">2/10 Early Pay Discount Available</span>
       </div>
     </div>
@@ -61,9 +61,9 @@
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
           <span class="text-muted small">Tracked EWT Withholding</span>
-          <span class="badge bg-success-subtle text-success"><i class="ph ph-percent"></i></span>
+          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-percent fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-success">₱124,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱124,000.00</h4>
         <span class="fs-xs text-muted">Form 2307 Eligible</span>
       </div>
     </div>

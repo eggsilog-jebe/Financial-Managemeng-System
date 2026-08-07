@@ -20,9 +20,33 @@
     </div>
   </div>
   <div class="row g-3 mb-4">
-    <div class="col-md-4"><div class="card border-0 shadow-sm rounded-3 p-3"><span class="text-muted small">Projected Inflows (30 Days)</span><h4 class="fw-bold text-success mb-0">+₱2,450,000.00</h4></div></div>
-    <div class="col-md-4"><div class="card border-0 shadow-sm rounded-3 p-3"><span class="text-muted small">Projected Outflows (30 Days)</span><h4 class="fw-bold text-danger mb-0">-₱1,820,000.00</h4></div></div>
-    <div class="col-md-4"><div class="card border-0 shadow-sm rounded-3 p-3"><span class="text-muted small">Estimated Net Liquidity Surplus</span><h4 class="fw-bold text-primary mb-0">+₱630,000.00</h4></div></div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-3 p-3">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">Projected Inflows (30 Days)</span>
+          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-trend-up fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold text-dark mb-0">+₱2,450,000.00</h4>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-3 p-3">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">Projected Outflows (30 Days)</span>
+          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-trend-down fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold text-dark mb-0">-₱1,820,000.00</h4>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm rounded-3 p-3">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">Estimated Net Liquidity Surplus</span>
+          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-coins fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold text-dark mb-0">+₱630,000.00</h4>
+      </div>
+    </div>
   </div>
   <div class="card border-0 shadow-sm rounded-3">
     <div class="card-body">

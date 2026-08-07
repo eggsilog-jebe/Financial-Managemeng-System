@@ -26,29 +26,41 @@
   <div class="row g-3 mb-4">
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">Total Billed This Month</span>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">Total Billed This Month</span>
+          <span class="badge bg-secondary-subtle text-secondary p-2 rounded-2"><i class="ph ph-receipt fs-5"></i></span>
+        </div>
         <h4 class="fw-bold mb-0 text-dark">₱4,250,000.00</h4>
         <span class="fs-xs text-muted">210 Patient Invoices</span>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">Doctor Professional Fees (PF)</span>
-        <h4 class="fw-bold mb-0 text-primary">₱1,120,000.00</h4>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">Doctor Professional Fees (PF)</span>
+          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-user-stethoscope fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold mb-0 text-dark">₱1,120,000.00</h4>
         <span class="fs-xs text-muted">Attending Consultants</span>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">Pharmacy &amp; Supplies Billed</span>
-        <h4 class="fw-bold mb-0 text-info">₱1,450,000.00</h4>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">Pharmacy &amp; Supplies Billed</span>
+          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-first-aid-kit fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold mb-0 text-dark">₱1,450,000.00</h4>
         <span class="fs-xs text-muted">Meds, IV &amp; Surgical Kits</span>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">Uncollected Billing Amount</span>
-        <h4 class="fw-bold mb-0 text-danger">₱1,230,500.00</h4>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">Uncollected Billing Amount</span>
+          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-warning fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold mb-0 text-dark">₱1,230,500.00</h4>
         <span class="fs-xs text-muted">Pending Patient Cash Settlement</span>
       </div>
     </div>

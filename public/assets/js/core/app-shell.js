@@ -349,6 +349,80 @@
     });
     window.HimsModuleRegistry?.wireLinks(document);
 
+    const fmsNavigationIndex = [
+      // 1. General Ledger
+      { name: "General Ledger", category: "Core Module", url: "/general-ledger/chart-of-accounts", icon: "ph-book-open", desc: "Central accounting repository and chart of accounts." },
+      { name: "Chart of Accounts", category: "General Ledger", url: "/general-ledger/chart-of-accounts", icon: "ph-list-bullets", desc: "Master index of assets, liabilities, equity, revenue, and expenses." },
+      { name: "Journal Entries", category: "General Ledger", url: "/general-ledger/journal-entries", icon: "ph-notebook", desc: "Record and review day-to-day double-entry accounting transactions." },
+      { name: "Ledger Books", category: "General Ledger", url: "/general-ledger/ledger-books", icon: "ph-book", desc: "Departmental financial logs and running balance statements." },
+      { name: "Trial Balance", category: "General Ledger", url: "/general-ledger/trial-balance", icon: "ph-scales", desc: "Periodic verification that total debits equal total credits." },
+      { name: "Period End Closing", category: "General Ledger", url: "/general-ledger/period-end-closing", icon: "ph-lock-key", desc: "Month-end and year-end closing, depreciation, and balance rollover." },
+
+      // 2. Accounts Payable
+      { name: "Accounts Payable (AP)", category: "Core Module", url: "/accounts-payable/vendor-management", icon: "ph-receipt", desc: "Vendor invoices, 3-way matching, and supplier payments." },
+      { name: "Vendor Management", category: "Accounts Payable", url: "/accounts-payable/vendor-management", icon: "ph-buildings", desc: "Master directory of pharmaceutical and medical device suppliers." },
+      { name: "Invoices & Vouchers", category: "Accounts Payable", url: "/accounts-payable/invoices-vouchers", icon: "ph-check-square-offset", desc: "3-Way matching (PO, GRN, Invoice) and AP voucher processing." },
+      { name: "Purchase Bills", category: "Accounts Payable", url: "/accounts-payable/purchase-bills", icon: "ph-file-text", desc: "Log recurring hospital utility, oxygen, and bio-hazard bills." },
+      { name: "Payable Aging", category: "Accounts Payable", url: "/accounts-payable/payable-aging", icon: "ph-clock-afternoon", desc: "Age analysis of unpaid vendor bills (0-30, 31-60, 61-90+ days)." },
+      { name: "AP Payment Approvals", category: "Accounts Payable", url: "/accounts-payable/ap-payment-approvals", icon: "ph-shield-check", desc: "Multi-tier approval workflow for releasing vendor payments." },
+
+      // 3. Accounts Receivable
+      { name: "Accounts Receivable (AR)", category: "Core Module", url: "/accounts-receivable/patient-accounts", icon: "ph-currency-circle-dollar", desc: "Patient billings, HMO claims, and collection tracking." },
+      { name: "Patient Accounts", category: "Accounts Receivable", url: "/accounts-receivable/patient-accounts", icon: "ph-user-list", desc: "Master accounts for admitted inpatients, outpatients, and HMOs." },
+      { name: "Invoicing & Billing", category: "Accounts Receivable", url: "/accounts-receivable/invoicing-billing", icon: "ph-receipt", desc: "Itemized patient billing for room, doctor fees, and meds." },
+      { name: "Receivable Aging", category: "Accounts Receivable", url: "/accounts-receivable/receivable-aging", icon: "ph-chart-bar", desc: "DSO tracking and age analysis of uncollected patient and HMO bills." },
+      { name: "Credit Notes", category: "Accounts Receivable", url: "/accounts-receivable/credit-notes", icon: "ph-percent", desc: "Senior Citizen (20%), PWD discounts, and procedure credits." },
+      { name: "Customer Statements", category: "Accounts Receivable", url: "/accounts-receivable/customer-statements", icon: "ph-files", desc: "Periodic statement summaries for PhilHealth and commercial HMOs." },
+
+      // 4. Disbursement Management
+      { name: "Disbursement Management", category: "Core Module", url: "/disbursement-management/payment-requests", icon: "ph-arrows-out", desc: "Fund request requisitions, check payments, and EFT transfers." },
+      { name: "Payment Requests", category: "Disbursement", url: "/disbursement-management/payment-requests", icon: "ph-file-arrow-up", desc: "Departmental requisitions for operational hospital expenses." },
+      { name: "Check Register", category: "Disbursement", url: "/disbursement-management/check-register", icon: "ph-pencil-line", desc: "Official log of physical checks written, signed, and issued." },
+      { name: "EFT Transfers", category: "Disbursement", url: "/disbursement-management/eft-transfers", icon: "ph-bank", desc: "Automated electronic bank transfers for payroll and suppliers." },
+      { name: "Disbursement Approvals", category: "Disbursement", url: "/disbursement-management/disbursement-approvals", icon: "ph-seal-check", desc: "Treasury and CFO authorization prior to releasing funds." },
+      { name: "Petty Cash", category: "Disbursement", url: "/disbursement-management/petty-cash", icon: "ph-wallet", desc: "On-site cash drawer for urgent minor daily operational expenses." },
+
+      // 5. Collection Management
+      { name: "Collection Management", category: "Core Module", url: "/collection-management/payment-receipts", icon: "ph-vault", desc: "Point-of-Sale cashiers, official receipts, and bank deposits." },
+      { name: "Payment Receipts", category: "Collection Management", url: "/collection-management/payment-receipts", icon: "ph-receipt", desc: "Official Receipts (OR) issued to patients upon payment." },
+      { name: "Cashier Desk", category: "Collection Management", url: "/collection-management/cashier-desk", icon: "ph-device-tablet", desc: "POS station drawer management across ER, Inpatient, and Pharmacy." },
+      { name: "Deposit Slips", category: "Collection Management", url: "/collection-management/deposit-slips", icon: "ph-path", desc: "Batch deposit slips for armored pickup and bank deposits." },
+      { name: "Bank Deposits", category: "Collection Management", url: "/collection-management/bank-deposits", icon: "ph-bank", desc: "Verification logs matching cashier drawers with bank statements." },
+      { name: "Payment Gateway Logs", category: "Collection Management", url: "/collection-management/payment-gateway-logs", icon: "ph-globe-hemisphere-west", desc: "Digital payment logs for online patient portal, GCash, and PayMaya." },
+
+      // 6. Budget Management
+      { name: "Budget Management", category: "Core Module", url: "/budget-management/fiscal-planning", icon: "ph-calculator", desc: "Fiscal planning, department caps, and variance analysis." },
+      { name: "Fiscal Planning", category: "Budget Management", url: "/budget-management/fiscal-planning", icon: "ph-calendar-check", desc: "Annual hospital revenue targets and operational expense caps." },
+      { name: "Budget Allocation", category: "Budget Management", url: "/budget-management/budget-allocation", icon: "ph-pie-chart", desc: "Distribution of approved funds to cost centers and units." },
+      { name: "Departmental Budgets", category: "Budget Management", url: "/budget-management/departmental-budgets", icon: "ph-chart-donut", desc: "Live departmental spending monitors and burn rate tracking." },
+      { name: "Variance Analysis", category: "Budget Management", url: "/budget-management/variance-analysis", icon: "ph-trend-up", desc: "Budget vs. Actual spending and revenue variance reports." },
+      { name: "Budget Reallocations", category: "Budget Management", url: "/budget-management/budget-reallocations", icon: "ph-swap", desc: "Inter-departmental budget transfer requests and approvals." },
+
+      // 7. Cash Management
+      { name: "Cash Management", category: "Core Module", url: "/cash-management/bank-accounts", icon: "ph-coins", desc: "Hospital liquidity, bank reconciliation, and cash flow forecasting." },
+      { name: "Bank Accounts", category: "Cash Management", url: "/cash-management/bank-accounts", icon: "ph-bank", desc: "Master register of hospital commercial bank accounts and balances." },
+      { name: "Cash Flow Forecasting", category: "Cash Management", url: "/cash-management/cash-flow-forecasting", icon: "ph-chart-line-up", desc: "30-day liquidity prediction model based on inflows/outflows." },
+      { name: "Bank Reconciliation", category: "Cash Management", url: "/cash-management/bank-reconciliation", icon: "ph-arrows-clockwise", desc: "Automated matching of bank statement feeds with GL accounts." },
+      { name: "Fund Transfers", category: "Cash Management", url: "/cash-management/fund-transfers", icon: "ph-arrows-left-right", desc: "Inter-bank fund transfers between operational and payroll accounts." },
+      { name: "Liquidity Management", category: "Cash Management", url: "/cash-management/liquidity-management", icon: "ph-safe", desc: "Short-term treasury investments and working capital reserves." },
+
+      // 8. Financial Reporting & Analytics
+      { name: "Financial Reporting & Analytics", category: "Core Module", url: "/financial-reporting/balance-sheet", icon: "ph-chart-line-up", desc: "Financial statements, P&L, balance sheets, and executive KPIs." },
+      { name: "Balance Sheet", category: "Financial Reporting", url: "/financial-reporting/balance-sheet", icon: "ph-scales", desc: "Statement of Financial Position: Assets, Liabilities, and Equity." },
+      { name: "Profit & Loss (P&L)", category: "Financial Reporting", url: "/financial-reporting/profit-loss", icon: "ph-trend-up", desc: "Hospital operating revenue, medical costs, and EBITDA margins." },
+      { name: "Cash Flow Statement", category: "Financial Reporting", url: "/financial-reporting/cash-flow-statement", icon: "ph-currency-dollar", desc: "Operating, Investing, and Financing cash movement analysis." },
+      { name: "Financial KPI Dashboard", category: "Financial Reporting", url: "/financial-reporting/financial-kpi-dashboard", icon: "ph-gauge", desc: "Healthcare indicators: DSO, Occupancy Revenue, ARPOB, Working Ratio." },
+      { name: "Executive Reports", category: "Financial Reporting", url: "/financial-reporting/executive-reports", icon: "ph-file-pdf", desc: "Compiled quarterly executive packs for Board of Directors." },
+
+      // 9. Tax Management
+      { name: "Tax Management", category: "Core Module", url: "/tax-management/tax-configuration", icon: "ph-percent", desc: "Tax rules, withholding compliance, Form 2307, and statutory filings." },
+      { name: "Tax Configuration", category: "Tax Management", url: "/tax-management/tax-configuration", icon: "ph-gear", desc: "Tax codes setup for VAT (12%), EWT, and hospital service exemptions." },
+      { name: "Withholding Tax (EWT/VAT)", category: "Tax Management", url: "/tax-management/withholding-tax", icon: "ph-file-text", desc: "BIR Form 2307 / 2306 certificates for doctors and suppliers." },
+      { name: "Tax Returns & Filings", category: "Tax Management", url: "/tax-management/tax-returns", icon: "ph-paperclip", desc: "Statutory tax returns (BIR Form 2550Q, 1601EQ, Corporate Tax)." },
+      { name: "Tax Exemptions", category: "Tax Management", url: "/tax-management/tax-exemptions", icon: "ph-shield-check", desc: "VAT-exempt prescription medicines and Senior Citizen/PWD logs." },
+      { name: "Tax Audit Trail", category: "Tax Management", url: "/tax-management/tax-audit-trail", icon: "ph-magnifying-glass-plus", desc: "Immutable audit trail logs for internal and external tax audits." }
+    ];
+
     const closeSearch = () => {
       if (!searchResults || !searchInput) return;
       searchResults.hidden = true;
@@ -359,45 +433,37 @@
       if (!searchResults || !searchInput) return;
       const query = searchInput.value.trim().toLowerCase();
       if (!query) return closeSearch();
-      const registryModules = (window.HimsModuleRegistry?.modules || []).map((module) => ({ ...module, registryId: module.id }));
-      const discoveryModules = window.HimsModuleDiscovery?.modules || [];
-      const searchableModules = [...registryModules, ...discoveryModules].filter((module, index, modules) =>
-        modules.findIndex((candidate) => candidate.id === module.id) === index,
+
+      const matches = fmsNavigationIndex.filter((item) =>
+        [item.name, item.category, item.desc].join(" ").toLowerCase().includes(query)
       );
-      const matches = searchableModules.filter((module) =>
-        [module.name, module.shortName, module.description, module.statusLabel, module.state].join(" ").toLowerCase().includes(query),
-      );
+
       searchResults.innerHTML = "";
-      matches.forEach((module) => {
+      matches.forEach((item) => {
         const result = document.createElement("button");
         result.type = "button";
-        result.className = "search-result";
+        result.className = "search-result d-flex align-items-center justify-content-between p-2";
         result.setAttribute("role", "option");
-        if (!module.enabled) {
-          result.classList.add("is-unavailable");
-          result.setAttribute("aria-disabled", "true");
-        }
-        result.innerHTML = `<i class="ph-fill ${module.icon}" aria-hidden="true"></i><span><strong></strong><small></small></span>`;
-        result.querySelector("strong").textContent = module.name;
-        result.querySelector("small").textContent = [module.statusLabel, module.state].filter(Boolean).join(" · ");
+        result.innerHTML = `
+          <div class="d-flex align-items-center gap-2 min-w-0">
+            <i class="ph ${item.icon} fs-5 text-primary flex-shrink-0" aria-hidden="true"></i>
+            <div class="d-flex flex-column text-start min-w-0">
+              <strong class="text-dark fs-xs text-truncate">${item.name}</strong>
+              <small class="text-muted fs-xs text-truncate" style="font-size: 10.5px;">${item.desc}</small>
+            </div>
+          </div>
+          <span class="badge bg-secondary-subtle text-secondary fs-xs flex-shrink-0 ms-2">${item.category}</span>
+        `;
         result.addEventListener("click", () => {
-          if (module.enabled && module.registryId) {
-            window.HimsModuleRegistry?.navigate(module.registryId);
-            return;
-          }
-          document.dispatchEvent(new CustomEvent("hims:module-locate", { detail: { moduleId: module.id } }));
-          if (module.registryId) {
-            window.HimsModuleRegistry?.navigate(module.registryId);
-          } else {
-            document.dispatchEvent(new CustomEvent("hims:module-feedback", {
-              detail: { moduleId: module.id, message: `${module.name}: ${module.statusLabel || module.state}. No approved route is available.` },
-            }));
-          }
+          window.location.href = item.url;
           closeSearch();
         });
         searchResults.appendChild(result);
       });
-      if (!matches.length) searchResults.innerHTML = '<p class="search-empty">No frontend module matched your search.</p>';
+
+      if (!matches.length) {
+        searchResults.innerHTML = '<p class="search-empty text-muted p-3 mb-0 fs-xs">No module or sub-module matched your search.</p>';
+      }
       searchResults.hidden = false;
       searchInput.setAttribute("aria-expanded", "true");
     };

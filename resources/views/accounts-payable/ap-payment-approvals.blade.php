@@ -25,22 +25,31 @@
   <div class="row g-3 mb-4">
     <div class="col-md-4">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">Tier 1: Dept Head (< ₱50k)</span>
-        <h4 class="fw-bold mb-0 text-success">2 Pending</h4>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">Tier 1: Dept Head (&lt; ₱50k)</span>
+          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-user-check fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold mb-0 text-dark">2 Pending</h4>
         <span class="fs-xs text-muted">Materials &amp; ER Approval</span>
       </div>
     </div>
     <div class="col-md-4">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">Tier 2: Finance Officer (< ₱250k)</span>
-        <h4 class="fw-bold mb-0 text-primary">1 Pending</h4>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">Tier 2: Finance Officer (&lt; ₱250k)</span>
+          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-shield-check fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold mb-0 text-dark">1 Pending</h4>
         <span class="fs-xs text-muted">Controller Authorization</span>
       </div>
     </div>
     <div class="col-md-4">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">Tier 3: CFO Final Release (> ₱250k)</span>
-        <h4 class="fw-bold mb-0 text-warning">1 Pending</h4>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">Tier 3: CFO Final Release (&gt; ₱250k)</span>
+          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-shield-star fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold mb-0 text-dark">1 Pending</h4>
         <span class="fs-xs text-muted">Executive Board Sign-off</span>
       </div>
     </div>

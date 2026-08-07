@@ -29,29 +29,41 @@
   <div class="row g-3 mb-4">
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">Active Admitted Inpatients</span>
-        <h4 class="fw-bold mb-0 text-primary">142 Patients</h4>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">Active Admitted Inpatients</span>
+          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-user-list fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold mb-0 text-dark">142 Patients</h4>
         <span class="fs-xs text-muted">Ward &amp; ICU Admission</span>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">Total Patient Receivables</span>
-        <h4 class="fw-bold mb-0 text-danger">₱1,850,500.00</h4>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">Total Patient Receivables</span>
+          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-currency-circle-dollar fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold mb-0 text-dark">₱1,850,500.00</h4>
         <span class="fs-xs text-muted">Pending Patient Cash Settlement</span>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">Active HMO Claims Pool</span>
-        <h4 class="fw-bold mb-0 text-info">₱1,220,000.00</h4>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">Active HMO Claims Pool</span>
+          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-shield-check fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold mb-0 text-dark">₱1,220,000.00</h4>
         <span class="fs-xs text-muted">Maxicare, Intellicare &amp; Medicard</span>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">PhilHealth Claim Receivables</span>
-        <h4 class="fw-bold mb-0 text-success">₱820,000.00</h4>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">PhilHealth Claim Receivables</span>
+          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold mb-0 text-dark">₱820,000.00</h4>
         <span class="fs-xs text-muted">National Government Scheme</span>
       </div>
     </div>

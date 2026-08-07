@@ -33,7 +33,7 @@
           <span class="text-muted small">Total Assets</span>
           <span class="p-2 rounded-3 bg-success-subtle text-success fs-xs"><i class="ph ph-trend-up"></i></span>
         </div>
-        <h4 class="fw-bold mb-1 text-success">₱8,450,000.00</h4>
+        <h4 class="fw-bold mb-1 text-dark">₱8,450,000.00</h4>
         <span class="fs-xs text-muted">14 Master Accounts</span>
       </div>
     </div>
@@ -43,7 +43,7 @@
           <span class="text-muted small">Total Liabilities</span>
           <span class="p-2 rounded-3 bg-danger-subtle text-danger fs-xs"><i class="ph ph-warning-circle"></i></span>
         </div>
-        <h4 class="fw-bold mb-1 text-danger">₱2,120,000.00</h4>
+        <h4 class="fw-bold mb-1 text-dark">₱2,120,000.00</h4>
         <span class="fs-xs text-muted">8 Vendor Accounts</span>
       </div>
     </div>
@@ -53,7 +53,7 @@
           <span class="text-muted small">Total Equity</span>
           <span class="p-2 rounded-3 bg-primary-subtle text-primary fs-xs"><i class="ph ph-scales"></i></span>
         </div>
-        <h4 class="fw-bold mb-1 text-primary">₱6,330,000.00</h4>
+        <h4 class="fw-bold mb-1 text-dark">₱6,330,000.00</h4>
         <span class="fs-xs text-muted">4 Capital Reserves</span>
       </div>
     </div>
@@ -63,7 +63,7 @@
           <span class="text-muted small">Operating Revenue</span>
           <span class="p-2 rounded-3 bg-info-subtle text-info fs-xs"><i class="ph ph-receipt"></i></span>
         </div>
-        <h4 class="fw-bold mb-1 text-info">₱5,240,000.00</h4>
+        <h4 class="fw-bold mb-1 text-dark">₱5,240,000.00</h4>
         <span class="fs-xs text-muted">YTD Care &amp; Sales</span>
       </div>
     </div>
@@ -73,7 +73,7 @@
           <span class="text-muted small">Operating Expenses</span>
           <span class="p-2 rounded-3 bg-warning-subtle text-warning fs-xs"><i class="ph ph-chart-line-down"></i></span>
         </div>
-        <h4 class="fw-bold mb-1 text-warning">₱3,180,000.00</h4>
+        <h4 class="fw-bold mb-1 text-dark">₱3,180,000.00</h4>
         <span class="fs-xs text-muted">YTD OPEX &amp; Supplies</span>
       </div>
     </div>

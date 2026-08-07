@@ -48,7 +48,7 @@
         </div>
         <div class="col-md-4 text-md-end">
           <span class="text-muted small d-block">Department Net Ledger Balance</span>
-          <h3 class="fw-bold text-success mb-0">₱3,420,000.00</h3>
+          <h3 class="fw-bold text-dark mb-0">₱3,420,000.00</h3>
         </div>
       </div>
     </div>

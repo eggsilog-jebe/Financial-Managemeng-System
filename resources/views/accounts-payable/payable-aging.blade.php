@@ -26,28 +26,40 @@
   <div class="row g-3 mb-4">
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">Current (0-30 Days)</span>
-        <h4 class="fw-bold text-success mb-1">₱680,200.00</h4>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">Current (0-30 Days)</span>
+          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold text-dark mb-1">₱680,200.00</h4>
         <span class="fs-xs text-muted">54.8% of Total AP</span>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">31-60 Days</span>
-        <h4 class="fw-bold text-warning mb-1">₱185,000.00</h4>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">31-60 Days</span>
+          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-hourglass fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold text-dark mb-1">₱185,000.00</h4>
         <span class="fs-xs text-muted">Approaching Grace Period</span>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">61-90 Days</span>
-        <h4 class="fw-bold text-danger mb-1">₱45,300.00</h4>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">61-90 Days</span>
+          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-warning fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold text-dark mb-1">₱45,300.00</h4>
         <span class="fs-xs text-danger"><i class="ph ph-warning"></i> High Overdue Priority</span>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">Over 90 Days</span>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">Over 90 Days</span>
+          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-shield-check fs-5"></i></span>
+        </div>
         <h4 class="fw-bold text-dark mb-1">₱0.00</h4>
         <span class="fs-xs text-success"><i class="ph ph-check"></i> Zero Critical Suspensions</span>
       </div>

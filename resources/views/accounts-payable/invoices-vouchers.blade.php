@@ -29,29 +29,41 @@
   <div class="row g-3 mb-4">
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">Total Vouchers Pending</span>
-        <h4 class="fw-bold mb-0 text-primary">18 Vouchers</h4>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">Total Vouchers Pending</span>
+          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-receipt fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold mb-0 text-dark">18 Vouchers</h4>
         <span class="fs-xs text-muted">Gross Value: ₱1,450,000.00</span>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">3-Way Matched (Ready)</span>
-        <h4 class="fw-bold mb-0 text-success">14 Vouchers</h4>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">3-Way Matched (Ready)</span>
+          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold mb-0 text-dark">14 Vouchers</h4>
         <span class="fs-xs text-success"><i class="ph ph-check-circle"></i> PO &amp; Receiving Confirmed</span>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">3-Way Mismatched</span>
-        <h4 class="fw-bold mb-0 text-danger">4 Vouchers</h4>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">3-Way Mismatched</span>
+          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-warning fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold mb-0 text-dark">4 Vouchers</h4>
         <span class="fs-xs text-danger"><i class="ph ph-warning"></i> Quantity / Unit Cost Mismatch</span>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted small">Net EWT Withheld</span>
-        <h4 class="fw-bold mb-0 text-info">₱14,500.00</h4>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small">Net EWT Withheld</span>
+          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-percent fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold mb-0 text-dark">₱14,500.00</h4>
         <span class="fs-xs text-muted">1% / 2% BIR Form 2307</span>
       </div>
     </div>

@@ -1,0 +1,327 @@
+/*
+ * Enterprise typography accessibility layer.
+ * Loaded after base, component, and page styles so every HIMS surface shares
+ * the same readable type hierarchy without changing layout or theme tokens.
+ */
+:root {
+  --type-page-title: clamp(1.75rem, 2.2vw, 2rem);
+  --type-section-title: 22px;
+  --type-card-title: 18px;
+  --type-navigation: 16px;
+  --type-body: 16px;
+  --type-secondary: 15px;
+  --type-table: 15px;
+  --type-label: 15px;
+  --type-badge: 14px;
+  --type-helper: 14px;
+  --type-metric: 28px;
+  --leading-body: 1.6;
+  --leading-heading: 1.25;
+  --leading-compact: 1.5;
+}
+
+body {
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
+}
+
+:is(h1, h2, h3, h4, h5, h6) {
+  line-height: var(--leading-heading);
+}
+
+:is(input, select, textarea, button) {
+  line-height: var(--leading-compact);
+}
+
+:is(input, textarea)::placeholder {
+  font-size: var(--type-secondary);
+  line-height: var(--leading-compact);
+}
+
+small {
+  font-size: var(--type-helper);
+}
+
+/* Application shell, sidebar, navbar, menus, and global search */
+.logo-text strong,
+.app-identity-title {
+  font-size: var(--type-navigation);
+}
+
+.brand-tagline,
+.brand-suite,
+.nav-title,
+.profile-role,
+.profile-menu-label,
+.app-identity-subtitle,
+.search-box kbd,
+.app-footer {
+  font-size: var(--type-helper);
+  line-height: var(--leading-compact);
+}
+
+.nav-link,
+.theme-options button,
+.profile-menu-link {
+  font-size: var(--type-navigation);
+  line-height: var(--leading-compact);
+}
+
+.nav-submenu :is(a, button),
+.nav-tooltip,
+.profile-avatar,
+.profile-name,
+.search-box input,
+.search-result strong,
+.search-result small,
+.search-empty {
+  font-size: var(--type-secondary);
+  line-height: var(--leading-compact);
+}
+
+.nav-status {
+  font-size: var(--type-badge);
+  line-height: var(--leading-compact);
+}
+
+/* Page hierarchy and standard controls */
+:is(.shell-placeholder, .dashboard-header, .hims-page-header) h1,
+.dashboard-overview .dashboard-header h1 {
+  font-size: var(--type-page-title);
+  line-height: var(--leading-heading);
+}
+
+.page-kicker,
+.dashboard-kicker,
+.hims-breadcrumb,
+.hims-page-header__updated {
+  font-size: var(--type-helper);
+  line-height: var(--leading-compact);
+}
+
+.shell-placeholder p,
+.dashboard-lead,
+.dashboard-section-desc,
+.hims-page-header__main > p {
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
+}
+
+.dashboard-section-title,
+.operations-title {
+  font-size: var(--type-section-title);
+  line-height: var(--leading-heading);
+}
+
+:is(.btn-primary, .btn-outline, .btn-danger, .login-submit),
+.dashboard-page :is(.btn-primary, .btn-outline),
+.btn-sm {
+  font-size: var(--type-label);
+  line-height: var(--leading-compact);
+}
+
+.app-toast {
+  font-size: var(--type-secondary);
+  line-height: var(--leading-compact);
+}
+
+/* Cards, KPI content, statuses, and dashboard descriptions */
+.card-header h2,
+:is(.dashboard-widget, .operations-widget) .card-header h2,
+.module-card h3,
+.module-tile-copy h3,
+.hospital-news-item h3,
+.announcement-item h3,
+.hims-card h2,
+.hims-card h3 {
+  font-size: var(--type-card-title);
+  line-height: var(--leading-heading);
+}
+
+.card-subtitle,
+:is(.dashboard-widget, .operations-widget) .card-subtitle,
+.module-card p,
+.module-tile-copy p,
+.activity-body span,
+.alert-item p,
+.insight-item p,
+.announcement-item p,
+.hospital-map-placeholder > p {
+  font-size: var(--type-secondary);
+  line-height: var(--leading-body);
+}
+
+.dashboard-banner-label,
+.dashboard-session span,
+.kpi-label,
+.kpi-support,
+.kpi-trend,
+.module-card-footer > span,
+.module-label,
+.activity-body small,
+.widget-link,
+.operations-updated,
+.operations-metric-details small,
+.department-meta,
+.weather-meta small,
+.hospital-news-item time,
+.announcement-item time,
+.calendar-today,
+.calendar-legend,
+.calendar-legend strong {
+  font-size: var(--type-helper);
+  line-height: var(--leading-compact);
+}
+
+.dashboard-session,
+.operations-metric-card > p,
+.operations-metric-details strong,
+.snapshot-item small,
+.emergency-monitor-row > strong,
+.department-head p,
+.department-capacity,
+.weather-main span,
+.weather-meta strong,
+.health-copy small,
+.quick-action small {
+  font-size: var(--type-secondary);
+  line-height: var(--leading-compact);
+}
+
+.dashboard-banner-item strong,
+.activity-body strong,
+.alert-row strong,
+.snapshot-item strong,
+.emergency-monitor-row > b,
+.health-list dt,
+.health-copy strong,
+.quick-action strong {
+  font-size: var(--type-body);
+  line-height: var(--leading-compact);
+}
+
+.department-head h3 {
+  font-size: var(--type-card-title);
+  line-height: var(--leading-heading);
+}
+
+.kpi-value,
+.stat-card-main .kpi-value,
+.operations-metric-value {
+  font-size: var(--type-metric);
+  line-height: 1.2;
+}
+
+.status-chip,
+.dashboard-page .status-chip,
+.operations-metric-head .status-chip,
+.module-tile-actions .status-chip,
+.health-row .status-chip,
+.widget-count,
+.live-status-pill strong,
+.live-status-pill small,
+.emergency-state,
+.alert-action,
+.announcement-priority,
+.widget-eyebrow,
+.hospital-news-item > span,
+.hospital-map-placeholder > div span,
+.insight-item small {
+  font-size: var(--type-badge);
+  line-height: var(--leading-compact);
+}
+
+.hospital-map-placeholder > strong {
+  font-size: var(--type-secondary);
+  line-height: var(--leading-compact);
+}
+
+/* Operational tables and calendar */
+.shift-table,
+.shift-table thead th,
+.shift-table td span,
+.hims-table,
+.hims-table th {
+  font-size: var(--type-table);
+  line-height: var(--leading-compact);
+}
+
+.calendar-weekdays span,
+.calendar-day {
+  font-size: var(--type-helper);
+  line-height: var(--leading-compact);
+}
+
+/* Shared enterprise components */
+.hims-search input,
+.hims-filter-group :is(select, input),
+.hims-form-field :is(input, select, textarea) {
+  font-size: var(--type-body);
+  line-height: var(--leading-compact);
+}
+
+.hims-pagination,
+.hims-pagination select,
+.hims-form-field > label,
+.hims-field-message,
+.hims-notification__content,
+.hims-notification__content strong,
+.hims-card__eyebrow {
+  font-size: var(--type-label);
+  line-height: var(--leading-compact);
+}
+
+.hims-empty-state h3,
+.hims-modal__header h2 {
+  font-size: var(--type-card-title);
+  line-height: var(--leading-heading);
+}
+
+.hims-empty-state p,
+.hims-modal__header p,
+.hims-confirmation p,
+.hims-notification__content > div {
+  font-size: var(--type-secondary);
+  line-height: var(--leading-body);
+}
+
+/* Authentication */
+.login-brand h1 {
+  font-size: clamp(1.875rem, 3vw, 2rem);
+  line-height: var(--leading-heading);
+}
+
+.login-card h2 {
+  font-size: 24px;
+  line-height: var(--leading-heading);
+}
+
+.login-kicker,
+.login-brand-signals li,
+.login-brand-footer,
+.login-card .form-field small,
+.login-card .form-error,
+.login-support p,
+.login-access-notice strong,
+.login-access-notice span,
+.login-card-footer,
+.remember-field {
+  font-size: var(--type-helper);
+  line-height: var(--leading-compact);
+}
+
+.login-brand-description,
+.login-help {
+  font-size: var(--type-secondary);
+  line-height: var(--leading-body);
+}
+
+.login-card .form-field label {
+  font-size: var(--type-label);
+  line-height: var(--leading-compact);
+}
+
+.login-card .form-field :is(input, select) {
+  font-size: var(--type-body);
+  line-height: var(--leading-compact);
+}

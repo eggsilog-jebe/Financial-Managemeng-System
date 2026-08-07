@@ -6,6 +6,7 @@
 
 @section('content')
 <div class="container-fluid p-4">
+  <!-- Header -->
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
       <nav aria-label="breadcrumb">
@@ -15,49 +16,131 @@
           <li class="breadcrumb-item active">Invoices &amp; Vouchers</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Invoices &amp; AP Vouchers</h1>
-      <p class="text-muted small mb-0">Process 3-way matching for vendor invoices, purchase orders, and receiving reports.</p>
+      <h1 class="h3 mb-0 font-weight-bold">Accounts Payable Vouchers (3-Way Matching)</h1>
+      <p class="text-muted small mb-0">Automated 3-way verification matching Vendor Invoices against Purchase Orders (PO) and Warehouse Goods Received Notes (GRN).</p>
     </div>
-    <button class="btn btn-primary btn-sm"><i class="ph ph-plus me-1"></i> Create AP Voucher</button>
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-secondary btn-sm"><i class="ph ph-funnel me-1"></i> Filter Mismatches</button>
+      <button class="btn btn-primary btn-sm"><i class="ph ph-plus me-1"></i> Create AP Voucher</button>
+    </div>
   </div>
+
+  <!-- Summary Metric Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3">
+        <span class="text-muted small">Total Vouchers Pending</span>
+        <h4 class="fw-bold mb-0 text-primary">18 Vouchers</h4>
+        <span class="fs-xs text-muted">Gross Value: ₱1,450,000.00</span>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3">
+        <span class="text-muted small">3-Way Matched (Ready)</span>
+        <h4 class="fw-bold mb-0 text-success">14 Vouchers</h4>
+        <span class="fs-xs text-success"><i class="ph ph-check-circle"></i> PO &amp; Receiving Confirmed</span>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3">
+        <span class="text-muted small">3-Way Mismatched</span>
+        <h4 class="fw-bold mb-0 text-danger">4 Vouchers</h4>
+        <span class="fs-xs text-danger"><i class="ph ph-warning"></i> Quantity / Unit Cost Mismatch</span>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3">
+        <span class="text-muted small">Net EWT Withheld</span>
+        <h4 class="fw-bold mb-0 text-info">₱14,500.00</h4>
+        <span class="fs-xs text-muted">1% / 2% BIR Form 2307</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vouchers Table Card -->
   <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-transparent border-bottom p-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <h6 class="fw-bold mb-0">AP Vouchers Register</h6>
+        <div class="search-box" style="width: 260px;">
+          <i class="ph ph-magnifying-glass"></i>
+          <input type="search" class="form-control form-control-sm" placeholder="Search voucher #, vendor, PO...">
+        </div>
+      </div>
+    </div>
     <div class="card-body p-0">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
-          <tr>
-            <th>Voucher Ref</th>
-            <th>Vendor Name</th>
-            <th>PO Reference</th>
-            <th>Invoice Date</th>
-            <th>Due Date</th>
-            <th class="text-end">Amount (₱)</th>
-            <th>3-Way Match</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><span class="font-monospace text-primary">APV-2026-091</span></td>
-            <td>PharmaCorp Philippines</td>
-            <td>PO-88210</td>
-            <td>2026-08-01</td>
-            <td>2026-08-31</td>
-            <td class="text-end fw-semibold">₱145,000.00</td>
-            <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check"></i> Matched</span></td>
-            <td><span class="badge bg-primary-subtle text-primary">Approved</span></td>
-          </tr>
-          <tr>
-            <td><span class="font-monospace text-primary">APV-2026-092</span></td>
-            <td>MedTech Diagnostics</td>
-            <td>PO-88215</td>
-            <td>2026-08-03</td>
-            <td>2026-09-17</td>
-            <td class="text-end fw-semibold">₱98,400.00</td>
-            <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check"></i> Matched</span></td>
-            <td><span class="badge bg-warning-subtle text-warning">Pending Review</span></td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Voucher Ref</th>
+              <th>Vendor Name</th>
+              <th>PO &amp; GRN Ref</th>
+              <th>Invoice Date</th>
+              <th>Due Date</th>
+              <th class="text-end">Gross Amount (₱)</th>
+              <th class="text-end">EWT (₱)</th>
+              <th class="text-end">Net Payable (₱)</th>
+              <th>3-Way Match</th>
+              <th>Status</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">APV-2026-091</span></td>
+              <td class="fw-semibold text-dark">PharmaCorp Philippines</td>
+              <td>
+                <div class="fs-xs"><span class="font-monospace text-primary">PO-88210</span> / <span class="font-monospace text-muted">GRN-4410</span></div>
+              </td>
+              <td>2026-08-01</td>
+              <td>2026-08-31</td>
+              <td class="text-end">₱145,000.00</td>
+              <td class="text-end text-muted">-₱1,450.00</td>
+              <td class="text-end fw-bold text-dark">₱143,550.00</td>
+              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check-double"></i> 3-Way Matched</span></td>
+              <td><span class="badge bg-primary-subtle text-primary">Approved</span></td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Matching Details"><i class="ph ph-eye"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">APV-2026-092</span></td>
+              <td class="fw-semibold text-dark">MedTech Diagnostics</td>
+              <td>
+                <div class="fs-xs"><span class="font-monospace text-primary">PO-88215</span> / <span class="font-monospace text-muted">GRN-4419</span></div>
+              </td>
+              <td>2026-08-03</td>
+              <td>2026-09-17</td>
+              <td class="text-end">₱98,400.00</td>
+              <td class="text-end text-muted">-₱1,968.00</td>
+              <td class="text-end fw-bold text-dark">₱96,432.00</td>
+              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check-double"></i> 3-Way Matched</span></td>
+              <td><span class="badge bg-warning-subtle text-warning">Pending Review</span></td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Matching Details"><i class="ph ph-eye"></i></button>
+              </td>
+            </tr>
+            <tr>
+              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">APV-2026-093</span></td>
+              <td class="fw-semibold text-dark">Surgical Supplies &amp; Implants</td>
+              <td>
+                <div class="fs-xs"><span class="font-monospace text-primary">PO-88220</span> / <span class="font-monospace text-danger">GRN-HOLD</span></div>
+              </td>
+              <td>2026-08-05</td>
+              <td>2026-09-04</td>
+              <td class="text-end">₱52,000.00</td>
+              <td class="text-end text-muted">-₱520.00</td>
+              <td class="text-end fw-bold text-dark">₱51,480.00</td>
+              <td><span class="badge bg-danger-subtle text-danger"><i class="ph ph-warning"></i> Qty Mismatch</span></td>
+              <td><span class="badge bg-danger-subtle text-danger">On Hold</span></td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Mismatch Reason"><i class="ph ph-eye"></i></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>

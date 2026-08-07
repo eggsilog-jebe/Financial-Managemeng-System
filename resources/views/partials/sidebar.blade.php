@@ -38,7 +38,7 @@
       <ul class="nav-list nav-domain-list">
         <!-- 1. General Ledger -->
         <li class="nav-accordion{{ $isGl ? ' is-expanded is-active' : '' }}">
-          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" aria-expanded="{{ $isGl ? 'true' : 'false' }}" aria-controls="nav-gl" aria-label="General Ledger" data-nav-tooltip="General Ledger">
+          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('gl.chart-of-accounts') }}" aria-expanded="{{ $isGl ? 'true' : 'false' }}" aria-controls="nav-gl" aria-label="General Ledger" data-nav-tooltip="General Ledger">
             <i class="ph-fill ph-book-open" aria-hidden="true"></i>
             <span class="nav-label">General Ledger</span>
             <i class="ph ph-caret-down nav-chevron" aria-hidden="true"></i>
@@ -54,7 +54,7 @@
 
         <!-- 2. Accounts Payable (AP) -->
         <li class="nav-accordion{{ $isAp ? ' is-expanded is-active' : '' }}">
-          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" aria-expanded="{{ $isAp ? 'true' : 'false' }}" aria-controls="nav-ap" aria-label="Accounts Payable" data-nav-tooltip="Accounts Payable">
+          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('ap.vendors') }}" aria-expanded="{{ $isAp ? 'true' : 'false' }}" aria-controls="nav-ap" aria-label="Accounts Payable" data-nav-tooltip="Accounts Payable">
             <i class="ph-fill ph-receipt" aria-hidden="true"></i>
             <span class="nav-label">Accounts Payable (AP)</span>
             <i class="ph ph-caret-down nav-chevron" aria-hidden="true"></i>
@@ -70,7 +70,7 @@
 
         <!-- 3. Accounts Receivable (AR) -->
         <li class="nav-accordion{{ $isAr ? ' is-expanded is-active' : '' }}">
-          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" aria-expanded="{{ $isAr ? 'true' : 'false' }}" aria-controls="nav-ar" aria-label="Accounts Receivable" data-nav-tooltip="Accounts Receivable">
+          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('ar.customers') }}" aria-expanded="{{ $isAr ? 'true' : 'false' }}" aria-controls="nav-ar" aria-label="Accounts Receivable" data-nav-tooltip="Accounts Receivable">
             <i class="ph-fill ph-currency-circle-dollar" aria-hidden="true"></i>
             <span class="nav-label">Accounts Receivable (AR)</span>
             <i class="ph ph-caret-down nav-chevron" aria-hidden="true"></i>
@@ -86,7 +86,7 @@
 
         <!-- 4. Disbursement Management -->
         <li class="nav-accordion{{ $isDisbursement ? ' is-expanded is-active' : '' }}">
-          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" aria-expanded="{{ $isDisbursement ? 'true' : 'false' }}" aria-controls="nav-disbursement" aria-label="Disbursement Management" data-nav-tooltip="Disbursement">
+          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('disbursement.payment-requests') }}" aria-expanded="{{ $isDisbursement ? 'true' : 'false' }}" aria-controls="nav-disbursement" aria-label="Disbursement Management" data-nav-tooltip="Disbursement">
             <i class="ph-fill ph-arrows-out" aria-hidden="true"></i>
             <span class="nav-label">Disbursement Management</span>
             <i class="ph ph-caret-down nav-chevron" aria-hidden="true"></i>
@@ -102,7 +102,7 @@
 
         <!-- 5. Collection Management -->
         <li class="nav-accordion{{ $isCollection ? ' is-expanded is-active' : '' }}">
-          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" aria-expanded="{{ $isCollection ? 'true' : 'false' }}" aria-controls="nav-collection" aria-label="Collection Management" data-nav-tooltip="Collection">
+          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('collection.receipts') }}" aria-expanded="{{ $isCollection ? 'true' : 'false' }}" aria-controls="nav-collection" aria-label="Collection Management" data-nav-tooltip="Collection">
             <i class="ph-fill ph-vault" aria-hidden="true"></i>
             <span class="nav-label">Collection Management</span>
             <i class="ph ph-caret-down nav-chevron" aria-hidden="true"></i>
@@ -118,7 +118,7 @@
 
         <!-- 6. Budget Management -->
         <li class="nav-accordion{{ $isBudget ? ' is-expanded is-active' : '' }}">
-          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" aria-expanded="{{ $isBudget ? 'true' : 'false' }}" aria-controls="nav-budget" aria-label="Budget Management" data-nav-tooltip="Budget">
+          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('budget.fiscal-planning') }}" aria-expanded="{{ $isBudget ? 'true' : 'false' }}" aria-controls="nav-budget" aria-label="Budget Management" data-nav-tooltip="Budget">
             <i class="ph-fill ph-calculator" aria-hidden="true"></i>
             <span class="nav-label">Budget Management</span>
             <i class="ph ph-caret-down nav-chevron" aria-hidden="true"></i>
@@ -134,7 +134,7 @@
 
         <!-- 7. Cash Management -->
         <li class="nav-accordion{{ $isCash ? ' is-expanded is-active' : '' }}">
-          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" aria-expanded="{{ $isCash ? 'true' : 'false' }}" aria-controls="nav-cash" aria-label="Cash Management" data-nav-tooltip="Cash Management">
+          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('cash.bank-accounts') }}" aria-expanded="{{ $isCash ? 'true' : 'false' }}" aria-controls="nav-cash" aria-label="Cash Management" data-nav-tooltip="Cash Management">
             <i class="ph-fill ph-coins" aria-hidden="true"></i>
             <span class="nav-label">Cash Management</span>
             <i class="ph ph-caret-down nav-chevron" aria-hidden="true"></i>
@@ -150,7 +150,7 @@
 
         <!-- 8. Financial Reporting & Analytics -->
         <li class="nav-accordion{{ $isReporting ? ' is-expanded is-active' : '' }}">
-          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" aria-expanded="{{ $isReporting ? 'true' : 'false' }}" aria-controls="nav-reporting" aria-label="Financial Reporting & Analytics" data-nav-tooltip="Reporting">
+          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('reporting.balance-sheet') }}" aria-expanded="{{ $isReporting ? 'true' : 'false' }}" aria-controls="nav-reporting" aria-label="Financial Reporting & Analytics" data-nav-tooltip="Reporting">
             <i class="ph-fill ph-chart-line-up" aria-hidden="true"></i>
             <span class="nav-label">Financial Reporting</span>
             <i class="ph ph-caret-down nav-chevron" aria-hidden="true"></i>
@@ -166,7 +166,7 @@
 
         <!-- 9. Tax Management -->
         <li class="nav-accordion{{ $isTax ? ' is-expanded is-active' : '' }}">
-          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" aria-expanded="{{ $isTax ? 'true' : 'false' }}" aria-controls="nav-tax" aria-label="Tax Management" data-nav-tooltip="Tax Management">
+          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('tax.tax-config') }}" aria-expanded="{{ $isTax ? 'true' : 'false' }}" aria-controls="nav-tax" aria-label="Tax Management" data-nav-tooltip="Tax Management">
             <i class="ph-fill ph-percent" aria-hidden="true"></i>
             <span class="nav-label">Tax Management</span>
             <i class="ph ph-caret-down nav-chevron" aria-hidden="true"></i>

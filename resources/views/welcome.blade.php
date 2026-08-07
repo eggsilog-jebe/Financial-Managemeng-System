@@ -74,36 +74,56 @@
   <div class="row g-3">
     @php
       $modules = [
-        ['title' => 'General Ledger', 'desc' => 'Central repository for all accounting and journal entries.', 'icon' => 'ph-book-open', 'badge' => 'Core'],
-        ['title' => 'Accounts Payable (AP)', 'desc' => 'Manage vendor invoices, vouchers, and outgoing payments.', 'icon' => 'ph-receipt', 'badge' => 'Active'],
-        ['title' => 'Accounts Receivable (AR)', 'desc' => 'Track customer billings, collections, and outstanding receivables.', 'icon' => 'ph-currency-circle-dollar', 'badge' => 'Active'],
-        ['title' => 'Disbursement Management', 'desc' => 'Authorize, approve, and execute disbursements seamlessly.', 'icon' => 'ph-arrows-out', 'badge' => 'Active'],
-        ['title' => 'Collection Management', 'desc' => 'Payment processing, receipts, and cash inflow reconciliation.', 'icon' => 'ph-vault', 'badge' => 'Active'],
-        ['title' => 'Budget Management', 'desc' => 'Fiscal planning, budget allocation, and variance analysis.', 'icon' => 'ph-calculator', 'badge' => 'Active'],
-        ['title' => 'Cash Management', 'desc' => 'Bank reconciliation, liquidity planning, and cash flow tracking.', 'icon' => 'ph-coins', 'badge' => 'New'],
-        ['title' => 'Financial Reporting & Analytics', 'desc' => 'Balance sheets, P&L statements, and real-time BI insights.', 'icon' => 'ph-chart-line-up', 'badge' => 'New'],
-        ['title' => 'Tax Management', 'desc' => 'Tax computation, withholding compliance, and tax filings.', 'icon' => 'ph-percent', 'badge' => 'New'],
+        ['title' => 'General Ledger', 'desc' => 'Central repository for all accounting and journal entries.', 'icon' => 'ph-book-open', 'badge' => 'Core', 'route' => route('gl.chart-of-accounts')],
+        ['title' => 'Accounts Payable (AP)', 'desc' => 'Manage vendor invoices, vouchers, and outgoing payments.', 'icon' => 'ph-receipt', 'badge' => 'Active', 'route' => route('ap.vendors')],
+        ['title' => 'Accounts Receivable (AR)', 'desc' => 'Track customer billings, collections, and outstanding receivables.', 'icon' => 'ph-currency-circle-dollar', 'badge' => 'Active', 'route' => route('ar.customers')],
+        ['title' => 'Disbursement Management', 'desc' => 'Authorize, approve, and execute disbursements seamlessly.', 'icon' => 'ph-arrows-out', 'badge' => 'Active', 'route' => route('disbursement.payment-requests')],
+        ['title' => 'Collection Management', 'desc' => 'Payment processing, receipts, and cash inflow reconciliation.', 'icon' => 'ph-vault', 'badge' => 'Active', 'route' => route('collection.receipts')],
+        ['title' => 'Budget Management', 'desc' => 'Fiscal planning, budget allocation, and variance analysis.', 'icon' => 'ph-calculator', 'badge' => 'Active', 'route' => route('budget.fiscal-planning')],
+        ['title' => 'Cash Management', 'desc' => 'Bank reconciliation, liquidity planning, and cash flow tracking.', 'icon' => 'ph-coins', 'badge' => 'New', 'route' => route('cash.bank-accounts')],
+        ['title' => 'Financial Reporting & Analytics', 'desc' => 'Balance sheets, P&L statements, and real-time BI insights.', 'icon' => 'ph-chart-line-up', 'badge' => 'New', 'route' => route('reporting.balance-sheet')],
+        ['title' => 'Tax Management', 'desc' => 'Tax computation, withholding compliance, and tax filings.', 'icon' => 'ph-percent', 'badge' => 'New', 'route' => route('tax.tax-config')],
       ];
     @endphp
 
     @foreach($modules as $mod)
     <div class="col-md-4">
-      <div class="card h-100 border-0 shadow-sm rounded-3 hover-shadow transition">
-        <div class="card-body">
-          <div class="d-flex align-items-center mb-3">
-            <div class="p-2 rounded-3 bg-primary-subtle text-primary me-3">
-              <i class="ph {{ $mod['icon'] }} fs-4"></i>
+      <a href="{{ $mod['route'] }}" class="card h-100 border-0 shadow-sm rounded-3 text-decoration-none module-card-link">
+        <div class="card-body d-flex flex-column">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <div class="d-flex align-items-center">
+              <div class="p-2 rounded-3 bg-primary-subtle text-primary me-3">
+                <i class="ph {{ $mod['icon'] }} fs-4"></i>
+              </div>
+              <div>
+                <h3 class="h6 mb-0 font-weight-bold text-dark">{{ $mod['title'] }}</h3>
+                <span class="badge bg-secondary-subtle text-secondary fs-xs">{{ $mod['badge'] }}</span>
+              </div>
             </div>
-            <div>
-              <h3 class="h6 mb-0 font-weight-bold">{{ $mod['title'] }}</h3>
-              <span class="badge bg-secondary-subtle text-secondary fs-xs">{{ $mod['badge'] }}</span>
-            </div>
+            <i class="ph ph-arrow-right text-muted opacity-50 module-arrow-icon fs-5"></i>
           </div>
-          <p class="text-muted small mb-0">{{ $mod['desc'] }}</p>
+          <p class="text-muted small mb-0 mt-auto">{{ $mod['desc'] }}</p>
         </div>
-      </div>
+      </a>
     </div>
     @endforeach
   </div>
 </div>
+
+<style>
+.module-card-link {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+}
+.module-card-link:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08) !important;
+}
+.module-card-link:hover .module-arrow-icon {
+  color: var(--color-primary) !important;
+  opacity: 1 !important;
+  transform: translateX(3px);
+  transition: all 0.2s ease;
+}
+</style>
 @endsection

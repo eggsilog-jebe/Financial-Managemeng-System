@@ -123,7 +123,16 @@
     const initiallyExpanded = accordionToggles.filter((toggle) => toggle.getAttribute("aria-expanded") === "true");
     initiallyExpanded.slice(1).forEach((toggle) => setAccordion(toggle, false));
     accordionToggles.forEach((toggle) => {
-      toggle.addEventListener("click", () => {
+      toggle.addEventListener("click", (event) => {
+        const isChevronClick = event.target.classList.contains("nav-chevron") || Boolean(event.target.closest(".nav-chevron"));
+        const targetUrl = toggle.dataset.href;
+        const isCurrentModulePage = targetUrl && window.location.href.split('#')[0].split('?')[0] === targetUrl.split('#')[0].split('?')[0];
+
+        if (!isChevronClick && targetUrl && !isCurrentModulePage) {
+          window.location.href = targetUrl;
+          return;
+        }
+
         const wasExpanded = toggle.getAttribute("aria-expanded") === "true";
         if (body.classList.contains("sidebar-collapsed") && window.innerWidth > 991) {
           body.classList.remove("sidebar-collapsed");

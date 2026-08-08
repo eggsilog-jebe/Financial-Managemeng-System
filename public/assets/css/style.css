@@ -77,9 +77,13 @@ input:focus {
   margin-bottom: 0 !important;
 }
 
-/* Card Primary Value Heading */
+/* Card Primary Value Heading - ALWAYS BLACK across all modules and sub-modules */
 .row.g-3 > [class*="col-"] > .card h4,
+.row.g-3 > [class*="col-"] > .card h3,
+.row.g-3 > [class*="col-"] > .card .h3,
+.row.g-3 > [class*="col-"] > .card .h4,
 .kpi-card-value {
+  color: #0f172a !important;
   font-size: 1.45rem !important;
   font-weight: 700 !important;
   letter-spacing: -0.02em !important;
@@ -89,6 +93,12 @@ input:focus {
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   white-space: nowrap !important;
+}
+
+html[data-theme="dark"] .row.g-3 > [class*="col-"] > .card h4,
+html[data-theme="dark"] .row.g-3 > [class*="col-"] > .card h3,
+html[data-theme="dark"] .kpi-card-value {
+  color: #f8fafc !important;
 }
 
 /* Card Subtitle/Footer details */
@@ -103,8 +113,28 @@ input:focus {
   margin-top: auto !important;
 }
 
-/* Uniform Icon Badges */
-.row.g-3 > [class*="col-"] > .card .badge,
+/* Standard Text Badges inside Cards */
+.row.g-3 > [class*="col-"] > .card .badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 0.35rem 0.65rem !important;
+  border-radius: 8px !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+}
+
+.row.g-3 > [class*="col-"] > .card .badge i {
+  font-size: 0.95rem !important;
+  line-height: 1 !important;
+}
+
+/* Icon-Only Badges (where badge contains ONLY an icon with no text) */
+.badge-icon-only,
 .kpi-icon-badge {
   display: inline-flex !important;
   align-items: center !important;
@@ -116,7 +146,7 @@ input:focus {
   flex-shrink: 0 !important;
 }
 
-.row.g-3 > [class*="col-"] > .card .badge i,
+.badge-icon-only i,
 .kpi-icon-badge i {
   font-size: 1.15rem !important;
 }

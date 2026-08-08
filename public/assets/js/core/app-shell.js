@@ -238,9 +238,38 @@
       hideNavTooltip();
     });
     backdrop?.addEventListener("click", closeMobileNav);
-    document.querySelector(".sidebar-nav")?.addEventListener("click", (event) => {
-      if (window.innerWidth <= 991 && event.target.closest('a[href]:not([aria-disabled="true"])')) closeMobileNav();
-    });
+    
+    // Sidebar Scroll Position Persistence & Auto-Scroll Active Link into View
+    const sidebarNav = document.querySelector(".sidebar-nav");
+    if (sidebarNav) {
+      const savedScroll = sessionStorage.getItem("fms_sidebar_scroll");
+      if (savedScroll !== null) {
+        sidebarNav.scrollTop = parseInt(savedScroll, 10);
+      } else {
+        const activeLink = sidebarNav.querySelector(".nav-link.active, .nav-submenu a.active, [aria-current='page']");
+        if (activeLink) {
+          activeLink.scrollIntoView({ block: "nearest", behavior: "instant" });
+        }
+      }
+
+      const saveSidebarScroll = () => {
+        sessionStorage.setItem("fms_sidebar_scroll", sidebarNav.scrollTop);
+      };
+
+      sidebarNav.addEventListener("scroll", saveSidebarScroll, { passive: true });
+      sidebarNav.addEventListener("click", (event) => {
+        if (event.target.closest("a[href]") || event.target.closest(".nav-accordion__toggle")) {
+          saveSidebarScroll();
+        }
+        if (window.innerWidth <= 991 && event.target.closest('a[href]:not([aria-disabled="true"])')) closeMobileNav();
+      });
+      window.addEventListener("beforeunload", saveSidebarScroll);
+    } else {
+      document.querySelector(".sidebar-nav")?.addEventListener("click", (event) => {
+        if (window.innerWidth <= 991 && event.target.closest('a[href]:not([aria-disabled="true"])')) closeMobileNav();
+      });
+    }
+
     window.addEventListener("resize", () => {
       if (!usesDrawer()) body.classList.remove("sidebar-open");
       syncSidebarToggle();

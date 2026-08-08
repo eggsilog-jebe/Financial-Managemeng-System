@@ -1,3 +1,181 @@
 @import url("./base/main.css");
 @import url("./components/enterprise.css");
 @import url("./components/motion.css");
+
+/* Remove blue oval / blue outline / blue glow on focus across all search bars and inputs */
+.form-control:focus,
+.form-select:focus,
+.search-box:focus-within,
+.input-group:focus-within,
+input[type="search"]:focus,
+input[type="text"]:focus,
+input:focus {
+  border-color: var(--color-primary, #00a86b) !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* Subtle clean border highlight for input-groups when search input is focused */
+.input-group:focus-within .input-group-text,
+.input-group:focus-within .form-control {
+  border-color: var(--color-primary, #00a86b) !important;
+}
+
+/* Search Box custom clean focus state */
+.search-box:focus-within {
+  border-color: var(--color-primary, #00a86b) !important;
+  box-shadow: none !important;
+}
+
+/* ==========================================================================
+   STANDARDIZED SYSTEM-WIDE KPI METRIC SUMMARY CARDS
+   Uniform sizes, identical card heights, clean spacing, and zero overlapping
+   ========================================================================== */
+
+.row.g-3 > [class*="col-"] > .card,
+.kpi-metric-card {
+  height: 100% !important;
+  min-height: 116px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  border: 1px solid var(--color-border, rgba(0, 0, 0, 0.08)) !important;
+  border-radius: 12px !important;
+  background: var(--color-surface, #ffffff) !important;
+  padding: 1.15rem 1.25rem !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.035) !important;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.row.g-3 > [class*="col-"] > .card:hover,
+.kpi-metric-card:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.07) !important;
+}
+
+/* Clean Header with Title & Badge */
+.row.g-3 > [class*="col-"] > .card .d-flex:first-child,
+.kpi-card-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  margin-bottom: 0.35rem !important;
+}
+
+/* Card Label/Title Styling */
+.row.g-3 > [class*="col-"] > .card .text-muted.small,
+.kpi-card-title {
+  font-size: 0.785rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.035em !important;
+  color: var(--color-text-muted, #64748b) !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  margin-bottom: 0 !important;
+}
+
+/* Card Primary Value Heading */
+.row.g-3 > [class*="col-"] > .card h4,
+.kpi-card-value {
+  font-size: 1.45rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.25 !important;
+  margin-top: 0.15rem !important;
+  margin-bottom: 0.25rem !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* Card Subtitle/Footer details */
+.row.g-3 > [class*="col-"] > .card .fs-xs,
+.kpi-card-subtitle {
+  font-size: 0.76rem !important;
+  color: var(--color-text-muted, #64748b) !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  display: block !important;
+  margin-top: auto !important;
+}
+
+/* Uniform Icon Badges */
+.row.g-3 > [class*="col-"] > .card .badge,
+.kpi-icon-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 36px !important;
+  height: 36px !important;
+  padding: 0 !important;
+  border-radius: 10px !important;
+  flex-shrink: 0 !important;
+}
+
+.row.g-3 > [class*="col-"] > .card .badge i,
+.kpi-icon-badge i {
+  font-size: 1.15rem !important;
+}
+
+/* Ensure clean card tables with no overlapping text */
+.table {
+  vertical-align: middle !important;
+}
+
+.table td, .table th {
+  padding: 0.75rem 1rem !important;
+}
+
+/* ==========================================================================
+   TABLE ACTION BUTTONS ALIGNMENT & DESIGN
+   ========================================================================== */
+.action-cell {
+  white-space: nowrap !important;
+  vertical-align: middle !important;
+}
+
+.action-cell .btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  font-weight: 600 !important;
+  font-size: 0.785rem !important;
+  padding: 0.38rem 0.85rem !important;
+  border-radius: 8px !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  white-space: nowrap !important;
+  line-height: 1.2 !important;
+}
+
+.action-cell .btn-success {
+  background-color: #10b981 !important;
+  border-color: #10b981 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.22) !important;
+}
+
+.action-cell .btn-success:hover {
+  background-color: #059669 !important;
+  border-color: #059669 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.35) !important;
+}
+
+.action-cell .btn-outline-danger {
+  color: #ef4444 !important;
+  border-color: #fca5a5 !important;
+  background-color: #fef2f2 !important;
+}
+
+.action-cell .btn-outline-danger:hover {
+  background-color: #ef4444 !important;
+  border-color: #ef4444 !important;
+  color: #ffffff !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25) !important;
+}

@@ -36,6 +36,7 @@
     <div id="modal-portal" aria-live="polite"></div>
     <div id="toast-container" role="status" aria-live="polite" aria-atomic="true"></div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ asset('assets/js/data/module-registry.js') }}"></script>
     <script src="{{ asset('assets/js/core/app-shell.js') }}"></script>
     @stack('scripts')

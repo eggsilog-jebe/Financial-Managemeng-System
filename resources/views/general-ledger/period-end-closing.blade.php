@@ -17,11 +17,10 @@
         </ol>
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Period-End Financial Closing &amp; GL Locking</h1>
-      <p class="text-muted small mb-0">Execute monthly/quarterly general ledger closing procedures, lock accounting entries, and rollover retained earnings.</p>
     </div>
     <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm" type="button"><i class="ph ph-list-checks me-1"></i> Pre-Closing Audit</button>
-      <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#closePeriodModal"><i class="ph ph-lock-key me-1"></i> Execute Period Close</button>
+      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Running pre-closing audit scan...');"><i class="ph ph-list-checks me-1"></i> Pre-Closing Audit</button>
+      <button id="btnClosePeriod" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#closePeriodModal"><i class="ph ph-lock-key me-1"></i> Execute Period Close</button>
     </div>
   </div>
 
@@ -33,8 +32,7 @@
           <span class="text-muted small fw-medium">Current Active Period</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-calendar-blank fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">August 2026</h4>
-        <span class="fs-xs text-muted">Open for Journal Postings</span>
+        <h4 class="fw-bold mb-0 text-dark" id="activePeriodText">August 2026</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -43,8 +41,7 @@
           <span class="text-muted small fw-medium">Pending Closing Tasks</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">1 Task Left</h4>
-        <span class="fs-xs text-muted">Bank Reconciliation Verification</span>
+        <h4 class="fw-bold mb-0 text-dark" id="pendingTasksCount">1 Task Left</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -53,8 +50,7 @@
           <span class="text-muted small fw-medium">Closed Fiscal Periods</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-lock fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">7 Months</h4>
-        <span class="fs-xs text-muted">Jan - Jul 2026 Fully Locked</span>
+        <h4 class="fw-bold mb-0 text-dark" id="closedPeriodsCount">7 Months</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -63,15 +59,17 @@
           <span class="text-muted small fw-medium">GL Lock Integrity</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-shield-check fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">Secure</h4>
-        <span class="fs-xs text-muted">Zero Post-Closing Adjustments</span>
+        <h4 class="fw-bold mb-0 text-dark" id="lockStatusText">Secure</h4>
       </div>
     </div>
   </div>
 
   <!-- Closing Checklist Table Card -->
   <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-light fw-bold">Month-End Closing Audit Checklist (July 2026 Period)</div>
+    <div class="card-header bg-transparent border-bottom p-3 d-flex align-items-center justify-content-between">
+      <h6 class="fw-bold mb-0">Month-End Closing Audit Checklist (July 2026 Period)</h6>
+      <span class="badge bg-primary-subtle text-primary" id="checklistBadge">2 of 3 Verified</span>
+    </div>
     <div class="card-body p-0">
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0">
@@ -91,16 +89,18 @@
               </td>
               <td>AP Lead Accountant</td>
               <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> Completed &amp; Verified</span></td>
-              <td class="text-end"><button class="btn btn-sm btn-light border p-1"><i class="ph ph-eye"></i></button></td>
+              <td class="text-end"><button class="btn btn-sm btn-light border p-1" title="View Verification Log"><i class="ph ph-eye"></i></button></td>
             </tr>
-            <tr>
+            <tr id="taskRow2">
               <td>
                 <div class="fw-bold text-dark">2. Bank Reconciliation &amp; Cash Match</div>
                 <span class="fs-xs text-muted">Reconcile Metrobank &amp; BDO bank statements</span>
               </td>
               <td>Treasury Accountant</td>
-              <td><span class="badge bg-warning-subtle text-warning"><i class="ph ph-clock me-1"></i> Pending Final Match</span></td>
-              <td class="text-end"><button class="btn btn-sm btn-outline-primary py-0 px-2 fs-xs"><i class="ph ph-arrow-right me-1"></i> Verify</button></td>
+              <td id="taskStatusCell2"><span class="badge bg-warning-subtle text-warning"><i class="ph ph-clock me-1"></i> Pending Final Match</span></td>
+              <td class="text-end" id="taskActionCell2">
+                <button class="btn btn-sm btn-outline-primary py-1 px-3 fs-xs" onclick="verifyTask2()"><i class="ph ph-check me-1"></i> Verify &amp; Complete</button>
+              </td>
             </tr>
             <tr>
               <td>
@@ -109,7 +109,7 @@
               </td>
               <td>Senior GL Controller</td>
               <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> Completed &amp; Verified</span></td>
-              <td class="text-end"><button class="btn btn-sm btn-light border p-1"><i class="ph ph-eye"></i></button></td>
+              <td class="text-end"><button class="btn btn-sm btn-light border p-1" title="View Verification Log"><i class="ph ph-eye"></i></button></td>
             </tr>
           </tbody>
         </table>
@@ -127,12 +127,12 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body p-4">
-        <form onsubmit="event.preventDefault(); alert('Fiscal Period Closed & Locked successfully!'); bootstrap.Modal.getInstance(document.getElementById('closePeriodModal')).hide();">
+        <form id="closePeriodForm">
           <div class="mb-3">
             <label class="form-label small fw-semibold">Select Fiscal Period to Close <span class="text-danger">*</span></label>
-            <select class="form-select form-select-sm" required>
-              <option value="jul_2026">July 2026 (Month-End Close)</option>
-              <option value="q2_2026">Q2 2026 (Quarter-End Close)</option>
+            <select id="modalClosePeriod" class="form-select form-select-sm" required>
+              <option value="July 2026">July 2026 (Month-End Close)</option>
+              <option value="Q2 2026">Q2 2026 (Quarter-End Close)</option>
             </select>
           </div>
           <div class="alert alert-warning fs-xs mb-3">
@@ -149,3 +149,64 @@
   </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function verifyTask2() {
+  const statusCell = document.getElementById('taskStatusCell2');
+  const actionCell = document.getElementById('taskActionCell2');
+  const pendingCard = document.getElementById('pendingTasksCount');
+  const checklistBadge = document.getElementById('checklistBadge');
+
+  if (statusCell) {
+    statusCell.innerHTML = '<span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> Completed & Verified</span>';
+  }
+  if (actionCell) {
+    actionCell.innerHTML = '<button class="btn btn-sm btn-light border p-1" title="View Verification Log"><i class="ph ph-eye"></i></button>';
+  }
+  if (pendingCard) {
+    pendingCard.textContent = '0 Tasks (Ready)';
+    pendingCard.className = 'fw-bold mb-0 text-success';
+  }
+  if (checklistBadge) {
+    checklistBadge.textContent = '3 of 3 Verified';
+    checklistBadge.className = 'badge bg-success-subtle text-success';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const btnClosePeriod = document.getElementById('btnClosePeriod');
+  if (btnClosePeriod) {
+    btnClosePeriod.addEventListener('click', function() {
+      const modalEl = document.getElementById('closePeriodModal');
+      if (modalEl && window.bootstrap) {
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modalInstance.show();
+      }
+    });
+  }
+
+  const closePeriodForm = document.getElementById('closePeriodForm');
+  if (closePeriodForm) {
+    closePeriodForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const selectedPeriod = document.getElementById('modalClosePeriod').value;
+      const closedCountCard = document.getElementById('closedPeriodsCount');
+
+      if (closedCountCard) {
+        closedCountCard.textContent = '8 Months';
+      }
+
+      alert('Fiscal Period (' + selectedPeriod + ') has been successfully closed and locked!');
+
+      const modalEl = document.getElementById('closePeriodModal');
+      const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+      if (modalInstance) modalInstance.hide();
+
+      closePeriodForm.reset();
+    });
+  }
+});
+</script>
+@endpush

@@ -17,7 +17,6 @@
         </ol>
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">General Ledger Account Books</h1>
-      <p class="text-muted small mb-0">Master general ledger books tracking debit/credit movement across Assets, Liabilities, Equity, Revenue, and Expenses.</p>
     </div>
     <div class="d-flex gap-2">
       <button class="btn btn-outline-secondary btn-sm" type="button" onclick="window.print()"><i class="ph ph-printer me-1"></i> Print GL Books</button>
@@ -34,7 +33,6 @@
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-book-open fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">48 Accounts</h4>
-        <span class="fs-xs text-muted">Chart of Accounts Master Index</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -44,7 +42,6 @@
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-arrow-up-right fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-success">₱54,110,200.00</h4>
-        <span class="fs-xs text-muted">Accumulated Debit Postings</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -54,7 +51,6 @@
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-arrow-down-left fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-danger">₱54,110,200.00</h4>
-        <span class="fs-xs text-muted">Accumulated Credit Postings</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -64,7 +60,6 @@
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-scales fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">Balanced</h4>
-        <span class="fs-xs text-muted">Zero Accounting Discrepancy</span>
       </div>
     </div>
   </div>
@@ -73,14 +68,14 @@
   <div class="card border-0 shadow-sm rounded-3 mb-4">
     <div class="card-body p-3">
       <div class="row g-2 align-items-center">
-        <div class="col-md-4">
+        <div class="col-md-6">
           <div class="input-group input-group-sm">
-            <span class="input-group-text bg-light border-end-0"><i class="ph ph-magnifying-glass text-muted"></i></span>
-            <input type="text" class="form-control bg-light border-start-0" placeholder="Search Account Code or Account Name...">
+            <span class="input-group-text bg-light border-end-0" id="glSearchIcon" style="cursor: pointer;"><i class="ph ph-magnifying-glass text-muted"></i></span>
+            <input type="text" id="glSearchInput" class="form-control bg-light border-start-0" placeholder="Search Account Code or Account Name...">
           </div>
         </div>
         <div class="col-md-3">
-          <select class="form-select form-select-sm bg-light">
+          <select id="glTypeSelect" class="form-select form-select-sm bg-light">
             <option value="">All Account Types</option>
             <option value="asset">1000 - Assets</option>
             <option value="liability">2000 - Liabilities</option>
@@ -90,14 +85,11 @@
           </select>
         </div>
         <div class="col-md-3">
-          <select class="form-select form-select-sm bg-light">
+          <select id="glPeriodSelect" class="form-select form-select-sm bg-light">
             <option value="">All Fiscal Periods</option>
             <option value="ytd">FY 2026 Year-To-Date</option>
             <option value="q2">Q2 2026</option>
           </select>
-        </div>
-        <div class="col-md-2 text-end">
-          <button class="btn btn-sm btn-light border w-100"><i class="ph ph-funnel me-1"></i> Filter</button>
         </div>
       </div>
     </div>
@@ -107,7 +99,7 @@
   <div class="card border-0 shadow-sm rounded-3">
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+        <table id="glBooksTable" class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
               <th>Account Code</th>
@@ -121,30 +113,91 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td><span class="font-monospace text-primary fw-bold">1010</span></td>
-              <td><div class="fw-bold text-dark">Metrobank Operating Account</div></td>
-              <td><span class="badge bg-success-subtle text-success">Asset</span></td>
-              <td class="text-end font-monospace">₱2,500,000.00</td>
-              <td class="text-end text-success font-monospace">+₱8,450,000.00</td>
-              <td class="text-end text-danger font-monospace">-₱6,100,000.00</td>
-              <td class="text-end text-primary fw-bold font-monospace">₱4,850,000.00</td>
+            @php
+              $glAccounts = [
+                [
+                  'code' => '1010',
+                  'name' => 'Metrobank Operating Cash Account',
+                  'type' => 'Asset',
+                  'type_key' => 'asset',
+                  'opening' => '₱2,500,000.00',
+                  'debit' => '+₱8,450,000.00',
+                  'credit' => '-₱6,100,000.00',
+                  'ending' => '₱4,850,000.00',
+                  'badge' => 'bg-success-subtle text-success'
+                ],
+                [
+                  'code' => '1200',
+                  'name' => 'Accounts Receivable (Patients & HMOs)',
+                  'type' => 'Asset',
+                  'type_key' => 'asset',
+                  'opening' => '₱1,850,000.00',
+                  'debit' => '+₱7,620,000.00',
+                  'credit' => '-₱6,399,800.00',
+                  'ending' => '₱3,070,200.00',
+                  'badge' => 'bg-success-subtle text-success'
+                ],
+                [
+                  'code' => '2010',
+                  'name' => 'Accounts Payable (Medical Suppliers & Vendors)',
+                  'type' => 'Liability',
+                  'type_key' => 'liability',
+                  'opening' => '₱980,000.00',
+                  'debit' => '+₱3,400,000.00',
+                  'credit' => '-₱4,520,000.00',
+                  'ending' => '₱2,100,000.00',
+                  'badge' => 'bg-danger-subtle text-danger'
+                ],
+                [
+                  'code' => '3010',
+                  'name' => 'Hospital Capital Reserve & Retained Capital',
+                  'type' => 'Equity',
+                  'type_key' => 'equity',
+                  'opening' => '₱6,330,000.00',
+                  'debit' => '+₱0.00',
+                  'credit' => '-₱0.00',
+                  'ending' => '₱6,330,000.00',
+                  'badge' => 'bg-primary-subtle text-primary'
+                ],
+                [
+                  'code' => '4010',
+                  'name' => 'Inpatient & Emergency Care Service Revenue',
+                  'type' => 'Revenue',
+                  'type_key' => 'revenue',
+                  'opening' => '₱0.00',
+                  'debit' => '+₱0.00',
+                  'credit' => '-₱5,240,000.00',
+                  'ending' => '₱5,240,000.00',
+                  'badge' => 'bg-info-subtle text-info'
+                ],
+                [
+                  'code' => '5010',
+                  'name' => 'Medical & Surgical Supplies Expense',
+                  'type' => 'Expense',
+                  'type_key' => 'expense',
+                  'opening' => '₱0.00',
+                  'debit' => '+₱3,180,000.00',
+                  'credit' => '-₱0.00',
+                  'ending' => '₱3,180,000.00',
+                  'badge' => 'bg-warning-subtle text-warning'
+                ],
+              ];
+            @endphp
+
+            @foreach($glAccounts as $gl)
+            <tr class="gl-row" data-type="{{ $gl['type_key'] }}">
+              <td><span class="font-monospace text-primary fw-bold">{{ $gl['code'] }}</span></td>
+              <td><div class="fw-bold text-dark">{{ $gl['name'] }}</div></td>
+              <td><span class="badge {{ $gl['badge'] }}">{{ $gl['type'] }}</span></td>
+              <td class="text-end font-monospace">{{ $gl['opening'] }}</td>
+              <td class="text-end text-success font-monospace">{{ $gl['debit'] }}</td>
+              <td class="text-end text-danger font-monospace">{{ $gl['credit'] }}</td>
+              <td class="text-end text-primary fw-bold font-monospace">{{ $gl['ending'] }}</td>
               <td class="text-end">
                 <button class="btn btn-sm btn-light border p-1" title="View Account Movement Ledger"><i class="ph ph-list-numbers"></i></button>
               </td>
             </tr>
-            <tr>
-              <td><span class="font-monospace text-primary fw-bold">1200</span></td>
-              <td><div class="fw-bold text-dark">Accounts Receivable (AR - Patients &amp; HMOs)</div></td>
-              <td><span class="badge bg-success-subtle text-success">Asset</span></td>
-              <td class="text-end font-monospace">₱1,850,000.00</td>
-              <td class="text-end text-success font-monospace">+₱7,620,000.00</td>
-              <td class="text-end text-danger font-monospace">-₱6,399,800.00</td>
-              <td class="text-end text-primary fw-bold font-monospace">₱3,070,200.00</td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-light border p-1" title="View Account Movement Ledger"><i class="ph ph-list-numbers"></i></button>
-              </td>
-            </tr>
+            @endforeach
           </tbody>
         </table>
       </div>
@@ -152,3 +205,60 @@
   </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const typeSelect = document.getElementById('glTypeSelect');
+  const periodSelect = document.getElementById('glPeriodSelect');
+  const searchInput = document.getElementById('glSearchInput');
+  const searchIcon = document.getElementById('glSearchIcon');
+
+  function filterGLBooks() {
+    const typeVal = typeSelect ? typeSelect.value.toLowerCase() : '';
+    const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const rows = document.querySelectorAll('.gl-row');
+    let visibleCount = 0;
+
+    rows.forEach(function(row) {
+      const rowType = row.getAttribute('data-type') || '';
+      const rowText = row.textContent.toLowerCase();
+
+      const matchType = !typeVal || rowType === typeVal;
+      const matchSearch = !searchQuery || rowText.includes(searchQuery);
+
+      if (matchType && matchSearch) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    let emptyRow = document.getElementById('noGLBooksRow');
+    const tbody = document.querySelector('#glBooksTable tbody');
+    if (visibleCount === 0) {
+      if (!emptyRow && tbody) {
+        emptyRow = document.createElement('tr');
+        emptyRow.id = 'noGLBooksRow';
+        emptyRow.innerHTML = `<td colspan="8" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No ledger accounts found matching the current filter.</td>`;
+        tbody.appendChild(emptyRow);
+      }
+      if (emptyRow) emptyRow.style.display = '';
+    } else if (emptyRow) {
+      emptyRow.style.display = 'none';
+    }
+  }
+
+  if (typeSelect) typeSelect.addEventListener('change', filterGLBooks);
+  if (periodSelect) periodSelect.addEventListener('change', filterGLBooks);
+  if (searchInput) {
+    searchInput.addEventListener('input', filterGLBooks);
+    searchInput.addEventListener('keyup', filterGLBooks);
+  }
+  if (searchIcon) searchIcon.addEventListener('click', filterGLBooks);
+
+  filterGLBooks();
+});
+</script>
+@endpush

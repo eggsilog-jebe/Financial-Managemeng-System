@@ -17,7 +17,6 @@
         </ol>
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Statement of Trial Balance</h1>
-      <p class="text-muted small mb-0">Verification audit of equal debit and credit balances across all active general ledger accounts.</p>
     </div>
     <div class="d-flex gap-2">
       <button class="btn btn-outline-secondary btn-sm" type="button" onclick="window.print()"><i class="ph ph-printer me-1"></i> Print Statement</button>
@@ -33,8 +32,7 @@
           <span class="text-muted small fw-medium">Total Debit Balance</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-arrow-up-right fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-success">₱54,110,200.00</h4>
-        <span class="fs-xs text-muted">Sum of all active Debit balances</span>
+        <h4 class="fw-bold mb-0 text-success" id="tbTotalDebitCard">₱14,550,000.00</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -43,8 +41,7 @@
           <span class="text-muted small fw-medium">Total Credit Balance</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-arrow-down-left fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-primary">₱54,110,200.00</h4>
-        <span class="fs-xs text-muted">Sum of all active Credit balances</span>
+        <h4 class="fw-bold mb-0 text-primary" id="tbTotalCreditCard">₱14,550,000.00</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -53,8 +50,7 @@
           <span class="text-muted small fw-medium">Balance Discrepancy</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-scales fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
-        <span class="fs-xs text-muted">100% Perfectly Balanced Trial</span>
+        <h4 class="fw-bold mb-0 text-dark" id="tbDiscrepancyCard">₱0.00</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -64,7 +60,6 @@
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-shield-check fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">Passed</h4>
-        <span class="fs-xs text-muted">GAAP Compliant Accounting</span>
       </div>
     </div>
   </div>
@@ -73,19 +68,24 @@
   <div class="card border-0 shadow-sm rounded-3 mb-4">
     <div class="card-body p-3">
       <div class="row g-2 align-items-center">
-        <div class="col-md-4">
-          <label class="form-label small fw-semibold mb-0">Trial Balance Date</label>
-          <input type="date" class="form-control form-control-sm bg-light" value="{{ date('Y-m-d') }}">
+        <div class="col-md-5">
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-light border-end-0" id="tbSearchIcon" style="cursor: pointer;"><i class="ph ph-magnifying-glass text-muted"></i></span>
+            <input type="text" id="tbSearchInput" class="form-control bg-light border-start-0" placeholder="Search account code, title, or category...">
+          </div>
         </div>
         <div class="col-md-4">
-          <label class="form-label small fw-semibold mb-0">Display Option</label>
-          <select class="form-select form-select-sm bg-light">
-            <option value="non_zero">Hide Zero Balance Accounts</option>
-            <option value="all">Show All Accounts</option>
+          <select id="tbCategorySelect" class="form-select form-select-sm bg-light">
+            <option value="">All Categories</option>
+            <option value="asset">Assets</option>
+            <option value="liability">Liabilities</option>
+            <option value="equity">Equity</option>
+            <option value="revenue">Revenue</option>
+            <option value="expense">Expenses</option>
           </select>
         </div>
-        <div class="col-md-4 text-end pt-3">
-          <button class="btn btn-sm btn-primary"><i class="ph ph-arrow-clockwise me-1"></i> Update Trial Balance</button>
+        <div class="col-md-3">
+          <input type="date" id="tbDateInput" class="form-control form-control-sm bg-light" value="{{ date('Y-m-d') }}">
         </div>
       </div>
     </div>
@@ -95,7 +95,7 @@
   <div class="card border-0 shadow-sm rounded-3">
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+        <table id="trialBalanceTable" class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
               <th>Account Code</th>
@@ -106,40 +106,107 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td><span class="font-monospace text-primary fw-bold">1010</span></td>
-              <td><div class="fw-bold text-dark">Metrobank Operating Cash</div></td>
-              <td><span class="badge bg-success-subtle text-success">Asset</span></td>
-              <td class="text-end text-success fw-bold font-monospace">₱4,850,000.00</td>
-              <td class="text-end font-monospace text-muted">-</td>
+            @php
+              $tbAccounts = [
+                [
+                  'code' => '1010',
+                  'title' => 'Metrobank Operating Cash Account',
+                  'category' => 'Asset',
+                  'category_key' => 'asset',
+                  'debit' => '₱4,850,000.00',
+                  'credit' => '-',
+                  'badge' => 'bg-success-subtle text-success'
+                ],
+                [
+                  'code' => '1200',
+                  'title' => 'Accounts Receivable (Patients & HMOs)',
+                  'category' => 'Asset',
+                  'category_key' => 'asset',
+                  'debit' => '₱3,070,200.00',
+                  'credit' => '-',
+                  'badge' => 'bg-success-subtle text-success'
+                ],
+                [
+                  'code' => '1300',
+                  'title' => 'Pharmacy Stock & Medicine Inventory',
+                  'category' => 'Asset',
+                  'category_key' => 'asset',
+                  'debit' => '₱980,000.00',
+                  'credit' => '-',
+                  'badge' => 'bg-success-subtle text-success'
+                ],
+                [
+                  'code' => '2010',
+                  'title' => 'Accounts Payable (Medical Suppliers & Vendors)',
+                  'category' => 'Liability',
+                  'category_key' => 'liability',
+                  'debit' => '-',
+                  'credit' => '₱2,100,000.00',
+                  'badge' => 'bg-danger-subtle text-danger'
+                ],
+                [
+                  'code' => '2030',
+                  'title' => 'Accrued Staff Payroll Liability',
+                  'category' => 'Liability',
+                  'category_key' => 'liability',
+                  'debit' => '-',
+                  'credit' => '₱880,000.00',
+                  'badge' => 'bg-danger-subtle text-danger'
+                ],
+                [
+                  'code' => '3010',
+                  'title' => 'Hospital Capital Reserve & Retained Earnings',
+                  'category' => 'Equity',
+                  'category_key' => 'equity',
+                  'debit' => '-',
+                  'credit' => '₱6,330,000.00',
+                  'badge' => 'bg-primary-subtle text-primary'
+                ],
+                [
+                  'code' => '4010',
+                  'title' => 'Inpatient & Emergency Care Service Revenue',
+                  'category' => 'Revenue',
+                  'category_key' => 'revenue',
+                  'debit' => '-',
+                  'credit' => '₱5,240,000.00',
+                  'badge' => 'bg-info-subtle text-info'
+                ],
+                [
+                  'code' => '5010',
+                  'title' => 'Medical & Surgical Supplies Operating Expense',
+                  'category' => 'Expense',
+                  'category_key' => 'expense',
+                  'debit' => '₱3,180,000.00',
+                  'credit' => '-',
+                  'badge' => 'bg-warning-subtle text-warning'
+                ],
+                [
+                  'code' => '5020',
+                  'title' => 'Hospital Facility Utility & Power Operating Expense',
+                  'category' => 'Expense',
+                  'category_key' => 'expense',
+                  'debit' => '₱2,469,800.00',
+                  'credit' => '-',
+                  'badge' => 'bg-warning-subtle text-warning'
+                ],
+              ];
+            @endphp
+
+            @foreach($tbAccounts as $acc)
+            <tr class="tb-row" data-category="{{ $acc['category_key'] }}">
+              <td><span class="font-monospace text-primary fw-bold">{{ $acc['code'] }}</span></td>
+              <td><div class="fw-bold text-dark">{{ $acc['title'] }}</div></td>
+              <td><span class="badge {{ $acc['badge'] }}">{{ $acc['category'] }}</span></td>
+              <td class="text-end @if($acc['debit'] !== '-') text-success fw-bold @else text-muted @endif font-monospace">{{ $acc['debit'] }}</td>
+              <td class="text-end @if($acc['credit'] !== '-') text-danger fw-bold @else text-muted @endif font-monospace">{{ $acc['credit'] }}</td>
             </tr>
-            <tr>
-              <td><span class="font-monospace text-primary fw-bold">1200</span></td>
-              <td><div class="fw-bold text-dark">Accounts Receivable (AR)</div></td>
-              <td><span class="badge bg-success-subtle text-success">Asset</span></td>
-              <td class="text-end text-success fw-bold font-monospace">₱3,070,200.00</td>
-              <td class="text-end font-monospace text-muted">-</td>
-            </tr>
-            <tr>
-              <td><span class="font-monospace text-primary fw-bold">2100</span></td>
-              <td><div class="fw-bold text-dark">Accounts Payable (AP)</div></td>
-              <td><span class="badge bg-danger-subtle text-danger">Liability</span></td>
-              <td class="text-end font-monospace text-muted">-</td>
-              <td class="text-end text-danger fw-bold font-monospace">₱910,500.00</td>
-            </tr>
-            <tr>
-              <td><span class="font-monospace text-primary fw-bold">3000</span></td>
-              <td><div class="fw-bold text-dark">Hospital Retained Earnings</div></td>
-              <td><span class="badge bg-primary-subtle text-primary">Equity</span></td>
-              <td class="text-end font-monospace text-muted">-</td>
-              <td class="text-end text-primary fw-bold font-monospace">₱53,199,700.00</td>
-            </tr>
+            @endforeach
           </tbody>
           <tfoot class="table-dark font-monospace fw-bold">
             <tr>
               <td colspan="3" class="text-end fs-6">TOTAL TRIAL BALANCE:</td>
-              <td class="text-end text-success fs-6">₱54,110,200.00</td>
-              <td class="text-end text-info fs-6">₱54,110,200.00</td>
+              <td class="text-end text-success fs-6" id="footDebitTotal">₱14,550,000.00</td>
+              <td class="text-end text-info fs-6" id="footCreditTotal">₱14,550,000.00</td>
             </tr>
           </tfoot>
         </table>
@@ -148,3 +215,58 @@
   </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('tbSearchInput');
+  const searchIcon = document.getElementById('tbSearchIcon');
+  const categorySelect = document.getElementById('tbCategorySelect');
+
+  function filterTrialBalance() {
+    const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const selectedCategory = categorySelect ? categorySelect.value.toLowerCase() : '';
+    const rows = document.querySelectorAll('.tb-row');
+    let visibleCount = 0;
+
+    rows.forEach(function(row) {
+      const rowCategory = row.getAttribute('data-category') || '';
+      const rowText = row.textContent.toLowerCase();
+
+      const matchCategory = !selectedCategory || rowCategory === selectedCategory;
+      const matchSearch = !searchQuery || rowText.includes(searchQuery);
+
+      if (matchCategory && matchSearch) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    let emptyRow = document.getElementById('noTBRow');
+    const tbody = document.querySelector('#trialBalanceTable tbody');
+    if (visibleCount === 0) {
+      if (!emptyRow && tbody) {
+        emptyRow = document.createElement('tr');
+        emptyRow.id = 'noTBRow';
+        emptyRow.innerHTML = `<td colspan="5" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No accounts found matching the current filter.</td>`;
+        tbody.appendChild(emptyRow);
+      }
+      if (emptyRow) emptyRow.style.display = '';
+    } else if (emptyRow) {
+      emptyRow.style.display = 'none';
+    }
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', filterTrialBalance);
+    searchInput.addEventListener('keyup', filterTrialBalance);
+  }
+  if (searchIcon) searchIcon.addEventListener('click', filterTrialBalance);
+  if (categorySelect) categorySelect.addEventListener('change', filterTrialBalance);
+
+  filterTrialBalance();
+});
+</script>
+@endpush

@@ -17,11 +17,10 @@
         </ol>
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Statement of Account (SOA) Generator</h1>
-      <p class="text-muted small mb-0">Compiled monthly Statements of Account generated for corporate HMO guarantors, corporate sponsors, and private patients.</p>
     </div>
     <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm" type="button"><i class="ph ph-envelope me-1"></i> Email All Statements</button>
-      <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#generateStatementModal"><i class="ph ph-plus-circle me-1"></i> Generate Statement</button>
+      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Sending email billing reminders...');"><i class="ph ph-envelope me-1"></i> Email All Statements</button>
+      <button id="btnGenerateStatement" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#generateStatementModal"><i class="ph ph-plus-circle me-1"></i> Generate Statement</button>
     </div>
   </div>
 
@@ -34,7 +33,6 @@
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-files fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">18 Statements</h4>
-        <span class="fs-xs text-muted">Monthly Payor Billing Packs</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -43,8 +41,7 @@
           <span class="text-muted small fw-medium">Total Outstanding AR</span>
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-currency-circle-dollar fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-danger">₱3,070,200.00</h4>
-        <span class="fs-xs text-muted">Uncollected Patient &amp; HMO Pool</span>
+        <h4 class="fw-bold mb-0 text-danger">₱3,005,300.00</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -54,7 +51,6 @@
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-buildings fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">5 HMO Companies</h4>
-        <span class="fs-xs text-muted">Maxicare, Intellicare, Medicard, Philam, Insular</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -64,7 +60,6 @@
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">28 Days</h4>
-        <span class="fs-xs text-muted">Within Standard 45-Day Collection Terms</span>
       </div>
     </div>
   </div>
@@ -73,28 +68,26 @@
   <div class="card border-0 shadow-sm rounded-3 mb-4">
     <div class="card-body p-3">
       <div class="row g-2 align-items-center">
-        <div class="col-md-4">
+        <div class="col-md-5">
           <div class="input-group input-group-sm">
             <span class="input-group-text bg-light border-end-0"><i class="ph ph-magnifying-glass text-muted"></i></span>
-            <input type="text" class="form-control bg-light border-start-0" placeholder="Search Payor Name, SOA Ref, or TIN...">
+            <input type="text" id="soaSearchInput" class="form-control bg-light border-start-0" placeholder="Search Payor Name, SOA Ref, or Contract Ref...">
           </div>
         </div>
         <div class="col-md-3">
-          <select class="form-select form-select-sm bg-light">
-            <option value="">All Account Types</option>
-            <option value="hmo">HMO Guarantor</option>
+          <select id="soaTypeSelect" class="form-select form-select-sm bg-light">
+            <option value="" selected>All Account Types</option>
+            <option value="hmo">HMO Corporate</option>
+            <option value="government">Government Guarantor</option>
             <option value="patient">Private Patient</option>
           </select>
         </div>
-        <div class="col-md-3">
-          <select class="form-select form-select-sm bg-light">
-            <option value="">All Statement Periods</option>
-            <option value="jul_2026">July 2026 Statement</option>
-            <option value="jun_2026">June 2026 Statement</option>
+        <div class="col-md-4">
+          <select id="soaStatusSelect" class="form-select form-select-sm bg-light">
+            <option value="" selected>All Statuses</option>
+            <option value="sent">Sent - Awaiting Payment</option>
+            <option value="paid">Paid &amp; Settled</option>
           </select>
-        </div>
-        <div class="col-md-2 text-end">
-          <button class="btn btn-sm btn-light border w-100"><i class="ph ph-funnel me-1"></i> Filter</button>
         </div>
       </div>
     </div>
@@ -104,7 +97,7 @@
   <div class="card border-0 shadow-sm rounded-3">
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+        <table id="soaTable" class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
               <th>Statement Ref</th>
@@ -117,23 +110,156 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td><span class="font-monospace text-primary fw-bold">SOA-2026-0701</span></td>
+            @php
+              $statements = [
+                [
+                  'ref' => 'SOA-2026-0701',
+                  'payor' => 'Maxicare Healthcare Corp',
+                  'sub' => 'Contract Ref: HMO-MAX-2026',
+                  'type' => 'HMO Corporate',
+                  'type_code' => 'hmo',
+                  'badge' => 'bg-info-subtle text-info',
+                  'date' => '2026-08-01',
+                  'balance' => '₱1,220,000.00',
+                  'status' => 'Sent - Awaiting Payment',
+                  'status_code' => 'sent',
+                  'status_badge' => 'bg-warning-subtle text-warning',
+                  'status_icon' => 'ph-clock',
+                  'period' => 'July 2026 Billing Pack'
+                ],
+                [
+                  'ref' => 'SOA-2026-0702',
+                  'payor' => 'Intellicare / Asuris Healthcare',
+                  'sub' => 'Contract Ref: HMO-INT-2026',
+                  'type' => 'HMO Corporate',
+                  'type_code' => 'hmo',
+                  'badge' => 'bg-info-subtle text-info',
+                  'date' => '2026-08-01',
+                  'balance' => '₱650,500.00',
+                  'status' => 'Sent - Awaiting Payment',
+                  'status_code' => 'sent',
+                  'status_badge' => 'bg-warning-subtle text-warning',
+                  'status_icon' => 'ph-clock',
+                  'period' => 'July 2026 Billing Pack'
+                ],
+                [
+                  'ref' => 'SOA-2026-0703',
+                  'payor' => 'PhilHealth Insurance Corp',
+                  'sub' => 'National Statutory Benefit Pool Batch',
+                  'type' => 'Government Guarantor',
+                  'type_code' => 'government',
+                  'badge' => 'bg-success-subtle text-success',
+                  'date' => '2026-08-01',
+                  'balance' => '₱820,000.00',
+                  'status' => 'Sent - Awaiting Payment',
+                  'status_code' => 'sent',
+                  'status_badge' => 'bg-warning-subtle text-warning',
+                  'status_icon' => 'ph-clock',
+                  'period' => 'July 2026 Billing Pack'
+                ],
+                [
+                  'ref' => 'SOA-2026-0704',
+                  'payor' => 'Medicard Philippines Inc',
+                  'sub' => 'Corporate Fleet Billing Account',
+                  'type' => 'HMO Corporate',
+                  'type_code' => 'hmo',
+                  'badge' => 'bg-info-subtle text-info',
+                  'date' => '2026-08-01',
+                  'balance' => '₱314,800.00',
+                  'status' => 'Paid & Settled',
+                  'status_code' => 'paid',
+                  'status_badge' => 'bg-success-subtle text-success',
+                  'status_icon' => 'ph-check-circle',
+                  'period' => 'July 2026 Billing Pack'
+                ],
+              ];
+            @endphp
+
+            @foreach($statements as $s)
+            <tr class="soa-row" style="cursor: pointer;" data-type="{{ $s['type_code'] }}" data-status="{{ $s['status_code'] }}" onclick="openSoaDetailsModal({{ json_encode($s) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $s['ref'] }}</span></td>
               <td>
-                <div class="fw-bold text-dark">Maxicare Healthcare Corp</div>
-                <span class="fs-xs text-muted">Contract Ref: HMO-MAX-2026</span>
+                <div class="fw-bold text-dark">{{ $s['payor'] }}</div>
+                <span class="fs-xs text-muted">{{ $s['sub'] }}</span>
               </td>
-              <td><span class="badge bg-info-subtle text-info">HMO Corporate</span></td>
-              <td>2026-08-01</td>
-              <td class="text-end text-danger fw-bold font-monospace">₱1,220,000.00</td>
-              <td><span class="badge bg-warning-subtle text-warning"><i class="ph ph-clock me-1"></i> Sent - Awaiting Payment</span></td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-light border p-1" title="Download Official SOA PDF"><i class="ph ph-file-pdf"></i></button>
-                <button class="btn btn-sm btn-light border p-1" title="Send Email Reminder"><i class="ph ph-paper-plane-tilt"></i></button>
+              <td><span class="badge {{ $s['badge'] }}">{{ $s['type'] }}</span></td>
+              <td class="font-monospace fs-xs">{{ $s['date'] }}</td>
+              <td class="text-end text-danger fw-bold font-monospace">{{ $s['balance'] }}</td>
+              <td><span class="badge {{ $s['status_badge'] }}"><i class="ph {{ $s['status_icon'] }} me-1"></i> {{ $s['status'] }}</span></td>
+              <td class="text-end" onclick="event.stopPropagation();">
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View SOA Details" onclick="openSoaDetailsModal({{ json_encode($s) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
+            @endforeach
           </tbody>
         </table>
+      </div>
+    </div>
+    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
+      <span class="text-muted fs-xs" id="soaSummaryText">Showing {{ count($statements) }} Statements</span>
+      <nav aria-label="SOAs Pagination">
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
+          <li class="page-item active"><a class="page-link" href="#">1</a></li>
+          <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: In-Depth SOA Details (Executive Design) -->
+<div class="modal fade" id="soaDetailsModal" tabindex="-1" aria-labelledby="soaDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header bg-white border-bottom p-4 pb-3">
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1" id="detailSoaRef">SOA-2026-0701</span>
+            <span class="badge bg-info-subtle text-info" id="detailSoaType">HMO Corporate</span>
+            <span class="badge bg-warning-subtle text-warning" id="detailSoaStatus"><i class="ph ph-clock me-1"></i> Sent - Awaiting Payment</span>
+          </div>
+          <h4 class="modal-title fw-bold text-dark mb-0" id="detailSoaPayor">Maxicare Healthcare Corp</h4>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-4 bg-light-subtle">
+        <!-- Key Amounts Grid -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <div class="bg-white border rounded-3 p-3 text-center">
+              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Total Unpaid Statement Balance</span>
+              <h4 class="fw-bold text-danger mb-0 font-monospace" id="detailSoaBalance">₱1,220,000.00</h4>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="bg-white border rounded-3 p-3 text-center">
+              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Statement Issue Date</span>
+              <h4 class="fw-bold text-primary mb-0 font-monospace" id="detailSoaDate">2026-08-01</h4>
+            </div>
+          </div>
+        </div>
+
+        <!-- Master Info -->
+        <div class="bg-white border rounded-3 p-3 mb-4">
+          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-info me-1 text-primary"></i> Statement Master Details</h6>
+          <div class="d-flex flex-column gap-2 fs-xs">
+            <div class="d-flex justify-content-between border-bottom pb-2">
+              <span class="text-muted">Contract Reference</span>
+              <span class="font-monospace fw-bold text-dark" id="detailSoaSub">Contract Ref: HMO-MAX-2026</span>
+            </div>
+            <div class="d-flex justify-content-between pt-1">
+              <span class="text-muted">Billing Cycle Period</span>
+              <span class="fw-medium text-dark" id="detailSoaPeriod">July 2026 Billing Pack</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer bg-white border-top p-3">
+        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-sm btn-primary" onclick="alert('Downloading SOA PDF...');"><i class="ph ph-file-pdf me-1"></i> Download Official SOA PDF</button>
       </div>
     </div>
   </div>
@@ -148,22 +274,31 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body p-4">
-        <form onsubmit="event.preventDefault(); alert('Statement of Account generated!'); bootstrap.Modal.getInstance(document.getElementById('generateStatementModal')).hide();">
+        <form id="generateStatementForm">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Statement Reference <span class="text-danger">*</span></label>
+            <input type="text" id="modalSoaRef" class="form-control form-control-sm font-monospace" placeholder="e.g. SOA-2026-0705" required>
+          </div>
           <div class="mb-3">
             <label class="form-label small fw-semibold">Select Payor / HMO Corporate Account <span class="text-danger">*</span></label>
-            <select class="form-select form-select-sm" required>
-              <option value="maxicare">Maxicare Healthcare Corp</option>
-              <option value="intellicare">Intellicare / Asuris</option>
-              <option value="medicard">Medicard Philippines</option>
+            <select id="modalSoaPayor" class="form-select form-select-sm" required>
+              <option value="Maxicare Healthcare Corp">Maxicare Healthcare Corp</option>
+              <option value="Intellicare / Asuris Healthcare">Intellicare / Asuris Healthcare</option>
+              <option value="Medicard Philippines Inc">Medicard Philippines Inc</option>
+              <option value="PhilHealth Insurance Corp">PhilHealth Insurance Corp</option>
             </select>
           </div>
           <div class="mb-3">
-            <label class="form-label small fw-semibold">Statement Period <span class="text-danger">*</span></label>
-            <input type="month" class="form-control form-control-sm" value="2026-07" required>
+            <label class="form-label small fw-semibold">Statement Issue Date <span class="text-danger">*</span></label>
+            <input type="date" id="modalSoaDate" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Unpaid Statement Balance (₱) <span class="text-danger">*</span></label>
+            <input type="number" id="modalSoaBalance" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace" placeholder="0.00" value="100000.00" required>
           </div>
           <div class="d-flex justify-content-end gap-2 mt-4">
             <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-file-pdf me-1"></i> Generate SOA PDF</button>
+            <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-file-pdf me-1"></i> Generate SOA</button>
           </div>
         </form>
       </div>
@@ -171,3 +306,182 @@
   </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function openSoaDetailsModal(s) {
+  if (!s) return;
+
+  document.getElementById('detailSoaRef').textContent = s.ref || 'SOA-000';
+  document.getElementById('detailSoaPayor').textContent = s.payor || 'Payor Name';
+  document.getElementById('detailSoaType').textContent = s.type || 'Account Type';
+  document.getElementById('detailSoaBalance').textContent = s.balance || '₱0.00';
+  document.getElementById('detailSoaDate').textContent = s.date || '-';
+  document.getElementById('detailSoaSub').textContent = s.sub || '-';
+  document.getElementById('detailSoaPeriod').textContent = s.period || 'Billing Pack';
+
+  const statusEl = document.getElementById('detailSoaStatus');
+  if (statusEl) {
+    statusEl.textContent = s.status;
+    statusEl.className = 'badge ' + (s.status_badge || 'bg-warning-subtle text-warning');
+  }
+
+  const modalEl = document.getElementById('soaDetailsModal');
+  if (modalEl && window.bootstrap) {
+    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modalInstance.show();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('soaSearchInput');
+  const typeSelect = document.getElementById('soaTypeSelect');
+  const statusSelect = document.getElementById('soaStatusSelect');
+  const summaryText = document.getElementById('soaSummaryText');
+  const btnGenerateStatement = document.getElementById('btnGenerateStatement');
+
+  if (btnGenerateStatement) {
+    btnGenerateStatement.addEventListener('click', function() {
+      const modalEl = document.getElementById('generateStatementModal');
+      if (modalEl && window.bootstrap) {
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modalInstance.show();
+      }
+    });
+  }
+
+  function filterStatements() {
+    const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const selectedType = typeSelect ? typeSelect.value.toLowerCase() : '';
+    const selectedStatus = statusSelect ? statusSelect.value.toLowerCase() : '';
+    const rows = document.querySelectorAll('.soa-row');
+    let visibleCount = 0;
+
+    rows.forEach(function(row) {
+      const rowType = row.getAttribute('data-type') || '';
+      const rowStatus = row.getAttribute('data-status') || '';
+      const rowText = row.textContent.toLowerCase();
+
+      const matchType = !selectedType || rowType.includes(selectedType);
+      const matchStatus = !selectedStatus || rowStatus.includes(selectedStatus);
+      const matchSearch = !searchQuery || rowText.includes(searchQuery);
+
+      if (matchType && matchStatus && matchSearch) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    if (summaryText) {
+      summaryText.textContent = `Showing ${visibleCount} Statement${visibleCount !== 1 ? 's' : ''}`;
+    }
+
+    let emptyRow = document.getElementById('noSoaRow');
+    const tbody = document.querySelector('#soaTable tbody');
+    if (visibleCount === 0) {
+      if (!emptyRow && tbody) {
+        emptyRow = document.createElement('tr');
+        emptyRow.id = 'noSoaRow';
+        emptyRow.innerHTML = `<td colspan="7" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No statement of accounts found matching the current filter.</td>`;
+        tbody.appendChild(emptyRow);
+      }
+      if (emptyRow) emptyRow.style.display = '';
+    } else if (emptyRow) {
+      emptyRow.style.display = 'none';
+    }
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', filterStatements);
+    searchInput.addEventListener('keyup', filterStatements);
+  }
+  if (typeSelect) typeSelect.addEventListener('change', filterStatements);
+  if (statusSelect) statusSelect.addEventListener('change', filterStatements);
+
+  const generateStatementForm = document.getElementById('generateStatementForm');
+  if (generateStatementForm) {
+    generateStatementForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const refVal = document.getElementById('modalSoaRef').value;
+      const payorVal = document.getElementById('modalSoaPayor').value;
+      const dateVal = document.getElementById('modalSoaDate').value;
+      const rawBalance = parseFloat(document.getElementById('modalSoaBalance').value || 0);
+      const formattedBalance = '₱' + rawBalance.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      let typeCode = 'hmo';
+      let typeLabel = 'HMO Corporate';
+      let badgeStyle = 'bg-info-subtle text-info';
+      if (payorVal.includes('PhilHealth')) {
+        typeCode = 'government';
+        typeLabel = 'Government Guarantor';
+        badgeStyle = 'bg-success-subtle text-success';
+      }
+
+      const soaObj = {
+        ref: refVal,
+        payor: payorVal,
+        sub: 'Contract Ref: HMO-GEN-2026',
+        type: typeLabel,
+        type_code: typeCode,
+        badge: badgeStyle,
+        date: dateVal,
+        balance: formattedBalance,
+        status: 'Sent - Awaiting Payment',
+        status_code: 'sent',
+        status_badge: 'bg-warning-subtle text-warning',
+        status_icon: 'ph-clock',
+        period: 'Newly Generated Billing Pack'
+      };
+
+      const tbody = document.querySelector('#soaTable tbody');
+      if (tbody) {
+        const newRow = document.createElement('tr');
+        newRow.className = 'soa-row';
+        newRow.style.cursor = 'pointer';
+        newRow.setAttribute('data-type', typeCode);
+        newRow.setAttribute('data-status', 'sent');
+
+        newRow.onclick = function() { openSoaDetailsModal(soaObj); };
+
+        newRow.innerHTML = `
+          <td><span class="font-monospace text-primary fw-bold">${refVal}</span></td>
+          <td>
+            <div class="fw-bold text-dark">${payorVal}</div>
+            <span class="fs-xs text-muted">Contract Ref: HMO-GEN-2026</span>
+          </td>
+          <td><span class="badge ${badgeStyle}">${typeLabel}</span></td>
+          <td class="font-monospace fs-xs">${dateVal}</td>
+          <td class="text-end text-danger fw-bold font-monospace">${formattedBalance}</td>
+          <td><span class="badge bg-warning-subtle text-warning"><i class="ph ph-clock me-1"></i> Sent - Awaiting Payment</span></td>
+          <td class="text-end" onclick="event.stopPropagation();">
+            <button class="btn btn-sm btn-icon btn-outline-secondary" title="View SOA Details"><i class="ph ph-eye"></i></button>
+          </td>
+        `;
+
+        const eyeBtn = newRow.querySelector('button[title="View SOA Details"]');
+        if (eyeBtn) {
+          eyeBtn.onclick = function(e) {
+            e.stopPropagation();
+            openSoaDetailsModal(soaObj);
+          };
+        }
+
+        tbody.insertBefore(newRow, tbody.firstChild);
+      }
+
+      const modalEl = document.getElementById('generateStatementModal');
+      const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+      if (modalInstance) modalInstance.hide();
+
+      generateStatementForm.reset();
+      filterStatements();
+    });
+  }
+
+  filterStatements();
+});
+</script>
+@endpush

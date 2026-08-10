@@ -17,7 +17,6 @@
         </ol>
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Treasury Disbursement Approvals</h1>
-      <p class="text-muted small mb-0">High-level treasury and CFO verification workflow ensuring funds are fully authorized before physical check printing or wire execution.</p>
     </div>
     <div class="d-flex gap-2">
       <button class="btn btn-outline-secondary btn-sm" type="button" onclick="location.reload()"><i class="ph ph-arrow-clockwise me-1"></i> Refresh Queue</button>
@@ -33,7 +32,6 @@
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-receipt fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱98,400.00</h4>
-        <span class="fs-xs text-muted">1 Physical Check Pending Sign-off</span>
       </div>
     </div>
     <div class="col-md-4">
@@ -43,7 +41,6 @@
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-bank fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱410,000.00</h4>
-        <span class="fs-xs text-muted">1 Payroll Batch Awaiting CFO Wire Release</span>
       </div>
     </div>
     <div class="col-md-4">
@@ -53,7 +50,6 @@
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱168,000.00</h4>
-        <span class="fs-xs text-success"><i class="ph ph-check-circle me-1"></i> Funds Authorized</span>
       </div>
     </div>
   </div>
@@ -61,7 +57,20 @@
   <!-- Approvals Queue Table -->
   <div class="card border-0 shadow-sm rounded-3">
     <div class="card-header bg-transparent border-bottom p-3">
-      <h6 class="fw-bold mb-0">Treasury Fund Release Queue</h6>
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div class="d-flex align-items-center gap-2">
+          <label for="disbLevelSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Level:</label>
+          <select id="disbLevelSelect" class="form-select form-select-sm bg-light" style="min-width: 220px;">
+            <option value="" selected>All Authorization Levels</option>
+            <option value="cfo">CFO Authorization Needed</option>
+            <option value="controller">Controller Sign-off</option>
+          </select>
+        </div>
+        <div class="search-box" style="width: 260px;">
+          <i class="ph ph-magnifying-glass"></i>
+          <input type="search" id="disbSearchInput" class="form-control form-control-sm" placeholder="Search payee name or ref...">
+        </div>
+      </div>
     </div>
     <div class="card-body p-0">
       <div class="table-responsive">
@@ -79,7 +88,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr id="row-DISB-APP-201">
+            <tr id="row-DISB-APP-201" class="disb-row" data-level="cfo">
               <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">DISB-APP-201</span></td>
               <td class="fw-semibold text-dark">Medical Staff Payroll Direct Batch</td>
               <td><span class="badge bg-info-subtle text-info">EFT Direct Deposit</span></td>
@@ -89,12 +98,12 @@
               <td class="status-cell"><span class="badge bg-warning-subtle text-warning"><i class="ph ph-clock me-1"></i> Pending Release</span></td>
               <td class="text-end action-cell">
                 <div class="d-inline-flex align-items-center justify-content-end gap-2">
-                  <button class="btn btn-success" type="button" onclick="openDisbAuthorizeModal('DISB-APP-201', 'Medical Staff Payroll Direct Batch', '₱410,000.00', 'EFT Direct Deposit')"><i class="ph ph-check"></i> Release Wire</button>
-                  <button class="btn btn-outline-danger" type="button" onclick="openDisbRejectModal('DISB-APP-201', 'Medical Staff Payroll Direct Batch', '₱410,000.00')"><i class="ph ph-x"></i> Reject</button>
+                  <button class="btn btn-success" type="button" onclick="openDisbAuthorizeModal('DISB-APP-201', 'Medical Staff Payroll Direct Batch', '₱410,000.00', 'EFT Direct Deposit')"><i class="ph ph-check me-1"></i> Release Wire</button>
+                  <button class="btn btn-outline-danger" type="button" onclick="openDisbRejectModal('DISB-APP-201', 'Medical Staff Payroll Direct Batch', '₱410,000.00')"><i class="ph ph-x me-1"></i> Reject</button>
                 </div>
               </td>
             </tr>
-            <tr id="row-DISB-APP-202">
+            <tr id="row-DISB-APP-202" class="disb-row" data-level="controller">
               <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">DISB-APP-202</span></td>
               <td class="fw-semibold text-dark">MedTech Diagnostics Inc</td>
               <td><span class="badge bg-primary-subtle text-primary">Physical Crossed Check</span></td>
@@ -104,8 +113,8 @@
               <td class="status-cell"><span class="badge bg-warning-subtle text-warning"><i class="ph ph-clock me-1"></i> Pending Release</span></td>
               <td class="text-end action-cell">
                 <div class="d-inline-flex align-items-center justify-content-end gap-2">
-                  <button class="btn btn-success" type="button" onclick="openDisbAuthorizeModal('DISB-APP-202', 'MedTech Diagnostics Inc', '₱98,400.00', 'Physical Crossed Check')"><i class="ph ph-check"></i> Authorize Check</button>
-                  <button class="btn btn-outline-danger" type="button" onclick="openDisbRejectModal('DISB-APP-202', 'MedTech Diagnostics Inc', '₱98,400.00')"><i class="ph ph-x"></i> Reject</button>
+                  <button class="btn btn-success" type="button" onclick="openDisbAuthorizeModal('DISB-APP-202', 'MedTech Diagnostics Inc', '₱98,400.00', 'Physical Crossed Check')"><i class="ph ph-check me-1"></i> Authorize Check</button>
+                  <button class="btn btn-outline-danger" type="button" onclick="openDisbRejectModal('DISB-APP-202', 'MedTech Diagnostics Inc', '₱98,400.00')"><i class="ph ph-x me-1"></i> Reject</button>
                 </div>
               </td>
             </tr>
@@ -141,6 +150,17 @@
           <label class="form-label small fw-semibold">Treasury Release Key / Authorization PIN</label>
           <input type="password" class="form-control form-control-sm" id="disbAuthPin" placeholder="Enter CFO release key..." value="8841">
         </div>
+
+        <!-- Audit Trail & Transparency Logs -->
+        <div class="bg-light border rounded-3 p-3 mb-3">
+          <h6 class="fw-bold text-dark mb-2 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-success"></i> Audit Trail &amp; Transparency Log</h6>
+          <div class="d-flex flex-column gap-1 fs-xs text-muted">
+            <div><strong class="text-dark">Role Authorized:</strong> Treasury CFO / Controller</div>
+            <div><strong class="text-dark">Audit Log ID:</strong> LOG-DISB-AUTH-2026-901</div>
+            <div><strong class="text-dark">System Timestamp:</strong> {{ date('Y-m-d H:i:s') }} PST</div>
+          </div>
+        </div>
+
         <div class="d-flex justify-content-end gap-2 mt-4">
           <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
           <button type="button" class="btn btn-sm btn-success" onclick="confirmDisbAuthorization()"><i class="ph ph-check me-1"></i> Release Funds</button>
@@ -180,6 +200,16 @@
           <label class="form-label small fw-semibold">Audit Notes</label>
           <textarea class="form-control form-control-sm" id="disbRejectNotes" rows="2" placeholder="State reason for withholding disbursement..."></textarea>
         </div>
+
+        <!-- Audit Trail & Transparency Logs -->
+        <div class="bg-light border rounded-3 p-3 mb-3">
+          <h6 class="fw-bold text-dark mb-2 fs-xs text-uppercase"><i class="ph ph-shield-warning me-1 text-danger"></i> Audit Trail &amp; Rejection Log</h6>
+          <div class="d-flex flex-column gap-1 fs-xs text-muted">
+            <div><strong class="text-dark">Audit Log ID:</strong> LOG-DISB-REJ-2026-902</div>
+            <div><strong class="text-dark">System Timestamp:</strong> {{ date('Y-m-d H:i:s') }} PST</div>
+          </div>
+        </div>
+
         <div class="d-flex justify-content-end gap-2 mt-4">
           <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
           <button type="button" class="btn btn-sm btn-danger" onclick="confirmDisbRejection()"><i class="ph ph-x me-1"></i> Confirm Rejection</button>
@@ -244,6 +274,39 @@
       alert('Disbursement ' + currentDisbTargetId + ' rejected: ' + reason);
     }
   }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const levelSelect = document.getElementById('disbLevelSelect');
+    const searchInput = document.getElementById('disbSearchInput');
+
+    function filterDisbursements() {
+      const selectedLevel = levelSelect ? levelSelect.value.toLowerCase() : '';
+      const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+      const rows = document.querySelectorAll('.disb-row');
+      let visibleCount = 0;
+
+      rows.forEach(function(row) {
+        const rowLevel = row.getAttribute('data-level') || '';
+        const rowText = row.textContent.toLowerCase();
+
+        const matchLevel = !selectedLevel || rowLevel.includes(selectedLevel);
+        const matchSearch = !searchQuery || rowText.includes(searchQuery);
+
+        if (matchLevel && matchSearch) {
+          row.style.display = '';
+          visibleCount++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    if (levelSelect) levelSelect.addEventListener('change', filterDisbursements);
+    if (searchInput) {
+      searchInput.addEventListener('input', filterDisbursements);
+      searchInput.addEventListener('keyup', filterDisbursements);
+    }
+  });
 </script>
 @endpush
 @endsection

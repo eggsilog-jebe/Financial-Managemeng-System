@@ -17,11 +17,10 @@
         </ol>
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Departmental Payment Requisitions</h1>
-      <p class="text-muted small mb-0">Operational fund requisitions submitted by hospital department heads for emergency parts, medical supplies, and service fees.</p>
     </div>
     <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm"><i class="ph ph-download-simple me-1"></i> Export Requests</button>
-      <button class="btn btn-primary btn-sm"><i class="ph ph-plus me-1"></i> Submit Payment Request</button>
+      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Exporting Payment Requisitions...');"><i class="ph ph-download-simple me-1"></i> Export Requests</button>
+      <button id="btnCreateRequest" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#createRequestModal"><i class="ph ph-plus me-1"></i> Submit Payment Request</button>
     </div>
   </div>
 
@@ -31,10 +30,9 @@
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
           <span class="text-muted small">Total Requisitions</span>
-          <span class="badge bg-primary-subtle text-primary"><i class="ph ph-file-text"></i></span>
+          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-file-text fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">12 Requisitions</h4>
-        <span class="fs-xs text-muted">Across 5 Hospital Units</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -44,7 +42,6 @@
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱88,500.00</h4>
-        <span class="fs-xs text-muted">4 Requisitions Awaiting CFO</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -54,7 +51,6 @@
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">100% Encumbered</h4>
-        <span class="fs-xs text-success">Cost Center Funds Reserved</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -64,7 +60,6 @@
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-bank fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱410,000.00</h4>
-        <span class="fs-xs text-muted">Disbursed This Month</span>
       </div>
     </div>
   </div>
@@ -73,21 +68,25 @@
   <div class="card border-0 shadow-sm rounded-3">
     <div class="card-header bg-transparent border-bottom p-3">
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <ul class="nav nav-pills flex-grow-1">
-          <li class="nav-item"><button class="nav-link active btn-sm py-1 px-3 me-1 fw-semibold">All Requisitions (12)</button></li>
-          <li class="nav-item"><button class="nav-link btn-sm py-1 px-3 me-1">Surgery &amp; OR</button></li>
-          <li class="nav-item"><button class="nav-link btn-sm py-1 px-3 me-1">Emergency Room</button></li>
-          <li class="nav-item"><button class="nav-link btn-sm py-1 px-3 me-1">Biomedical Maintenance</button></li>
-        </ul>
+        <!-- Department Origin Filter Dropdown -->
+        <div class="d-flex align-items-center gap-2">
+          <label for="reqDeptSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Department:</label>
+          <select id="reqDeptSelect" class="form-select form-select-sm bg-light" style="min-width: 220px;">
+            <option value="all" selected>All Requisitions</option>
+            <option value="surgery">Surgery &amp; Operating Room</option>
+            <option value="er">Emergency Room (ER)</option>
+            <option value="biomedical">Biomedical Engineering</option>
+          </select>
+        </div>
         <div class="search-box" style="width: 260px;">
           <i class="ph ph-magnifying-glass"></i>
-          <input type="search" class="form-control form-control-sm" placeholder="Search req #, department, payee...">
+          <input type="search" id="reqSearchInput" class="form-control form-control-sm" placeholder="Search req #, department, payee...">
         </div>
       </div>
     </div>
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+        <table id="reqTable" class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
               <th>Req Ref</th>
@@ -101,46 +100,364 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">REQ-2026-114</span></td>
-              <td class="fw-semibold text-dark">Surgery &amp; Operating Room</td>
-              <td>Surgical Supplies &amp; Implants Co.</td>
-              <td>Emergency Sterilizer Maintenance Pack &amp; Autoclave Seals</td>
-              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check"></i> Encumbered (CC-104)</span></td>
-              <td class="text-end fw-bold text-dark">₱18,500.00</td>
-              <td><span class="badge bg-warning-subtle text-warning"><i class="ph ph-clock"></i> Pending CFO Sign-off</span></td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Requisition Document"><i class="ph ph-eye"></i></button>
+            @php
+              $requisitions = [
+                [
+                  'ref' => 'REQ-2026-114',
+                  'dept' => 'Surgery & Operating Room',
+                  'dept_code' => 'surgery',
+                  'payee' => 'Surgical Supplies & Implants Co.',
+                  'purpose' => 'Emergency Sterilizer Maintenance Pack & Autoclave Seals',
+                  'cc' => 'Encumbered (CC-104)',
+                  'amount' => '₱18,500.00',
+                  'status' => 'Pending CFO Sign-off',
+                  'status_badge' => 'bg-warning-subtle text-warning',
+                  'status_icon' => 'ph-clock',
+                  'requested_by' => 'Dr. A. Ramos (Surgery Dept Head)'
+                ],
+                [
+                  'ref' => 'REQ-2026-115',
+                  'dept' => 'Emergency Room (ER)',
+                  'dept_code' => 'er',
+                  'payee' => 'Linde Medical Gases Philippines',
+                  'purpose' => 'Urgent Portable Oxygen Cylinder Refills (20 Units)',
+                  'cc' => 'Encumbered (CC-102)',
+                  'amount' => '₱22,000.00',
+                  'status' => 'Pending Dept Head',
+                  'status_badge' => 'bg-warning-subtle text-warning',
+                  'status_icon' => 'ph-clock',
+                  'requested_by' => 'Nurse Supervisor M. Cruz'
+                ],
+                [
+                  'ref' => 'REQ-2026-116',
+                  'dept' => 'Biomedical Engineering',
+                  'dept_code' => 'biomedical',
+                  'payee' => 'Siemens Healthcare Philippines',
+                  'purpose' => 'CT Scan X-Ray Tube Maintenance Replacement Parts',
+                  'cc' => 'Encumbered (CC-108)',
+                  'amount' => '₱48,000.00',
+                  'status' => 'Approved for EFT',
+                  'status_badge' => 'bg-primary-subtle text-primary',
+                  'status_icon' => 'ph-check-double',
+                  'requested_by' => 'Engr. R. Santos (Lead BioMed)'
+                ],
+              ];
+            @endphp
+
+            @foreach($requisitions as $r)
+            <tr class="req-row" style="cursor: pointer;" data-dept="{{ $r['dept_code'] }}" onclick="openRequestDetailsModal({{ json_encode($r) }})">
+              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">{{ $r['ref'] }}</span></td>
+              <td class="fw-semibold text-dark">{{ $r['dept'] }}</td>
+              <td>{{ $r['payee'] }}</td>
+              <td><span class="text-truncate d-inline-block" style="max-width: 250px;">{{ $r['purpose'] }}</span></td>
+              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> {{ $r['cc'] }}</span></td>
+              <td class="text-end fw-bold text-dark font-monospace">{{ $r['amount'] }}</td>
+              <td><span class="badge {{ $r['status_badge'] }}"><i class="ph {{ $r['status_icon'] }} me-1"></i> {{ $r['status'] }}</span></td>
+              <td class="text-end" onclick="event.stopPropagation();">
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Requisition Document" onclick="openRequestDetailsModal({{ json_encode($r) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            <tr>
-              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">REQ-2026-115</span></td>
-              <td class="fw-semibold text-dark">Emergency Room (ER)</td>
-              <td>Linde Medical Gases Philippines</td>
-              <td>Urgent Portable Oxygen Cylinder Refills (20 Units)</td>
-              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check"></i> Encumbered (CC-102)</span></td>
-              <td class="text-end fw-bold text-dark">₱22,000.00</td>
-              <td><span class="badge bg-warning-subtle text-warning"><i class="ph ph-clock"></i> Pending Dept Head</span></td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Requisition Document"><i class="ph ph-eye"></i></button>
-              </td>
-            </tr>
-            <tr>
-              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">REQ-2026-116</span></td>
-              <td class="fw-semibold text-dark">Biomedical Engineering</td>
-              <td>Siemens Healthcare Philippines</td>
-              <td>CT Scan X-Ray Tube Maintenance Replacement Parts</td>
-              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check"></i> Encumbered (CC-108)</span></td>
-              <td class="text-end fw-bold text-dark">₱48,000.00</td>
-              <td><span class="badge bg-primary-subtle text-primary"><i class="ph ph-check-double"></i> Approved for EFT</span></td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Requisition Document"><i class="ph ph-eye"></i></button>
-              </td>
-            </tr>
+            @endforeach
           </tbody>
         </table>
+      </div>
+    </div>
+    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
+      <span class="text-muted fs-xs" id="reqSummaryText">Showing {{ count($requisitions) }} Requisitions</span>
+      <nav aria-label="Requisitions Pagination">
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
+          <li class="page-item active"><a class="page-link" href="#">1</a></li>
+          <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: In-Depth Payment Requisition Details (Executive Design) -->
+<div class="modal fade" id="requestDetailsModal" tabindex="-1" aria-labelledby="requestDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header bg-white border-bottom p-4 pb-3">
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1" id="detailReqRef">REQ-2026-114</span>
+            <span class="badge bg-warning-subtle text-warning" id="detailReqStatus"><i class="ph ph-clock me-1"></i> Pending CFO Sign-off</span>
+          </div>
+          <h4 class="modal-title fw-bold text-dark mb-0" id="detailReqDept">Surgery &amp; Operating Room</h4>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-4 bg-light-subtle">
+        <!-- Key Amounts Grid -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <div class="bg-white border rounded-3 p-3 text-center">
+              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Requested Fund Amount</span>
+              <h4 class="fw-bold text-dark mb-0 font-monospace" id="detailReqAmount">₱18,500.00</h4>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="bg-white border rounded-3 p-3 text-center">
+              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Budget Verification</span>
+              <h4 class="fw-bold text-success mb-0 font-monospace" id="detailReqCc">Encumbered (CC-104)</h4>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payee & Particulars Card -->
+        <div class="bg-white border rounded-3 p-3 mb-4">
+          <h6 class="fw-bold text-dark mb-2 fs-xs text-uppercase"><i class="ph ph-buildings me-1 text-primary"></i> Target Payee &amp; Particular Purpose</h6>
+          <h6 class="fw-bold text-dark mb-1" id="detailReqPayee">Surgical Supplies &amp; Implants Co.</h6>
+          <p class="small text-muted mb-0 lh-base" id="detailReqPurpose">Emergency Sterilizer Maintenance Pack &amp; Autoclave Seals</p>
+        </div>
+
+        <!-- Audit Trail & Segregation of Duties -->
+        <div class="bg-white border rounded-3 p-3">
+          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-success"></i> Audit Trail &amp; Transparency Verification</h6>
+          <div class="d-flex flex-column gap-2 fs-xs">
+            <div class="d-flex justify-content-between border-bottom pb-2">
+              <span class="text-muted">Requisition Requested By:</span>
+              <span class="fw-semibold text-dark" id="detailReqRequestedBy"><i class="ph ph-user me-1 text-primary"></i> Dr. A. Ramos (Surgery Dept Head)</span>
+            </div>
+            <div class="d-flex justify-content-between border-bottom pb-2">
+              <span class="text-muted">Cost Center Verification:</span>
+              <span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> Cost Center Funds Available</span>
+            </div>
+            <div class="d-flex justify-content-between pt-1">
+              <span class="text-muted">System Log Stamp:</span>
+              <span class="font-monospace text-muted">LOG-REQ-2026-114 | {{ date('Y-m-d H:i:s') }} PST</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer bg-white border-top p-3">
+        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-sm btn-primary" onclick="alert('Printing Requisition Document PDF...');"><i class="ph ph-printer me-1"></i> Print Requisition PDF</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Submit Payment Request -->
+<div class="modal fade" id="createRequestModal" tabindex="-1" aria-labelledby="createRequestModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title font-weight-bold" id="createRequestModalLabel"><i class="ph ph-plus-circle me-2 text-primary"></i>Submit Departmental Payment Requisition</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4">
+        <form id="createRequestForm">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Requisition Reference <span class="text-danger">*</span></label>
+              <input type="text" id="modalReqRef" class="form-control form-control-sm font-monospace" placeholder="e.g. REQ-2026-117" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Department Origin <span class="text-danger">*</span></label>
+              <select id="modalReqDept" class="form-select form-select-sm" required>
+                <option value="surgery">Surgery &amp; Operating Room</option>
+                <option value="er">Emergency Room (ER)</option>
+                <option value="biomedical">Biomedical Engineering</option>
+                <option value="pharmacy">Central Pharmacy</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Payee / Vendor Name <span class="text-danger">*</span></label>
+              <input type="text" id="modalReqPayee" class="form-control form-control-sm" placeholder="e.g. Siemens Healthcare" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Requested Fund Amount (₱) <span class="text-danger">*</span></label>
+              <input type="number" id="modalReqAmount" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace" placeholder="0.00" value="15000.00" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label small fw-semibold">Purpose &amp; Particulars <span class="text-danger">*</span></label>
+              <textarea id="modalReqPurpose" class="form-control form-control-sm" rows="2" placeholder="Explain the operational necessity for this fund requisition..." required></textarea>
+            </div>
+          </div>
+          <div class="d-flex justify-content-end gap-2 mt-4">
+            <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-check me-1"></i> Submit Requisition</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function openRequestDetailsModal(r) {
+  if (!r) return;
+
+  document.getElementById('detailReqRef').textContent = r.ref || 'REQ-000';
+  document.getElementById('detailReqDept').textContent = r.dept || 'Department';
+  document.getElementById('detailReqAmount').textContent = r.amount || '₱0.00';
+  document.getElementById('detailReqCc').textContent = r.cc || 'Encumbered';
+  document.getElementById('detailReqPayee').textContent = r.payee || 'Payee Vendor';
+  document.getElementById('detailReqPurpose').textContent = r.purpose || 'Purpose';
+  document.getElementById('detailReqRequestedBy').innerHTML = `<i class="ph ph-user me-1 text-primary"></i> ${r.requested_by || 'Department Supervisor'}`;
+
+  const statusEl = document.getElementById('detailReqStatus');
+  if (statusEl) {
+    statusEl.textContent = r.status;
+    statusEl.className = 'badge ' + (r.status_badge || 'bg-warning-subtle text-warning');
+  }
+
+  const modalEl = document.getElementById('requestDetailsModal');
+  if (modalEl && window.bootstrap) {
+    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modalInstance.show();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('reqSearchInput');
+  const summaryText = document.getElementById('reqSummaryText');
+  const btnCreateRequest = document.getElementById('btnCreateRequest');
+  let activeDept = 'all';
+
+  if (btnCreateRequest) {
+    btnCreateRequest.addEventListener('click', function() {
+      const modalEl = document.getElementById('createRequestModal');
+      if (modalEl && window.bootstrap) {
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modalInstance.show();
+      }
+    });
+  }
+
+  const reqDeptSelect = document.getElementById('reqDeptSelect');
+  if (reqDeptSelect) {
+    reqDeptSelect.addEventListener('change', function() {
+      activeDept = this.value || 'all';
+      filterRequisitions();
+    });
+  }
+
+  function filterRequisitions() {
+    const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const rows = document.querySelectorAll('.req-row');
+    let visibleCount = 0;
+
+    rows.forEach(function(row) {
+      const rowDept = row.getAttribute('data-dept') || '';
+      const rowText = row.textContent.toLowerCase();
+
+      const matchDept = activeDept === 'all' || rowDept === activeDept;
+      const matchSearch = !searchQuery || rowText.includes(searchQuery);
+
+      if (matchDept && matchSearch) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    if (summaryText) {
+      summaryText.textContent = `Showing ${visibleCount} Requisition${visibleCount !== 1 ? 's' : ''}`;
+    }
+
+    let emptyRow = document.getElementById('noReqRow');
+    const tbody = document.querySelector('#reqTable tbody');
+    if (visibleCount === 0) {
+      if (!emptyRow && tbody) {
+        emptyRow = document.createElement('tr');
+        emptyRow.id = 'noReqRow';
+        emptyRow.innerHTML = `<td colspan="8" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No payment requisitions found matching the current filter.</td>`;
+        tbody.appendChild(emptyRow);
+      }
+      if (emptyRow) emptyRow.style.display = '';
+    } else if (emptyRow) {
+      emptyRow.style.display = 'none';
+    }
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', filterRequisitions);
+    searchInput.addEventListener('keyup', filterRequisitions);
+  }
+
+  const createRequestForm = document.getElementById('createRequestForm');
+  if (createRequestForm) {
+    createRequestForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const refVal = document.getElementById('modalReqRef').value;
+      const deptCodeVal = document.getElementById('modalReqDept').value;
+      const payeeVal = document.getElementById('modalReqPayee').value;
+      const rawAmount = parseFloat(document.getElementById('modalReqAmount').value || 0);
+      const formattedAmount = '₱' + rawAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const purposeVal = document.getElementById('modalReqPurpose').value;
+
+      let deptLabel = 'Surgery & Operating Room';
+      if (deptCodeVal === 'er') deptLabel = 'Emergency Room (ER)';
+      else if (deptCodeVal === 'biomedical') deptLabel = 'Biomedical Engineering';
+      else if (deptCodeVal === 'pharmacy') deptLabel = 'Central Pharmacy';
+
+      const reqObj = {
+        ref: refVal,
+        dept: deptLabel,
+        dept_code: deptCodeVal,
+        payee: payeeVal,
+        purpose: purposeVal,
+        cc: 'Encumbered (CC-109)',
+        amount: formattedAmount,
+        status: 'Pending Dept Head',
+        status_badge: 'bg-warning-subtle text-warning',
+        status_icon: 'ph-clock',
+        requested_by: 'Active User (Department Supervisor)'
+      };
+
+      const tbody = document.querySelector('#reqTable tbody');
+      if (tbody) {
+        const newRow = document.createElement('tr');
+        newRow.className = 'req-row';
+        newRow.style.cursor = 'pointer';
+        newRow.setAttribute('data-dept', deptCodeVal);
+
+        newRow.onclick = function() { openRequestDetailsModal(reqObj); };
+
+        newRow.innerHTML = `
+          <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">${refVal}</span></td>
+          <td class="fw-semibold text-dark">${deptLabel}</td>
+          <td>${payeeVal}</td>
+          <td><span class="text-truncate d-inline-block" style="max-width: 250px;">${purposeVal}</span></td>
+          <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> Encumbered (CC-109)</span></td>
+          <td class="text-end fw-bold text-dark font-monospace">${formattedAmount}</td>
+          <td><span class="badge bg-warning-subtle text-warning"><i class="ph ph-clock me-1"></i> Pending Dept Head</span></td>
+          <td class="text-end" onclick="event.stopPropagation();">
+            <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Requisition Document"><i class="ph ph-eye"></i></button>
+          </td>
+        `;
+
+        const eyeBtn = newRow.querySelector('button[title="View Requisition Document"]');
+        if (eyeBtn) {
+          eyeBtn.onclick = function(e) {
+            e.stopPropagation();
+            openRequestDetailsModal(reqObj);
+          };
+        }
+
+        tbody.insertBefore(newRow, tbody.firstChild);
+      }
+
+      const modalEl = document.getElementById('createRequestModal');
+      const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+      if (modalInstance) modalInstance.hide();
+
+      createRequestForm.reset();
+      filterRequisitions();
+    });
+  }
+
+  filterRequisitions();
+});
+</script>
+@endpush

@@ -17,11 +17,10 @@
         </ol>
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Hospital Working Capital &amp; Liquidity Controls</h1>
-      <p class="text-muted small mb-0">Monitor cash buffer adequacy, Days Cash on Hand (DCOH), and working capital solvency ratios.</p>
     </div>
     <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm" type="button"><i class="ph ph-shield-check me-1"></i> Solvency Audit</button>
-      <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#adjustReserveModal"><i class="ph ph-sliders me-1"></i> Adjust Reserve Level</button>
+      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Running Solvency Ratio Audit...');"><i class="ph ph-shield-check me-1"></i> Solvency Audit</button>
+      <button id="btnAdjustReserve" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#adjustReserveModal"><i class="ph ph-sliders me-1"></i> Adjust Reserve Level</button>
     </div>
   </div>
 
@@ -34,7 +33,6 @@
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">48.2 Days</h4>
-        <span class="fs-xs text-muted">Exceeds 40-Day Statutory Minimum</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -44,7 +42,6 @@
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-scales fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">2.41x</h4>
-        <span class="fs-xs text-muted">Liquid Assets vs Short-Term AP</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -54,7 +51,6 @@
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-vault fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-success">₱5,840,000.00</h4>
-        <span class="fs-xs text-muted">Immediately deployable cash</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -64,17 +60,39 @@
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-shield fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱2,000,000.00</h4>
-        <span class="fs-xs text-muted">Minimum locked safety floor</span>
       </div>
     </div>
   </div>
 
-  <!-- Liquidity Indicators Data Table -->
+  <!-- Data Table Card -->
   <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-light fw-bold">Hospital Working Capital Ratios &amp; Buffer Analysis</div>
+    <div class="card-header bg-transparent border-bottom p-3">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div class="d-flex align-items-center gap-2">
+          <label for="complianceStatusSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Compliance:</label>
+          <select id="complianceStatusSelect" class="form-select form-select-sm bg-light" style="min-width: 180px;">
+            <option value="" selected>All Statuses</option>
+            <option value="compliant">Compliant</option>
+            <option value="warning">Warning / Near Threshold</option>
+          </select>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <label for="indicatorCatSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap">Category:</label>
+          <select id="indicatorCatSelect" class="form-select form-select-sm bg-light" style="min-width: 200px;">
+            <option value="" selected>All Categories</option>
+            <option value="operating">Operating Buffer</option>
+            <option value="solvency">Solvency Ratios</option>
+          </select>
+        </div>
+        <div class="search-box ms-auto" style="width: 260px;">
+          <i class="ph ph-magnifying-glass"></i>
+          <input type="search" id="liquiditySearchInput" class="form-control form-control-sm" placeholder="Search indicator, threshold, value...">
+        </div>
+      </div>
+    </div>
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+        <table id="liquidityTable" class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
               <th>Liquidity Indicator</th>
@@ -85,28 +103,133 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
+            @php
+              $indicators = [
+                [
+                  'name' => 'Days Cash on Hand (DCOH)',
+                  'desc' => 'Operating cash divided by daily hospital burn rate',
+                  'target' => '> 40.0 Days',
+                  'value' => '48.2 Days',
+                  'status' => 'Compliant',
+                  'status_badge' => 'bg-success-subtle text-success',
+                  'cat' => 'operating'
+                ],
+                [
+                  'name' => 'Quick Ratio (Acid-Test)',
+                  'desc' => '(Cash + AR) divided by Current Liabilities',
+                  'target' => '> 1.5x',
+                  'value' => '2.41x',
+                  'status' => 'Compliant',
+                  'status_badge' => 'bg-success-subtle text-success',
+                  'cat' => 'solvency'
+                ],
+                [
+                  'name' => 'Working Capital Net Reserve',
+                  'desc' => 'Liquid unrestricted cash reserves available',
+                  'target' => '> ₱5,000,000.00',
+                  'value' => '₱5,840,000.00',
+                  'status' => 'Compliant',
+                  'status_badge' => 'bg-success-subtle text-success',
+                  'cat' => 'operating'
+                ],
+              ];
+            @endphp
+
+            @foreach($indicators as $ind)
+            <tr class="liquidity-row" style="cursor: pointer;" data-cat="{{ $ind['cat'] }}" data-status="{{ strtolower($ind['status']) }}" onclick="openLiquidityDetailsModal({{ json_encode($ind) }})">
               <td>
-                <div class="fw-bold text-dark">Days Cash on Hand (DCOH)</div>
-                <span class="fs-xs text-muted">Operating cash divided by daily hospital burn rate</span>
+                <div class="fw-bold text-dark">{{ $ind['name'] }}</div>
+                <span class="fs-xs text-muted">{{ $ind['desc'] }}</span>
               </td>
-              <td>&gt; 40.0 Days</td>
-              <td class="text-end font-monospace fw-bold text-success">48.2 Days</td>
-              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> Compliant</span></td>
-              <td class="text-end"><button class="btn btn-sm btn-light border p-1"><i class="ph ph-eye"></i></button></td>
-            </tr>
-            <tr>
-              <td>
-                <div class="fw-bold text-dark">Quick Ratio (Acid-Test)</div>
-                <span class="fs-xs text-muted">(Cash + AR) divided by Current Liabilities</span>
+              <td class="font-monospace fs-xs">{{ $ind['target'] }}</td>
+              <td class="text-end font-monospace fw-bold text-success">{{ $ind['value'] }}</td>
+              <td><span class="badge {{ $ind['status_badge'] }}"><i class="ph ph-check-circle me-1"></i> {{ $ind['status'] }}</span></td>
+              <td class="text-end" onclick="event.stopPropagation();">
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Ratio Breakdown" onclick="openLiquidityDetailsModal({{ json_encode($ind) }})"><i class="ph ph-eye"></i></button>
               </td>
-              <td>&gt; 1.5x</td>
-              <td class="text-end font-monospace fw-bold text-success">2.41x</td>
-              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> Compliant</span></td>
-              <td class="text-end"><button class="btn btn-sm btn-light border p-1"><i class="ph ph-eye"></i></button></td>
             </tr>
+            @endforeach
           </tbody>
         </table>
+      </div>
+    </div>
+    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
+      <span class="text-muted fs-xs" id="liquiditySummaryText">Showing {{ count($indicators) }} Solvency Ratios</span>
+      <nav aria-label="Liquidity Pagination">
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
+          <li class="page-item active"><a class="page-link" href="#">1</a></li>
+          <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: In-Depth Liquidity Indicator Details (Executive Design) -->
+<div class="modal fade" id="liquidityDetailsModal" tabindex="-1" aria-labelledby="liquidityDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header bg-white border-bottom p-4 pb-3">
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">WORKING CAPITAL</span>
+            <span class="badge bg-success-subtle text-success" id="detailLiqStatus"><i class="ph ph-check-circle me-1"></i> Compliant</span>
+          </div>
+          <h4 class="modal-title fw-bold text-dark mb-0" id="detailLiqName">Days Cash on Hand (DCOH)</h4>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-4 bg-light-subtle">
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <div class="bg-white border rounded-3 p-3 text-center">
+              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Target Threshold</span>
+              <h4 class="fw-bold text-dark mb-0 font-monospace" id="detailLiqTarget">&gt; 40.0 Days</h4>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="bg-white border rounded-3 p-3 text-center">
+              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Current Calculated Value</span>
+              <h4 class="fw-bold text-success mb-0 font-monospace" id="detailLiqValue">48.2 Days</h4>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white border rounded-3 p-3 mb-4">
+          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-scales me-1 text-primary"></i> Indicator Calculation Formula</h6>
+          <div class="d-flex flex-column gap-2 fs-xs">
+            <div class="d-flex justify-content-between border-bottom pb-2">
+              <span class="text-muted">Formula Definition</span>
+              <span class="fw-semibold text-dark" id="detailLiqDesc">Operating cash divided by daily hospital burn rate</span>
+            </div>
+            <div class="d-flex justify-content-between pt-1">
+              <span class="text-muted">Regulatory Minimum Compliance</span>
+              <span class="badge bg-success-subtle text-success"><i class="ph ph-shield-check me-1"></i> Exceeds Statutory Minimums</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit Trail & Segregation of Duties -->
+        <div class="bg-white border rounded-3 p-3">
+          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-success"></i> Audit Trail &amp; Solvency Audit Verification</h6>
+          <div class="d-flex flex-column gap-2 fs-xs">
+            <div class="d-flex justify-content-between border-bottom pb-2">
+              <span class="text-muted">Internal Solvency Lock:</span>
+              <span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> Capital Reserves Verified</span>
+            </div>
+            <div class="d-flex justify-content-between pt-1">
+              <span class="text-muted">System Audit Stamp:</span>
+              <span class="font-monospace text-muted">LOG-LIQ-2026-001 | {{ date('Y-m-d H:i:s') }} PST</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer bg-white border-top p-3">
+        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-sm btn-primary" onclick="alert('Exporting Solvency Audit Report...');"><i class="ph ph-file-text me-1"></i> Export Solvency Report</button>
       </div>
     </div>
   </div>
@@ -140,3 +263,98 @@
   </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function openLiquidityDetailsModal(ind) {
+  if (!ind) return;
+
+  document.getElementById('detailLiqName').textContent = ind.name || 'Indicator Name';
+  document.getElementById('detailLiqDesc').textContent = ind.desc || '-';
+  document.getElementById('detailLiqTarget').textContent = ind.target || '0';
+  document.getElementById('detailLiqValue').textContent = ind.value || '0';
+
+  const statusEl = document.getElementById('detailLiqStatus');
+  if (statusEl) {
+    statusEl.textContent = ind.status;
+    statusEl.className = 'badge ' + (ind.status_badge || 'bg-success-subtle text-success');
+  }
+
+  const modalEl = document.getElementById('liquidityDetailsModal');
+  if (modalEl && window.bootstrap) {
+    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modalInstance.show();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('liquiditySearchInput');
+  const complianceSelect = document.getElementById('complianceStatusSelect');
+  const catSelect = document.getElementById('indicatorCatSelect');
+  const summaryText = document.getElementById('liquiditySummaryText');
+  const btnAdjustReserve = document.getElementById('btnAdjustReserve');
+
+  if (btnAdjustReserve) {
+    btnAdjustReserve.addEventListener('click', function() {
+      const modalEl = document.getElementById('adjustReserveModal');
+      if (modalEl && window.bootstrap) {
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modalInstance.show();
+      }
+    });
+  }
+
+  function filterLiquidity() {
+    const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const selectedStatus = complianceSelect ? complianceSelect.value.toLowerCase() : '';
+    const selectedCat = catSelect ? catSelect.value.toLowerCase() : '';
+    const rows = document.querySelectorAll('.liquidity-row');
+    let visibleCount = 0;
+
+    rows.forEach(function(row) {
+      const rowCat = row.getAttribute('data-cat') || '';
+      const rowStatus = row.getAttribute('data-status') || '';
+      const rowText = row.textContent.toLowerCase();
+
+      const matchCat = !selectedCat || rowCat.includes(selectedCat);
+      const matchStatus = !selectedStatus || rowStatus.includes(selectedStatus);
+      const matchSearch = !searchQuery || rowText.includes(searchQuery);
+
+      if (matchCat && matchStatus && matchSearch) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    if (summaryText) {
+      summaryText.textContent = `Showing ${visibleCount} Solvency Ratio${visibleCount !== 1 ? 's' : ''}`;
+    }
+
+    let emptyRow = document.getElementById('noLiquidityRow');
+    const tbody = document.querySelector('#liquidityTable tbody');
+    if (visibleCount === 0) {
+      if (!emptyRow && tbody) {
+        emptyRow = document.createElement('tr');
+        emptyRow.id = 'noLiquidityRow';
+        emptyRow.innerHTML = `<td colspan="5" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No solvency indicators found matching the current filter.</td>`;
+        tbody.appendChild(emptyRow);
+      }
+      if (emptyRow) emptyRow.style.display = '';
+    } else if (emptyRow) {
+      emptyRow.style.display = 'none';
+    }
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', filterLiquidity);
+    searchInput.addEventListener('keyup', filterLiquidity);
+  }
+  if (complianceSelect) complianceSelect.addEventListener('change', filterLiquidity);
+  if (catSelect) catSelect.addEventListener('change', filterLiquidity);
+
+  filterLiquidity();
+});
+</script>
+@endpush

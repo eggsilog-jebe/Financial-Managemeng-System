@@ -17,11 +17,10 @@
         </ol>
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Bank Deposits Log &amp; Verification</h1>
-      <p class="text-muted small mb-0">Reconciliation records matching cashier drawer collections with confirmed bank deposits.</p>
     </div>
     <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm" type="button"><i class="ph ph-file-arrow-down me-1"></i> Export Deposit Audit</button>
-      <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#verifyDepositModal"><i class="ph ph-check-circle me-1"></i> Record Bank Validation</button>
+      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Exporting Bank Deposit Audit...');"><i class="ph ph-file-arrow-down me-1"></i> Export Deposit Audit</button>
+      <button id="btnVerifyDeposit" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#verifyDepositModal"><i class="ph ph-check-circle me-1"></i> Record Bank Validation</button>
     </div>
   </div>
 
@@ -34,7 +33,6 @@
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-bank fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱1,842,500.00</h4>
-        <span class="fs-xs text-muted">Cleared by commercial banks</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -44,7 +42,6 @@
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">1 Deposit</h4>
-        <span class="fs-xs text-muted">Awaiting teller receipt validation: ₱45,200</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -54,7 +51,6 @@
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-warning-circle fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
-        <span class="fs-xs text-muted">100% teller stamp alignment</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -64,47 +60,39 @@
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-scales fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">100.0%</h4>
-        <span class="fs-xs text-muted">Matched with General Ledger Cash Book</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Filter Toolbar -->
-  <div class="card border-0 shadow-sm rounded-3 mb-4">
-    <div class="card-body p-3">
-      <div class="row g-2 align-items-center">
-        <div class="col-md-4">
-          <div class="input-group input-group-sm">
-            <span class="input-group-text bg-light border-end-0"><i class="ph ph-magnifying-glass text-muted"></i></span>
-            <input type="text" class="form-control bg-light border-start-0" placeholder="Search Deposit Ref, Machine Stamp, or Bank...">
-          </div>
-        </div>
-        <div class="col-md-3">
-          <select class="form-select form-select-sm bg-light">
-            <option value="">All Hospital Accounts</option>
-            <option value="metrobank">Metrobank #1020 (Operating)</option>
-            <option value="bdo">BDO Unibank #2384 (Collections)</option>
-          </select>
-        </div>
-        <div class="col-md-3">
-          <select class="form-select form-select-sm bg-light">
-            <option value="">All Verification Statuses</option>
-            <option value="verified">Verified by Bank</option>
-            <option value="pending">Pending Teller Verification</option>
-          </select>
-        </div>
-        <div class="col-md-2 text-end">
-          <button class="btn btn-sm btn-light border w-100"><i class="ph ph-funnel me-1"></i> Filter</button>
-        </div>
       </div>
     </div>
   </div>
 
   <!-- Data Table Card -->
   <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-transparent border-bottom p-3">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div class="d-flex align-items-center gap-2">
+          <label for="bankAccSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Bank Account:</label>
+          <select id="bankAccSelect" class="form-select form-select-sm bg-light" style="min-width: 200px;">
+            <option value="" selected>All Hospital Accounts</option>
+            <option value="metrobank">Metrobank Operating</option>
+            <option value="bdo">BDO Collections</option>
+          </select>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <label for="verificationSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap">Verification:</label>
+          <select id="verificationSelect" class="form-select form-select-sm bg-light" style="min-width: 180px;">
+            <option value="" selected>All Statuses</option>
+            <option value="verified by bank">Verified by Bank</option>
+            <option value="pending">Pending Teller Verification</option>
+          </select>
+        </div>
+        <div class="search-box ms-auto" style="width: 260px;">
+          <i class="ph ph-magnifying-glass"></i>
+          <input type="search" id="bankDepositSearchInput" class="form-control form-control-sm" placeholder="Search deposit ref, stamp, bank...">
+        </div>
+      </div>
+    </div>
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+        <table id="bankDepositTable" class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
               <th>Deposit Ref</th>
@@ -118,40 +106,141 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td><span class="font-monospace text-primary fw-bold">DEP-2026-302</span></td>
-              <td><span class="font-monospace text-muted">SLIP-2026-080</span></td>
+            @php
+              $deposits = [
+                [
+                  'ref' => 'DEP-2026-302',
+                  'slip' => 'SLIP-2026-080',
+                  'bank' => 'Metrobank Operating',
+                  'acc' => '#1020-8841-99',
+                  'date' => '2026-08-07 15:30',
+                  'amount' => '₱125,400.00',
+                  'stamp' => 'MB-STAMP-99210',
+                  'status' => 'Verified by Bank',
+                  'status_badge' => 'bg-success-subtle text-success',
+                  'status_icon' => 'ph-check-circle'
+                ],
+                [
+                  'ref' => 'DEP-2026-301',
+                  'slip' => 'SLIP-2026-079',
+                  'bank' => 'BDO Collections',
+                  'acc' => '#0091-2384-12',
+                  'date' => '2026-08-06 16:15',
+                  'amount' => '₱98,000.00',
+                  'stamp' => 'BDO-TRX-10294',
+                  'status' => 'Verified by Bank',
+                  'status_badge' => 'bg-success-subtle text-success',
+                  'status_icon' => 'ph-check-circle'
+                ],
+              ];
+            @endphp
+
+            @foreach($deposits as $d)
+            <tr class="bank-deposit-row" style="cursor: pointer;" data-bank="{{ strtolower($d['bank']) }}" data-status="{{ strtolower($d['status']) }}" onclick="openBankDepositDetailsModal({{ json_encode($d) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $d['ref'] }}</span></td>
+              <td><span class="font-monospace text-muted fs-xs">{{ $d['slip'] }}</span></td>
               <td>
-                <div class="fw-semibold text-dark">Metrobank Operating</div>
-                <span class="fs-xs font-monospace text-muted">#1020-8841-99</span>
+                <div class="fw-semibold text-dark">{{ $d['bank'] }}</div>
+                <span class="fs-xs font-monospace text-muted">{{ $d['acc'] }}</span>
               </td>
-              <td>2026-08-07 15:30</td>
-              <td class="text-end text-success fw-bold font-monospace">₱125,400.00</td>
-              <td><span class="font-monospace text-dark">MB-STAMP-99210</span></td>
-              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> Verified by Bank</span></td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-light border p-1" title="View Machine Slip Image"><i class="ph ph-file-image"></i></button>
-                <button class="btn btn-sm btn-light border p-1" title="GL Audit Entry"><i class="ph ph-arrows-left-right"></i></button>
+              <td class="font-monospace fs-xs">{{ $d['date'] }}</td>
+              <td class="text-end text-success fw-bold font-monospace">{{ $d['amount'] }}</td>
+              <td><span class="font-monospace text-dark fs-xs">{{ $d['stamp'] }}</span></td>
+              <td><span class="badge {{ $d['status_badge'] }}"><i class="ph {{ $d['status_icon'] }} me-1"></i> {{ $d['status'] }}</span></td>
+              <td class="text-end" onclick="event.stopPropagation();">
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Deposit Details" onclick="openBankDepositDetailsModal({{ json_encode($d) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            <tr>
-              <td><span class="font-monospace text-primary fw-bold">DEP-2026-301</span></td>
-              <td><span class="font-monospace text-muted">SLIP-2026-079</span></td>
-              <td>
-                <div class="fw-semibold text-dark">BDO Collections</div>
-                <span class="fs-xs font-monospace text-muted">#0091-2384-12</span>
-              </td>
-              <td>2026-08-06 16:15</td>
-              <td class="text-end text-success fw-bold font-monospace">₱98,000.00</td>
-              <td><span class="font-monospace text-dark">BDO-TRX-10294</span></td>
-              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> Verified by Bank</span></td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-light border p-1" title="View Machine Slip Image"><i class="ph ph-file-image"></i></button>
-                <button class="btn btn-sm btn-light border p-1" title="GL Audit Entry"><i class="ph ph-arrows-left-right"></i></button>
-              </td>
-            </tr>
+            @endforeach
           </tbody>
         </table>
+      </div>
+    </div>
+    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
+      <span class="text-muted fs-xs" id="bankDepositSummaryText">Showing {{ count($deposits) }} Bank Deposits</span>
+      <nav aria-label="Bank Deposit Pagination">
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
+          <li class="page-item active"><a class="page-link" href="#">1</a></li>
+          <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: In-Depth Bank Deposit Details (Executive Design) -->
+<div class="modal fade" id="bankDepositDetailsModal" tabindex="-1" aria-labelledby="bankDepositDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header bg-white border-bottom p-4 pb-3">
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1" id="detailDepRef">DEP-2026-302</span>
+            <span class="badge bg-success-subtle text-success" id="detailDepStatus"><i class="ph ph-check-circle me-1"></i> Verified by Bank</span>
+          </div>
+          <h4 class="modal-title fw-bold text-dark mb-0" id="detailDepBank">Metrobank Operating</h4>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-4 bg-light-subtle">
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <div class="bg-white border rounded-3 p-3 text-center">
+              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Confirmed Deposited Amount</span>
+              <h4 class="fw-bold text-success mb-0 font-monospace" id="detailDepAmount">₱125,400.00</h4>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="bg-white border rounded-3 p-3 text-center">
+              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Deposit Date &amp; Time</span>
+              <h4 class="fw-bold text-primary mb-0 font-monospace" id="detailDepDate">2026-08-07 15:30</h4>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white border rounded-3 p-3 mb-4">
+          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-bank me-1 text-primary"></i> Banking &amp; Slip Reference</h6>
+          <div class="d-flex flex-column gap-2 fs-xs">
+            <div class="d-flex justify-content-between border-bottom pb-2">
+              <span class="text-muted">Target Account Number</span>
+              <span class="font-monospace fw-bold text-dark" id="detailDepAcc">#1020-8841-99</span>
+            </div>
+            <div class="d-flex justify-content-between border-bottom pb-2">
+              <span class="text-muted">Linked Batch Deposit Slip</span>
+              <span class="font-monospace fw-bold text-primary" id="detailDepSlip">SLIP-2026-080</span>
+            </div>
+            <div class="d-flex justify-content-between pt-1">
+              <span class="text-muted">Bank Teller Machine Stamp</span>
+              <span class="font-monospace fw-bold text-dark" id="detailDepStamp">MB-STAMP-99210</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit Trail & Segregation of Duties -->
+        <div class="bg-white border rounded-3 p-3">
+          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-success"></i> Audit Trail &amp; GL Cash Book Verification</h6>
+          <div class="d-flex flex-column gap-2 fs-xs">
+            <div class="d-flex justify-content-between border-bottom pb-2">
+              <span class="text-muted">General Ledger Cash Match:</span>
+              <span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> Cash Book Reconciled</span>
+            </div>
+            <div class="d-flex justify-content-between border-bottom pb-2">
+              <span class="text-muted">Bank Statement Line ID:</span>
+              <span class="font-monospace text-primary">STMT-2026-08-1029</span>
+            </div>
+            <div class="d-flex justify-content-between pt-1">
+              <span class="text-muted">System Audit Stamp:</span>
+              <span class="font-monospace text-muted">LOG-DEP-2026-302 | {{ date('Y-m-d H:i:s') }} PST</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer bg-white border-top p-3">
+        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-sm btn-primary" onclick="alert('Viewing Bank Machine Deposit Slip Photo Scan...');"><i class="ph ph-file-image me-1"></i> View Machine Slip Image</button>
       </div>
     </div>
   </div>
@@ -166,29 +255,28 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body p-4">
-        <form onsubmit="event.preventDefault(); alert('Bank deposit verified and posted!'); bootstrap.Modal.getInstance(document.getElementById('verifyDepositModal')).hide();">
+        <form id="bankDepositForm">
           <div class="row g-3">
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Select Batch Deposit Slip <span class="text-danger">*</span></label>
-              <select class="form-select form-select-sm" required>
+              <select id="modalDepSlip" class="form-select form-select-sm" required>
                 <option value="SLIP-2026-081">SLIP-2026-081 (₱45,200.00 - Metrobank)</option>
               </select>
             </div>
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Deposit Date &amp; Time Stamp <span class="text-danger">*</span></label>
-              <input type="datetime-local" class="form-control form-control-sm" value="{{ date('Y-m-d\TH:i') }}" required>
+              <label class="form-label small fw-semibold">Hospital Bank Account <span class="text-danger">*</span></label>
+              <select id="modalDepBank" class="form-select form-select-sm" required>
+                <option value="Metrobank Operating">Metrobank Operating (#1020-8841-99)</option>
+                <option value="BDO Collections">BDO Collections (#0091-2384-12)</option>
+              </select>
             </div>
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Bank Machine Teller Stamp Ref <span class="text-danger">*</span></label>
-              <input type="text" class="form-control form-control-sm font-monospace" placeholder="e.g. MB-STAMP-99211" required>
+              <label class="form-label small fw-semibold">Bank Machine Stamp Ref <span class="text-danger">*</span></label>
+              <input type="text" id="modalDepStamp" class="form-control form-control-sm font-monospace" placeholder="e.g. MB-STAMP-99211" required>
             </div>
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Confirmed Deposited Amount (₱) <span class="text-danger">*</span></label>
-              <input type="number" step="0.01" class="form-control form-control-sm text-end font-monospace" value="45200.00" required>
-            </div>
-            <div class="col-12">
-              <label class="form-label small fw-semibold">Upload Bank Machine Deposit Slip Photo / PDF</label>
-              <input type="file" class="form-control form-control-sm">
+              <input type="number" id="modalDepAmount" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace" placeholder="0.00" value="45200.00" required>
             </div>
           </div>
           <div class="d-flex justify-content-end gap-2 mt-4">
@@ -201,3 +289,175 @@
   </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function openBankDepositDetailsModal(d) {
+  if (!d) return;
+
+  document.getElementById('detailDepRef').textContent = d.ref || 'DEP-000';
+  document.getElementById('detailDepBank').textContent = d.bank || 'Bank Name';
+  document.getElementById('detailDepAcc').textContent = d.acc || '-';
+  document.getElementById('detailDepSlip').textContent = d.slip || '-';
+  document.getElementById('detailDepAmount').textContent = d.amount || '₱0.00';
+  document.getElementById('detailDepDate').textContent = d.date || '-';
+  document.getElementById('detailDepStamp').textContent = d.stamp || '-';
+
+  const statusEl = document.getElementById('detailDepStatus');
+  if (statusEl) {
+    statusEl.textContent = d.status;
+    statusEl.className = 'badge ' + (d.status_badge || 'bg-success-subtle text-success');
+  }
+
+  const modalEl = document.getElementById('bankDepositDetailsModal');
+  if (modalEl && window.bootstrap) {
+    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modalInstance.show();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('bankDepositSearchInput');
+  const bankAccSelect = document.getElementById('bankAccSelect');
+  const verificationSelect = document.getElementById('verificationSelect');
+  const summaryText = document.getElementById('bankDepositSummaryText');
+  const btnVerifyDeposit = document.getElementById('btnVerifyDeposit');
+
+  if (btnVerifyDeposit) {
+    btnVerifyDeposit.addEventListener('click', function() {
+      const modalEl = document.getElementById('verifyDepositModal');
+      if (modalEl && window.bootstrap) {
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modalInstance.show();
+      }
+    });
+  }
+
+  function filterBankDeposits() {
+    const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const selectedBank = bankAccSelect ? bankAccSelect.value.toLowerCase() : '';
+    const selectedVerification = verificationSelect ? verificationSelect.value.toLowerCase() : '';
+    const rows = document.querySelectorAll('.bank-deposit-row');
+    let visibleCount = 0;
+
+    rows.forEach(function(row) {
+      const rowBank = row.getAttribute('data-bank') || '';
+      const rowStatus = row.getAttribute('data-status') || '';
+      const rowText = row.textContent.toLowerCase();
+
+      const matchBank = !selectedBank || rowBank.includes(selectedBank);
+      const matchStatus = !selectedVerification || rowStatus.includes(selectedVerification);
+      const matchSearch = !searchQuery || rowText.includes(searchQuery);
+
+      if (matchBank && matchStatus && matchSearch) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    if (summaryText) {
+      summaryText.textContent = `Showing ${visibleCount} Bank Deposit${visibleCount !== 1 ? 's' : ''}`;
+    }
+
+    let emptyRow = document.getElementById('noBankDepositRow');
+    const tbody = document.querySelector('#bankDepositTable tbody');
+    if (visibleCount === 0) {
+      if (!emptyRow && tbody) {
+        emptyRow = document.createElement('tr');
+        emptyRow.id = 'noBankDepositRow';
+        emptyRow.innerHTML = `<td colspan="8" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No bank deposit records found matching the current filter.</td>`;
+        tbody.appendChild(emptyRow);
+      }
+      if (emptyRow) emptyRow.style.display = '';
+    } else if (emptyRow) {
+      emptyRow.style.display = 'none';
+    }
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', filterBankDeposits);
+    searchInput.addEventListener('keyup', filterBankDeposits);
+  }
+  if (bankAccSelect) bankAccSelect.addEventListener('change', filterBankDeposits);
+  if (verificationSelect) verificationSelect.addEventListener('change', filterBankDeposits);
+
+  const bankDepositForm = document.getElementById('bankDepositForm');
+  if (bankDepositForm) {
+    bankDepositForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const slipVal = document.getElementById('modalDepSlip').value;
+      const bankVal = document.getElementById('modalDepBank').value;
+      const stampVal = document.getElementById('modalDepStamp').value;
+      const rawAmount = parseFloat(document.getElementById('modalDepAmount').value || 0);
+      const formattedAmount = '₱' + rawAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const nextRef = 'DEP-2026-' + Math.floor(303 + Math.random() * 20);
+
+      let accNum = '#1020-8841-99';
+      if (bankVal.includes('BDO')) accNum = '#0091-2384-12';
+
+      const depositObj = {
+        ref: nextRef,
+        slip: slipVal,
+        bank: bankVal,
+        acc: accNum,
+        date: "{{ date('Y-m-d H:i') }}",
+        amount: formattedAmount,
+        stamp: stampVal,
+        status: 'Verified by Bank',
+        status_badge: 'bg-success-subtle text-success',
+        status_icon: 'ph-check-circle'
+      };
+
+      const tbody = document.querySelector('#bankDepositTable tbody');
+      if (tbody) {
+        const newRow = document.createElement('tr');
+        newRow.className = 'bank-deposit-row';
+        newRow.style.cursor = 'pointer';
+        newRow.setAttribute('data-bank', bankVal.toLowerCase());
+        newRow.setAttribute('data-status', 'verified by bank');
+
+        newRow.onclick = function() { openBankDepositDetailsModal(depositObj); };
+
+        newRow.innerHTML = `
+          <td><span class="font-monospace text-primary fw-bold">${nextRef}</span></td>
+          <td><span class="font-monospace text-muted fs-xs">${slipVal}</span></td>
+          <td>
+            <div class="fw-semibold text-dark">${bankVal}</div>
+            <span class="fs-xs font-monospace text-muted">${accNum}</span>
+          </td>
+          <td class="font-monospace fs-xs">${depositObj.date}</td>
+          <td class="text-end text-success fw-bold font-monospace">${formattedAmount}</td>
+          <td><span class="font-monospace text-dark fs-xs">${stampVal}</span></td>
+          <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> Verified by Bank</span></td>
+          <td class="text-end" onclick="event.stopPropagation();">
+            <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Deposit Details"><i class="ph ph-eye"></i></button>
+          </td>
+        `;
+
+        const eyeBtn = newRow.querySelector('button[title="View Deposit Details"]');
+        if (eyeBtn) {
+          eyeBtn.onclick = function(ex) {
+            ex.stopPropagation();
+            openBankDepositDetailsModal(depositObj);
+          };
+        }
+
+        tbody.insertBefore(newRow, tbody.firstChild);
+      }
+
+      const modalEl = document.getElementById('verifyDepositModal');
+      const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+      if (modalInstance) modalInstance.hide();
+
+      bankDepositForm.reset();
+      filterBankDeposits();
+    });
+  }
+
+  filterBankDeposits();
+});
+</script>
+@endpush

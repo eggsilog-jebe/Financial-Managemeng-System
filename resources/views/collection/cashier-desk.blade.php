@@ -17,11 +17,10 @@
         </ol>
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Cashier Desk &amp; POS Station Terminals</h1>
-      <p class="text-muted small mb-0">POS cashier shift management, opening float balances, drawer counting, and shift end remittance.</p>
     </div>
     <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm" type="button"><i class="ph ph-arrow-counter-clockwise me-1"></i> Refresh Terminals</button>
-      <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#openShiftModal"><i class="ph ph-play-circle me-1"></i> Open Terminal Shift</button>
+      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="location.reload()"><i class="ph ph-arrow-counter-clockwise me-1"></i> Refresh Terminals</button>
+      <button id="btnOpenShift" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#openShiftModal"><i class="ph ph-play-circle me-1"></i> Open Terminal Shift</button>
     </div>
   </div>
 
@@ -34,7 +33,6 @@
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-desktop fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">4 / 5 Open</h4>
-        <span class="fs-xs text-muted">ER, OPD, Inpatient &amp; Pharmacy</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -44,7 +42,6 @@
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-vault fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱142,400.00</h4>
-        <span class="fs-xs text-muted">Physical cash in active POS drawers</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -54,7 +51,6 @@
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-scales fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
-        <span class="fs-xs text-muted">No overage or shortage flagged</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -64,50 +60,41 @@
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-tray fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">1 Terminal</h4>
-        <span class="fs-xs text-muted">Night shift ready for vault turn-in</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Filter & Search Toolbar -->
-  <div class="card border-0 shadow-sm rounded-3 mb-4">
-    <div class="card-body p-3">
-      <div class="row g-2 align-items-center">
-        <div class="col-md-4">
-          <div class="input-group input-group-sm">
-            <span class="input-group-text bg-light border-end-0"><i class="ph ph-magnifying-glass text-muted"></i></span>
-            <input type="text" class="form-control bg-light border-start-0" placeholder="Search Terminal ID, Cashier, or Station...">
-          </div>
-        </div>
-        <div class="col-md-3">
-          <select class="form-select form-select-sm bg-light">
-            <option value="">All Hospital Stations</option>
-            <option value="main">Main Discharge Desk</option>
-            <option value="er">Emergency Room (ER)</option>
-            <option value="pharmacy">Pharmacy POS</option>
-            <option value="opd">Outpatient Clinic</option>
-          </select>
-        </div>
-        <div class="col-md-3">
-          <select class="form-select form-select-sm bg-light">
-            <option value="">All Shift Statuses</option>
-            <option value="open">Open Shift</option>
-            <option value="closing">Closing In Progress</option>
-            <option value="remitted">Closed &amp; Remitted</option>
-          </select>
-        </div>
-        <div class="col-md-2 text-end">
-          <button class="btn btn-sm btn-light border w-100"><i class="ph ph-funnel me-1"></i> Filter</button>
-        </div>
       </div>
     </div>
   </div>
 
   <!-- Data Table Card -->
   <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-transparent border-bottom p-3">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div class="d-flex align-items-center gap-2">
+          <label for="stationSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Station:</label>
+          <select id="stationSelect" class="form-select form-select-sm bg-light" style="min-width: 180px;">
+            <option value="" selected>All Hospital Stations</option>
+            <option value="main discharge">Main Discharge Desk</option>
+            <option value="emergency room">Emergency Room (ER)</option>
+            <option value="pharmacy central">Pharmacy Central Station</option>
+            <option value="outpatient">Outpatient Consultation</option>
+          </select>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <label for="shiftStatusSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap">Shift Status:</label>
+          <select id="shiftStatusSelect" class="form-select form-select-sm bg-light" style="min-width: 160px;">
+            <option value="" selected>All Shift Statuses</option>
+            <option value="open shift">Open Shift</option>
+            <option value="closed shift">Closed Shift</option>
+          </select>
+        </div>
+        <div class="search-box ms-auto" style="width: 260px;">
+          <i class="ph ph-magnifying-glass"></i>
+          <input type="search" id="terminalSearchInput" class="form-control form-control-sm" placeholder="Search terminal #, cashier, location...">
+        </div>
+      </div>
+    </div>
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+        <table id="terminalTable" class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
               <th>Terminal ID</th>
@@ -121,68 +108,168 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td><span class="font-monospace text-primary fw-bold">TERM-01</span></td>
+            @php
+              $terminals = [
+                [
+                  'id' => 'TERM-01',
+                  'location' => 'Main Discharge Desk',
+                  'sub' => 'Building A - Ground Floor',
+                  'cashier' => 'Anna Reyes',
+                  'float' => '₱5,000.00',
+                  'cash' => '₱45,200.00',
+                  'start' => '07:00 AM (Today)',
+                  'status' => 'Open Shift',
+                  'status_badge' => 'bg-success-subtle text-success',
+                  'status_icon' => 'ph-circle-wavy-check'
+                ],
+                [
+                  'id' => 'TERM-02',
+                  'location' => 'Emergency Room (ER) Cashier',
+                  'sub' => 'Emergency Ward Entrance',
+                  'cashier' => 'Mark Morales',
+                  'float' => '₱5,000.00',
+                  'cash' => '₱38,150.00',
+                  'start' => '07:00 AM (Today)',
+                  'status' => 'Open Shift',
+                  'status_badge' => 'bg-success-subtle text-success',
+                  'status_icon' => 'ph-circle-wavy-check'
+                ],
+                [
+                  'id' => 'TERM-03',
+                  'location' => 'Pharmacy Central Station',
+                  'sub' => 'Outpatient Pharmacy Annex',
+                  'cashier' => 'Sarah Gomez',
+                  'float' => '₱3,000.00',
+                  'cash' => '₱59,050.00',
+                  'start' => '08:00 AM (Today)',
+                  'status' => 'Open Shift',
+                  'status_badge' => 'bg-success-subtle text-success',
+                  'status_icon' => 'ph-circle-wavy-check'
+                ],
+                [
+                  'id' => 'TERM-04',
+                  'location' => 'Outpatient Consultation Desk',
+                  'sub' => 'Clinic Building 2F',
+                  'cashier' => 'James Cruz',
+                  'float' => '₱3,000.00',
+                  'cash' => '₱0.00',
+                  'start' => 'Closed',
+                  'status' => 'Closed Shift',
+                  'status_badge' => 'bg-secondary-subtle text-secondary',
+                  'status_icon' => 'ph-minus-circle'
+                ],
+              ];
+            @endphp
+
+            @foreach($terminals as $t)
+            <tr class="terminal-row" style="cursor: pointer;" data-station="{{ strtolower($t['location']) }}" data-status="{{ strtolower($t['status']) }}" onclick="openTerminalDetailsModal({{ json_encode($t) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $t['id'] }}</span></td>
               <td>
-                <div class="fw-semibold text-dark">Main Discharge Desk</div>
-                <span class="fs-xs text-muted">Building A - Ground Floor</span>
+                <div class="fw-semibold text-dark">{{ $t['location'] }}</div>
+                <span class="fs-xs text-muted">{{ $t['sub'] }}</span>
               </td>
-              <td>Anna Reyes</td>
-              <td class="text-end text-muted font-monospace">₱5,000.00</td>
-              <td class="text-end text-success fw-bold font-monospace">₱45,200.00</td>
-              <td><span class="text-nowrap">07:00 AM (Today)</span></td>
-              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-circle-wavy-check me-1"></i> Open Shift</span></td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-outline-primary py-1 px-2" data-bs-toggle="modal" data-bs-target="#closeShiftModal"><i class="ph ph-stop-circle me-1"></i> Close &amp; Remit Shift</button>
-              </td>
-            </tr>
-            <tr>
-              <td><span class="font-monospace text-primary fw-bold">TERM-02</span></td>
-              <td>
-                <div class="fw-semibold text-dark">Emergency Room (ER) Cashier</div>
-                <span class="fs-xs text-muted">Emergency Ward Entrance</span>
-              </td>
-              <td>Mark Morales</td>
-              <td class="text-end text-muted font-monospace">₱5,000.00</td>
-              <td class="text-end text-success fw-bold font-monospace">₱38,150.00</td>
-              <td><span class="text-nowrap">07:00 AM (Today)</span></td>
-              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-circle-wavy-check me-1"></i> Open Shift</span></td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-outline-primary py-1 px-2" data-bs-toggle="modal" data-bs-target="#closeShiftModal"><i class="ph ph-stop-circle me-1"></i> Close &amp; Remit Shift</button>
-              </td>
-            </tr>
-            <tr>
-              <td><span class="font-monospace text-primary fw-bold">TERM-03</span></td>
-              <td>
-                <div class="fw-semibold text-dark">Pharmacy Central Station</div>
-                <span class="fs-xs text-muted">Outpatient Pharmacy Annex</span>
-              </td>
-              <td>Sarah Gomez</td>
-              <td class="text-end text-muted font-monospace">₱3,000.00</td>
-              <td class="text-end text-success fw-bold font-monospace">₱59,050.00</td>
-              <td><span class="text-nowrap">08:00 AM (Today)</span></td>
-              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-circle-wavy-check me-1"></i> Open Shift</span></td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-outline-primary py-1 px-2" data-bs-toggle="modal" data-bs-target="#closeShiftModal"><i class="ph ph-stop-circle me-1"></i> Close &amp; Remit Shift</button>
-              </td>
-            </tr>
-            <tr>
-              <td><span class="font-monospace text-primary fw-bold">TERM-04</span></td>
-              <td>
-                <div class="fw-semibold text-dark">Outpatient Consultation Desk</div>
-                <span class="fs-xs text-muted">Clinic Building 2F</span>
-              </td>
-              <td>James Cruz</td>
-              <td class="text-end text-muted font-monospace">₱3,000.00</td>
-              <td class="text-end text-muted font-monospace">₱0.00</td>
-              <td><span class="text-nowrap">Closed</span></td>
-              <td><span class="badge bg-secondary-subtle text-secondary"><i class="ph ph-minus-circle me-1"></i> Closed Shift</span></td>
-              <td class="text-end">
+              <td class="fw-semibold text-dark">{{ $t['cashier'] }}</td>
+              <td class="text-end text-muted font-monospace">{{ $t['float'] }}</td>
+              <td class="text-end text-success fw-bold font-monospace">{{ $t['cash'] }}</td>
+              <td><span class="text-nowrap font-monospace fs-xs">{{ $t['start'] }}</span></td>
+              <td><span class="badge {{ $t['status_badge'] }}"><i class="ph {{ $t['status_icon'] }} me-1"></i> {{ $t['status'] }}</span></td>
+              <td class="text-end" onclick="event.stopPropagation();">
+                @if($t['status'] === 'Open Shift')
+                <button class="btn btn-sm btn-outline-primary py-1 px-2" data-bs-toggle="modal" data-bs-target="#closeShiftModal"><i class="ph ph-stop-circle me-1"></i> Close &amp; Remit</button>
+                @else
                 <button class="btn btn-sm btn-primary py-1 px-2" data-bs-toggle="modal" data-bs-target="#openShiftModal"><i class="ph ph-play me-1"></i> Start Shift</button>
+                @endif
               </td>
             </tr>
+            @endforeach
           </tbody>
         </table>
+      </div>
+    </div>
+    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
+      <span class="text-muted fs-xs" id="terminalSummaryText">Showing {{ count($terminals) }} Terminals</span>
+      <nav aria-label="Terminal Pagination">
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
+          <li class="page-item active"><a class="page-link" href="#">1</a></li>
+          <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Terminal Details (Executive Design) -->
+<div class="modal fade" id="terminalDetailsModal" tabindex="-1" aria-labelledby="terminalDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header bg-white border-bottom p-4 pb-3">
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1" id="detailTermId">TERM-01</span>
+            <span class="badge bg-success-subtle text-success" id="detailTermStatus"><i class="ph ph-circle-wavy-check me-1"></i> Open Shift</span>
+          </div>
+          <h4 class="modal-title fw-bold text-dark mb-0" id="detailTermLocation">Main Discharge Desk</h4>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-4 bg-light-subtle">
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <div class="bg-white border rounded-3 p-3 text-center">
+              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Current Drawer Cash</span>
+              <h4 class="fw-bold text-success mb-0 font-monospace" id="detailTermCash">₱45,200.00</h4>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="bg-white border rounded-3 p-3 text-center">
+              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Opening Cash Float</span>
+              <h4 class="fw-bold text-dark mb-0 font-monospace" id="detailTermFloat">₱5,000.00</h4>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white border rounded-3 p-3 mb-4">
+          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-desktop me-1 text-primary"></i> Station &amp; Cashier Assignment</h6>
+          <div class="d-flex flex-column gap-2 fs-xs">
+            <div class="d-flex justify-content-between border-bottom pb-2">
+              <span class="text-muted">Assigned Cashier Officer</span>
+              <span class="fw-semibold text-dark" id="detailTermCashier">Anna Reyes</span>
+            </div>
+            <div class="d-flex justify-content-between border-bottom pb-2">
+              <span class="text-muted">Physical Location</span>
+              <span class="text-dark" id="detailTermSub">Building A - Ground Floor</span>
+            </div>
+            <div class="d-flex justify-content-between pt-1">
+              <span class="text-muted">Shift Opened Timestamp</span>
+              <span class="font-monospace text-primary" id="detailTermStart">07:00 AM (Today)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit Trail & Segregation of Duties -->
+        <div class="bg-white border rounded-3 p-3">
+          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-success"></i> Audit Trail &amp; Vault Remittance Verification</h6>
+          <div class="d-flex flex-column gap-2 fs-xs">
+            <div class="d-flex justify-content-between border-bottom pb-2">
+              <span class="text-muted">Vault Teller Sign-off:</span>
+              <span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> Float Verified &amp; Cleared</span>
+            </div>
+            <div class="d-flex justify-content-between border-bottom pb-2">
+              <span class="text-muted">System Log Ref:</span>
+              <span class="font-monospace text-muted">LOG-TERM-2026-001 | {{ date('Y-m-d H:i:s') }} PST</span>
+            </div>
+            <div class="d-flex justify-content-between pt-1">
+              <span class="text-muted">Discrepancy Status:</span>
+              <span class="fw-semibold text-success"><i class="ph ph-check-circle me-1"></i> Zero Variance (Exact Match)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer bg-white border-top p-3">
+        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
       </div>
     </div>
   </div>
@@ -209,12 +296,11 @@
           </div>
           <div class="mb-3">
             <label class="form-label small fw-semibold">Assigned Cashier <span class="text-danger">*</span></label>
-            <input type="text" class="form-control form-control-sm" value="{{ auth()->user()->name ?? 'Anna Reyes' }}" required>
+            <input type="text" class="form-control form-control-sm" value="Active Cashier Officer" required>
           </div>
           <div class="mb-3">
             <label class="form-label small fw-semibold">Opening Cash Float (₱) <span class="text-danger">*</span></label>
             <input type="number" step="0.01" class="form-control form-control-sm text-end font-monospace" value="5000.00" required>
-            <span class="fs-xs text-muted">Provided by vault teller for change drawer.</span>
           </div>
           <div class="d-flex justify-content-end gap-2 mt-4">
             <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
@@ -226,7 +312,7 @@
   </div>
 </div>
 
-<!-- Modal: Close & Remit Shift (Z-Read & Denomination Counter) -->
+<!-- Modal: Close & Remit Shift -->
 <div class="modal fade" id="closeShiftModal" tabindex="-1" aria-labelledby="closeShiftModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content border-0 shadow">
@@ -246,34 +332,10 @@
               <input type="text" class="form-control form-control-sm bg-light text-end font-monospace text-success fw-bold" value="₱45,200.00" readonly>
             </div>
           </div>
-
-          <h6 class="fw-bold small mb-2 text-uppercase text-muted">Physical Bill &amp; Coin Denomination Count</h6>
-          <div class="table-responsive mb-3">
-            <table class="table table-sm table-bordered align-middle">
-              <thead class="table-light fs-xs">
-                <tr><th>Denomination</th><th style="width: 120px;">Bill / Coin Count</th><th class="text-end">Total Amount (₱)</th></tr>
-              </thead>
-              <tbody class="fs-xs">
-                <tr><td>₱1,000 Bill</td><td><input type="number" class="form-control form-control-sm text-center py-0" value="40"></td><td class="text-end font-monospace">₱40,000.00</td></tr>
-                <tr><td>₱500 Bill</td><td><input type="number" class="form-control form-control-sm text-center py-0" value="8"></td><td class="text-end font-monospace">₱4,000.00</td></tr>
-                <tr><td>₱200 Bill</td><td><input type="number" class="form-control form-control-sm text-center py-0" value="5"></td><td class="text-end font-monospace">₱1,000.00</td></tr>
-                <tr><td>₱100 Bill</td><td><input type="number" class="form-control form-control-sm text-center py-0" value="2"></td><td class="text-end font-monospace">₱200.00</td></tr>
-                <tr><td>Coins &amp; Small Bills</td><td><input type="number" class="form-control form-control-sm text-center py-0" value="0"></td><td class="text-end font-monospace">₱0.00</td></tr>
-              </tbody>
-              <tfoot class="table-light">
-                <tr>
-                  <th colspan="2" class="text-end">Total Physical Cash Counted:</th>
-                  <th class="text-end font-monospace text-primary fs-6">₱45,200.00</th>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-
           <div class="alert alert-success d-flex align-items-center py-2 mb-3 fs-xs">
             <i class="ph ph-check-circle fs-5 me-2"></i>
             <div>Physical Cash drawer matches system receipts perfectly! Zero discrepancy.</div>
           </div>
-
           <div class="d-flex justify-content-end gap-2">
             <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
             <button type="submit" class="btn btn-sm btn-warning"><i class="ph ph-file-arrow-up me-1"></i> Remit Funds to Vault &amp; Close Shift</button>
@@ -284,3 +346,90 @@
   </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function openTerminalDetailsModal(t) {
+  if (!t) return;
+
+  document.getElementById('detailTermId').textContent = t.id || 'TERM-00';
+  document.getElementById('detailTermLocation').textContent = t.location || 'Location';
+  document.getElementById('detailTermCashier').textContent = t.cashier || 'Cashier';
+  document.getElementById('detailTermSub').textContent = t.sub || 'Sub-location';
+  document.getElementById('detailTermFloat').textContent = t.float || '₱0.00';
+  document.getElementById('detailTermCash').textContent = t.cash || '₱0.00';
+  document.getElementById('detailTermStart').textContent = t.start || '-';
+
+  const statusEl = document.getElementById('detailTermStatus');
+  if (statusEl) {
+    statusEl.textContent = t.status;
+    statusEl.className = 'badge ' + (t.status_badge || 'bg-success-subtle text-success');
+  }
+
+  const modalEl = document.getElementById('terminalDetailsModal');
+  if (modalEl && window.bootstrap) {
+    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modalInstance.show();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('terminalSearchInput');
+  const stationSelect = document.getElementById('stationSelect');
+  const shiftStatusSelect = document.getElementById('shiftStatusSelect');
+  const summaryText = document.getElementById('terminalSummaryText');
+
+  function filterTerminals() {
+    const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const selectedStation = stationSelect ? stationSelect.value.toLowerCase() : '';
+    const selectedStatus = shiftStatusSelect ? shiftStatusSelect.value.toLowerCase() : '';
+    const rows = document.querySelectorAll('.terminal-row');
+    let visibleCount = 0;
+
+    rows.forEach(function(row) {
+      const rowStation = row.getAttribute('data-station') || '';
+      const rowStatus = row.getAttribute('data-status') || '';
+      const rowText = row.textContent.toLowerCase();
+
+      const matchStation = !selectedStation || rowStation.includes(selectedStation);
+      const matchStatus = !selectedStatus || rowStatus.includes(selectedStatus);
+      const matchSearch = !searchQuery || rowText.includes(searchQuery);
+
+      if (matchStation && matchStatus && matchSearch) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    if (summaryText) {
+      summaryText.textContent = `Showing ${visibleCount} Terminal${visibleCount !== 1 ? 's' : ''}`;
+    }
+
+    let emptyRow = document.getElementById('noTerminalRow');
+    const tbody = document.querySelector('#terminalTable tbody');
+    if (visibleCount === 0) {
+      if (!emptyRow && tbody) {
+        emptyRow = document.createElement('tr');
+        emptyRow.id = 'noTerminalRow';
+        emptyRow.innerHTML = `<td colspan="8" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No POS terminals found matching the current filter.</td>`;
+        tbody.appendChild(emptyRow);
+      }
+      if (emptyRow) emptyRow.style.display = '';
+    } else if (emptyRow) {
+      emptyRow.style.display = 'none';
+    }
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', filterTerminals);
+    searchInput.addEventListener('keyup', filterTerminals);
+  }
+  if (stationSelect) stationSelect.addEventListener('change', filterTerminals);
+  if (shiftStatusSelect) shiftStatusSelect.addEventListener('change', filterTerminals);
+
+  filterTerminals();
+});
+</script>
+@endpush

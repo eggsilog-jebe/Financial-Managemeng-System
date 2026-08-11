@@ -19,7 +19,7 @@
       <h1 class="h3 mb-0 font-weight-bold">Double-Entry Journal Entries</h1>
     </div>
     <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm" type="button"><i class="ph ph-file-arrow-down me-1"></i> Export Journal Log</button>
+      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Exporting Journal Entry Log PDF...');"><i class="ph ph-file-arrow-down me-1"></i> Export Journal Log</button>
       <button id="btnNewJournal" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#newJournalModal"><i class="ph ph-plus-circle me-1"></i> New Journal Entry</button>
     </div>
   </div>
@@ -64,37 +64,33 @@
     </div>
   </div>
 
-  <!-- Filter Toolbar -->
-  <div class="card border-0 shadow-sm rounded-3 mb-4">
-    <div class="card-body p-3">
-      <div class="row g-2 align-items-center">
-        <div class="col-md-6">
-          <div class="input-group input-group-sm">
-            <span class="input-group-text bg-light border-end-0" id="searchBtnIcon" style="cursor: pointer;" title="Click to Search"><i class="ph ph-magnifying-glass text-muted"></i></span>
-            <input type="text" id="journalSearchInput" class="form-control bg-light border-start-0" placeholder="Search Entry Ref, Description, or Account...">
-          </div>
-        </div>
-        <div class="col-md-3">
-          <select id="journalStatusSelect" class="form-select form-select-sm bg-light">
-            <option value="">All Posting Statuses</option>
+  <!-- Data Table Card -->
+  <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-transparent border-bottom p-3">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div class="d-flex align-items-center gap-2">
+          <label for="journalStatusSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Status:</label>
+          <select id="journalStatusSelect" class="form-select form-select-sm bg-light" style="min-width: 180px;">
+            <option value="" selected>All Posting Statuses</option>
             <option value="posted">Posted to Ledger</option>
             <option value="draft">Draft Entry</option>
           </select>
         </div>
-        <div class="col-md-3">
-          <select id="journalTypeSelect" class="form-select form-select-sm bg-light">
-            <option value="">All Journal Types</option>
+        <div class="d-flex align-items-center gap-2">
+          <label for="journalTypeSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap">Type:</label>
+          <select id="journalTypeSelect" class="form-select form-select-sm bg-light" style="min-width: 180px;">
+            <option value="" selected>All Journal Types</option>
             <option value="general">General Journal</option>
             <option value="adjusting">Adjusting Entry</option>
             <option value="closing">Closing Entry</option>
           </select>
         </div>
+        <div class="search-box ms-auto" style="width: 260px;">
+          <i class="ph ph-magnifying-glass"></i>
+          <input type="search" id="journalSearchInput" class="form-control form-control-sm" placeholder="Search entry ref, description...">
+        </div>
       </div>
     </div>
-  </div>
-
-  <!-- Data Table Card -->
-  <div class="card border-0 shadow-sm rounded-3">
     <div class="card-body p-0">
       <div class="table-responsive">
         <table id="journalTable" class="table table-hover align-middle mb-0">
@@ -120,8 +116,7 @@
                   'credit' => '₱350,000.00',
                   'status' => 'Posted',
                   'type' => 'general',
-                  'badge' => 'bg-success-subtle text-success',
-                  'icon' => 'ph-check-circle'
+                  'badge' => 'bg-success-subtle text-success'
                 ],
                 [
                   'ref' => 'JE-2026-0044',
@@ -131,8 +126,7 @@
                   'credit' => '₱2,450,000.00',
                   'status' => 'Posted',
                   'type' => 'general',
-                  'badge' => 'bg-success-subtle text-success',
-                  'icon' => 'ph-check-circle'
+                  'badge' => 'bg-success-subtle text-success'
                 ],
                 [
                   'ref' => 'JE-2026-0043',
@@ -142,69 +136,23 @@
                   'credit' => '₱85,400.00',
                   'status' => 'Posted',
                   'type' => 'general',
-                  'badge' => 'bg-success-subtle text-success',
-                  'icon' => 'ph-check-circle'
-                ],
-                [
-                  'ref' => 'JE-2026-0042',
-                  'date' => '2026-08-07',
-                  'title' => 'Pharmacy Inventory Bulk Replenishment Payout',
-                  'debit' => '₱120,000.00',
-                  'credit' => '₱120,000.00',
-                  'status' => 'Posted',
-                  'type' => 'general',
-                  'badge' => 'bg-success-subtle text-success',
-                  'icon' => 'ph-check-circle'
-                ],
-                [
-                  'ref' => 'JE-2026-0041',
-                  'date' => '2026-08-06',
-                  'title' => 'MRI Scanner & Radiology Depreciation Expense (Monthly)',
-                  'debit' => '₱125,000.00',
-                  'credit' => '₱125,000.00',
-                  'status' => 'Posted',
-                  'type' => 'adjusting',
-                  'badge' => 'bg-success-subtle text-success',
-                  'icon' => 'ph-check-circle'
-                ],
-                [
-                  'ref' => 'JE-2026-0040',
-                  'date' => '2026-08-05',
-                  'title' => 'Hospital Facility Utility & Electric Power Generator Settlement',
-                  'debit' => '₱215,600.00',
-                  'credit' => '₱215,600.00',
-                  'status' => 'Draft',
-                  'type' => 'general',
-                  'badge' => 'bg-warning-subtle text-warning',
-                  'icon' => 'ph-clock'
-                ],
-                [
-                  'ref' => 'JE-2026-0039',
-                  'date' => '2026-07-31',
-                  'title' => 'Fiscal Period Revenue & Expense Account Closing Entry',
-                  'debit' => '₱5,240,000.00',
-                  'credit' => '₱5,240,000.00',
-                  'status' => 'Posted',
-                  'type' => 'closing',
-                  'badge' => 'bg-info-subtle text-info',
-                  'icon' => 'ph-check-circle'
+                  'badge' => 'bg-success-subtle text-success'
                 ],
               ];
             @endphp
 
-            @foreach($entries as $entry)
-            <tr class="journal-row" data-status="{{ strtolower($entry['status']) }}" data-type="{{ strtolower($entry['type']) }}">
-              <td><span class="font-monospace text-primary fw-bold">{{ $entry['ref'] }}</span></td>
-              <td>{{ $entry['date'] }}</td>
+            @foreach($entries as $je)
+            <tr class="journal-row" style="cursor: pointer;" data-status="{{ strtolower($je['status']) }}" data-type="{{ strtolower($je['type']) }}" onclick="openJournalDetailsModal({{ json_encode($je) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $je['ref'] }}</span></td>
+              <td class="font-monospace fs-xs">{{ $je['date'] }}</td>
               <td>
-                <div class="fw-semibold text-dark">{{ $entry['title'] }}</div>
+                <div class="fw-semibold text-dark">{{ $je['title'] }}</div>
               </td>
-              <td class="text-end text-success fw-bold font-monospace">{{ $entry['debit'] }}</td>
-              <td class="text-end text-danger fw-bold font-monospace">{{ $entry['credit'] }}</td>
-              <td><span class="badge {{ $entry['badge'] }}"><i class="ph {{ $entry['icon'] }} me-1"></i> {{ $entry['status'] }}</span></td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-light border p-1" title="View Double-Entry Voucher"><i class="ph ph-eye"></i></button>
-                <button class="btn btn-sm btn-light border p-1" title="Print Voucher"><i class="ph ph-printer"></i></button>
+              <td class="text-end text-success fw-bold font-monospace">{{ $je['debit'] }}</td>
+              <td class="text-end text-danger fw-bold font-monospace">{{ $je['credit'] }}</td>
+              <td><span class="badge {{ $je['badge'] }}"><i class="ph ph-check-circle me-1"></i> {{ $je['status'] }}</span></td>
+              <td class="text-end" onclick="event.stopPropagation();">
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Journal Voucher" onclick="openJournalDetailsModal({{ json_encode($je) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
             @endforeach
@@ -212,65 +160,127 @@
         </table>
       </div>
     </div>
+    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
+      <span class="text-muted fs-xs" id="journalSummaryText">Showing {{ count($entries) }} Journal Entries</span>
+      <nav aria-label="Journal Pagination">
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
+          <li class="page-item active"><a class="page-link" href="#">1</a></li>
+          <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
+        </ul>
+      </nav>
+    </div>
   </div>
 </div>
 
-<!-- Modal: New Double-Entry Journal Modal -->
+<!-- Modal: In-Depth Journal Details (Executive Design) -->
+<div class="modal fade" id="journalDetailsModal" tabindex="-1" aria-labelledby="journalDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header bg-white border-bottom p-4 pb-3">
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1" id="detailJeRef">JE-2026-0045</span>
+            <span class="badge bg-success-subtle text-success" id="detailJeStatus"><i class="ph ph-check-circle me-1"></i> Posted to Ledger</span>
+          </div>
+          <h4 class="modal-title fw-bold text-dark mb-0" id="detailJeTitle">Outpatient Lab Consultation &amp; Testing Revenue Settlement</h4>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-4 bg-light-subtle">
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <div class="bg-white border rounded-3 p-3 text-center">
+              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Total Debit Amount</span>
+              <h4 class="fw-bold text-success mb-0 font-monospace" id="detailJeDebit">₱350,000.00</h4>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="bg-white border rounded-3 p-3 text-center">
+              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Total Credit Amount</span>
+              <h4 class="fw-bold text-danger mb-0 font-monospace" id="detailJeCredit">₱350,000.00</h4>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white border rounded-3 p-3 mb-4">
+          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-book-open me-1 text-primary"></i> Journal Entry Metadata</h6>
+          <div class="d-flex flex-column gap-2 fs-xs">
+            <div class="d-flex justify-content-between border-bottom pb-2">
+              <span class="text-muted">Journal Voucher Posting Date</span>
+              <span class="font-monospace fw-bold text-dark" id="detailJeDate">2026-08-10</span>
+            </div>
+            <div class="d-flex justify-content-between pt-1">
+              <span class="text-muted">Double-Entry Accounting Rule</span>
+              <span class="font-monospace text-primary fw-bold">Balanced Debit / Credit Double Entry</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit Trail & Segregation of Duties -->
+        <div class="bg-white border rounded-3 p-3">
+          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-success"></i> Audit Trail &amp; General Ledger Verification</h6>
+          <div class="d-flex flex-column gap-2 fs-xs">
+            <div class="d-flex justify-content-between border-bottom pb-2">
+              <span class="text-muted">General Ledger Posting Verification:</span>
+              <span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> Verified by Chief Accountant</span>
+            </div>
+            <div class="d-flex justify-content-between pt-1">
+              <span class="text-muted">System Audit Stamp:</span>
+              <span class="font-monospace text-muted">LOG-JE-2026-0045 | {{ date('Y-m-d H:i:s') }} PST</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer bg-white border-top p-3">
+        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-sm btn-primary" onclick="alert('Exporting Journal Voucher PDF...');"><i class="ph ph-printer me-1"></i> Print Journal Voucher</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: New Journal Entry -->
 <div class="modal fade" id="newJournalModal" tabindex="-1" aria-labelledby="newJournalModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content border-0 shadow">
       <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title font-weight-bold" id="newJournalModalLabel"><i class="ph ph-plus-circle me-2 text-primary"></i>New Double-Entry Journal Transaction</h5>
+        <h5 class="modal-title font-weight-bold" id="newJournalModalLabel"><i class="ph ph-plus-circle me-2 text-primary"></i>Post Double-Entry Journal Voucher</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body p-4">
         <form id="newJournalForm">
           <div class="row g-3">
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Entry Date <span class="text-danger">*</span></label>
+              <label class="form-label small fw-semibold">Journal Entry Date <span class="text-danger">*</span></label>
               <input type="date" id="modalEntryDate" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
             </div>
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Journal Type <span class="text-danger">*</span></label>
               <select id="modalJournalType" class="form-select form-select-sm" required>
-                <option value="general">General Operating Journal</option>
-                <option value="adjusting">Month-End Adjusting Entry</option>
-                <option value="closing">Fiscal Closing Entry</option>
+                <option value="General">General Journal</option>
+                <option value="Adjusting">Adjusting Entry</option>
+                <option value="Closing">Closing Entry</option>
               </select>
             </div>
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Debit Account <span class="text-danger">*</span></label>
-              <select id="modalDebitAccount" class="form-select form-select-sm" required>
-                <option value="1300">1300 - Pharmacy Inventory Asset</option>
-                <option value="5100">5100 - Doctor Salaries Expense</option>
-                <option value="5200">5200 - Medical Equipment Depreciation</option>
-                <option value="4010">4010 - Inpatient Care Revenue</option>
-              </select>
+              <label class="form-label small fw-semibold">Balanced Debit / Credit Amount (₱) <span class="text-danger">*</span></label>
+              <input type="number" id="modalAmount" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace" placeholder="0.00" value="150000.00" required>
             </div>
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Credit Account <span class="text-danger">*</span></label>
-              <select id="modalCreditAccount" class="form-select form-select-sm" required>
-                <option value="1010">1010 - Metrobank Operating Cash</option>
-                <option value="2100">2100 - Accounts Payable Liability</option>
-                <option value="1590">1590 - Accumulated Depreciation</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Transaction Amount (₱) <span class="text-danger">*</span></label>
-              <input type="number" id="modalAmount" step="0.01" min="0.01" class="form-control form-control-sm text-end font-monospace" placeholder="0.00" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Source Document / Reference</label>
-              <input type="text" id="modalReference" class="form-control form-control-sm" placeholder="e.g. Inv #99201 or Depr Schedule">
+              <label class="form-label small fw-semibold">Target Debit Account <span class="text-danger">*</span></label>
+              <input type="text" class="form-control form-control-sm" value="1010 - Cash on Hand - Main Vault" required>
             </div>
             <div class="col-12">
-              <label class="form-label small fw-semibold">Journal Description / Particulars <span class="text-danger">*</span></label>
-              <textarea id="modalDescription" class="form-control form-control-sm" rows="2" placeholder="Record purchase of emergency room antibiotics..." required></textarea>
+              <label class="form-label small fw-semibold">Journal Explanation / Remarks <span class="text-danger">*</span></label>
+              <input type="text" id="modalDescription" class="form-control form-control-sm" placeholder="e.g. Settlement of outpatient consultation fees..." required>
             </div>
           </div>
           <div class="d-flex justify-content-end gap-2 mt-4">
             <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-check me-1"></i> Post Double-Entry</button>
+            <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-check me-1"></i> Post Journal Entry</button>
           </div>
         </form>
       </div>
@@ -281,59 +291,35 @@
 
 @push('scripts')
 <script>
+function openJournalDetailsModal(je) {
+  if (!je) return;
+
+  document.getElementById('detailJeTitle').textContent = je.title || 'Journal Description';
+  document.getElementById('detailJeRef').textContent = je.ref || 'JE-000';
+  document.getElementById('detailJeDate').textContent = je.date || '-';
+  document.getElementById('detailJeDebit').textContent = je.debit || '₱0.00';
+  document.getElementById('detailJeCredit').textContent = je.credit || '₱0.00';
+
+  const statusEl = document.getElementById('detailJeStatus');
+  if (statusEl) {
+    statusEl.textContent = je.status;
+    statusEl.className = 'badge ' + (je.badge || 'bg-success-subtle text-success');
+  }
+
+  const modalEl = document.getElementById('journalDetailsModal');
+  if (modalEl && window.bootstrap) {
+    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modalInstance.show();
+  }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('journalSearchInput');
   const statusSelect = document.getElementById('journalStatusSelect');
   const typeSelect = document.getElementById('journalTypeSelect');
-  const searchInput = document.getElementById('journalSearchInput');
-  const filterBtn = document.getElementById('journalFilterBtn');
-  const searchIcon = document.getElementById('searchBtnIcon');
-
-  function filterJournals() {
-    const statusVal = statusSelect ? statusSelect.value.toLowerCase() : '';
-    const typeVal = typeSelect ? typeSelect.value.toLowerCase() : '';
-    const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
-    const rows = document.querySelectorAll('.journal-row');
-    let visibleCount = 0;
-
-    rows.forEach(function(row) {
-      const rowStatus = row.getAttribute('data-status') || ''; // posted, draft
-      const rowType = row.getAttribute('data-type') || ''; // general, adjusting, closing
-      const rowText = row.textContent.toLowerCase();
-
-      const matchStatus = !statusVal || rowStatus === statusVal;
-      const matchType = !typeVal || rowType === typeVal;
-      const matchSearch = !searchQuery || rowText.includes(searchQuery);
-
-      if (matchStatus && matchType && matchSearch) {
-        row.style.display = '';
-        visibleCount++;
-      } else {
-        row.style.display = 'none';
-      }
-    });
-
-    let emptyRow = document.getElementById('noJournalsRow');
-    const tbody = document.querySelector('#journalTable tbody');
-    if (visibleCount === 0) {
-      if (!emptyRow && tbody) {
-        emptyRow = document.createElement('tr');
-        emptyRow.id = 'noJournalsRow';
-        emptyRow.innerHTML = `<td colspan="7" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No journal entries found matching the current filter.</td>`;
-        tbody.appendChild(emptyRow);
-      }
-      if (emptyRow) emptyRow.style.display = '';
-    } else if (emptyRow) {
-      emptyRow.style.display = 'none';
-    }
-  }
-
-  if (statusSelect) statusSelect.addEventListener('change', filterJournals);
-  if (typeSelect) typeSelect.addEventListener('change', filterJournals);
-  if (searchInput) {
-    searchInput.addEventListener('input', filterJournals);
-    searchInput.addEventListener('keyup', filterJournals);
-  }
+  const summaryText = document.getElementById('journalSummaryText');
   const btnNewJournal = document.getElementById('btnNewJournal');
+
   if (btnNewJournal) {
     btnNewJournal.addEventListener('click', function() {
       const modalEl = document.getElementById('newJournalModal');
@@ -344,7 +330,56 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // New Journal Entry Modal Submit Handler
+  function filterJournals() {
+    const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const selectedStatus = statusSelect ? statusSelect.value.toLowerCase() : '';
+    const selectedType = typeSelect ? typeSelect.value.toLowerCase() : '';
+    const rows = document.querySelectorAll('.journal-row');
+    let visibleCount = 0;
+
+    rows.forEach(function(row) {
+      const rowStatus = row.getAttribute('data-status') || '';
+      const rowType = row.getAttribute('data-type') || '';
+      const rowText = row.textContent.toLowerCase();
+
+      const matchStatus = !selectedStatus || rowStatus.includes(selectedStatus);
+      const matchType = !selectedType || rowType.includes(selectedType);
+      const matchSearch = !searchQuery || rowText.includes(searchQuery);
+
+      if (matchStatus && matchType && matchSearch) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    if (summaryText) {
+      summaryText.textContent = `Showing ${visibleCount} Journal Entr${visibleCount !== 1 ? 'ies' : 'y'}`;
+    }
+
+    let emptyRow = document.getElementById('noJournalRow');
+    const tbody = document.querySelector('#journalTable tbody');
+    if (visibleCount === 0) {
+      if (!emptyRow && tbody) {
+        emptyRow = document.createElement('tr');
+        emptyRow.id = 'noJournalRow';
+        emptyRow.innerHTML = `<td colspan="7" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No journal entries found matching the current filter.</td>`;
+        tbody.appendChild(emptyRow);
+      }
+      if (emptyRow) emptyRow.style.display = '';
+    } else if (emptyRow) {
+      emptyRow.style.display = 'none';
+    }
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', filterJournals);
+    searchInput.addEventListener('keyup', filterJournals);
+  }
+  if (statusSelect) statusSelect.addEventListener('change', filterJournals);
+  if (typeSelect) typeSelect.addEventListener('change', filterJournals);
+
   const newJournalForm = document.getElementById('newJournalForm');
   if (newJournalForm) {
     newJournalForm.addEventListener('submit', function(e) {
@@ -352,50 +387,64 @@ document.addEventListener('DOMContentLoaded', function() {
 
       const dateVal = document.getElementById('modalEntryDate').value;
       const typeVal = document.getElementById('modalJournalType').value;
+      const descVal = document.getElementById('modalDescription').value;
       const rawAmount = parseFloat(document.getElementById('modalAmount').value || 0);
       const formattedAmount = '₱' + rawAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const descVal = document.getElementById('modalDescription').value;
+      const nextRef = 'JE-2026-00' + Math.floor(46 + Math.random() * 50);
 
-      // Auto-generate reference code
-      const nextRef = 'JE-2026-00' + (Math.floor(Math.random() * 90) + 46);
+      const jeObj = {
+        ref: nextRef,
+        date: dateVal,
+        title: descVal,
+        debit: formattedAmount,
+        credit: formattedAmount,
+        status: 'Posted',
+        type: typeVal.toLowerCase(),
+        badge: 'bg-success-subtle text-success'
+      };
 
       const tbody = document.querySelector('#journalTable tbody');
       if (tbody) {
         const newRow = document.createElement('tr');
         newRow.className = 'journal-row';
+        newRow.style.cursor = 'pointer';
         newRow.setAttribute('data-status', 'posted');
         newRow.setAttribute('data-type', typeVal.toLowerCase());
 
+        newRow.onclick = function() { openJournalDetailsModal(jeObj); };
+
         newRow.innerHTML = `
           <td><span class="font-monospace text-primary fw-bold">${nextRef}</span></td>
-          <td>${dateVal}</td>
+          <td class="font-monospace fs-xs">${dateVal}</td>
           <td><div class="fw-semibold text-dark">${descVal}</div></td>
           <td class="text-end text-success fw-bold font-monospace">${formattedAmount}</td>
           <td class="text-end text-danger fw-bold font-monospace">${formattedAmount}</td>
           <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> Posted</span></td>
-          <td class="text-end">
-            <button class="btn btn-sm btn-light border p-1" title="View Double-Entry Voucher"><i class="ph ph-eye"></i></button>
-            <button class="btn btn-sm btn-light border p-1" title="Print Voucher"><i class="ph ph-printer"></i></button>
+          <td class="text-end" onclick="event.stopPropagation();">
+            <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Journal Voucher"><i class="ph ph-eye"></i></button>
           </td>
         `;
+
+        const eyeBtn = newRow.querySelector('button[title="View Journal Voucher"]');
+        if (eyeBtn) {
+          eyeBtn.onclick = function(ex) {
+            ex.stopPropagation();
+            openJournalDetailsModal(jeObj);
+          };
+        }
 
         tbody.insertBefore(newRow, tbody.firstChild);
       }
 
-      // Close Modal
       const modalEl = document.getElementById('newJournalModal');
       const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
       if (modalInstance) modalInstance.hide();
 
-      // Reset Form
       newJournalForm.reset();
-
-      // Re-run filter to incorporate new entry
       filterJournals();
     });
   }
 
-  // Initial filter run
   filterJournals();
 });
 </script>

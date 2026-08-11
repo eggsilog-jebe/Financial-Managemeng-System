@@ -17,11 +17,10 @@
         </ol>
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Batch Deposit Slips</h1>
-      <p class="text-muted small mb-0">Consolidate cashier shift cash and bank checks into official batch deposit slips for armored pickup.</p>
     </div>
     <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm" type="button"><i class="ph ph-file-pdf me-1"></i> Download Manifest</button>
-      <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#createDepositSlipModal"><i class="ph ph-plus-circle me-1"></i> Create Deposit Slip</button>
+      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Downloading Armored Transit Manifest...');"><i class="ph ph-file-pdf me-1"></i> Download Manifest</button>
+      <button id="btnCreateSlip" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#createDepositSlipModal"><i class="ph ph-plus-circle me-1"></i> Create Deposit Slip</button>
     </div>
   </div>
 
@@ -34,7 +33,6 @@
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-path fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">3 Batch Slips</h4>
-        <span class="fs-xs text-muted">Total Deposit Value: <strong class="text-primary">₱215,400.00</strong></span>
       </div>
     </div>
     <div class="col-md-3">
@@ -44,7 +42,6 @@
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-money fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱140,400.00</h4>
-        <span class="fs-xs text-muted">Bundled in sealed tamper-proof bags</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -54,7 +51,6 @@
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-bank fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱75,000.00</h4>
-        <span class="fs-xs text-muted">2 Commercial Checks</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -64,48 +60,39 @@
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-truck fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">Armored Pickup</h4>
-        <span class="fs-xs text-muted">Scheduled Today at 04:30 PM</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Filter Toolbar -->
-  <div class="card border-0 shadow-sm rounded-3 mb-4">
-    <div class="card-body p-3">
-      <div class="row g-2 align-items-center">
-        <div class="col-md-4">
-          <div class="input-group input-group-sm">
-            <span class="input-group-text bg-light border-end-0"><i class="ph ph-magnifying-glass text-muted"></i></span>
-            <input type="text" class="form-control bg-light border-start-0" placeholder="Search Slip Ref, Bank Name, or Account...">
-          </div>
-        </div>
-        <div class="col-md-3">
-          <select class="form-select form-select-sm bg-light">
-            <option value="">All Bank Destinations</option>
-            <option value="metrobank">Metrobank #1020 (Operating)</option>
-            <option value="bdo">BDO Unibank #2384 (Collections)</option>
-          </select>
-        </div>
-        <div class="col-md-3">
-          <select class="form-select form-select-sm bg-light">
-            <option value="">All Transit Statuses</option>
-            <option value="ready">Ready for Transport</option>
-            <option value="in_transit">In-Transit (Armored Car)</option>
-            <option value="deposited">Deposited at Branch</option>
-          </select>
-        </div>
-        <div class="col-md-2 text-end">
-          <button class="btn btn-sm btn-light border w-100"><i class="ph ph-funnel me-1"></i> Filter</button>
-        </div>
       </div>
     </div>
   </div>
 
   <!-- Data Table Card -->
   <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-transparent border-bottom p-3">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div class="d-flex align-items-center gap-2">
+          <label for="bankSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Target Bank:</label>
+          <select id="bankSelect" class="form-select form-select-sm bg-light" style="min-width: 200px;">
+            <option value="" selected>All Bank Destinations</option>
+            <option value="metrobank">Metrobank - Main</option>
+            <option value="bdo">BDO Unibank - Collections</option>
+          </select>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <label for="transitStatusSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap">Transit Status:</label>
+          <select id="transitStatusSelect" class="form-select form-select-sm bg-light" style="min-width: 180px;">
+            <option value="" selected>All Transit Statuses</option>
+            <option value="ready">Ready for Transport</option>
+            <option value="deposited">Deposited at Branch</option>
+          </select>
+        </div>
+        <div class="search-box ms-auto" style="width: 260px;">
+          <i class="ph ph-magnifying-glass"></i>
+          <input type="search" id="slipSearchInput" class="form-control form-control-sm" placeholder="Search slip ref, bank, account...">
+        </div>
+      </div>
+    </div>
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+        <table id="slipTable" class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
               <th>Slip Ref</th>
@@ -120,42 +107,146 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td><span class="font-monospace text-primary fw-bold">SLIP-2026-081</span></td>
-              <td>2026-08-08</td>
-              <td><span class="badge bg-light text-dark border">TERM-01, TERM-02</span></td>
+            @php
+              $slips = [
+                [
+                  'ref' => 'SLIP-2026-081',
+                  'date' => '2026-08-08',
+                  'sources' => 'TERM-01, TERM-02',
+                  'bank' => 'Metrobank - Main',
+                  'acc' => '1020-8841-99',
+                  'cash' => '₱35,000.00',
+                  'check' => '₱10,200.00',
+                  'total' => '₱45,200.00',
+                  'status' => 'Ready for Transport',
+                  'status_badge' => 'bg-primary-subtle text-primary',
+                  'status_icon' => 'ph-truck',
+                  'bag_seal' => 'SEAL-BAG-99201'
+                ],
+                [
+                  'ref' => 'SLIP-2026-080',
+                  'date' => '2026-08-07',
+                  'sources' => 'TERM-03 (Pharmacy)',
+                  'bank' => 'BDO Unibank - Collections',
+                  'acc' => '0091-2384-12',
+                  'cash' => '₱105,400.00',
+                  'check' => '₱64,800.00',
+                  'total' => '₱170,200.00',
+                  'status' => 'Deposited at Branch',
+                  'status_badge' => 'bg-success-subtle text-success',
+                  'status_icon' => 'ph-check-circle',
+                  'bag_seal' => 'SEAL-BAG-99180'
+                ],
+              ];
+            @endphp
+
+            @foreach($slips as $s)
+            <tr class="slip-row" style="cursor: pointer;" data-bank="{{ strtolower($s['bank']) }}" data-status="{{ strtolower($s['status']) }}" onclick="openSlipDetailsModal({{ json_encode($s) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $s['ref'] }}</span></td>
+              <td class="font-monospace fs-xs">{{ $s['date'] }}</td>
+              <td><span class="badge bg-light text-dark border">{{ $s['sources'] }}</span></td>
               <td>
-                <div class="fw-semibold text-dark">Metrobank - Main</div>
-                <span class="fs-xs font-monospace text-muted">1020-8841-99</span>
+                <div class="fw-semibold text-dark">{{ $s['bank'] }}</div>
+                <span class="fs-xs font-monospace text-muted">{{ $s['acc'] }}</span>
               </td>
-              <td class="text-end font-monospace">₱35,000.00</td>
-              <td class="text-end font-monospace">₱10,200.00</td>
-              <td class="text-end text-success fw-bold font-monospace">₱45,200.00</td>
-              <td><span class="badge bg-primary-subtle text-primary"><i class="ph ph-truck me-1"></i> Ready for Transport</span></td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-light border p-1" title="Print Slip PDF"><i class="ph ph-printer"></i></button>
-                <button class="btn btn-sm btn-light border p-1" title="View Details"><i class="ph ph-eye"></i></button>
+              <td class="text-end font-monospace">{{ $s['cash'] }}</td>
+              <td class="text-end font-monospace">{{ $s['check'] }}</td>
+              <td class="text-end text-success fw-bold font-monospace">{{ $s['total'] }}</td>
+              <td><span class="badge {{ $s['status_badge'] }}"><i class="ph {{ $s['status_icon'] }} me-1"></i> {{ $s['status'] }}</span></td>
+              <td class="text-end" onclick="event.stopPropagation();">
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Slip Details" onclick="openSlipDetailsModal({{ json_encode($s) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            <tr>
-              <td><span class="font-monospace text-primary fw-bold">SLIP-2026-080</span></td>
-              <td>2026-08-07</td>
-              <td><span class="badge bg-light text-dark border">TERM-03 (Pharmacy)</span></td>
-              <td>
-                <div class="fw-semibold text-dark">BDO Unibank - Collections</div>
-                <span class="fs-xs font-monospace text-muted">0091-2384-12</span>
-              </td>
-              <td class="text-end font-monospace">₱105,400.00</td>
-              <td class="text-end font-monospace">₱64,800.00</td>
-              <td class="text-end text-success fw-bold font-monospace">₱170,200.00</td>
-              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> Deposited at Branch</span></td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-light border p-1" title="Print Slip PDF"><i class="ph ph-printer"></i></button>
-                <button class="btn btn-sm btn-light border p-1" title="View Verification"><i class="ph ph-file-check"></i></button>
-              </td>
-            </tr>
+            @endforeach
           </tbody>
         </table>
+      </div>
+    </div>
+    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
+      <span class="text-muted fs-xs" id="slipSummaryText">Showing {{ count($slips) }} Batch Slips</span>
+      <nav aria-label="Deposit Slip Pagination">
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
+          <li class="page-item active"><a class="page-link" href="#">1</a></li>
+          <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: In-Depth Deposit Slip Details (Executive Design) -->
+<div class="modal fade" id="slipDetailsModal" tabindex="-1" aria-labelledby="slipDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header bg-white border-bottom p-4 pb-3">
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1" id="detailSlipRef">SLIP-2026-081</span>
+            <span class="badge bg-primary-subtle text-primary" id="detailSlipStatus"><i class="ph ph-truck me-1"></i> Ready for Transport</span>
+          </div>
+          <h4 class="modal-title fw-bold text-dark mb-0" id="detailSlipBank">Metrobank - Main</h4>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-4 bg-light-subtle">
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <div class="bg-white border rounded-3 p-3 text-center">
+              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Total Deposit Amount</span>
+              <h4 class="fw-bold text-success mb-0 font-monospace" id="detailSlipTotal">₱45,200.00</h4>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="bg-white border rounded-3 p-3 text-center">
+              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Batch Date</span>
+              <h4 class="fw-bold text-primary mb-0 font-monospace" id="detailSlipDate">2026-08-08</h4>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white border rounded-3 p-3 mb-4">
+          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-bank me-1 text-primary"></i> Target Account &amp; Remittances</h6>
+          <div class="d-flex flex-column gap-2 fs-xs">
+            <div class="d-flex justify-content-between border-bottom pb-2">
+              <span class="text-muted">Target Account Number</span>
+              <span class="font-monospace fw-bold text-dark" id="detailSlipAcc">1020-8841-99</span>
+            </div>
+            <div class="d-flex justify-content-between border-bottom pb-2">
+              <span class="text-muted">Source Remittance Terminals</span>
+              <span class="badge bg-light text-dark border" id="detailSlipSources">TERM-01, TERM-02</span>
+            </div>
+            <div class="d-flex justify-content-between pt-1">
+              <span class="text-muted">Vault Security Seal Tag</span>
+              <span class="font-monospace fw-bold text-primary" id="detailSlipSeal">SEAL-BAG-99201</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit Trail & Segregation of Duties -->
+        <div class="bg-white border rounded-3 p-3">
+          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-success"></i> Audit Trail &amp; Armored Transit Verification</h6>
+          <div class="d-flex flex-column gap-2 fs-xs">
+            <div class="d-flex justify-content-between border-bottom pb-2">
+              <span class="text-muted">Armored Courier Service:</span>
+              <span class="fw-semibold text-dark"><i class="ph ph-shield me-1 text-primary"></i> Secure-Way Armored Logistics (ID #9901)</span>
+            </div>
+            <div class="d-flex justify-content-between border-bottom pb-2">
+              <span class="text-muted">Bank Machine Verification:</span>
+              <span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> Teller Machine Stamp Verified</span>
+            </div>
+            <div class="d-flex justify-content-between pt-1">
+              <span class="text-muted">System Audit Log:</span>
+              <span class="font-monospace text-muted">LOG-SLIP-2026-081 | {{ date('Y-m-d H:i:s') }} PST</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer bg-white border-top p-3">
+        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-sm btn-primary" onclick="alert('Printing Deposit Slip PDF...');"><i class="ph ph-printer me-1"></i> Print Deposit Slip</button>
       </div>
     </div>
   </div>
@@ -166,43 +257,39 @@
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content border-0 shadow">
       <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title font-weight-bold" id="createDepositSlipModalLabel"><i class="ph ph-path me-2 text-primary"></i>Create Batch Deposit Slip</h5>
+        <h5 class="modal-title font-weight-bold" id="createDepositSlipModalLabel"><i class="ph ph-plus-circle me-2 text-primary"></i>Create Batch Deposit Slip</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body p-4">
-        <form onsubmit="event.preventDefault(); alert('Batch deposit slip created successfully!'); bootstrap.Modal.getInstance(document.getElementById('createDepositSlipModal')).hide();">
+        <form id="depositSlipForm">
           <div class="row g-3">
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Target Hospital Bank Account <span class="text-danger">*</span></label>
-              <select class="form-select form-select-sm" required>
-                <option value="1">Metrobank Main Branch (Acc #1020-8841-99)</option>
-                <option value="2">BDO Unibank Collections (Acc #0091-2384-12)</option>
+              <select id="modalSlipBank" class="form-select form-select-sm" required>
+                <option value="Metrobank - Main">Metrobank Main (Acc #1020-8841-99)</option>
+                <option value="BDO Unibank - Collections">BDO Collections (Acc #0091-2384-12)</option>
               </select>
             </div>
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Armored Pickup Schedule Date <span class="text-danger">*</span></label>
-              <input type="date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
+              <label class="form-label small fw-semibold">Armored Pickup Date <span class="text-danger">*</span></label>
+              <input type="date" id="modalSlipDate" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
             </div>
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Total Cash to Bundle (₱) <span class="text-danger">*</span></label>
-              <input type="number" step="0.01" class="form-control form-control-sm text-end font-monospace" placeholder="0.00" required>
+              <label class="form-label small fw-semibold">Total Cash Amount (₱) <span class="text-danger">*</span></label>
+              <input type="number" id="modalSlipCash" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace" placeholder="0.00" value="50000.00" required>
             </div>
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Total Checks Included (₱)</label>
-              <input type="number" step="0.01" class="form-control form-control-sm text-end font-monospace" placeholder="0.00">
+              <label class="form-label small fw-semibold">Total Check Amount (₱)</label>
+              <input type="number" id="modalSlipCheck" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace" placeholder="0.00" value="15000.00">
             </div>
             <div class="col-12">
-              <label class="form-label small fw-semibold">Check References / Bank List</label>
-              <input type="text" class="form-control form-control-sm" placeholder="e.g. BDO Check #44910 (₱65,000.00), BPI Check #1002 (₱10,000.00)">
-            </div>
-            <div class="col-12">
-              <label class="form-label small fw-semibold">Vault Security Bag Seal Tag Number</label>
-              <input type="text" class="form-control form-control-sm font-monospace" placeholder="e.g. SEAL-BAG-99201">
+              <label class="form-label small fw-semibold">Vault Security Seal Tag Number <span class="text-danger">*</span></label>
+              <input type="text" id="modalSlipSeal" class="form-control form-control-sm font-monospace" placeholder="e.g. SEAL-BAG-99202" required>
             </div>
           </div>
           <div class="d-flex justify-content-end gap-2 mt-4">
             <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-check me-1"></i> Generate &amp; Seal Batch Slip</button>
+            <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-check me-1"></i> Generate Deposit Slip</button>
           </div>
         </form>
       </div>
@@ -210,3 +297,181 @@
   </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function openSlipDetailsModal(s) {
+  if (!s) return;
+
+  document.getElementById('detailSlipRef').textContent = s.ref || 'SLIP-000';
+  document.getElementById('detailSlipBank').textContent = s.bank || 'Bank Name';
+  document.getElementById('detailSlipAcc').textContent = s.acc || '-';
+  document.getElementById('detailSlipSources').textContent = s.sources || '-';
+  document.getElementById('detailSlipTotal').textContent = s.total || '₱0.00';
+  document.getElementById('detailSlipDate').textContent = s.date || '-';
+  document.getElementById('detailSlipSeal').textContent = s.bag_seal || 'SEAL-BAG-000';
+
+  const statusEl = document.getElementById('detailSlipStatus');
+  if (statusEl) {
+    statusEl.textContent = s.status;
+    statusEl.className = 'badge ' + (s.status_badge || 'bg-primary-subtle text-primary');
+  }
+
+  const modalEl = document.getElementById('slipDetailsModal');
+  if (modalEl && window.bootstrap) {
+    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modalInstance.show();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('slipSearchInput');
+  const bankSelect = document.getElementById('bankSelect');
+  const transitStatusSelect = document.getElementById('transitStatusSelect');
+  const summaryText = document.getElementById('slipSummaryText');
+  const btnCreateSlip = document.getElementById('btnCreateSlip');
+
+  if (btnCreateSlip) {
+    btnCreateSlip.addEventListener('click', function() {
+      const modalEl = document.getElementById('createDepositSlipModal');
+      if (modalEl && window.bootstrap) {
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modalInstance.show();
+      }
+    });
+  }
+
+  function filterSlips() {
+    const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const selectedBank = bankSelect ? bankSelect.value.toLowerCase() : '';
+    const selectedStatus = transitStatusSelect ? transitStatusSelect.value.toLowerCase() : '';
+    const rows = document.querySelectorAll('.slip-row');
+    let visibleCount = 0;
+
+    rows.forEach(function(row) {
+      const rowBank = row.getAttribute('data-bank') || '';
+      const rowStatus = row.getAttribute('data-status') || '';
+      const rowText = row.textContent.toLowerCase();
+
+      const matchBank = !selectedBank || rowBank.includes(selectedBank);
+      const matchStatus = !selectedStatus || rowStatus.includes(selectedStatus);
+      const matchSearch = !searchQuery || rowText.includes(searchQuery);
+
+      if (matchBank && matchStatus && matchSearch) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    if (summaryText) {
+      summaryText.textContent = `Showing ${visibleCount} Batch Slip${visibleCount !== 1 ? 's' : ''}`;
+    }
+
+    let emptyRow = document.getElementById('noSlipRow');
+    const tbody = document.querySelector('#slipTable tbody');
+    if (visibleCount === 0) {
+      if (!emptyRow && tbody) {
+        emptyRow = document.createElement('tr');
+        emptyRow.id = 'noSlipRow';
+        emptyRow.innerHTML = `<td colspan="9" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No deposit slips found matching the current filter.</td>`;
+        tbody.appendChild(emptyRow);
+      }
+      if (emptyRow) emptyRow.style.display = '';
+    } else if (emptyRow) {
+      emptyRow.style.display = 'none';
+    }
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', filterSlips);
+    searchInput.addEventListener('keyup', filterSlips);
+  }
+  if (bankSelect) bankSelect.addEventListener('change', filterSlips);
+  if (transitStatusSelect) transitStatusSelect.addEventListener('change', filterSlips);
+
+  const depositSlipForm = document.getElementById('depositSlipForm');
+  if (depositSlipForm) {
+    depositSlipForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const bankVal = document.getElementById('modalSlipBank').value;
+      const dateVal = document.getElementById('modalSlipDate').value;
+      const rawCash = parseFloat(document.getElementById('modalSlipCash').value || 0);
+      const rawCheck = parseFloat(document.getElementById('modalSlipCheck').value || 0);
+      const formattedCash = '₱' + rawCash.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const formattedCheck = '₱' + rawCheck.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const formattedTotal = '₱' + (rawCash + rawCheck).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const sealVal = document.getElementById('modalSlipSeal').value || 'SEAL-NEW-001';
+      const nextRef = 'SLIP-2026-' + Math.floor(82 + Math.random() * 20);
+
+      let accNum = '1020-8841-99';
+      if (bankVal.includes('BDO')) accNum = '0091-2384-12';
+
+      const slipObj = {
+        ref: nextRef,
+        date: dateVal,
+        sources: 'TERM-01, TERM-02',
+        bank: bankVal,
+        acc: accNum,
+        cash: formattedCash,
+        check: formattedCheck,
+        total: formattedTotal,
+        status: 'Ready for Transport',
+        status_badge: 'bg-primary-subtle text-primary',
+        status_icon: 'ph-truck',
+        bag_seal: sealVal
+      };
+
+      const tbody = document.querySelector('#slipTable tbody');
+      if (tbody) {
+        const newRow = document.createElement('tr');
+        newRow.className = 'slip-row';
+        newRow.style.cursor = 'pointer';
+        newRow.setAttribute('data-bank', bankVal.toLowerCase());
+        newRow.setAttribute('data-status', 'ready for transport');
+
+        newRow.onclick = function() { openSlipDetailsModal(slipObj); };
+
+        newRow.innerHTML = `
+          <td><span class="font-monospace text-primary fw-bold">${nextRef}</span></td>
+          <td class="font-monospace fs-xs">${dateVal}</td>
+          <td><span class="badge bg-light text-dark border">TERM-01, TERM-02</span></td>
+          <td>
+            <div class="fw-semibold text-dark">${bankVal}</div>
+            <span class="fs-xs font-monospace text-muted">${accNum}</span>
+          </td>
+          <td class="text-end font-monospace">${formattedCash}</td>
+          <td class="text-end font-monospace">${formattedCheck}</td>
+          <td class="text-end text-success fw-bold font-monospace">${formattedTotal}</td>
+          <td><span class="badge bg-primary-subtle text-primary"><i class="ph ph-truck me-1"></i> Ready for Transport</span></td>
+          <td class="text-end" onclick="event.stopPropagation();">
+            <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Slip Details"><i class="ph ph-eye"></i></button>
+          </td>
+        `;
+
+        const eyeBtn = newRow.querySelector('button[title="View Slip Details"]');
+        if (eyeBtn) {
+          eyeBtn.onclick = function(ex) {
+            ex.stopPropagation();
+            openSlipDetailsModal(slipObj);
+          };
+        }
+
+        tbody.insertBefore(newRow, tbody.firstChild);
+      }
+
+      const modalEl = document.getElementById('createDepositSlipModal');
+      const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+      if (modalInstance) modalInstance.hide();
+
+      depositSlipForm.reset();
+      filterSlips();
+    });
+  }
+
+  filterSlips();
+});
+</script>
+@endpush

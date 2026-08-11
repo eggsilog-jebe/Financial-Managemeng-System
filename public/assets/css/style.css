@@ -2,6 +2,10 @@
 @import url("./components/enterprise.css");
 @import url("./components/motion.css");
 
+/* ==========================================================================
+   EXECUTIVE FINANCIAL MANAGEMENT SYSTEM (FMS) ENHANCED DESIGN & UX SYSTEM
+   ========================================================================== */
+
 /* Remove blue oval / blue outline / blue glow on focus across all search bars and inputs */
 .form-control:focus,
 .form-select:focus,
@@ -29,7 +33,6 @@ input:focus {
 
 /* ==========================================================================
    STANDARDIZED SYSTEM-WIDE KPI METRIC SUMMARY CARDS
-   Uniform sizes, identical card heights, clean spacing, and zero overlapping
    ========================================================================== */
 
 .row.g-3 > [class*="col-"] > .card,
@@ -77,7 +80,7 @@ input:focus {
   margin-bottom: 0 !important;
 }
 
-/* Card Primary Value Heading - ALWAYS BLACK across all modules and sub-modules */
+/* Card Primary Value Heading - ALWAYS BLACK across all modules */
 .row.g-3 > [class*="col-"] > .card h4,
 .row.g-3 > [class*="col-"] > .card h3,
 .row.g-3 > [class*="col-"] > .card .h3,
@@ -133,7 +136,7 @@ html[data-theme="dark"] .kpi-card-value {
   line-height: 1 !important;
 }
 
-/* Icon-Only Badges (where badge contains ONLY an icon with no text) */
+/* Icon-Only Badges */
 .badge-icon-only,
 .kpi-icon-badge {
   display: inline-flex !important;
@@ -151,18 +154,41 @@ html[data-theme="dark"] .kpi-card-value {
   font-size: 1.15rem !important;
 }
 
-/* Ensure clean card tables with no overlapping text */
+/* Table Row Smooth Hover Physics */
+.table-hover tbody tr {
+  transition: background-color 0.15s ease, transform 0.15s ease !important;
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(0, 168, 107, 0.035) !important;
+}
+
+/* Table Typography & Spacing */
 .table {
   vertical-align: middle !important;
 }
 
 .table td, .table th {
-  padding: 0.75rem 1rem !important;
+  padding: 0.85rem 1rem !important;
 }
 
-/* ==========================================================================
-   TABLE ACTION BUTTONS ALIGNMENT & DESIGN
-   ========================================================================== */
+.table th {
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  color: #475569 !important;
+  background-color: #f8fafc !important;
+  border-bottom: 2px solid #e2e8f0 !important;
+}
+
+/* Monospace Currency Formatting */
+.font-monospace {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* Table Action Buttons */
 .action-cell {
   white-space: nowrap !important;
   vertical-align: middle !important;
@@ -182,30 +208,33 @@ html[data-theme="dark"] .kpi-card-value {
   line-height: 1.2 !important;
 }
 
-.action-cell .btn-success {
-  background-color: #10b981 !important;
-  border-color: #10b981 !important;
-  color: #ffffff !important;
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.22) !important;
+/* Executive Modal Styling */
+.modal-backdrop.show {
+  opacity: 0.45 !important;
+  backdrop-filter: blur(4px) !important;
 }
 
-.action-cell .btn-success:hover {
-  background-color: #059669 !important;
-  border-color: #059669 !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.35) !important;
+.modal-content {
+  border-radius: 16px !important;
+  border: none !important;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15) !important;
 }
 
-.action-cell .btn-outline-danger {
-  color: #ef4444 !important;
-  border-color: #fca5a5 !important;
-  background-color: #fef2f2 !important;
+/* Modern Minimalist Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-.action-cell .btn-outline-danger:hover {
-  background-color: #ef4444 !important;
-  border-color: #ef4444 !important;
-  color: #ffffff !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.25) !important;
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }

@@ -17,11 +17,10 @@
         </ol>
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Departmental Operating Budgets</h1>
-      <p class="text-muted small mb-0">Detailed breakdown of operational spending caps assigned to hospital heads of department.</p>
     </div>
     <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm" type="button"><i class="ph ph-chart-pie-slice me-1"></i> Department Summary</button>
-      <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#editDepartmentModal"><i class="ph ph-pencil-line me-1"></i> Edit Department Cap</button>
+      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Viewing Department Summary Chart...');"><i class="ph ph-chart-pie-slice me-1"></i> Department Summary</button>
+      <button id="btnEditDept" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#editDepartmentModal"><i class="ph ph-pencil-line me-1"></i> Edit Department Cap</button>
     </div>
   </div>
 
@@ -34,7 +33,6 @@
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-buildings fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">6 Departments</h4>
-        <span class="fs-xs text-muted">ER, ICU, Pharmacy, Surgery, OPD, IT</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -44,7 +42,6 @@
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-vault fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱85,000,000.00</h4>
-        <span class="fs-xs text-muted">Annual approved quota pool</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -54,7 +51,6 @@
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-trend-up fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱42,500,000.00</h4>
-        <span class="fs-xs text-muted">Realized disbursements &amp; POs</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -64,49 +60,40 @@
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-gauge fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">50.0%</h4>
-        <span class="fs-xs text-muted">On Track for Q3/Q4 Target</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Filter Toolbar -->
-  <div class="card border-0 shadow-sm rounded-3 mb-4">
-    <div class="card-body p-3">
-      <div class="row g-2 align-items-center">
-        <div class="col-md-4">
-          <div class="input-group input-group-sm">
-            <span class="input-group-text bg-light border-end-0"><i class="ph ph-magnifying-glass text-muted"></i></span>
-            <input type="text" class="form-control bg-light border-start-0" placeholder="Search Department, Head of Dept, or Code...">
-          </div>
-        </div>
-        <div class="col-md-3">
-          <select class="form-select form-select-sm bg-light">
-            <option value="">All Hospital Wings</option>
-            <option value="clinical">Clinical Services (ER, ICU, Surgery)</option>
-            <option value="pharmacy">Pharmacy &amp; Supplies</option>
-            <option value="admin">Admin &amp; IT Support</option>
-          </select>
-        </div>
-        <div class="col-md-3">
-          <select class="form-select form-select-sm bg-light">
-            <option value="">All Burn Rate Statuses</option>
-            <option value="normal">Normal (&lt; 75%)</option>
-            <option value="warning">High Burn (75% - 90%)</option>
-            <option value="exceeded">Critical / Over Budget (&gt; 90%)</option>
-          </select>
-        </div>
-        <div class="col-md-2 text-end">
-          <button class="btn btn-sm btn-light border w-100"><i class="ph ph-funnel me-1"></i> Filter</button>
-        </div>
       </div>
     </div>
   </div>
 
   <!-- Data Table Card -->
   <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-transparent border-bottom p-3">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div class="d-flex align-items-center gap-2">
+          <label for="wingSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Hospital Wing:</label>
+          <select id="wingSelect" class="form-select form-select-sm bg-light" style="min-width: 200px;">
+            <option value="" selected>All Hospital Wings</option>
+            <option value="cardiology">Clinical (Cardiology &amp; ICU)</option>
+            <option value="pharmacy">Pharmacy &amp; Therapeutics</option>
+            <option value="emergency">Emergency Operations</option>
+          </select>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <label for="burnRateSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap">Burn Status:</label>
+          <select id="burnRateSelect" class="form-select form-select-sm bg-light" style="min-width: 180px;">
+            <option value="" selected>All Burn Statuses</option>
+            <option value="normal">Normal (&lt; 75%)</option>
+            <option value="high">High Burn (75% - 90%)</option>
+          </select>
+        </div>
+        <div class="search-box ms-auto" style="width: 260px;">
+          <i class="ph ph-magnifying-glass"></i>
+          <input type="search" id="deptSearchInput" class="form-control form-control-sm" placeholder="Search department, head, code...">
+        </div>
+      </div>
+    </div>
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+        <table id="deptTable" class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
               <th>Department Name</th>
@@ -119,74 +106,157 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
+            @php
+              $departments = [
+                [
+                  'code' => 'DEPT-ICU-01',
+                  'name' => 'Cardiology & ICU Care',
+                  'head' => 'Dr. Alejandro Santos',
+                  'cap' => '₱22,000,000.00',
+                  'spent' => '₱12,700,000.00',
+                  'available' => '₱9,300,000.00',
+                  'burn' => '57.7%',
+                  'burn_val' => 57.7,
+                  'burn_class' => 'bg-info',
+                  'burn_status' => 'normal'
+                ],
+                [
+                  'code' => 'DEPT-PHARM-02',
+                  'name' => 'Pharmacy & Medical Therapeutics',
+                  'head' => 'Pharm. Elena Rostova',
+                  'cap' => '₱25,000,000.00',
+                  'spent' => '₱19,300,000.00',
+                  'available' => '₱5,700,000.00',
+                  'burn' => '77.2%',
+                  'burn_val' => 77.2,
+                  'burn_class' => 'bg-warning',
+                  'burn_status' => 'high'
+                ],
+                [
+                  'code' => 'DEPT-ER-03',
+                  'name' => 'Emergency Room Operations',
+                  'head' => 'Dr. Marcus Vance',
+                  'cap' => '₱18,000,000.00',
+                  'spent' => '₱8,500,000.00',
+                  'available' => '₱9,500,000.00',
+                  'burn' => '47.2%',
+                  'burn_val' => 47.2,
+                  'burn_class' => 'bg-success',
+                  'burn_status' => 'normal'
+                ],
+              ];
+            @endphp
+
+            @foreach($departments as $d)
+            <tr class="dept-row" style="cursor: pointer;" data-wing="{{ strtolower($d['name']) }}" data-burn="{{ $d['burn_status'] }}" onclick="openDepartmentDetailsModal({{ json_encode($d) }})">
               <td>
-                <div class="fw-bold text-dark">Cardiology &amp; ICU Care</div>
-                <span class="fs-xs font-monospace text-muted">DEPT-ICU-01</span>
+                <div class="fw-bold text-dark">{{ $d['name'] }}</div>
+                <span class="fs-xs font-monospace text-muted">{{ $d['code'] }}</span>
               </td>
-              <td>Dr. Alejandro Santos</td>
-              <td class="text-end font-monospace fw-semibold">₱22,000,000.00</td>
-              <td class="text-end text-primary font-monospace">₱12,700,000.00</td>
-              <td class="text-end text-success fw-bold font-monospace">₱9,300,000.00</td>
-              <td>
-                <div class="d-flex align-items-center gap-2">
-                  <div class="progress flex-grow-1" style="height: 6px;">
-                    <div class="progress-bar bg-info" style="width: 57.7%;"></div>
-                  </div>
-                  <span class="fs-xs fw-semibold">57.7%</span>
-                </div>
-              </td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-light border p-1" title="View Department Ledger"><i class="ph ph-eye"></i></button>
-                <button class="btn btn-sm btn-light border p-1" title="Adjust Cap" data-bs-toggle="modal" data-bs-target="#editDepartmentModal"><i class="ph ph-pencil"></i></button>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <div class="fw-bold text-dark">Pharmacy &amp; Medical Therapeutics</div>
-                <span class="fs-xs font-monospace text-muted">DEPT-PHARM-02</span>
-              </td>
-              <td>Pharm. Elena Rostova</td>
-              <td class="text-end font-monospace fw-semibold">₱25,000,000.00</td>
-              <td class="text-end text-primary font-monospace">₱19,300,000.00</td>
-              <td class="text-end text-warning fw-bold font-monospace">₱5,700,000.00</td>
-              <td>
-                <div class="d-flex align-items-center gap-2">
-                  <div class="progress flex-grow-1" style="height: 6px;">
-                    <div class="progress-bar bg-warning" style="width: 77.2%;"></div>
-                  </div>
-                  <span class="fs-xs fw-semibold text-warning">77.2%</span>
-                </div>
-              </td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-light border p-1" title="View Department Ledger"><i class="ph ph-eye"></i></button>
-                <button class="btn btn-sm btn-light border p-1" title="Adjust Cap" data-bs-toggle="modal" data-bs-target="#editDepartmentModal"><i class="ph ph-pencil"></i></button>
-              </td>
-            </tr>
-            <tr>
-              <td>
-                <div class="fw-bold text-dark">Emergency Room (ER) Operations</div>
-                <span class="fs-xs font-monospace text-muted">DEPT-ER-03</span>
-              </td>
-              <td>Dr. Marcus Vance</td>
-              <td class="text-end font-monospace fw-semibold">₱18,000,000.00</td>
-              <td class="text-end text-primary font-monospace">₱8,500,000.00</td>
-              <td class="text-end text-success fw-bold font-monospace">₱9,500,000.00</td>
+              <td>{{ $d['head'] }}</td>
+              <td class="text-end font-monospace fw-semibold">{{ $d['cap'] }}</td>
+              <td class="text-end text-primary font-monospace">{{ $d['spent'] }}</td>
+              <td class="text-end text-success fw-bold font-monospace">{{ $d['available'] }}</td>
               <td>
                 <div class="d-flex align-items-center gap-2">
                   <div class="progress flex-grow-1" style="height: 6px;">
-                    <div class="progress-bar bg-success" style="width: 47.2%;"></div>
+                    <div class="progress-bar {{ $d['burn_class'] }}" style="width: {{ $d['burn_val'] }}%;"></div>
                   </div>
-                  <span class="fs-xs fw-semibold text-success">47.2%</span>
+                  <span class="fs-xs fw-semibold">{{ $d['burn'] }}</span>
                 </div>
               </td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-light border p-1" title="View Department Ledger"><i class="ph ph-eye"></i></button>
-                <button class="btn btn-sm btn-light border p-1" title="Adjust Cap" data-bs-toggle="modal" data-bs-target="#editDepartmentModal"><i class="ph ph-pencil"></i></button>
+              <td class="text-end" onclick="event.stopPropagation();">
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Department Details" onclick="openDepartmentDetailsModal({{ json_encode($d) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
+            @endforeach
           </tbody>
         </table>
+      </div>
+    </div>
+    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
+      <span class="text-muted fs-xs" id="deptSummaryText">Showing {{ count($departments) }} Departmental Budgets</span>
+      <nav aria-label="Department Pagination">
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
+          <li class="page-item active"><a class="page-link" href="#">1</a></li>
+          <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: In-Depth Department Details (Executive Design) -->
+<div class="modal fade" id="departmentDetailsModal" tabindex="-1" aria-labelledby="departmentDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header bg-white border-bottom p-4 pb-3">
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1" id="detailDeptCode">DEPT-ICU-01</span>
+            <span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> Active Department Unit</span>
+          </div>
+          <h4 class="modal-title fw-bold text-dark mb-0" id="detailDeptName">Cardiology &amp; ICU Care</h4>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-4 bg-light-subtle">
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <div class="bg-white border rounded-3 p-3 text-center">
+              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Annual Cap Limit</span>
+              <h4 class="fw-bold text-dark mb-0 font-monospace" id="detailDeptCap">₱22,000,000.00</h4>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="bg-white border rounded-3 p-3 text-center">
+              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">YTD Spent</span>
+              <h4 class="fw-bold text-primary mb-0 font-monospace" id="detailDeptSpent">₱12,700,000.00</h4>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="bg-white border rounded-3 p-3 text-center">
+              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Available Quota</span>
+              <h4 class="fw-bold text-success mb-0 font-monospace" id="detailDeptAvailable">₱9,300,000.00</h4>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white border rounded-3 p-3 mb-4">
+          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-user-gear me-1 text-primary"></i> Department Head &amp; Quota Utilization</h6>
+          <div class="d-flex flex-column gap-2 fs-xs">
+            <div class="d-flex justify-content-between border-bottom pb-2">
+              <span class="text-muted">Head of Department</span>
+              <span class="fw-bold text-dark" id="detailDeptHead">Dr. Alejandro Santos</span>
+            </div>
+            <div class="d-flex justify-content-between pt-1">
+              <span class="text-muted">Burn Rate Percentage</span>
+              <span class="font-monospace fw-bold text-primary" id="detailDeptBurn">57.7%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit Trail & Segregation of Duties -->
+        <div class="bg-white border rounded-3 p-3">
+          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-success"></i> Audit Trail &amp; Spending Cap Control</h6>
+          <div class="d-flex flex-column gap-2 fs-xs">
+            <div class="d-flex justify-content-between border-bottom pb-2">
+              <span class="text-muted">Over-Budget Lock Protection:</span>
+              <span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> Automatic PO Block Active</span>
+            </div>
+            <div class="d-flex justify-content-between pt-1">
+              <span class="text-muted">System Audit Log:</span>
+              <span class="font-monospace text-muted">LOG-DEPT-2026-ICU | {{ date('Y-m-d H:i:s') }} PST</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer bg-white border-top p-3">
+        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-sm btn-primary" onclick="alert('Exporting Departmental Ledger PDF...');"><i class="ph ph-file-pdf me-1"></i> Department Ledger PDF</button>
       </div>
     </div>
   </div>
@@ -201,22 +271,18 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body p-4">
-        <form onsubmit="event.preventDefault(); alert('Departmental Budget Cap updated!'); bootstrap.Modal.getInstance(document.getElementById('editDepartmentModal')).hide();">
+        <form id="editDeptForm">
           <div class="mb-3">
             <label class="form-label small fw-semibold">Target Department <span class="text-danger">*</span></label>
-            <select class="form-select form-select-sm" required>
-              <option value="DEPT-PHARM-02">Pharmacy &amp; Medical Therapeutics (Pharm. Elena Rostova)</option>
-              <option value="DEPT-ICU-01">Cardiology &amp; ICU Care (Dr. Alejandro Santos)</option>
-              <option value="DEPT-ER-03">Emergency Room Operations (Dr. Marcus Vance)</option>
+            <select id="modalDeptSelect" class="form-select form-select-sm" required>
+              <option value="Cardiology & ICU Care">Cardiology &amp; ICU Care (Dr. Alejandro Santos)</option>
+              <option value="Pharmacy & Medical Therapeutics">Pharmacy &amp; Medical Therapeutics (Pharm. Elena Rostova)</option>
+              <option value="Emergency Room Operations">Emergency Room Operations (Dr. Marcus Vance)</option>
             </select>
           </div>
           <div class="mb-3">
             <label class="form-label small fw-semibold">New Annual Budget Cap (₱) <span class="text-danger">*</span></label>
-            <input type="number" step="0.01" class="form-control form-control-sm text-end font-monospace" value="28000000.00" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Justification for Cap Revision</label>
-            <textarea class="form-control form-control-sm" rows="3" placeholder="Explain reason for cap adjustment (e.g., patient volume spike, unexpected drug cost inflation)..."></textarea>
+            <input type="number" id="modalDeptCap" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace" value="28000000.00" required>
           </div>
           <div class="d-flex justify-content-end gap-2 mt-4">
             <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
@@ -228,3 +294,120 @@
   </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function openDepartmentDetailsModal(d) {
+  if (!d) return;
+
+  document.getElementById('detailDeptCode').textContent = d.code || 'DEPT-000';
+  document.getElementById('detailDeptName').textContent = d.name || 'Department Name';
+  document.getElementById('detailDeptHead').textContent = d.head || '-';
+  document.getElementById('detailDeptCap').textContent = d.cap || '₱0.00';
+  document.getElementById('detailDeptSpent').textContent = d.spent || '₱0.00';
+  document.getElementById('detailDeptAvailable').textContent = d.available || '₱0.00';
+  document.getElementById('detailDeptBurn').textContent = d.burn || '0%';
+
+  const modalEl = document.getElementById('departmentDetailsModal');
+  if (modalEl && window.bootstrap) {
+    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modalInstance.show();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('deptSearchInput');
+  const wingSelect = document.getElementById('wingSelect');
+  const burnRateSelect = document.getElementById('burnRateSelect');
+  const summaryText = document.getElementById('deptSummaryText');
+  const btnEditDept = document.getElementById('btnEditDept');
+
+  if (btnEditDept) {
+    btnEditDept.addEventListener('click', function() {
+      const modalEl = document.getElementById('editDepartmentModal');
+      if (modalEl && window.bootstrap) {
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modalInstance.show();
+      }
+    });
+  }
+
+  function filterDepartments() {
+    const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const selectedWing = wingSelect ? wingSelect.value.toLowerCase() : '';
+    const selectedBurn = burnRateSelect ? burnRateSelect.value.toLowerCase() : '';
+    const rows = document.querySelectorAll('.dept-row');
+    let visibleCount = 0;
+
+    rows.forEach(function(row) {
+      const rowWing = row.getAttribute('data-wing') || '';
+      const rowBurn = row.getAttribute('data-burn') || '';
+      const rowText = row.textContent.toLowerCase();
+
+      const matchWing = !selectedWing || rowWing.includes(selectedWing);
+      const matchBurn = !selectedBurn || rowBurn.includes(selectedBurn);
+      const matchSearch = !searchQuery || rowText.includes(searchQuery);
+
+      if (matchWing && matchBurn && matchSearch) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    if (summaryText) {
+      summaryText.textContent = `Showing ${visibleCount} Departmental Budget${visibleCount !== 1 ? 's' : ''}`;
+    }
+
+    let emptyRow = document.getElementById('noDeptRow');
+    const tbody = document.querySelector('#deptTable tbody');
+    if (visibleCount === 0) {
+      if (!emptyRow && tbody) {
+        emptyRow = document.createElement('tr');
+        emptyRow.id = 'noDeptRow';
+        emptyRow.innerHTML = `<td colspan="7" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No departmental budgets found matching the current filter.</td>`;
+        tbody.appendChild(emptyRow);
+      }
+      if (emptyRow) emptyRow.style.display = '';
+    } else if (emptyRow) {
+      emptyRow.style.display = 'none';
+    }
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', filterDepartments);
+    searchInput.addEventListener('keyup', filterDepartments);
+  }
+  if (wingSelect) wingSelect.addEventListener('change', filterDepartments);
+  if (burnRateSelect) burnRateSelect.addEventListener('change', filterDepartments);
+
+  const editDeptForm = document.getElementById('editDeptForm');
+  if (editDeptForm) {
+    editDeptForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const nameVal = document.getElementById('modalDeptSelect').value;
+      const rawCap = parseFloat(document.getElementById('modalDeptCap').value || 0);
+      const formattedCap = '₱' + rawCap.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      const rows = document.querySelectorAll('.dept-row');
+      rows.forEach(function(r) {
+        if (r.textContent.includes(nameVal)) {
+          const capTd = r.children[2];
+          if (capTd) capTd.textContent = formattedCap;
+        }
+      });
+
+      const modalEl = document.getElementById('editDepartmentModal');
+      const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+      if (modalInstance) modalInstance.hide();
+
+      alert(`Department budget cap for ${nameVal} updated to ${formattedCap}!`);
+    });
+  }
+
+  filterDepartments();
+});
+</script>
+@endpush

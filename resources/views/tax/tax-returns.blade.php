@@ -17,11 +17,10 @@
         </ol>
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Tax Returns &amp; Statutory Filings</h1>
-      <p class="text-muted small mb-0">Monthly and quarterly statutory returns (BIR Form 2550M/Q, Form 1601EQ, Corporate Income Tax Form 1702).</p>
     </div>
     <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm" type="button"><i class="ph ph-calendar-check me-1"></i> BIR Tax Calendar</button>
-      <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#fileReturnModal"><i class="ph ph-file-arrow-up me-1"></i> File Statutory Return</button>
+      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Opening BIR Tax Calendar Deadlines...');"><i class="ph ph-calendar-check me-1"></i> BIR Tax Calendar</button>
+      <button id="btnFileReturn" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#fileReturnModal"><i class="ph ph-file-arrow-up me-1"></i> File Statutory Return</button>
     </div>
   </div>
 
@@ -34,7 +33,6 @@
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">8 Returns</h4>
-        <span class="fs-xs text-muted">100% On-Time Filing Record</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -44,7 +42,6 @@
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-bank fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-primary">₱1,425,000.00</h4>
-        <span class="fs-xs text-muted">Remitted via eFPS Payment</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -54,7 +51,6 @@
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-danger">₱215,000.00</h4>
-        <span class="fs-xs text-muted">Form 2550Q Due Aug 25</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -64,48 +60,40 @@
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-globe fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">Connected</h4>
-        <span class="fs-xs text-muted">BIR eFPS System Synced</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Filter Toolbar -->
-  <div class="card border-0 shadow-sm rounded-3 mb-4">
-    <div class="card-body p-3">
-      <div class="row g-2 align-items-center">
-        <div class="col-md-4">
-          <div class="input-group input-group-sm">
-            <span class="input-group-text bg-light border-end-0"><i class="ph ph-magnifying-glass text-muted"></i></span>
-            <input type="text" class="form-control bg-light border-start-0" placeholder="Search Form Code, Return Title, or Ref...">
-          </div>
-        </div>
-        <div class="col-md-3">
-          <select class="form-select form-select-sm bg-light">
-            <option value="">All BIR Form Types</option>
-            <option value="2550">BIR Form 2550Q (Quarterly VAT)</option>
-            <option value="1601">BIR Form 1601EQ (Withholding Tax)</option>
-            <option value="1702">BIR Form 1702 (Corporate Tax)</option>
-          </select>
-        </div>
-        <div class="col-md-3">
-          <select class="form-select form-select-sm bg-light">
-            <option value="">All Filing Statuses</option>
-            <option value="filed">Filed &amp; Paid</option>
-            <option value="pending">Pending Payment</option>
-          </select>
-        </div>
-        <div class="col-md-2 text-end">
-          <button class="btn btn-sm btn-light border w-100"><i class="ph ph-funnel me-1"></i> Filter</button>
-        </div>
       </div>
     </div>
   </div>
 
   <!-- Data Table Card -->
   <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-transparent border-bottom p-3">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div class="d-flex align-items-center gap-2">
+          <label for="returnFormSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Form Type:</label>
+          <select id="returnFormSelect" class="form-select form-select-sm bg-light" style="min-width: 220px;">
+            <option value="" selected>All BIR Form Types</option>
+            <option value="2550">BIR Form 2550Q (Quarterly VAT)</option>
+            <option value="1601">BIR Form 1601EQ (Withholding Tax)</option>
+            <option value="1702">BIR Form 1702 (Corporate Tax)</option>
+          </select>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <label for="returnStatusSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap">Status:</label>
+          <select id="returnStatusSelect" class="form-select form-select-sm bg-light" style="min-width: 180px;">
+            <option value="" selected>All Statuses</option>
+            <option value="filed">Filed &amp; Remitted</option>
+            <option value="pending">Pending Payment</option>
+          </select>
+        </div>
+        <div class="search-box ms-auto" style="width: 260px;">
+          <i class="ph ph-magnifying-glass"></i>
+          <input type="search" id="returnSearchInput" class="form-control form-control-sm" placeholder="Search form code, title, ref...">
+        </div>
+      </div>
+    </div>
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
+        <table id="taxReturnTable" class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
               <th>Form Code</th>
@@ -118,38 +106,130 @@
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td><span class="font-monospace text-primary fw-bold">BIR FORM 2550Q</span></td>
+            @php
+              $returns = [
+                [
+                  'code' => 'BIR FORM 2550Q',
+                  'form_type' => '2550',
+                  'title' => 'Quarterly Value Added Tax Return',
+                  'ref' => 'eFPS Confirmation Ref: 9940129',
+                  'period' => 'Q2 2026',
+                  'due' => '2026-08-25',
+                  'payable' => '₱215,000.00',
+                  'status' => 'Pending Payment',
+                  'status_badge' => 'bg-warning-subtle text-warning'
+                ],
+                [
+                  'code' => 'BIR FORM 1601EQ',
+                  'form_type' => '1601',
+                  'title' => 'Quarterly Remittance of Creditable Income Taxes (EWT)',
+                  'ref' => 'eFPS Payment Confirmation Ref: 881024',
+                  'period' => 'Q1 2026',
+                  'due' => '2026-04-30',
+                  'payable' => '₱340,000.00',
+                  'status' => 'Filed & Remitted',
+                  'status_badge' => 'bg-success-subtle text-success'
+                ],
+              ];
+            @endphp
+
+            @foreach($returns as $ret)
+            <tr class="return-row" style="cursor: pointer;" data-form="{{ $ret['form_type'] }}" data-status="{{ strtolower($ret['status']) }}" onclick="openTaxReturnDetailsModal({{ json_encode($ret) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $ret['code'] }}</span></td>
               <td>
-                <div class="fw-semibold text-dark">Quarterly Value Added Tax Return</div>
-                <span class="fs-xs text-muted">eFPS Confirmation Ref: 9940129</span>
+                <div class="fw-semibold text-dark">{{ $ret['title'] }}</div>
+                <span class="fs-xs text-muted">{{ $ret['ref'] }}</span>
               </td>
-              <td>Q2 2026</td>
-              <td>2026-08-25</td>
-              <td class="text-end text-danger fw-bold font-monospace">₱215,000.00</td>
-              <td><span class="badge bg-warning-subtle text-warning"><i class="ph ph-clock me-1"></i> Pending Payment</span></td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-success py-1 px-2 fs-xs me-1"><i class="ph ph-bank me-1"></i> Pay via eFPS</button>
-                <button class="btn btn-sm btn-light border p-1" title="View Form PDF"><i class="ph ph-file-pdf"></i></button>
+              <td class="font-monospace fs-xs">{{ $ret['period'] }}</td>
+              <td class="font-monospace fs-xs">{{ $ret['due'] }}</td>
+              <td class="text-end font-monospace fw-bold text-danger">{{ $ret['payable'] }}</td>
+              <td><span class="badge {{ $ret['status_badge'] }}"><i class="ph ph-clock me-1"></i> {{ $ret['status'] }}</span></td>
+              <td class="text-end" onclick="event.stopPropagation();">
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Return Details" onclick="openTaxReturnDetailsModal({{ json_encode($ret) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            <tr>
-              <td><span class="font-monospace text-primary fw-bold">BIR FORM 1601EQ</span></td>
-              <td>
-                <div class="fw-semibold text-dark">Quarterly Remittance of Creditable Income Taxes (EWT)</div>
-                <span class="fs-xs text-muted">eFPS Payment Confirmation Ref: 881024</span>
-              </td>
-              <td>Q1 2026</td>
-              <td>2026-04-30</td>
-              <td class="text-end font-monospace text-muted">₱340,000.00</td>
-              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> Filed &amp; Remitted</span></td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-light border p-1" title="View eFPS Receipt"><i class="ph ph-receipt"></i></button>
-                <button class="btn btn-sm btn-light border p-1" title="View Form PDF"><i class="ph ph-file-pdf"></i></button>
-              </td>
-            </tr>
+            @endforeach
           </tbody>
         </table>
+      </div>
+    </div>
+    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
+      <span class="text-muted fs-xs" id="returnSummaryText">Showing {{ count($returns) }} Statutory Returns</span>
+      <nav aria-label="Return Pagination">
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
+          <li class="page-item active"><a class="page-link" href="#">1</a></li>
+          <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: In-Depth Tax Return Details (Executive Design) -->
+<div class="modal fade" id="taxReturnDetailsModal" tabindex="-1" aria-labelledby="taxReturnDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header bg-white border-bottom p-4 pb-3">
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1" id="detailReturnCode">BIR FORM 2550Q</span>
+            <span class="badge bg-warning-subtle text-warning" id="detailReturnStatus"><i class="ph ph-clock me-1"></i> Pending Payment</span>
+          </div>
+          <h4 class="modal-title fw-bold text-dark mb-0" id="detailReturnTitle">Quarterly Value Added Tax Return</h4>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-4 bg-light-subtle">
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <div class="bg-white border rounded-3 p-3 text-center">
+              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Total Net Tax Payable</span>
+              <h4 class="fw-bold text-danger mb-0 font-monospace" id="detailReturnPayable">₱215,000.00</h4>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="bg-white border rounded-3 p-3 text-center">
+              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Statutory Filing Due Date</span>
+              <h5 class="fw-bold text-dark mb-0 font-monospace" id="detailReturnDue">2026-08-25</h5>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white border rounded-3 p-3 mb-4">
+          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-file-text me-1 text-primary"></i> Filing Metadata &amp; Period Scope</h6>
+          <div class="d-flex flex-column gap-2 fs-xs">
+            <div class="d-flex justify-content-between border-bottom pb-2">
+              <span class="text-muted">Tax Period Covered</span>
+              <span class="font-monospace fw-bold text-dark" id="detailReturnPeriod">Q2 2026</span>
+            </div>
+            <div class="d-flex justify-content-between pt-1">
+              <span class="text-muted">BIR eFPS Reference</span>
+              <span class="font-monospace text-primary fw-bold" id="detailReturnRef">eFPS Confirmation Ref: 9940129</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit Trail & Segregation of Duties -->
+        <div class="bg-white border rounded-3 p-3">
+          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-success"></i> Audit Trail &amp; BIR eFPS Transmission Verification</h6>
+          <div class="d-flex flex-column gap-2 fs-xs">
+            <div class="d-flex justify-content-between border-bottom pb-2">
+              <span class="text-muted">Bureau of Internal Revenue Status:</span>
+              <span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> Transmitted &amp; Electronic Ack Received</span>
+            </div>
+            <div class="d-flex justify-content-between pt-1">
+              <span class="text-muted">System Audit Stamp:</span>
+              <span class="font-monospace text-muted">LOG-RET-2026-001 | {{ date('Y-m-d H:i:s') }} PST</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer bg-white border-top p-3">
+        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-sm btn-primary" onclick="alert('Downloading BIR Filing PDF Brief...');"><i class="ph ph-file-pdf me-1"></i> Download Return PDF</button>
       </div>
     </div>
   </div>
@@ -164,35 +244,27 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body p-4">
-        <form onsubmit="event.preventDefault(); alert('Statutory Return filed successfully!'); bootstrap.Modal.getInstance(document.getElementById('fileReturnModal')).hide();">
+        <form id="fileReturnForm">
           <div class="row g-3">
             <div class="col-md-6">
               <label class="form-label small fw-semibold">BIR Form Code <span class="text-danger">*</span></label>
-              <select class="form-select form-select-sm" required>
-                <option value="2550Q">BIR Form 2550Q (Quarterly VAT Return)</option>
-                <option value="1601EQ">BIR Form 1601EQ (Quarterly EWT Return)</option>
-                <option value="1702">BIR Form 1702-EX (Corporate Income Tax)</option>
+              <select id="modalReturnForm" class="form-select form-select-sm" required>
+                <option value="BIR FORM 2550Q">BIR Form 2550Q (Quarterly VAT Return)</option>
+                <option value="BIR FORM 1601EQ">BIR Form 1601EQ (Quarterly EWT Return)</option>
+                <option value="BIR FORM 1702-EX">BIR Form 1702-EX (Corporate Income Tax)</option>
               </select>
             </div>
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Tax Period Covered <span class="text-danger">*</span></label>
-              <input type="text" class="form-control form-control-sm" placeholder="e.g. Q2 2026 (Apr - Jun)" required>
+              <input type="text" id="modalReturnPeriod" class="form-control form-control-sm" placeholder="e.g. Q3 2026 (Jul - Sep)" value="Q3 2026" required>
             </div>
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Gross Taxable Base (₱) <span class="text-danger">*</span></label>
-              <input type="number" step="0.01" class="form-control form-control-sm text-end font-monospace" placeholder="0.00" required>
+              <label class="form-label small fw-semibold">Statutory Due Date <span class="text-danger">*</span></label>
+              <input type="date" id="modalReturnDue" class="form-control form-control-sm" value="2026-10-25" required>
             </div>
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Total Net Tax Payable (₱) <span class="text-danger">*</span></label>
-              <input type="number" step="0.01" class="form-control form-control-sm text-end font-monospace text-danger fw-bold" placeholder="0.00" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">BIR eFPS Payment Reference No.</label>
-              <input type="text" class="form-control form-control-sm font-monospace" placeholder="e.g. eFPS-PAY-991204">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Upload BIR Filing Confirmation (PDF / Image)</label>
-              <input type="file" class="form-control form-control-sm">
+              <input type="number" id="modalReturnPayable" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace text-danger fw-bold" placeholder="0.00" value="185000.00" required>
             </div>
           </div>
           <div class="d-flex justify-content-end gap-2 mt-4">
@@ -205,3 +277,169 @@
   </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function openTaxReturnDetailsModal(ret) {
+  if (!ret) return;
+
+  document.getElementById('detailReturnCode').textContent = ret.code || 'BIR FORM';
+  document.getElementById('detailReturnTitle').textContent = ret.title || 'Return Name';
+  document.getElementById('detailReturnPeriod').textContent = ret.period || '-';
+  document.getElementById('detailReturnDue').textContent = ret.due || '-';
+  document.getElementById('detailReturnPayable').textContent = ret.payable || '₱0.00';
+  document.getElementById('detailReturnRef').textContent = ret.ref || '-';
+
+  const statusEl = document.getElementById('detailReturnStatus');
+  if (statusEl) {
+    statusEl.textContent = ret.status;
+    statusEl.className = 'badge ' + (ret.status_badge || 'bg-success-subtle text-success');
+  }
+
+  const modalEl = document.getElementById('taxReturnDetailsModal');
+  if (modalEl && window.bootstrap) {
+    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modalInstance.show();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('returnSearchInput');
+  const formSelect = document.getElementById('returnFormSelect');
+  const statusSelect = document.getElementById('returnStatusSelect');
+  const summaryText = document.getElementById('returnSummaryText');
+  const btnFileReturn = document.getElementById('btnFileReturn');
+
+  if (btnFileReturn) {
+    btnFileReturn.addEventListener('click', function() {
+      const modalEl = document.getElementById('fileReturnModal');
+      if (modalEl && window.bootstrap) {
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modalInstance.show();
+      }
+    });
+  }
+
+  function filterReturns() {
+    const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const selectedForm = formSelect ? formSelect.value.toLowerCase() : '';
+    const selectedStatus = statusSelect ? statusSelect.value.toLowerCase() : '';
+    const rows = document.querySelectorAll('.return-row');
+    let visibleCount = 0;
+
+    rows.forEach(function(row) {
+      const rowForm = row.getAttribute('data-form') || '';
+      const rowStatus = row.getAttribute('data-status') || '';
+      const rowText = row.textContent.toLowerCase();
+
+      const matchForm = !selectedForm || rowForm.includes(selectedForm);
+      const matchStatus = !selectedStatus || rowStatus.includes(selectedStatus);
+      const matchSearch = !searchQuery || rowText.includes(searchQuery);
+
+      if (matchForm && matchStatus && matchSearch) {
+        row.style.display = '';
+        visibleCount++;
+      } else {
+        row.style.display = 'none';
+      }
+    });
+
+    if (summaryText) {
+      summaryText.textContent = `Showing ${visibleCount} Statutory Return${visibleCount !== 1 ? 's' : ''}`;
+    }
+
+    let emptyRow = document.getElementById('noReturnRow');
+    const tbody = document.querySelector('#taxReturnTable tbody');
+    if (visibleCount === 0) {
+      if (!emptyRow && tbody) {
+        emptyRow = document.createElement('tr');
+        emptyRow.id = 'noReturnRow';
+        emptyRow.innerHTML = `<td colspan="7" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No tax returns found matching the current filter.</td>`;
+        tbody.appendChild(emptyRow);
+      }
+      if (emptyRow) emptyRow.style.display = '';
+    } else if (emptyRow) {
+      emptyRow.style.display = 'none';
+    }
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', filterReturns);
+    searchInput.addEventListener('keyup', filterReturns);
+  }
+  if (formSelect) formSelect.addEventListener('change', filterReturns);
+  if (statusSelect) statusSelect.addEventListener('change', filterReturns);
+
+  const fileReturnForm = document.getElementById('fileReturnForm');
+  if (fileReturnForm) {
+    fileReturnForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const codeVal = document.getElementById('modalReturnForm').value;
+      const periodVal = document.getElementById('modalReturnPeriod').value;
+      const dueVal = document.getElementById('modalReturnDue').value;
+      const rawPayable = parseFloat(document.getElementById('modalReturnPayable').value || 0);
+      const formattedPayable = '₱' + rawPayable.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const nextRef = 'eFPS Confirmation Ref: ' + Math.floor(9000000 + Math.random() * 999999);
+
+      const retObj = {
+        code: codeVal,
+        form_type: codeVal.includes('2550') ? '2550' : '1601',
+        title: 'Statutory Tax Return',
+        ref: nextRef,
+        period: periodVal,
+        due: dueVal,
+        payable: formattedPayable,
+        status: 'Pending Payment',
+        status_badge: 'bg-warning-subtle text-warning'
+      };
+
+      const tbody = document.querySelector('#taxReturnTable tbody');
+      if (tbody) {
+        const newRow = document.createElement('tr');
+        newRow.className = 'return-row';
+        newRow.style.cursor = 'pointer';
+        newRow.setAttribute('data-form', retObj.form_type);
+        newRow.setAttribute('data-status', 'pending payment');
+
+        newRow.onclick = function() { openTaxReturnDetailsModal(retObj); };
+
+        newRow.innerHTML = `
+          <td><span class="font-monospace text-primary fw-bold">${codeVal}</span></td>
+          <td>
+            <div class="fw-semibold text-dark">Statutory Tax Return</div>
+            <span class="fs-xs text-muted">${nextRef}</span>
+          </td>
+          <td class="font-monospace fs-xs">${periodVal}</td>
+          <td class="font-monospace fs-xs">${dueVal}</td>
+          <td class="text-end font-monospace fw-bold text-danger">${formattedPayable}</td>
+          <td><span class="badge bg-warning-subtle text-warning"><i class="ph ph-clock me-1"></i> Pending Payment</span></td>
+          <td class="text-end" onclick="event.stopPropagation();">
+            <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Return Details"><i class="ph ph-eye"></i></button>
+          </td>
+        `;
+
+        const eyeBtn = newRow.querySelector('button[title="View Return Details"]');
+        if (eyeBtn) {
+          eyeBtn.onclick = function(ex) {
+            ex.stopPropagation();
+            openTaxReturnDetailsModal(retObj);
+          };
+        }
+
+        tbody.insertBefore(newRow, tbody.firstChild);
+      }
+
+      const modalEl = document.getElementById('fileReturnModal');
+      const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+      if (modalInstance) modalInstance.hide();
+
+      fileReturnForm.reset();
+      filterReturns();
+    });
+  }
+
+  filterReturns();
+});
+</script>
+@endpush

@@ -19,7 +19,7 @@
       <h1 class="h3 mb-0 font-weight-bold">Chart of Accounts</h1>
     </div>
     <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm"><i class="ph ph-download-simple me-1"></i> Export COA</button>
+      <button class="btn btn-outline-secondary btn-sm" onclick="alert('Exporting Chart of Accounts Schedule PDF...');"><i class="ph ph-download-simple me-1"></i> Export COA</button>
       <button id="btnAddAccount" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#addAccountModal"><i class="ph ph-plus me-1"></i> Add Account</button>
     </div>
   </div>
@@ -28,45 +28,45 @@
   <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-5 g-3 mb-4">
     <div class="col">
       <div class="card border-0 shadow-sm rounded-3 p-3 h-100">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-muted small">Total Assets</span>
-          <span class="p-2 rounded-3 bg-success-subtle text-success fs-xs"><i class="ph ph-trend-up"></i></span>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small fw-medium">Total Assets</span>
+          <span class="p-2 rounded-3 bg-success-subtle text-success fs-xs"><i class="ph ph-trend-up fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱8,450,000.00</h4>
       </div>
     </div>
     <div class="col">
       <div class="card border-0 shadow-sm rounded-3 p-3 h-100">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-muted small">Total Liabilities</span>
-          <span class="p-2 rounded-3 bg-danger-subtle text-danger fs-xs"><i class="ph ph-warning-circle"></i></span>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small fw-medium">Total Liabilities</span>
+          <span class="p-2 rounded-3 bg-danger-subtle text-danger fs-xs"><i class="ph ph-warning-circle fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱2,120,000.00</h4>
       </div>
     </div>
     <div class="col">
       <div class="card border-0 shadow-sm rounded-3 p-3 h-100">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-muted small">Total Equity</span>
-          <span class="p-2 rounded-3 bg-primary-subtle text-primary fs-xs"><i class="ph ph-scales"></i></span>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small fw-medium">Total Equity</span>
+          <span class="p-2 rounded-3 bg-primary-subtle text-primary fs-xs"><i class="ph ph-scales fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱6,330,000.00</h4>
       </div>
     </div>
     <div class="col">
       <div class="card border-0 shadow-sm rounded-3 p-3 h-100">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-muted small">Operating Revenue</span>
-          <span class="p-2 rounded-3 bg-info-subtle text-info fs-xs"><i class="ph ph-receipt"></i></span>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small fw-medium">Operating Revenue</span>
+          <span class="p-2 rounded-3 bg-info-subtle text-info fs-xs"><i class="ph ph-receipt fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱5,240,000.00</h4>
       </div>
     </div>
     <div class="col">
       <div class="card border-0 shadow-sm rounded-3 p-3 h-100">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-muted small">Operating Expenses</span>
-          <span class="p-2 rounded-3 bg-warning-subtle text-warning fs-xs"><i class="ph ph-chart-line-down"></i></span>
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small fw-medium">Operating Expenses</span>
+          <span class="p-2 rounded-3 bg-warning-subtle text-warning fs-xs"><i class="ph ph-chart-line-down fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱3,180,000.00</h4>
       </div>
@@ -82,7 +82,8 @@
         <div class="d-flex align-items-center gap-2">
           <label for="accountCategorySelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Account Category:</label>
           <select id="accountCategorySelect" class="form-select form-select-sm bg-light" style="min-width: 200px;">
-            <option value="assets" selected>Assets</option>
+            <option value="" selected>All Categories</option>
+            <option value="assets">Assets</option>
             <option value="liabilities">Liabilities</option>
             <option value="equity">Equity</option>
             <option value="revenue">Revenue</option>
@@ -91,7 +92,7 @@
         </div>
 
         <!-- Search Bar -->
-        <div class="search-box" style="width: 280px;">
+        <div class="search-box ms-auto" style="width: 280px;">
           <i class="ph ph-magnifying-glass"></i>
           <input type="search" id="accountSearchInput" class="form-control form-control-sm" placeholder="Search code, name, or unit...">
         </div>
@@ -122,135 +123,78 @@
                   'name' => 'Cash on Hand - Main Vault',
                   'desc' => 'Physical currency drawer held in hospital main vault.',
                   'category' => 'Asset',
+                  'cat_type' => 'assets',
                   'dept' => 'Treasury / Cashier',
                   'type' => 'Debit',
                   'balance' => '₱250,000.00',
-                  'status' => 'Active'
+                  'status' => 'Active',
+                  'badge' => 'bg-success-subtle text-success'
                 ],
                 [
                   'code' => '1020',
                   'name' => 'Operating Bank Account - Metrobank',
                   'desc' => 'Primary commercial bank account for payroll and AP disbursements.',
                   'category' => 'Asset',
+                  'cat_type' => 'assets',
                   'dept' => 'Hospital Treasury',
                   'type' => 'Debit',
                   'balance' => '₱3,420,000.00',
-                  'status' => 'Active'
+                  'status' => 'Active',
+                  'badge' => 'bg-success-subtle text-success'
                 ],
                 [
                   'code' => '1050',
                   'name' => 'Accounts Receivable - Patients & HMOs',
                   'desc' => 'Outstanding billing receivables due from admitted patients and insurers.',
                   'category' => 'Asset',
+                  'cat_type' => 'assets',
                   'dept' => 'Patient Billing / AR',
                   'type' => 'Debit',
                   'balance' => '₱1,850,500.00',
-                  'status' => 'Active'
-                ],
-                [
-                  'code' => '1100',
-                  'name' => 'Pharmacy Stock Inventory',
-                  'desc' => 'Current store inventory valuation of pharmaceutical drugs and IV solutions.',
-                  'category' => 'Asset',
-                  'dept' => 'Pharmacy Department',
-                  'type' => 'Debit',
-                  'balance' => '₱980,000.00',
-                  'status' => 'Active'
+                  'status' => 'Active',
+                  'badge' => 'bg-success-subtle text-success'
                 ],
                 [
                   'code' => '2010',
-                  'name' => 'Accounts Payable - Medical Vendors',
-                  'desc' => 'Short-term liabilities owed to medical suppliers and device vendors.',
+                  'name' => 'Accounts Payable - Medical Suppliers',
+                  'desc' => 'Outstanding trade payables due to pharmaceutical and equipment vendors.',
                   'category' => 'Liability',
+                  'cat_type' => 'liabilities',
                   'dept' => 'Accounts Payable',
                   'type' => 'Credit',
-                  'balance' => '₱1,240,000.00',
-                  'status' => 'Active'
-                ],
-                [
-                  'code' => '2030',
-                  'name' => 'Accrued Hospital Staff Payroll',
-                  'desc' => 'Accumulated salaries, nurse stipends, and medical staff bonuses payable.',
-                  'category' => 'Liability',
-                  'dept' => 'Human Resources & Payroll',
-                  'type' => 'Credit',
-                  'balance' => '₱880,000.00',
-                  'status' => 'Active'
+                  'balance' => '₱910,500.00',
+                  'status' => 'Active',
+                  'badge' => 'bg-danger-subtle text-danger'
                 ],
                 [
                   'code' => '3010',
-                  'name' => 'Hospital Capital Reserve',
-                  'desc' => 'Retained capital reserves for facility expansion and high-tech equipment.',
+                  'name' => 'Founding Capital Reserve',
+                  'desc' => 'Original institutional endowment and capital reserves.',
                   'category' => 'Equity',
-                  'dept' => 'Executive Board',
+                  'cat_type' => 'equity',
+                  'dept' => 'Executive Office',
                   'type' => 'Credit',
                   'balance' => '₱6,330,000.00',
-                  'status' => 'Active'
-                ],
-                [
-                  'code' => '4010',
-                  'name' => 'Inpatient Care Revenue',
-                  'desc' => 'Gross billings for inpatient rooms, ICU stays, and surgical procedures.',
-                  'category' => 'Revenue',
-                  'dept' => 'Inpatient & Wards',
-                  'type' => 'Credit',
-                  'balance' => '₱3,150,000.00',
-                  'status' => 'Active'
-                ],
-                [
-                  'code' => '4020',
-                  'name' => 'Outpatient & Laboratory Revenue',
-                  'desc' => 'Income generated from outpatient consultations, X-rays, and lab tests.',
-                  'category' => 'Revenue',
-                  'dept' => 'Laboratory & Outpatient',
-                  'type' => 'Credit',
-                  'balance' => '₱2,090,000.00',
-                  'status' => 'Active'
-                ],
-                [
-                  'code' => '5010',
-                  'name' => 'Medical & Surgical Supplies Expense',
-                  'desc' => 'Direct operating expenses for surgical gloves, syringes, and PPE.',
-                  'category' => 'Expense',
-                  'dept' => 'Surgery & Emergency',
-                  'type' => 'Debit',
-                  'balance' => '₱1,420,000.00',
-                  'status' => 'Active'
+                  'status' => 'Active',
+                  'badge' => 'bg-primary-subtle text-primary'
                 ],
               ];
             @endphp
 
             @foreach($accounts as $acc)
-            <tr class="account-row" data-category="{{ strtolower($acc['category']) }}">
-              <td>
-                <span class="badge bg-secondary-subtle text-secondary font-monospace fs-xs px-2 py-1">{{ $acc['code'] }}</span>
-              </td>
+            <tr class="account-row" style="cursor: pointer;" data-category="{{ $acc['cat_type'] }}" onclick="openAccountDetailsModal({{ json_encode($acc) }})">
+              <td><span class="badge bg-secondary-subtle text-secondary font-monospace fs-xs px-2 py-1">{{ $acc['code'] }}</span></td>
               <td>
                 <div class="fw-semibold text-dark">{{ $acc['name'] }}</div>
+                <span class="fs-xs text-muted">{{ $acc['desc'] }}</span>
               </td>
-              <td>
-                <span class="badge 
-                  @if($acc['category'] === 'Asset') bg-success-subtle text-success
-                  @elseif($acc['category'] === 'Liability') bg-danger-subtle text-danger
-                  @elseif($acc['category'] === 'Equity') bg-primary-subtle text-primary
-                  @elseif($acc['category'] === 'Revenue') bg-info-subtle text-info
-                  @else bg-warning-subtle text-warning @endif">
-                  {{ $acc['category'] }}
-                </span>
-              </td>
+              <td><span class="badge {{ $acc['badge'] }}">{{ $acc['category'] }}</span></td>
               <td><span class="fs-xs text-muted">{{ $acc['dept'] }}</span></td>
-              <td>
-                <span class="badge bg-light text-dark border font-monospace fs-xs">{{ $acc['type'] }}</span>
-              </td>
-              <td class="text-end fw-bold text-dark">{{ $acc['balance'] }}</td>
-              <td>
-                <span class="badge bg-success-subtle text-success"><i class="ph ph-check"></i> {{ $acc['status'] }}</span>
-              </td>
-              <td class="text-end">
-                <div class="d-flex justify-content-end gap-1">
-                  <a href="{{ route('gl.ledger-books') }}" class="btn btn-sm btn-icon btn-outline-secondary" title="View Ledger Book"><i class="ph ph-book-open"></i></a>
-                  <button class="btn btn-sm btn-icon btn-outline-secondary" title="Edit Account"><i class="ph ph-pencil-simple"></i></button>
-                </div>
+              <td><span class="badge bg-light text-dark border font-monospace fs-xs">{{ $acc['type'] }}</span></td>
+              <td class="text-end fw-bold text-dark font-monospace">{{ $acc['balance'] }}</td>
+              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check"></i> {{ $acc['status'] }}</span></td>
+              <td class="text-end" onclick="event.stopPropagation();">
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Account Details" onclick="openAccountDetailsModal({{ json_encode($acc) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
             @endforeach
@@ -258,10 +202,8 @@
         </table>
       </div>
     </div>
-
-    <!-- Table Footer with Summary Stats & Pagination -->
-    <div class="card-footer bg-transparent border-top p-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
-      <span id="coaSummaryText" class="text-muted fs-xs">Showing 4 Asset Accounts</span>
+    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
+      <span class="text-muted fs-xs" id="coaSummaryText">Showing {{ count($accounts) }} Accounts</span>
       <nav aria-label="COA Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
@@ -271,26 +213,97 @@
       </nav>
     </div>
   </div>
+</div>
+
+<!-- Modal: In-Depth Account Details (Executive Design) -->
+<div class="modal fade" id="accountDetailsModal" tabindex="-1" aria-labelledby="accountDetailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header bg-white border-bottom p-4 pb-3">
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1" id="detailAccCode">1010</span>
+            <span class="badge bg-success-subtle text-success" id="detailAccCategory">Asset Account</span>
+          </div>
+          <h4 class="modal-title fw-bold text-dark mb-0" id="detailAccName">Cash on Hand - Main Vault</h4>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body p-4 bg-light-subtle">
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <div class="bg-white border rounded-3 p-3 text-center">
+              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Current Ledger Balance</span>
+              <h4 class="fw-bold text-success mb-0 font-monospace" id="detailAccBalance">₱250,000.00</h4>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="bg-white border rounded-3 p-3 text-center">
+              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Normal Accounting Balance</span>
+              <h4 class="fw-bold text-primary mb-0 font-monospace" id="detailAccType">Debit</h4>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white border rounded-3 p-3 mb-4">
+          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-buildings me-1 text-primary"></i> Organizational Mapping</h6>
+          <div class="d-flex flex-column gap-2 fs-xs">
+            <div class="d-flex justify-content-between border-bottom pb-2">
+              <span class="text-muted">Assigned Department / Cost Center</span>
+              <span class="font-monospace fw-bold text-dark" id="detailAccDept">Treasury / Cashier</span>
+            </div>
+            <div class="d-flex justify-content-between pt-1">
+              <span class="text-muted">Account Operational Description</span>
+              <span class="text-muted" id="detailAccDesc">Physical currency drawer held in hospital main vault.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit Trail & Segregation of Duties -->
+        <div class="bg-white border rounded-3 p-3">
+          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-success"></i> Audit Trail &amp; General Ledger Control</h6>
+          <div class="d-flex flex-column gap-2 fs-xs">
+            <div class="d-flex justify-content-between border-bottom pb-2">
+              <span class="text-muted">Double-Entry Ledger Status:</span>
+              <span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> Active GL Account Code</span>
+            </div>
+            <div class="d-flex justify-content-between pt-1">
+              <span class="text-muted">System Audit Stamp:</span>
+              <span class="font-monospace text-muted">LOG-COA-2026-001 | {{ date('Y-m-d H:i:s') }} PST</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer bg-white border-top p-3">
+        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-sm btn-primary" onclick="alert('Exporting Ledger Book for Account...');"><i class="ph ph-book-open me-1"></i> Open Ledger Book</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: Add New Account -->
 <div class="modal fade" id="addAccountModal" tabindex="-1" aria-labelledby="addAccountModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
     <div class="modal-content border-0 shadow">
       <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title font-weight-bold" id="addAccountModalLabel"><i class="ph ph-plus-circle me-2 text-primary"></i>Add New Master Account</h5>
+        <h5 class="modal-title font-weight-bold" id="addAccountModalLabel"><i class="ph ph-plus-circle me-2 text-primary"></i>Add New GL Account</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body p-4">
         <form id="addAccountForm">
           <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Account Code <span class="text-danger">*</span></label>
-              <input type="text" id="modalAccountCode" class="form-control form-control-sm font-monospace" placeholder="e.g. 1060 or 2040" required>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">GL Account Code <span class="text-danger">*</span></label>
+              <input type="text" id="modalAccountCode" class="form-control form-control-sm font-monospace" placeholder="e.g. 1060" required>
             </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Account Name <span class="text-danger">*</span></label>
-              <input type="text" id="modalAccountName" class="form-control form-control-sm" placeholder="e.g. Emergency ICU Supplies Reserve" required>
+            <div class="col-md-8">
+              <label class="form-label small fw-semibold">Account Title / Name <span class="text-danger">*</span></label>
+              <input type="text" id="modalAccountName" class="form-control form-control-sm" placeholder="e.g. Allowance for Doubtful Accounts" required>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
               <label class="form-label small fw-semibold">Account Category <span class="text-danger">*</span></label>
               <select id="modalAccountCategory" class="form-select form-select-sm" required>
                 <option value="Asset">Asset</option>
@@ -300,22 +313,11 @@
                 <option value="Expense">Expense</option>
               </select>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
               <label class="form-label small fw-semibold">Department / Cost Center <span class="text-danger">*</span></label>
-              <select id="modalAccountDept" class="form-select form-select-sm" required>
-                <option value="Hospital Treasury">Hospital Treasury</option>
-                <option value="Treasury / Cashier">Treasury / Cashier</option>
-                <option value="Patient Billing / AR">Patient Billing / AR</option>
-                <option value="Pharmacy Department">Pharmacy Department</option>
-                <option value="Accounts Payable">Accounts Payable</option>
-                <option value="Human Resources & Payroll">Human Resources & Payroll</option>
-                <option value="Executive Board">Executive Board</option>
-                <option value="Inpatient & Wards">Inpatient & Wards</option>
-                <option value="Laboratory & Outpatient">Laboratory & Outpatient</option>
-                <option value="Surgery & Emergency">Surgery & Emergency</option>
-              </select>
+              <input type="text" id="modalAccountDept" class="form-control form-control-sm" placeholder="e.g. Financial Services" required>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
               <label class="form-label small fw-semibold">Normal Balance <span class="text-danger">*</span></label>
               <select id="modalAccountType" class="form-select form-select-sm" required>
                 <option value="Debit">Debit</option>
@@ -323,13 +325,17 @@
               </select>
             </div>
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Initial Balance (₱) <span class="text-danger">*</span></label>
-              <input type="number" id="modalAccountBalance" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace" placeholder="0.00" value="0.00" required>
+              <label class="form-label small fw-semibold">Initial Opening Balance (₱)</label>
+              <input type="number" id="modalAccountBalance" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace" placeholder="0.00" value="0.00">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Operational Description</label>
+              <input type="text" id="modalAccountDesc" class="form-control form-control-sm" placeholder="e.g. Account description..." value="Newly created account ledger">
             </div>
           </div>
           <div class="d-flex justify-content-end gap-2 mt-4">
             <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-check me-1"></i> Save Account</button>
+            <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-check me-1"></i> Save GL Account</button>
           </div>
         </form>
       </div>
@@ -340,6 +346,24 @@
 
 @push('scripts')
 <script>
+function openAccountDetailsModal(acc) {
+  if (!acc) return;
+
+  document.getElementById('detailAccName').textContent = acc.name || 'Account Name';
+  document.getElementById('detailAccCode').textContent = acc.code || '0000';
+  document.getElementById('detailAccCategory').textContent = acc.category || 'Asset';
+  document.getElementById('detailAccDept').textContent = acc.dept || '-';
+  document.getElementById('detailAccType').textContent = acc.type || 'Debit';
+  document.getElementById('detailAccBalance').textContent = acc.balance || '₱0.00';
+  document.getElementById('detailAccDesc').textContent = acc.desc || '-';
+
+  const modalEl = document.getElementById('accountDetailsModal');
+  if (modalEl && window.bootstrap) {
+    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modalInstance.show();
+  }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   const categorySelect = document.getElementById('accountCategorySelect');
   const searchInput = document.getElementById('accountSearchInput');
@@ -357,26 +381,20 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   function filterAccounts() {
-    const selectedVal = categorySelect ? categorySelect.value.toLowerCase() : 'assets';
+    const selectedCategory = categorySelect ? categorySelect.value.toLowerCase() : '';
     const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
     const rows = document.querySelectorAll('.account-row');
     let visibleCount = 0;
 
     rows.forEach(function(row) {
-      const rowCat = row.getAttribute('data-category'); // e.g. asset, liability, equity, revenue, expense
+      const rowCategory = row.getAttribute('data-category') || '';
       const rowText = row.textContent.toLowerCase();
 
-      // Check category match (handle assets vs asset, liabilities vs liability, expenses vs expense)
-      let matchCat = false;
-      if (selectedVal === 'assets' && rowCat === 'asset') matchCat = true;
-      else if (selectedVal === 'liabilities' && rowCat === 'liability') matchCat = true;
-      else if (selectedVal === 'expenses' && rowCat === 'expense') matchCat = true;
-      else if (selectedVal === rowCat) matchCat = true;
-
-      // Check search query match
+      const matchCategory = !selectedCategory || rowCategory === selectedCategory;
       const matchSearch = !searchQuery || rowText.includes(searchQuery);
 
-      if (matchCat && matchSearch) {
+      if (matchCategory && matchSearch) {
         row.style.display = '';
         visibleCount++;
       } else {
@@ -384,19 +402,16 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
 
-    // Update summary text
-    if (summaryText && categorySelect) {
-      const selectedText = categorySelect.options[categorySelect.selectedIndex].text;
-      summaryText.textContent = `Showing ${visibleCount} ${selectedText} Account${visibleCount !== 1 ? 's' : ''}`;
+    if (summaryText) {
+      summaryText.textContent = `Showing ${visibleCount} Account${visibleCount !== 1 ? 's' : ''}`;
     }
 
-    // Handle empty state display
-    let emptyRow = document.getElementById('noAccountsRow');
+    let emptyRow = document.getElementById('noAccountRow');
     const tbody = document.querySelector('#coaTable tbody');
     if (visibleCount === 0) {
       if (!emptyRow && tbody) {
         emptyRow = document.createElement('tr');
-        emptyRow.id = 'noAccountsRow';
+        emptyRow.id = 'noAccountRow';
         emptyRow.innerHTML = `<td colspan="8" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No accounts found matching the current filter.</td>`;
         tbody.appendChild(emptyRow);
       }
@@ -406,15 +421,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  if (categorySelect) {
-    categorySelect.addEventListener('change', filterAccounts);
-  }
+  if (categorySelect) categorySelect.addEventListener('change', filterAccounts);
   if (searchInput) {
     searchInput.addEventListener('input', filterAccounts);
     searchInput.addEventListener('keyup', filterAccounts);
   }
 
-  // Add Account Form Submission Handler
   const addAccountForm = document.getElementById('addAccountForm');
   if (addAccountForm) {
     addAccountForm.addEventListener('submit', function(e) {
@@ -425,8 +437,13 @@ document.addEventListener('DOMContentLoaded', function() {
       const categoryVal = document.getElementById('modalAccountCategory').value;
       const deptVal = document.getElementById('modalAccountDept').value;
       const typeVal = document.getElementById('modalAccountType').value;
+      const descVal = document.getElementById('modalAccountDesc').value || 'Newly created account ledger';
       const rawBalance = parseFloat(document.getElementById('modalAccountBalance').value || 0);
       const formattedBalance = '₱' + rawBalance.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      let catType = categoryVal.toLowerCase() + 's';
+      if (categoryVal === 'Liability') catType = 'liabilities';
+      else if (categoryVal === 'Equity') catType = 'equity';
 
       let badgeClass = 'bg-secondary-subtle text-secondary';
       if (categoryVal === 'Asset') badgeClass = 'bg-success-subtle text-success';
@@ -435,56 +452,64 @@ document.addEventListener('DOMContentLoaded', function() {
       else if (categoryVal === 'Revenue') badgeClass = 'bg-info-subtle text-info';
       else if (categoryVal === 'Expense') badgeClass = 'bg-warning-subtle text-warning';
 
+      const accObj = {
+        code: codeVal,
+        name: nameVal,
+        desc: descVal,
+        category: categoryVal,
+        cat_type: catType,
+        dept: deptVal,
+        type: typeVal,
+        balance: formattedBalance,
+        status: 'Active',
+        badge: badgeClass
+      };
+
       const tbody = document.querySelector('#coaTable tbody');
       if (tbody) {
         const newRow = document.createElement('tr');
         newRow.className = 'account-row';
-        newRow.setAttribute('data-category', categoryVal.toLowerCase());
+        newRow.style.cursor = 'pointer';
+        newRow.setAttribute('data-category', catType);
+
+        newRow.onclick = function() { openAccountDetailsModal(accObj); };
 
         newRow.innerHTML = `
           <td><span class="badge bg-secondary-subtle text-secondary font-monospace fs-xs px-2 py-1">${codeVal}</span></td>
-          <td><div class="fw-semibold text-dark">${nameVal}</div></td>
+          <td>
+            <div class="fw-semibold text-dark">${nameVal}</div>
+            <span class="fs-xs text-muted">${descVal}</span>
+          </td>
           <td><span class="badge ${badgeClass}">${categoryVal}</span></td>
           <td><span class="fs-xs text-muted">${deptVal}</span></td>
           <td><span class="badge bg-light text-dark border font-monospace fs-xs">${typeVal}</span></td>
-          <td class="text-end fw-bold text-dark">${formattedBalance}</td>
+          <td class="text-end fw-bold text-dark font-monospace">${formattedBalance}</td>
           <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check"></i> Active</span></td>
-          <td class="text-end">
-            <div class="d-flex justify-content-end gap-1">
-              <a href="{{ route('gl.ledger-books') }}" class="btn btn-sm btn-icon btn-outline-secondary" title="View Ledger Book"><i class="ph ph-book-open"></i></a>
-              <button class="btn btn-sm btn-icon btn-outline-secondary" title="Edit Account"><i class="ph ph-pencil-simple"></i></button>
-            </div>
+          <td class="text-end" onclick="event.stopPropagation();">
+            <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Account Details"><i class="ph ph-eye"></i></button>
           </td>
         `;
+
+        const eyeBtn = newRow.querySelector('button[title="View Account Details"]');
+        if (eyeBtn) {
+          eyeBtn.onclick = function(ex) {
+            ex.stopPropagation();
+            openAccountDetailsModal(accObj);
+          };
+        }
 
         tbody.insertBefore(newRow, tbody.firstChild);
       }
 
-      // Auto-switch category filter to match new account category if needed
-      if (categorySelect) {
-        let matchOption = 'assets';
-        if (categoryVal === 'Asset') matchOption = 'assets';
-        else if (categoryVal === 'Liability') matchOption = 'liabilities';
-        else if (categoryVal === 'Equity') matchOption = 'equity';
-        else if (categoryVal === 'Revenue') matchOption = 'revenue';
-        else if (categoryVal === 'Expense') matchOption = 'expenses';
-        categorySelect.value = matchOption;
-      }
-
-      // Close modal
       const modalEl = document.getElementById('addAccountModal');
       const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
       if (modalInstance) modalInstance.hide();
 
-      // Reset form
       addAccountForm.reset();
-
-      // Run filter to display new row
       filterAccounts();
     });
   }
 
-  // Initial execution to filter based on default selected value (Assets)
   filterAccounts();
 });
 </script>

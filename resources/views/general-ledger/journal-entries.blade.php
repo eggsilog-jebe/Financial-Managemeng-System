@@ -32,7 +32,7 @@
           <span class="text-muted small fw-medium">Total Debit Volume (Month)</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-arrow-up-right fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱14,850,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($monthlyDebitTotal, 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,7 +41,7 @@
           <span class="text-muted small fw-medium">Total Credit Volume (Month)</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-arrow-down-left fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱14,850,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($monthlyCreditTotal, 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -50,7 +50,7 @@
           <span class="text-muted small fw-medium">Posted Journal Entries</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">142 Entries</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ $postedCount }} {{ Str::plural('Entry', $postedCount) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -59,7 +59,7 @@
           <span class="text-muted small fw-medium">Unposted Draft Entries</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">2 Drafts</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ $draftCount }} {{ Str::plural('Draft', $draftCount) }}</h4>
       </div>
     </div>
   </div>
@@ -108,22 +108,22 @@
           <tbody>
             @forelse($entries ?? [] as $je)
             @php
-              $ref = is_array($je) ? $je['ref'] : $je->reference_number;
-              $date = is_array($je) ? $je['date'] : $je->entry_date->format('Y-m-d');
-              $title = is_array($je) ? $je['title'] : $je->description;
-              $status = is_array($je) ? $je['status'] : ucfirst(strtolower($je->status));
-              $type = is_array($je) ? $je['type'] : strtolower($je->type);
-              $debitSum = is_array($je) ? $je['debit'] : '₱' . number_format($je->lines->sum('debit'), 2);
-              $creditSum = is_array($je) ? $je['credit'] : '₱' . number_format($je->lines->sum('credit'), 2);
+              $ref       = $je->reference_number;
+              $date      = $je->entry_date->format('Y-m-d');
+              $title     = $je->description;
+              $status    = ucfirst(strtolower($je->status));
+              $type      = strtolower($je->type);
+              $debitSum  = '₱' . number_format($je->lines->sum('debit'), 2);
+              $creditSum = '₱' . number_format($je->lines->sum('credit'), 2);
               $jeData = [
-                'ref' => $ref,
-                'date' => $date,
-                'title' => $title,
-                'debit' => $debitSum,
+                'ref'    => $ref,
+                'date'   => $date,
+                'title'  => $title,
+                'debit'  => $debitSum,
                 'credit' => $creditSum,
                 'status' => $status,
-                'type' => $type,
-                'badge' => 'bg-success-subtle text-success'
+                'type'   => $type,
+                'badge'  => $status === 'Posted' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning',
               ];
             @endphp
             <tr class="journal-row" style="cursor: pointer;" data-status="{{ strtolower($status) }}" data-type="{{ strtolower($type) }}" onclick="openJournalDetailsModal({{ json_encode($jeData) }})">
@@ -134,7 +134,7 @@
               </td>
               <td class="text-end text-success fw-bold font-monospace">{{ $debitSum }}</td>
               <td class="text-end text-danger fw-bold font-monospace">{{ $creditSum }}</td>
-              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> {{ $status }}</span></td>
+              <td><span class="badge {{ $jeData['badge'] }}"><i class="ph ph-check-circle me-1"></i> {{ $status }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
                 <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Journal Voucher" onclick="openJournalDetailsModal({{ json_encode($jeData) }})"><i class="ph ph-eye"></i></button>
               </td>

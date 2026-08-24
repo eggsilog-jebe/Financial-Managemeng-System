@@ -32,25 +32,25 @@
           <span class="text-muted small fw-medium">Current Active Period</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-calendar-blank fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark" id="activePeriodText">August 2026</h4>
+        <h4 class="fw-bold mb-0 text-dark" id="activePeriodText">{{ $activePeriod ?? date('F Y') }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Pending Closing Tasks</span>
+          <span class="text-muted small fw-medium">Unposted Draft Entries</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark" id="pendingTasksCount">1 Task Left</h4>
+        <h4 class="fw-bold mb-0 text-dark" id="pendingTasksCount">{{ $unpostedEntriesCount ?? 0 }} {{ Str::plural('Entry', $unpostedEntriesCount ?? 0) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Closed Fiscal Periods</span>
+          <span class="text-muted small fw-medium">Total Ledger Entries</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-lock fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark" id="closedPeriodsCount">7 Months</h4>
+        <h4 class="fw-bold mb-0 text-dark" id="closedPeriodsCount">{{ $totalEntriesCount ?? 0 }} Entries</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -59,7 +59,7 @@
           <span class="text-muted small fw-medium">GL Lock Integrity</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-shield-check fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark" id="lockStatusText">Secure</h4>
+        <h4 class="fw-bold mb-0 text-dark" id="lockStatusText">{{ ($unpostedEntriesCount ?? 0) === 0 ? 'Audited & Secure' : 'Pending Verification' }}</h4>
       </div>
     </div>
   </div>

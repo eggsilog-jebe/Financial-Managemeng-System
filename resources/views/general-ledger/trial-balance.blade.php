@@ -105,26 +105,27 @@
           <tbody>
             @forelse($accounts ?? [] as $acc)
             @php
-              $code = is_array($acc) ? $acc['code'] : $acc->code;
-              $title = is_array($acc) ? $acc['title'] : $acc->name;
-              $category = is_array($acc) ? $acc['category'] : ucfirst(strtolower($acc->category));
-              $catKey = is_array($acc) ? $acc['category_key'] : strtolower($acc->category);
-              $normalBal = is_array($acc) ? 'DEBIT' : $acc->normal_balance;
+              $code      = $acc->code;
+              $title     = $acc->name;
+              $category  = ucfirst(strtolower($acc->category));
+              $catKey    = strtolower($acc->category);
+              $normalBal = $acc->normal_balance;
+              $balance   = (float) $acc->current_balance;
               $badgeClass = match(strtolower($category)) {
-                'asset' => 'bg-success-subtle text-success',
+                'asset'     => 'bg-success-subtle text-success',
                 'liability' => 'bg-danger-subtle text-danger',
-                'equity' => 'bg-primary-subtle text-primary',
-                'revenue' => 'bg-info-subtle text-info',
-                default => 'bg-warning-subtle text-warning',
+                'equity'    => 'bg-primary-subtle text-primary',
+                'revenue'   => 'bg-info-subtle text-info',
+                default     => 'bg-warning-subtle text-warning',
               };
               $accData = [
-                'code' => $code,
-                'title' => $title,
-                'category' => $category,
+                'code'         => $code,
+                'title'        => $title,
+                'category'     => $category,
                 'category_key' => $catKey,
-                'debit' => $normalBal === 'DEBIT' ? '₱0.00' : '-',
-                'credit' => $normalBal === 'CREDIT' ? '₱0.00' : '-',
-                'badge' => $badgeClass
+                'debit'        => strtoupper($normalBal) === 'DEBIT' ? '₱' . number_format($balance, 2) : '-',
+                'credit'       => strtoupper($normalBal) === 'CREDIT' ? '₱' . number_format($balance, 2) : '-',
+                'badge'        => $badgeClass,
               ];
             @endphp
             <tr class="tb-row" style="cursor: pointer;" data-category="{{ $catKey }}" onclick="openTbDetailsModal({{ json_encode($accData) }})">
@@ -146,8 +147,8 @@
           <tfoot class="table-dark font-monospace fw-bold">
             <tr>
               <td colspan="3" class="text-end fs-6">TOTAL TRIAL BALANCE:</td>
-              <td class="text-end text-success fs-6" id="footDebitTotal">₱14,550,000.00</td>
-              <td class="text-end text-info fs-6" id="footCreditTotal">₱14,550,000.00</td>
+              <td class="text-end text-success fs-6" id="footDebitTotal">₱{{ number_format($totalDebitBalance, 2) }}</td>
+              <td class="text-end text-info fs-6" id="footCreditTotal">₱{{ number_format($totalCreditBalance, 2) }}</td>
               <td></td>
             </tr>
           </tfoot>

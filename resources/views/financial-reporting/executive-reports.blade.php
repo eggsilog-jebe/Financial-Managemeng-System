@@ -38,19 +38,19 @@
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Pending Draft Packs</span>
-          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-pencil-simple fs-5"></i></span>
+          <span class="text-muted small fw-medium">Available Cash Reserves</span>
+          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-vault fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">0 Drafts</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($cashPool ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Next Board Meeting</span>
-          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-calendar-blank fs-5"></i></span>
+          <span class="text-muted small fw-medium">Total YTD Net Margin</span>
+          <span class="badge bg-{{ ((float) ($netIncome ?? 0)) >= 0 ? 'success' : 'danger' }}-subtle text-{{ ((float) ($netIncome ?? 0)) >= 0 ? 'success' : 'danger' }} p-2 rounded-2"><i class="ph ph-trend-up fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">N/A</h4>
+        <h4 class="fw-bold mb-0 text-{{ ((float) ($netIncome ?? 0)) >= 0 ? 'success' : 'danger' }}">₱{{ number_format((float) ($netIncome ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -105,16 +105,30 @@
           </thead>
           <tbody>
             @forelse($reports ?? [] as $rep)
-            <tr class="report-row" style="cursor: pointer;">
+            @php
+              $repData = [
+                'title' => $rep['title'] ?? 'Executive Board Pack',
+                'sub' => $rep['sub'] ?? 'Comprehensive Financial Review',
+                'period' => $rep['period'] ?? 'FY 2026',
+                'author' => $rep['author'] ?? 'Office of the CFO',
+                'date' => $rep['date'] ?? date('Y-m-d'),
+                'status' => $rep['status'] ?? 'Published',
+                'status_badge' => $rep['status_badge'] ?? 'bg-success-subtle text-success',
+                'resolution' => $rep['resolution'] ?? 'BOARD-RES-2026-Q2',
+              ];
+            @endphp
+            <tr class="report-row" style="cursor: pointer;" onclick="openExecutiveReportDetailsModal({{ json_encode($repData) }})">
               <td>
-                <div class="fw-bold text-dark">{{ $rep['title'] }}</div>
-                <span class="fs-xs text-muted">{{ $rep['sub'] }}</span>
+                <div class="fw-bold text-dark">{{ $repData['title'] }}</div>
+                <span class="fs-xs text-muted">{{ $repData['sub'] }}</span>
               </td>
-              <td class="font-monospace fs-xs">{{ $rep['period'] }}</td>
-              <td class="fs-xs text-muted">{{ $rep['author'] }}</td>
-              <td class="font-monospace fs-xs">{{ $rep['date'] }}</td>
-              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> {{ $rep['status'] }}</span></td>
-              <td class="text-end"><button class="btn btn-sm btn-icon btn-outline-secondary"><i class="ph ph-eye"></i></button></td>
+              <td class="font-monospace fs-xs">{{ $repData['period'] }}</td>
+              <td class="fs-xs text-muted">{{ $repData['author'] }}</td>
+              <td class="font-monospace fs-xs">{{ $repData['date'] }}</td>
+              <td><span class="badge {{ $repData['status_badge'] }}"><i class="ph ph-check-circle me-1"></i> {{ $repData['status'] }}</span></td>
+              <td class="text-end" onclick="event.stopPropagation();">
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Board Pack Details" onclick="openExecutiveReportDetailsModal({{ json_encode($repData) }})"><i class="ph ph-eye"></i></button>
+              </td>
             </tr>
             @empty
             <tr>
@@ -125,13 +139,6 @@
         </table>
       </div>
     </div>
-    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="reportSummaryText">Showing {{ count($reports ?? []) }} Executive Reports</span>
-              <td class="fs-xs text-muted">{{ $rep['author'] }}</td>
-              <td class="font-monospace fs-xs">{{ $rep['date'] }}</td>
-              <td><span class="badge {{ $rep['status_badge'] }}"><i class="ph ph-check-circle me-1"></i> {{ $rep['status'] }}</span></td>
-              <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Board Pack Details" onclick="openExecutiveReportDetailsModal({{ json_encode($rep) }})"><i class="ph ph-eye"></i></button>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
       <span class="text-muted fs-xs" id="reportSummaryText">Showing {{ count($reports ?? []) }} Executive Reports</span>
       <nav aria-label="Report Pagination">

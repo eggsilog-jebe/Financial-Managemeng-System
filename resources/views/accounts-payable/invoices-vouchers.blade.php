@@ -32,34 +32,39 @@
           <span class="text-muted small">Total Vouchers Pending</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-receipt fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">18 Vouchers</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($invoices ?? collect())->count() }} Vouchers</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">3-Way Matched (Ready)</span>
+          <span class="text-muted small">Total Billed Amount</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">14 Vouchers</h4>
+        <h4 class="fw-bold mb-0 text-success">₱{{ number_format((float) ($totalBilled ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">3-Way Mismatched</span>
+          <span class="text-muted small">Pending Settlement</span>
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-warning fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">4 Vouchers</h4>
+        <h4 class="fw-bold mb-0 text-danger">₱{{ number_format((float) ($totalPending ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Net EWT Withheld</span>
+          <span class="text-muted small">Settlement Ratio</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-percent fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱14,500.00</h4>
+        @php
+          $billedVal = (float) ($totalBilled ?? 0);
+          $pendingVal = (float) ($totalPending ?? 0);
+          $settledRatio = $billedVal > 0 ? round((($billedVal - $pendingVal) / $billedVal) * 100, 1) : 0;
+        @endphp
+        <h4 class="fw-bold mb-0 text-dark">{{ $settledRatio }}%</h4>
       </div>
     </div>
   </div>

@@ -32,7 +32,7 @@
           <span class="text-muted small">Total Active Vendors</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-buildings fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">0 Vendors</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ $totalActiveVendors }} Vendor{{ $totalActiveVendors !== 1 ? 's' : '' }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,8 +41,7 @@
           <span class="text-muted small">Total AP Liabilities</span>
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-trend-down fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱0
-        </h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($totalApLiability, 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -60,7 +59,7 @@
           <span class="text-muted small">Tracked EWT Withholding</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-percent fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱124,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($totalEwt, 2) }}</h4>
       </div>
     </div>
   </div>
@@ -107,19 +106,20 @@
           <tbody>
             @forelse($vendors ?? [] as $v)
             @php
-              $code = is_array($v) ? $v['code'] : $v->code;
-              $name = is_array($v) ? $v['name'] : $v->name;
-              $tin = is_array($v) ? $v['tin'] : ($v->tin ?? 'N/A');
-              $status = is_array($v) ? $v['status'] : $v->status;
+              $code    = $v->code;
+              $name    = $v->name;
+              $tin     = $v->tin ?? 'N/A';
+              $status  = $v->status;
+              $balance = $v->purchaseBills->whereIn('status', ['UNPAID', 'PARTIAL'])->sum('total_amount');
               $vData = [
-                'code' => $code,
-                'name' => $name,
+                'code'     => $code,
+                'name'     => $name,
                 'category' => 'Medical Supplier',
-                'tin' => $tin,
-                'terms' => 'Net 30',
-                'ewt' => '1% EWT',
-                'balance' => '₱0.00',
-                'status' => $status
+                'tin'      => $tin,
+                'terms'    => 'Net 30',
+                'ewt'      => '1% EWT',
+                'balance'  => '₱' . number_format($balance, 2),
+                'status'   => $status,
               ];
             @endphp
             <tr class="vendor-row" style="cursor: pointer;" onclick="openVendorDetailsModal({{ json_encode($vData) }})">
@@ -131,8 +131,8 @@
               <td><span class="font-monospace text-muted">{{ $tin }}</span></td>
               <td>Net 30</td>
               <td>1% EWT</td>
-              <td class="text-end font-monospace fw-bold text-danger">₱0.00</td>
-              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> {{ $status }}</span></td>
+              <td class="text-end font-monospace fw-bold {{ $balance > 0 ? 'text-danger' : 'text-muted' }}">₱{{ number_format($balance, 2) }}</td>
+              <td><span class="badge {{ $status === 'Active' ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary' }}"><i class="ph ph-check me-1"></i> {{ $status }}</span></td>
               <td class="text-end"><button class="btn btn-sm btn-icon btn-outline-secondary" title="View Vendor Details" onclick="openVendorDetailsModal({{ json_encode($vData) }})"><i class="ph ph-eye"></i></button></td>
             </tr>
             @empty

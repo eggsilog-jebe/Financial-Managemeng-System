@@ -29,10 +29,10 @@
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Digital Inflows (Today)</span>
+          <span class="text-muted small fw-medium">Digital Gateway Inflows</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-globe-hemisphere-west fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱42,800.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($totalOnline ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,25 +41,25 @@
           <span class="text-muted small fw-medium">Gateway Success Rate</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-trend-up fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">98.5%</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($logs ?? collect())->count() > 0 ? '100.0%' : 'N/A' }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Failed / Timed-Out Txns</span>
+          <span class="text-muted small fw-medium">Digital Transactions</span>
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-warning-octagon fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">1 Txn</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($logs ?? collect())->count() }} Txns</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Pending Merchant Payout</span>
+          <span class="text-muted small fw-medium">Digital Gateway Status</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-device-mobile fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱38,500.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">Active</h4>
       </div>
     </div>
   </div>

@@ -29,10 +29,10 @@
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Inter-Account Transfers (Month)</span>
+          <span class="text-muted small fw-medium">Inter-Account Transfers</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-arrows-left-right fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">8 Transfers</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($transfers ?? collect())->count() }} Transfers</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,25 +41,29 @@
           <span class="text-muted small fw-medium">Total Transfer Volume</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-currency-circle-dollar fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-success">₱3,450,000.00</h4>
+        <h4 class="fw-bold mb-0 text-success">₱{{ number_format((float) ($totalTransferVolume ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Pending Approvals</span>
+          <span class="text-muted small fw-medium">Average Transfer Size</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">1 Pending</h4>
+        @php
+          $tCnt = ($transfers ?? collect())->count();
+          $tAvg = $tCnt > 0 ? ((float) ($totalTransferVolume ?? 0)) / $tCnt : 0;
+        @endphp
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($tAvg, 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Bank Wire Fees</span>
+          <span class="text-muted small fw-medium">Transfer Clearance</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-receipt fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱200.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">Audited</h4>
       </div>
     </div>
   </div>

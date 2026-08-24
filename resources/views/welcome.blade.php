@@ -24,9 +24,9 @@
       <div class="card border-0 shadow-sm rounded-3 p-3 h-100">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <span class="text-muted small fw-semibold text-uppercase kpi-title-text">Total Ledger Balance</span>
-          <span class="badge bg-success-subtle text-success"><i class="ph ph-trend-up me-1"></i> +12.4%</span>
+          <span class="badge bg-success-subtle text-success"><i class="ph ph-trend-up me-1"></i> GL</span>
         </div>
-        <h3 class="fw-bold mb-1 text-dark kpi-value-text">₱4,850,240.00</h3>
+        <h3 class="fw-bold mb-1 text-dark kpi-value-text">₱{{ number_format($totalLedgerBalance, 2) }}</h3>
         <span class="fs-xs text-muted kpi-sub-text">Real-time General Ledger Balance</span>
       </div>
     </div>
@@ -36,8 +36,8 @@
           <span class="text-muted small fw-semibold text-uppercase kpi-title-text">Accounts Receivable</span>
           <span class="badge bg-primary-subtle text-primary"><i class="ph ph-clock me-1"></i> Pending</span>
         </div>
-        <h3 class="fw-bold mb-1 text-dark kpi-value-text">₱1,230,500.00</h3>
-        <span class="fs-xs text-muted kpi-sub-text">142 Active Patient &amp; HMO Invoices</span>
+        <h3 class="fw-bold mb-1 text-dark kpi-value-text">₱{{ number_format($totalAR, 2) }}</h3>
+        <span class="fs-xs text-muted kpi-sub-text">{{ $activeInvoices }} Active Patient &amp; HMO Invoices</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -46,8 +46,8 @@
           <span class="text-muted small fw-semibold text-uppercase kpi-title-text">Accounts Payable</span>
           <span class="badge bg-warning-subtle text-warning"><i class="ph ph-calendar me-1"></i> Scheduled</span>
         </div>
-        <h3 class="fw-bold mb-1 text-dark kpi-value-text">₱640,120.00</h3>
-        <span class="fs-xs text-muted kpi-sub-text">38 Vendor Payments Due</span>
+        <h3 class="fw-bold mb-1 text-dark kpi-value-text">₱{{ number_format($totalAP, 2) }}</h3>
+        <span class="fs-xs text-muted kpi-sub-text">{{ $pendingVendors }} Vendor Payments Due</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -56,8 +56,8 @@
           <span class="text-muted small fw-semibold text-uppercase kpi-title-text">Available Cash Pool</span>
           <span class="badge bg-info-subtle text-info"><i class="ph ph-shield-check me-1"></i> Optimal</span>
         </div>
-        <h3 class="fw-bold mb-1 text-dark kpi-value-text">₱2,980,000.00</h3>
-        <span class="fs-xs text-muted kpi-sub-text">Liquid Across 4 Bank Accounts</span>
+        <h3 class="fw-bold mb-1 text-dark kpi-value-text">₱{{ number_format($totalCash, 2) }}</h3>
+        <span class="fs-xs text-muted kpi-sub-text">Liquid Across {{ $bankAccountCount }} Bank Account{{ $bankAccountCount !== 1 ? 's' : '' }}</span>
       </div>
     </div>
   </div>

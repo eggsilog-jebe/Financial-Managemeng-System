@@ -32,34 +32,38 @@
           <span class="text-muted small">Total Checks Issued</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-receipt fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">42 Checks</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($checks ?? collect())->count() }} Checks</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Cleared by Bank</span>
+          <span class="text-muted small">Total Disbursed Amount</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱1,450,000.00</h4>
+        <h4 class="fw-bold mb-0 text-success">₱{{ number_format((float) ($totalReleased ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Outstanding Checks</span>
+          <span class="text-muted small">Average Check Size</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱245,000.00</h4>
+        @php
+          $cnt = ($checks ?? collect())->count();
+          $avg = $cnt > 0 ? ((float) ($totalReleased ?? 0)) / $cnt : 0;
+        @endphp
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($avg, 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Voided / Cancelled Checks</span>
-          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-x-circle fs-5"></i></span>
+          <span class="text-muted small">Check Issuance Status</span>
+          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-shield-check fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">Active &amp; Audited</h4>
       </div>
     </div>
   </div>

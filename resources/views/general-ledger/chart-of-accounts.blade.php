@@ -117,31 +117,32 @@
                  <tbody>
             @forelse($accounts as $acc)
             @php
-              $code = is_array($acc) ? $acc['code'] : $acc->code;
-              $name = is_array($acc) ? $acc['name'] : $acc->name;
-              $category = is_array($acc) ? $acc['category'] : ucfirst(strtolower($acc->category));
-              $catType = is_array($acc) ? $acc['cat_type'] : strtolower($acc->category);
-              $dept = is_array($acc) ? $acc['dept'] : ($acc->department ?? 'General');
-              $normalBalance = is_array($acc) ? $acc['type'] : ucfirst(strtolower($acc->normal_balance));
-              $status = is_array($acc) ? $acc['status'] : ($acc->is_active ? 'Active' : 'Inactive');
+              $code          = $acc->code;
+              $name          = $acc->name;
+              $category      = ucfirst(strtolower($acc->category));
+              $catType       = strtolower($acc->category);
+              $dept          = $acc->department ?? 'General';
+              $normalBalance = ucfirst(strtolower($acc->normal_balance));
+              $status        = $acc->is_active ? 'Active' : 'Inactive';
+              $balance       = (float) $acc->current_balance;
               $badgeClass = match(strtolower($category)) {
-                'asset' => 'bg-success-subtle text-success',
+                'asset'     => 'bg-success-subtle text-success',
                 'liability' => 'bg-danger-subtle text-danger',
-                'equity' => 'bg-primary-subtle text-primary',
-                'revenue' => 'bg-info-subtle text-info',
-                default => 'bg-warning-subtle text-warning',
+                'equity'    => 'bg-primary-subtle text-primary',
+                'revenue'   => 'bg-info-subtle text-info',
+                default     => 'bg-warning-subtle text-warning',
               };
               $accData = [
-                'code' => $code,
-                'name' => $name,
-                'desc' => 'Chart of accounts ledger item for ' . $name,
+                'code'     => $code,
+                'name'     => $name,
+                'desc'     => $acc->description ?? 'Chart of accounts ledger item for ' . $name,
                 'category' => $category,
                 'cat_type' => $catType,
-                'dept' => $dept,
-                'type' => $normalBalance,
-                'balance' => '₱' . number_format(is_array($acc) ? 250000 : 500000, 2),
-                'status' => $status,
-                'badge' => $badgeClass
+                'dept'     => $dept,
+                'type'     => $normalBalance,
+                'balance'  => '₱' . number_format($balance, 2),
+                'status'   => $status,
+                'badge'    => $badgeClass,
               ];
             @endphp
             <tr class="account-row" style="cursor: pointer;" data-category="{{ $catType }}" onclick="openAccountDetailsModal({{ json_encode($accData) }})">
@@ -150,8 +151,8 @@
               <td><span class="badge {{ $badgeClass }}">{{ $category }}</span></td>
               <td><span class="fs-xs text-muted">{{ $dept }}</span></td>
               <td><span class="badge bg-light text-dark border font-monospace fs-xs">{{ $normalBalance }}</span></td>
-              <td class="text-end fw-bold text-dark font-monospace">₱500,000.00</td>
-              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check"></i> {{ $status }}</span></td>
+              <td class="text-end fw-bold text-dark font-monospace">₱{{ number_format($balance, 2) }}</td>
+              <td><span class="badge {{ $acc->is_active ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary' }}"><i class="ph ph-check"></i> {{ $status }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
                 <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Account Details" onclick="openAccountDetailsModal({{ json_encode($accData) }})"><i class="ph ph-eye"></i></button>
               </td>

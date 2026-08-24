@@ -29,28 +29,28 @@
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Active Exemption Classes</span>
+          <span class="text-muted small fw-medium">Active Exemption Records</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-shield-check fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">4 Classes</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($certificates ?? collect())->count() }} Certificates</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">YTD Exempt Gross Amount</span>
+          <span class="text-muted small fw-medium">Total Tax Base Amount</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-currency-circle-dollar fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱4,850,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($certificates ?? collect())->sum('tax_base'), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Tax Saved / Waived</span>
+          <span class="text-muted small fw-medium">Total Tax Withheld / Waived</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-piggy-bank fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-success">₱582,000.00</h4>
+        <h4 class="fw-bold mb-0 text-success">₱{{ number_format((float) ($certificates ?? collect())->sum('tax_withheld'), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">

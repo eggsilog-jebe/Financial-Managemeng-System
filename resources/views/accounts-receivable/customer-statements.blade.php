@@ -32,7 +32,7 @@
           <span class="text-muted small fw-medium">Active SOAs Generated</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-files fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">18 Statements</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($accounts ?? collect())->count() }} Statements</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,7 +41,7 @@
           <span class="text-muted small fw-medium">Total Outstanding AR</span>
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-currency-circle-dollar fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-danger">₱3,005,300.00</h4>
+        <h4 class="fw-bold mb-0 text-danger">₱{{ number_format((float) ($accounts ?? collect())->sum('current_balance'), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -50,16 +50,16 @@
           <span class="text-muted small fw-medium">HMO Corporate Guarantors</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-buildings fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">5 HMO Companies</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($accounts ?? collect())->whereNotNull('hmo_provider')->count() }} HMO Accounts</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Average Statement Age</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
+          <span class="text-muted small fw-medium">Total Billed Volume</span>
+          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-receipt fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">28 Days</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($accounts ?? collect())->sum('total_billed'), 2) }}</h4>
       </div>
     </div>
   </div>

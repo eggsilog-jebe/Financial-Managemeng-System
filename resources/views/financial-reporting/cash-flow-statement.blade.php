@@ -32,25 +32,25 @@
           <span class="text-muted small fw-medium">Operating Cash Inflow</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-hand-coins fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-success">+₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-success">+₱{{ number_format((float) ($operatingCash ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Investing Cash Outflow</span>
+          <span class="text-muted small fw-medium">Supplier &amp; Vendor Cash Outflow</span>
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-shopping-bag fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-danger">-₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-danger">-₱{{ number_format((float) ($supplierCash ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Financing Cash Outflow</span>
+          <span class="text-muted small fw-medium">Staff &amp; Payroll Disbursements</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-bank fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">-₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">-₱{{ number_format((float) ($payrollCash ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -59,7 +59,7 @@
           <span class="text-muted small fw-medium">Net Cash Position Increase</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-scales fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-primary">+₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-primary">{{ ((float) ($netCashFlow ?? 0)) >= 0 ? '+' : '' }}₱{{ number_format((float) ($netCashFlow ?? 0), 2) }}</h4>
       </div>
     </div>
   </div>
@@ -71,9 +71,9 @@
         <div class="d-flex align-items-center gap-2">
           <label for="cfPeriodSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Period:</label>
           <select id="cfPeriodSelect" class="form-select form-select-sm bg-light" style="min-width: 220px;">
-            <option value="ytd" selected>Year-To-Date 2026 (Jan - Aug)</option>
-            <option value="q2">Q2 2026 (Apr - Jun)</option>
-            <option value="q1">Q1 2026 (Jan - Mar)</option>
+            <option value="ytd" selected>Year-To-Date {{ date('Y') }}</option>
+            <option value="q2">Q2 {{ date('Y') }}</option>
+            <option value="q1">Q1 {{ date('Y') }}</option>
           </select>
         </div>
         <div class="d-flex align-items-center gap-2">
@@ -103,43 +103,43 @@
           </thead>
           <tbody>
             <tr class="table-light fw-bold text-success"><td colspan="3">1. Cash Flow from Operating Activities</td></tr>
-            <tr class="cf-row" style="cursor: pointer;" data-group="operating" onclick="openCashFlowDetailsModal('Collections from Patient Billings & HMO Claims', 'Operating Activities', '+₱16,400,000.00', 'Direct Patient Cash & HMO Settlement Wire Deposits')">
+            <tr class="cf-row" style="cursor: pointer;" data-group="operating" onclick="openCashFlowDetailsModal('Collections from Patient Billings & HMO Claims', 'Operating Activities', '+₱{{ number_format((float) ($operatingCash ?? 0), 2) }}', 'Direct Patient Cash & HMO Settlement Wire Deposits')">
               <td class="ps-4">Collections from Patient Billings &amp; HMO Claims</td>
-              <td class="text-end font-monospace text-success">+₱16,400,000.00</td>
+              <td class="text-end font-monospace text-success">+₱{{ number_format((float) ($operatingCash ?? 0), 2) }}</td>
               <td class="text-end"><button class="btn btn-sm btn-icon btn-outline-secondary" title="View Audit Details"><i class="ph ph-eye"></i></button></td>
             </tr>
-            <tr class="cf-row" style="cursor: pointer;" data-group="operating" onclick="openCashFlowDetailsModal('Cash Paid to Medical Suppliers & Vendors', 'Operating Activities', '-₱7,200,000.00', 'AP Vendor Check Disbursements & Wire Transfers')">
+            <tr class="cf-row" style="cursor: pointer;" data-group="operating" onclick="openCashFlowDetailsModal('Cash Paid to Medical Suppliers & Vendors', 'Operating Activities', '-₱{{ number_format((float) ($supplierCash ?? 0), 2) }}', 'AP Vendor Check Disbursements & Wire Transfers')">
               <td class="ps-4 text-muted">Less: Cash Paid to Medical Suppliers &amp; Vendors</td>
-              <td class="text-end font-monospace text-danger">-₱7,200,000.00</td>
+              <td class="text-end font-monospace text-danger">-₱{{ number_format((float) ($supplierCash ?? 0), 2) }}</td>
               <td class="text-end"><button class="btn btn-sm btn-icon btn-outline-secondary" title="View Audit Details"><i class="ph ph-eye"></i></button></td>
             </tr>
-            <tr class="cf-row" style="cursor: pointer;" data-group="operating" onclick="openCashFlowDetailsModal('Cash Paid for Staff Payroll & Overtime', 'Operating Activities', '-₱5,000,000.00', 'Direct Medical Staff Payroll Direct Deposit Clearance')">
+            <tr class="cf-row" style="cursor: pointer;" data-group="operating" onclick="openCashFlowDetailsModal('Cash Paid for Staff Payroll & Overtime', 'Operating Activities', '-₱{{ number_format((float) ($payrollCash ?? 0), 2) }}', 'Direct Medical Staff Payroll Direct Deposit Clearance')">
               <td class="ps-4 text-muted">Less: Cash Paid for Staff Payroll &amp; Overtime</td>
-              <td class="text-end font-monospace text-danger">-₱5,000,000.00</td>
+              <td class="text-end font-monospace text-danger">-₱{{ number_format((float) ($payrollCash ?? 0), 2) }}</td>
               <td class="text-end"><button class="btn btn-sm btn-icon btn-outline-secondary" title="View Audit Details"><i class="ph ph-eye"></i></button></td>
             </tr>
-            <tr class="fw-bold"><td>Net Cash Provided by Operating Activities</td><td class="text-end text-success font-monospace">+₱4,200,000.00</td><td></td></tr>
+            <tr class="fw-bold"><td>Net Cash Provided by Operating Activities</td><td class="text-end text-success font-monospace">{{ ((float) ($operatingNet ?? 0)) >= 0 ? '+' : '' }}₱{{ number_format((float) ($operatingNet ?? 0), 2) }}</td><td></td></tr>
 
             <tr class="table-light fw-bold text-danger"><td colspan="3">2. Cash Flow from Investing Activities</td></tr>
-            <tr class="cf-row" style="cursor: pointer;" data-group="investing" onclick="openCashFlowDetailsModal('Purchase of Digital X-Ray & ICU Ventilators', 'Investing Activities', '-₱1,500,000.00', 'Biomedical Capital Equipment Acquisition (CAPEX)')">
-              <td class="ps-4 text-muted">Purchase of Digital X-Ray &amp; ICU Ventilators</td>
-              <td class="text-end font-monospace text-danger">-₱1,500,000.00</td>
+            <tr class="cf-row" style="cursor: pointer;" data-group="investing" onclick="openCashFlowDetailsModal('Purchase of Biomedical Equipment', 'Investing Activities', '₱0.00', 'Biomedical Capital Equipment Acquisition (CAPEX)')">
+              <td class="ps-4 text-muted">Biomedical Capital Equipment Acquisition (CAPEX)</td>
+              <td class="text-end font-monospace text-muted">₱0.00</td>
               <td class="text-end"><button class="btn btn-sm btn-icon btn-outline-secondary" title="View Audit Details"><i class="ph ph-eye"></i></button></td>
             </tr>
-            <tr class="fw-bold"><td>Net Cash Used in Investing Activities</td><td class="text-end text-danger font-monospace">-₱1,500,000.00</td><td></td></tr>
+            <tr class="fw-bold"><td>Net Cash Used in Investing Activities</td><td class="text-end text-muted font-monospace">₱0.00</td><td></td></tr>
 
             <tr class="table-light fw-bold text-warning"><td colspan="3">3. Cash Flow from Financing Activities</td></tr>
-            <tr class="cf-row" style="cursor: pointer;" data-group="financing" onclick="openCashFlowDetailsModal('Repayment of Commercial Bank Loan Principal', 'Financing Activities', '-₱500,000.00', 'Metrobank Term Loan Scheduled Principal Amortization')">
+            <tr class="cf-row" style="cursor: pointer;" data-group="financing" onclick="openCashFlowDetailsModal('Repayment of Commercial Bank Loan Principal', 'Financing Activities', '₱0.00', 'Bank Term Loan Scheduled Principal Amortization')">
               <td class="ps-4 text-muted">Repayment of Commercial Bank Loan Principal</td>
-              <td class="text-end font-monospace text-danger">-₱500,000.00</td>
+              <td class="text-end font-monospace text-muted">₱0.00</td>
               <td class="text-end"><button class="btn btn-sm btn-icon btn-outline-secondary" title="View Audit Details"><i class="ph ph-eye"></i></button></td>
             </tr>
-            <tr class="fw-bold"><td>Net Cash Used in Financing Activities</td><td class="text-end text-dark font-monospace">-₱500,000.00</td><td></td></tr>
+            <tr class="fw-bold"><td>Net Cash Used in Financing Activities</td><td class="text-end text-muted font-monospace">₱0.00</td><td></td></tr>
           </tbody>
           <tfoot class="table-primary fw-bold">
             <tr>
               <td class="fs-6">NET INCREASE IN HOSPITAL CASH &amp; EQUIVALENTS</td>
-              <td class="text-end text-primary fs-5 font-monospace">+₱2,200,000.00</td>
+              <td class="text-end text-primary fs-5 font-monospace">{{ ((float) ($netCashFlow ?? 0)) >= 0 ? '+' : '' }}₱{{ number_format((float) ($netCashFlow ?? 0), 2) }}</td>
               <td></td>
             </tr>
           </tfoot>

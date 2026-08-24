@@ -29,37 +29,37 @@
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">30-Day Projected End Balance</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-trend-up fs-5"></i></span>
+          <span class="text-muted small fw-medium">Available Cash Reserves</span>
+          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-vault fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-success">₱9,420,000.00</h4>
+        <h4 class="fw-bold mb-0 text-success">₱{{ number_format((float) ($totalCash ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Expected Collections (30 Days)</span>
+          <span class="text-muted small fw-medium">Projected 30-Day Solvency</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-hand-coins fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱6,800,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($totalCash ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Scheduled Outflows (30 Days)</span>
-          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-calculator fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-danger">₱5,220,000.00</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Net Monthly Surplus</span>
+          <span class="text-muted small fw-medium">Projected Working Capital</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-scales fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-primary">+₱1,580,000.00</h4>
+        <h4 class="fw-bold mb-0 text-primary">₱{{ number_format((float) ($totalCash ?? 0), 2) }}</h4>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small fw-medium">Forecast Model Status</span>
+          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-trend-up fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold mb-0 text-dark">Active</h4>
       </div>
     </div>
   </div>

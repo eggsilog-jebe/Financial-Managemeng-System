@@ -50,7 +50,8 @@
           <span class="text-muted small fw-medium">Main Operating Account</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-credit-card fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
+        @php $mainAccount = ($bankAccounts ?? collect())->where('purpose', 'like', '%Operations%')->first(); @endphp
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($mainAccount?->balance ?? 0, 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -59,7 +60,8 @@
           <span class="text-muted small fw-medium">Collections Account</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-hand-coins fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱2,140,000.00</h4>
+        @php $collectionsAccount = ($bankAccounts ?? collect())->where('purpose', 'like', '%Collections%')->first(); @endphp
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($collectionsAccount?->balance ?? 0, 2) }}</h4>
       </div>
     </div>
   </div>
@@ -107,19 +109,19 @@
           <tbody>
             @forelse($bankAccounts ?? [] as $acc)
             @php
-              $bank = is_array($acc) ? $acc['bank'] : ($acc->name . ' (' . $acc->bank_name . ')');
-              $no = is_array($acc) ? $acc['no'] : $acc->account_number;
-              $purpose = is_array($acc) ? $acc['purpose'] : $acc->purpose;
-              $curr = is_array($acc) ? $acc['currency'] : $acc->currency;
-              $bal = is_array($acc) ? $acc['balance'] : ('₱' . number_format($acc->balance, 2));
-              $gl = is_array($acc) ? $acc['gl_code'] : $acc->gl_code;
+              $bank    = $acc->name . ' (' . $acc->bank_name . ')';
+              $no      = $acc->account_number;
+              $purpose = $acc->purpose;
+              $curr    = $acc->currency;
+              $bal     = '₱' . number_format($acc->balance, 2);
+              $gl      = $acc->gl_code;
               $accData = [
-                'bank' => $bank,
-                'no' => $no,
-                'purpose' => $purpose,
+                'bank'     => $bank,
+                'no'       => $no,
+                'purpose'  => $purpose,
                 'currency' => $curr,
-                'balance' => $bal,
-                'gl_code' => $gl
+                'balance'  => $bal,
+                'gl_code'  => $gl,
               ];
             @endphp
             <tr class="account-row" style="cursor: pointer;" onclick="openBankAccountDetailsModal({{ json_encode($accData) }})">

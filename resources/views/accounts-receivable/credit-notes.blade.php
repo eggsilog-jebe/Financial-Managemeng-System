@@ -32,7 +32,7 @@
           <span class="text-muted small fw-medium">Credit Notes (Month)</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-note-pencil fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">6 Credit Memos</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($creditNotes ?? collect())->count() }} Credit Memos</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,16 +41,16 @@
           <span class="text-muted small fw-medium">Total Credit Value</span>
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-arrow-down-left fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-danger">₱84,500.00</h4>
+        <h4 class="fw-bold mb-0 text-danger">₱{{ number_format((float) ($totalCreditValue ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">HMO Contract Disallowance</span>
-          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-shield-warning fs-5"></i></span>
+          <span class="text-muted small fw-medium">Approved Adjustments</span>
+          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱62,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($creditNotes ?? collect())->where('status', 'APPROVED')->count() }} Approved</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -59,7 +59,7 @@
           <span class="text-muted small fw-medium">Pending Manager Approvals</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">1 Pending</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($creditNotes ?? collect())->where('status', 'PENDING')->count() }} Pending</h4>
       </div>
     </div>
   </div>

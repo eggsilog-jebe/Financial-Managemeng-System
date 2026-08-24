@@ -20,22 +20,26 @@ final class CashManagementController extends Controller
     public function fundTransfers(): View
     {
         $transfers = FundTransfer::latest('transfer_date')->get();
-        return view('cash.fund-transfers', compact('transfers'));
+        $totalTransferVolume = $transfers->sum('amount');
+        return view('cash.fund-transfers', compact('transfers', 'totalTransferVolume'));
     }
 
     public function bankReconciliation(): View
     {
         $reconciliations = BankReconciliation::with('bankAccount')->latest('statement_date')->get();
-        return view('cash.bank-reconciliation', compact('reconciliations'));
+        $totalBookBalance = BankAccount::where('status', 'Active')->sum('balance');
+        return view('cash.bank-reconciliation', compact('reconciliations', 'totalBookBalance'));
     }
 
     public function cashFlowForecasting(): View
     {
-        return view('cash.cash-flow-forecasting');
+        $totalCash = BankAccount::where('status', 'Active')->sum('balance');
+        return view('cash.cash-flow-forecasting', compact('totalCash'));
     }
 
     public function liquidityManagement(): View
     {
-        return view('cash.liquidity-management');
+        $totalCash = BankAccount::where('status', 'Active')->sum('balance');
+        return view('cash.liquidity-management', compact('totalCash'));
     }
 }

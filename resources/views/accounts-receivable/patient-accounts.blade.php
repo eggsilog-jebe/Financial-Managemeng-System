@@ -32,7 +32,7 @@
           <span class="text-muted small fw-medium">Active Payor Accounts</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-users fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ count($accounts ?? []) }} Accounts</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($accounts ?? collect())->count() }} Accounts</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,7 +41,7 @@
           <span class="text-muted small fw-medium">Total Patient Receivable</span>
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-hand-coins fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-danger">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-danger">₱{{ number_format($totalReceivable ?? 0, 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -50,7 +50,7 @@
           <span class="text-muted small fw-medium">HMO Pending Guarantees</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-shield-check fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($hmoGuarantees ?? 0, 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">

@@ -32,25 +32,29 @@
           <span class="text-muted small fw-medium">Confirmed Deposits (Month)</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-bank fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱1,842,500.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($totalDeposits ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Pending Verification</span>
+          <span class="text-muted small fw-medium">Total Bank Deposits</span>
+          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-receipt fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($deposits ?? collect())->count() }} Deposits</h4>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small fw-medium">Average Deposit Size</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">1 Deposit</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Deposit Discrepancies</span>
-          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-warning-circle fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
+        @php
+          $depCnt = ($deposits ?? collect())->count();
+          $depAvg = $depCnt > 0 ? ((float) ($totalDeposits ?? 0)) / $depCnt : 0;
+        @endphp
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($depAvg, 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">

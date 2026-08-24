@@ -32,7 +32,7 @@
           <span class="text-muted small">Current (0-30 Days)</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
         </div>
-        <h4 class="fw-bold text-dark mb-1">₱680,200.00</h4>
+        <h4 class="fw-bold text-dark mb-1">₱{{ number_format((float) ($current ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,7 +41,7 @@
           <span class="text-muted small">31-60 Days</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-hourglass fs-5"></i></span>
         </div>
-        <h4 class="fw-bold text-dark mb-1">₱185,000.00</h4>
+        <h4 class="fw-bold text-dark mb-1">₱{{ number_format((float) ($days30 ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -50,7 +50,7 @@
           <span class="text-muted small">61-90 Days</span>
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-warning fs-5"></i></span>
         </div>
-        <h4 class="fw-bold text-dark mb-1">₱45,300.00</h4>
+        <h4 class="fw-bold text-dark mb-1">₱{{ number_format((float) ($days60 ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -59,7 +59,7 @@
           <span class="text-muted small">Over 90 Days</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-shield-check fs-5"></i></span>
         </div>
-        <h4 class="fw-bold text-dark mb-1">₱0.00</h4>
+        <h4 class="fw-bold text-dark mb-1">₱{{ number_format((float) ($days90Plus ?? 0), 2) }}</h4>
       </div>
     </div>
   </div>

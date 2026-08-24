@@ -29,37 +29,37 @@
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Active Tax Rules</span>
+          <span class="text-muted small fw-medium">Configured Tax Rules</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-percent fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">6 Active Rules</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($taxRules ?? collect())->count() }} Active Rules</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Standard EWT Rate (Doctors)</span>
+          <span class="text-muted small fw-medium">Active Tax Categories</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-user-stethoscope fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">10.0% / 15.0%</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($taxRules ?? collect())->pluck('tax_type')->unique()->count() }} Categories</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Default VAT Rate</span>
+          <span class="text-muted small fw-medium">Statutory Compliance</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-receipt fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">12.0%</h4>
+        <h4 class="fw-bold mb-0 text-dark">BIR Compliant</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Corporate Income Tax</span>
+          <span class="text-muted small fw-medium">Tax Engine Status</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-buildings fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">25.0% / 10.0%</h4>
+        <h4 class="fw-bold mb-0 text-dark">Active &amp; Ready</h4>
       </div>
     </div>
   </div>

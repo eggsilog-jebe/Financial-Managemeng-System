@@ -31,11 +31,14 @@ final class TaxManagementController extends Controller
 
     public function taxExemptions(): View
     {
-        return view('tax.tax-exemptions');
+        $certificates = TaxCertificate::latest()->get();
+        return view('tax.tax-exemptions', compact('certificates'));
     }
 
     public function taxAuditTrail(): View
     {
-        return view('tax.tax-audit-trail');
+        $taxRules     = TaxRule::all();
+        $certificates = TaxCertificate::latest()->get();
+        return view('tax.tax-audit-trail', compact('taxRules', 'certificates'));
     }
 }

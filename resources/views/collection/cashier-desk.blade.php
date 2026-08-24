@@ -29,37 +29,37 @@
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Active Shift Terminals</span>
+          <span class="text-muted small fw-medium">Active POS Receipts</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-desktop fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">4 / 5 Open</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($receipts ?? collect())->count() }} Receipts</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Combined Drawer Cash</span>
+          <span class="text-muted small fw-medium">Cash Drawer Collections</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-vault fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱142,400.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($cashReceipts ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Shift Cash Variance</span>
+          <span class="text-muted small fw-medium">Total Shift Collections</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-scales fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($todayTotal ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Pending Remittances</span>
+          <span class="text-muted small fw-medium">Audit Shift Balance</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-tray fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">1 Terminal</h4>
+        <h4 class="fw-bold mb-0 text-dark">Reconciled</h4>
       </div>
     </div>
   </div>

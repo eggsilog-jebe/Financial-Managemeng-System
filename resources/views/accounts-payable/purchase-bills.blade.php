@@ -138,17 +138,37 @@
           <tbody>
             @forelse($bills ?? [] as $inv)
             @php
-              $iArr = is_array($inv) ? $inv : [
-                'ref' => $inv->reference_number ?? 'APV-N/A',
-                'vendor_inv' => $inv->vendor_invoice_number ?? 'N/A',
-                'vendor' => $inv->vendor_name ?? 'N/A', 'sub' => $inv->description ?? 'N/A',
-                'date' => $inv->invoice_date ? $inv->invoice_date->format('Y-m-d') : 'N/A',
-                'due' => $inv->due_date ? $inv->due_date->format('Y-m-d') : 'N/A',
-                'amount' => '₱' . number_format($inv->amount ?? 0, 2),
-                'status' => $inv->status ?? 'Pending', 'status_badge' => 'bg-warning-subtle text-warning',
-                'status_icon' => 'ph-clock',
-                'terms' => $inv->payment_terms ?? 'NET 30', 'category' => strtolower($inv->category ?? 'general'),
+              $ref = $inv->bill_number ?? 'APV-N/A';
+              $vendorName = $inv->vendor->name ?? 'Supplier';
+              $billDate = $inv->bill_date ? $inv->bill_date->format('Y-m-d') : '-';
+              $dueDate = $inv->due_date ? $inv->due_date->format('Y-m-d') : '-';
+              $amount = '₱' . number_format((float) ($inv->total_amount ?? 0), 2);
+              $status = ucfirst(strtolower($inv->status ?? 'UNPAID'));
+              $statusBadge = match(strtoupper($inv->status ?? '')) {
+                'PAID' => 'bg-success-subtle text-success',
+                'PARTIAL' => 'bg-info-subtle text-info',
+                default => 'bg-warning-subtle text-warning',
+              };
+              $statusIcon = match(strtoupper($inv->status ?? '')) {
+                'PAID' => 'ph-check-circle',
+                'PARTIAL' => 'ph-hourglass',
+                default => 'ph-clock',
+              };
+              $iArr = [
+                'ref' => $ref,
+                'vendor_inv' => $ref,
+                'vendor' => $vendorName,
+                'sub' => 'Medical Consumables & Supplies',
+                'date' => $billDate,
+                'due' => $dueDate,
+                'amount' => $amount,
+                'status' => $status,
+                'status_badge' => $statusBadge,
+                'status_icon' => $statusIcon,
+                'terms' => 'NET 30',
+                'category' => 'medical',
               ];
+            @endphp
             <tr class="invoice-row" style="cursor: pointer;" data-category="{{ $iArr['category'] }}" data-status="{{ strtolower($iArr['status']) }}" onclick="openInvoiceDetailsModal({{ json_encode($iArr) }})">
               <td>
                 <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">{{ $iArr['ref'] }}</span>

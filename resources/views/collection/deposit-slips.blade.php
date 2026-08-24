@@ -29,37 +29,41 @@
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Slips Prepared Today</span>
+          <span class="text-muted small fw-medium">Slips Prepared</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-path fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">3 Batch Slips</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($deposits ?? collect())->count() }} Batch Slips</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Cash for Vault Pickup</span>
+          <span class="text-muted small fw-medium">Total Vault Deposits</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-money fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱140,400.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($totalDeposits ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Checks Pending Clearance</span>
+          <span class="text-muted small fw-medium">Average Deposit Size</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-bank fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱75,000.00</h4>
+        @php
+          $dCnt = ($deposits ?? collect())->count();
+          $dAvg = $dCnt > 0 ? ((float) ($totalDeposits ?? 0)) / $dCnt : 0;
+        @endphp
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($dAvg, 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">In-Transit Status</span>
+          <span class="text-muted small fw-medium">Transit Clearance</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-truck fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">Armored Pickup</h4>
+        <h4 class="fw-bold mb-0 text-dark">Verified &amp; Reconciled</h4>
       </div>
     </div>
   </div>

@@ -41,7 +41,7 @@
           <span class="text-muted small fw-medium">Total YTD Debit Movement</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-arrow-up-right fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-success">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-success">₱{{ number_format($ytdDebitTotal, 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -50,7 +50,7 @@
           <span class="text-muted small fw-medium">Total YTD Credit Movement</span>
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-arrow-down-left fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-danger">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-danger">₱{{ number_format($ytdCreditTotal, 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -59,7 +59,8 @@
           <span class="text-muted small fw-medium">Ledger Book Solvency</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-scales fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">Balanced</h4>
+        @php $isBalanced = round($ytdDebitTotal, 2) === round($ytdCreditTotal, 2); @endphp
+        <h4 class="fw-bold mb-0 {{ $isBalanced ? 'text-success' : 'text-danger' }}">{{ $isBalanced ? 'Balanced' : 'Unbalanced' }}</h4>
       </div>
     </div>
   </div>
@@ -111,27 +112,30 @@
           <tbody>
             @forelse($accounts ?? [] as $acc)
             @php
-              $code = is_array($acc) ? $acc['code'] : $acc->code;
-              $name = is_array($acc) ? $acc['name'] : $acc->name;
-              $type = is_array($acc) ? $acc['type'] : ucfirst(strtolower($acc->category));
-              $typeKey = is_array($acc) ? $acc['type_key'] : strtolower($acc->category);
+              $code    = $acc->code;
+              $name    = $acc->name;
+              $type    = ucfirst(strtolower($acc->category));
+              $typeKey = strtolower($acc->category);
+              $debitTotal  = $acc->journalEntryLines->sum('debit');
+              $creditTotal = $acc->journalEntryLines->sum('credit');
+              $endingBal   = (float) $acc->current_balance;
               $badgeClass = match(strtolower($type)) {
-                'asset' => 'bg-success-subtle text-success',
+                'asset'     => 'bg-success-subtle text-success',
                 'liability' => 'bg-danger-subtle text-danger',
-                'equity' => 'bg-primary-subtle text-primary',
-                'revenue' => 'bg-info-subtle text-info',
-                default => 'bg-warning-subtle text-warning',
+                'equity'    => 'bg-primary-subtle text-primary',
+                'revenue'   => 'bg-info-subtle text-info',
+                default     => 'bg-warning-subtle text-warning',
               };
               $glData = [
-                'code' => $code,
-                'name' => $name,
-                'type' => $type,
+                'code'     => $code,
+                'name'     => $name,
+                'type'     => $type,
                 'type_key' => $typeKey,
-                'opening' => '₱0.00',
-                'debit' => '+₱0.00',
-                'credit' => '-₱0.00',
-                'ending' => '₱0.00',
-                'badge' => $badgeClass
+                'opening'  => '₱0.00',
+                'debit'    => '+₱' . number_format($debitTotal, 2),
+                'credit'   => '-₱' . number_format($creditTotal, 2),
+                'ending'   => '₱' . number_format($endingBal, 2),
+                'badge'    => $badgeClass,
               ];
             @endphp
             <tr class="gl-row" style="cursor: pointer;" data-type="{{ $typeKey }}" onclick="openLedgerBookDetailsModal({{ json_encode($glData) }})">
@@ -139,9 +143,9 @@
               <td><div class="fw-bold text-dark">{{ $name }}</div></td>
               <td><span class="badge {{ $badgeClass }}">{{ $type }}</span></td>
               <td class="text-end font-monospace">₱0.00</td>
-              <td class="text-end text-success font-monospace">+₱0.00</td>
-              <td class="text-end text-danger font-monospace">-₱0.00</td>
-              <td class="text-end text-primary fw-bold font-monospace">₱0.00</td>
+              <td class="text-end text-success font-monospace">+₱{{ number_format($debitTotal, 2) }}</td>
+              <td class="text-end text-danger font-monospace">-₱{{ number_format($creditTotal, 2) }}</td>
+              <td class="text-end text-primary fw-bold font-monospace">₱{{ number_format($endingBal, 2) }}</td>
               <td class="text-end" onclick="event.stopPropagation();">
                 <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Account Movement Ledger" onclick="openLedgerBookDetailsModal({{ json_encode($glData) }})"><i class="ph ph-eye"></i></button>
               </td>

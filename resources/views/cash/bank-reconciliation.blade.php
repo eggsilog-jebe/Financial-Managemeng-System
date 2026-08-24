@@ -29,19 +29,19 @@
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Bank Statement Ending Balance</span>
+          <span class="text-muted small fw-medium">Hospital Cash Book Balance</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-bank fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱4,850,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($totalBookBalance ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Hospital Cash Book Balance</span>
+          <span class="text-muted small fw-medium">Audited Bank Position</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-book fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱4,850,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($totalBookBalance ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -56,10 +56,10 @@
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Statement Match Rate</span>
+          <span class="text-muted small fw-medium">Reconciled Statements</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">100.0%</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($reconciliations ?? collect())->count() }} Statements</h4>
       </div>
     </div>
   </div>

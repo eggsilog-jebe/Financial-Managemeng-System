@@ -32,7 +32,7 @@
           <span class="text-muted small fw-medium">Active Department Units</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-buildings fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">6 Departments</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($budgets ?? collect())->count() }} Departments</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,7 +41,7 @@
           <span class="text-muted small fw-medium">Combined Department Caps</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-vault fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱85,000,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($budgets ?? collect())->sum('allocated_amount'), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -50,7 +50,7 @@
           <span class="text-muted small fw-medium">Total YTD Consumed</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-trend-up fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱42,500,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($budgets ?? collect())->sum('spent_amount'), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -59,7 +59,12 @@
           <span class="text-muted small fw-medium">Average Hospital Burn Rate</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-gauge fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">50.0%</h4>
+        @php
+          $allocTotal = (float) ($budgets ?? collect())->sum('allocated_amount');
+          $spentTotal = (float) ($budgets ?? collect())->sum('spent_amount');
+          $burnRate = $allocTotal > 0 ? round(($spentTotal / $allocTotal) * 100, 1) : 0;
+        @endphp
+        <h4 class="fw-bold mb-0 text-dark">{{ $burnRate }}%</h4>
       </div>
     </div>
   </div>

@@ -29,37 +29,41 @@
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Fixed Fund Ceiling</span>
+          <span class="text-muted small">Petty Cash Vouchers</span>
           <span class="badge bg-secondary-subtle text-secondary p-2 rounded-2"><i class="ph ph-wallet fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱50,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($pettyRequests ?? collect())->count() }} Vouchers</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Cash Remaining in Drawer</span>
+          <span class="text-muted small">Total Disbursed Petty Cash</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱34,250.00</h4>
+        <h4 class="fw-bold mb-0 text-success">₱{{ number_format((float) ($totalPetty ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Total Disbursed Vouchers</span>
+          <span class="text-muted small">Average Voucher Size</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-receipt fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱15,750.00</h4>
+        @php
+          $pCount = ($pettyRequests ?? collect())->count();
+          $pAvg = $pCount > 0 ? ((float) ($totalPetty ?? 0)) / $pCount : 0;
+        @endphp
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($pAvg, 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Fund Custodian</span>
+          <span class="text-muted small">Audit Reconciliation</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-user-check fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">Anna Reyes</h4>
+        <h4 class="fw-bold mb-0 text-dark">Balanced</h4>
       </div>
     </div>
   </div>

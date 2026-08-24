@@ -29,28 +29,28 @@
     <div class="col-md-4">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Bi-Weekly Staff Payroll Batches</span>
+          <span class="text-muted small">Total EFT Batches</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-users-three fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱410,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($transfers ?? collect())->count() }} Batches</h4>
       </div>
     </div>
     <div class="col-md-4">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Supplier Digital Transfers</span>
+          <span class="text-muted small">Total Electronic Disbursements</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-bank fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱850,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($totalAmount ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-4">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Processing Success Rate</span>
+          <span class="text-muted small">Processing Settlement Status</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-shield-check fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">100% Settled</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($transfers ?? collect())->count() > 0 ? '100% Settled' : 'Idle / Ready' }}</h4>
       </div>
     </div>
   </div>

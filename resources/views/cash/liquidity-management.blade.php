@@ -29,19 +29,19 @@
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Days Cash on Hand (DCOH)</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
+          <span class="text-muted small fw-medium">Available Cash Pool</span>
+          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-vault fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">48.2 Days</h4>
+        <h4 class="fw-bold mb-0 text-success">₱{{ number_format((float) ($totalCash ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Quick Solvency Ratio</span>
+          <span class="text-muted small fw-medium">Liquidity Position</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-scales fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">2.41x</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ((float) ($totalCash ?? 0)) > 0 ? 'Healthy' : 'Zero Balance' }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -50,16 +50,16 @@
           <span class="text-muted small fw-medium">Unrestricted Free Cash Pool</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-vault fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-success">₱5,840,000.00</h4>
+        <h4 class="fw-bold mb-0 text-primary">₱{{ number_format((float) ($totalCash ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Emergency Reserve Quota</span>
+          <span class="text-muted small fw-medium">Working Capital Solvency</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-shield fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱2,000,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">Solvent</h4>
       </div>
     </div>
   </div>

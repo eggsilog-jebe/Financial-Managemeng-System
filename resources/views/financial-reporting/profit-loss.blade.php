@@ -32,7 +32,7 @@
           <span class="text-muted small fw-medium">Total Operating Revenue</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-trend-up fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-success">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-success">₱{{ number_format((float) ($totalRevenue ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,7 +41,7 @@
           <span class="text-muted small fw-medium">Operating Expenses (OPEX)</span>
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-calculator fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-danger">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-danger">₱{{ number_format((float) ($totalExpense ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -50,7 +50,7 @@
           <span class="text-muted small fw-medium">Net Profit (EBITDA)</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-vault fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-primary">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-primary">₱{{ number_format((float) ($netIncome ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -59,7 +59,11 @@
           <span class="text-muted small fw-medium">Operating Net Margin %</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-percent fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">0.0%</h4>
+        @php
+          $revVal = (float) ($totalRevenue ?? 0);
+          $marginVal = $revVal > 0 ? round((((float) ($netIncome ?? 0)) / $revVal) * 100, 1) : 0;
+        @endphp
+        <h4 class="fw-bold mb-0 text-dark">{{ $marginVal }}%</h4>
       </div>
     </div>
   </div>
@@ -103,70 +107,52 @@
           </thead>
           <tbody>
             <tr class="table-light fw-bold text-success"><td colspan="5">1. Hospital Operating Revenue</td></tr>
-            <tr class="pnl-row" style="cursor: pointer;" onclick="openPnlDetailsModal('Inpatient Ward & ICU Admission Revenue', 'Hospital Operating Revenue', '₱11,200,000.00', '₱9,800,000.00', '+₱1,400,000.00', '4010-REV-INPATIENT')">
-              <td class="ps-4 fw-semibold">Inpatient Ward &amp; ICU Admission Revenue</td>
-              <td class="text-end font-monospace text-success fw-semibold">₱11,200,000.00</td>
-              <td class="text-end font-monospace">₱9,800,000.00</td>
-              <td class="text-end font-monospace text-success">+₱1,400,000.00</td>
+            @forelse($revenues ?? [] as $revAcc)
+            @php $revBal = (float) $revAcc->current_balance; @endphp
+            <tr class="pnl-row" style="cursor: pointer;" onclick="openPnlDetailsModal('{{ addslashes($revAcc->name) }}', 'Hospital Operating Revenue', '₱{{ number_format($revBal, 2) }}', '₱0.00', '+₱{{ number_format($revBal, 2) }}', '{{ $revAcc->code }}')">
+              <td class="ps-4 fw-semibold">{{ $revAcc->name }}</td>
+              <td class="text-end font-monospace text-success fw-semibold">₱{{ number_format($revBal, 2) }}</td>
+              <td class="text-end font-monospace">₱0.00</td>
+              <td class="text-end font-monospace text-success">+₱{{ number_format($revBal, 2) }}</td>
               <td class="text-end" onclick="event.stopPropagation();"><button class="btn btn-sm btn-icon btn-outline-secondary" title="View Audit Details"><i class="ph ph-eye"></i></button></td>
             </tr>
-            <tr class="pnl-row" style="cursor: pointer;" onclick="openPnlDetailsModal('Outpatient Clinic & ER Consultation Fees', 'Hospital Operating Revenue', '₱4,250,000.00', '₱3,900,000.00', '+₱350,000.00', '4020-REV-OUTPATIENT')">
-              <td class="ps-4 fw-semibold">Outpatient Clinic &amp; ER Consultation Fees</td>
-              <td class="text-end font-monospace text-success fw-semibold">₱4,250,000.00</td>
-              <td class="text-end font-monospace">₱3,900,000.00</td>
-              <td class="text-end font-monospace text-success">+₱350,000.00</td>
-              <td class="text-end" onclick="event.stopPropagation();"><button class="btn btn-sm btn-icon btn-outline-secondary" title="View Audit Details"><i class="ph ph-eye"></i></button></td>
-            </tr>
-            <tr class="pnl-row" style="cursor: pointer;" onclick="openPnlDetailsModal('Pharmacy & Diagnostic Sales', 'Hospital Operating Revenue', '₱3,000,000.00', '₱2,500,000.00', '+₱500,000.00', '4030-REV-PHARMACY')">
-              <td class="ps-4 fw-semibold">Pharmacy &amp; Diagnostic Sales</td>
-              <td class="text-end font-monospace text-success fw-semibold">₱3,000,000.00</td>
-              <td class="text-end font-monospace">₱2,500,000.00</td>
-              <td class="text-end font-monospace text-success">+₱500,000.00</td>
-              <td class="text-end" onclick="event.stopPropagation();"><button class="btn btn-sm btn-icon btn-outline-secondary" title="View Audit Details"><i class="ph ph-eye"></i></button></td>
-            </tr>
+            @empty
+            <tr><td colspan="5" class="text-center py-2 text-muted">No operating revenues recorded.</td></tr>
+            @endforelse
             <tr class="table-success fw-bold">
               <td>TOTAL GROSS REVENUE</td>
-              <td class="text-end text-success font-monospace fs-6">₱18,450,000.00</td>
-              <td class="text-end font-monospace fs-6">₱16,200,000.00</td>
-              <td class="text-end text-success font-monospace fs-6">+₱2,250,000.00</td>
+              <td class="text-end text-success font-monospace fs-6">₱{{ number_format((float) ($totalRevenue ?? 0), 2) }}</td>
+              <td class="text-end font-monospace fs-6">₱0.00</td>
+              <td class="text-end text-success font-monospace fs-6">+₱{{ number_format((float) ($totalRevenue ?? 0), 2) }}</td>
               <td></td>
             </tr>
 
             <tr class="table-light fw-bold text-danger"><td colspan="5">2. Operating Expenses (OPEX)</td></tr>
-            <tr class="pnl-row" style="cursor: pointer;" onclick="openPnlDetailsModal('Doctors & Nursing Staff Payroll Benefits', 'Operating Expenses', '-₱6,500,000.00', '-₱6,100,000.00', '-₱400,000.00', '5010-EXP-PAYROLL')">
-              <td class="ps-4 text-muted">Doctors &amp; Nursing Staff Payroll Benefits</td>
-              <td class="text-end font-monospace text-danger">-₱6,500,000.00</td>
-              <td class="text-end font-monospace">-₱6,100,000.00</td>
-              <td class="text-end font-monospace text-danger">-₱400,000.00</td>
+            @forelse($expenses ?? [] as $expAcc)
+            @php $expBal = (float) $expAcc->current_balance; @endphp
+            <tr class="pnl-row" style="cursor: pointer;" onclick="openPnlDetailsModal('{{ addslashes($expAcc->name) }}', 'Operating Expenses', '-₱{{ number_format($expBal, 2) }}', '₱0.00', '-₱{{ number_format($expBal, 2) }}', '{{ $expAcc->code }}')">
+              <td class="ps-4 text-muted">{{ $expAcc->name }}</td>
+              <td class="text-end font-monospace text-danger">-₱{{ number_format($expBal, 2) }}</td>
+              <td class="text-end font-monospace">₱0.00</td>
+              <td class="text-end font-monospace text-danger">-₱{{ number_format($expBal, 2) }}</td>
               <td class="text-end" onclick="event.stopPropagation();"><button class="btn btn-sm btn-icon btn-outline-secondary" title="View Audit Details"><i class="ph ph-eye"></i></button></td>
             </tr>
-            <tr class="pnl-row" style="cursor: pointer;" onclick="openPnlDetailsModal('Medical Consumables & Pharmaceuticals', 'Operating Expenses', '-₱3,800,000.00', '-₱3,500,000.00', '-₱300,000.00', '5020-EXP-SUPPLIES')">
-              <td class="ps-4 text-muted">Medical Consumables &amp; Pharmaceuticals</td>
-              <td class="text-end font-monospace text-danger">-₱3,800,000.00</td>
-              <td class="text-end font-monospace">-₱3,500,000.00</td>
-              <td class="text-end font-monospace text-danger">-₱300,000.00</td>
-              <td class="text-end" onclick="event.stopPropagation();"><button class="btn btn-sm btn-icon btn-outline-secondary" title="View Audit Details"><i class="ph ph-eye"></i></button></td>
-            </tr>
-            <tr class="pnl-row" style="cursor: pointer;" onclick="openPnlDetailsModal('Facility Electricity & Water Utilities', 'Operating Expenses', '-₱1,800,000.00', '-₱1,800,000.00', '₱0.00', '5030-EXP-UTILITY')">
-              <td class="ps-4 text-muted">Facility Electricity &amp; Water Utilities</td>
-              <td class="text-end font-monospace text-danger">-₱1,800,000.00</td>
-              <td class="text-end font-monospace">-₱1,800,000.00</td>
-              <td class="text-end font-monospace text-muted">₱0.00</td>
-              <td class="text-end" onclick="event.stopPropagation();"><button class="btn btn-sm btn-icon btn-outline-secondary" title="View Audit Details"><i class="ph ph-eye"></i></button></td>
-            </tr>
+            @empty
+            <tr><td colspan="5" class="text-center py-2 text-muted">No operating expenses recorded.</td></tr>
+            @endforelse
             <tr class="table-danger fw-bold">
               <td>TOTAL OPERATING EXPENSES</td>
-              <td class="text-end text-danger font-monospace fs-6">-₱12,100,000.00</td>
-              <td class="text-end font-monospace fs-6">-₱11,400,000.00</td>
-              <td class="text-end text-danger font-monospace fs-6">-₱700,000.00</td>
+              <td class="text-end text-danger font-monospace fs-6">-₱{{ number_format((float) ($totalExpense ?? 0), 2) }}</td>
+              <td class="text-end font-monospace fs-6">₱0.00</td>
+              <td class="text-end text-danger font-monospace fs-6">-₱{{ number_format((float) ($totalExpense ?? 0), 2) }}</td>
               <td></td>
             </tr>
 
             <tr class="table-primary fw-bold">
               <td class="fs-6">NET OPERATING PROFIT (EBITDA)</td>
-              <td class="text-end text-primary font-monospace fs-5">₱6,350,000.00</td>
-              <td class="text-end font-monospace fs-5">₱4,800,000.00</td>
-              <td class="text-end text-success font-monospace fs-5">+₱1,550,000.00</td>
+              <td class="text-end text-primary font-monospace fs-5">₱{{ number_format((float) ($netIncome ?? 0), 2) }}</td>
+              <td class="text-end font-monospace fs-5">₱0.00</td>
+              <td class="text-end text-success font-monospace fs-5">+₱{{ number_format((float) ($netIncome ?? 0), 2) }}</td>
               <td></td>
             </tr>
           </tbody>

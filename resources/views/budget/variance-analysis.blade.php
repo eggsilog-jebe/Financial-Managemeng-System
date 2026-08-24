@@ -32,7 +32,11 @@
           <span class="text-muted small fw-medium">Favorable Variances (Savings)</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-trend-down fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-success">+₱1,420,000.00</h4>
+        @php
+          $favorable = ($budgets ?? collect())->filter(fn($b) => ((float) $b->allocated_amount - (float) $b->spent_amount) > 0)->sum(fn($b) => (float) $b->allocated_amount - (float) $b->spent_amount);
+          $unfavorable = ($budgets ?? collect())->filter(fn($b) => ((float) $b->allocated_amount - (float) $b->spent_amount) < 0)->sum(fn($b) => (float) $b->spent_amount - (float) $b->allocated_amount);
+        @endphp
+        <h4 class="fw-bold mb-0 text-success">+₱{{ number_format($favorable, 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,7 +45,7 @@
           <span class="text-muted small fw-medium">Unfavorable Variances (Over-Spend)</span>
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-trend-up fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-danger">-₱345,000.00</h4>
+        <h4 class="fw-bold mb-0 text-danger">-₱{{ number_format($unfavorable, 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -50,16 +54,16 @@
           <span class="text-muted small fw-medium">Net Budget Variance</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-scales fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">+₱1,075,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($totalVariance ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Over-Budget Flagged Accounts</span>
+          <span class="text-muted small fw-medium">Monitored Department Units</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-warning-octagon fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">2 Accounts</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($budgets ?? collect())->count() }} Units</h4>
       </div>
     </div>
   </div>

@@ -32,7 +32,7 @@
           <span class="text-muted small fw-medium">Logged Tax Audit Events</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-list-checks fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">1,248 Logs</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($taxRules ?? collect())->count() + ($certificates ?? collect())->count() }} Logs</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -59,7 +59,7 @@
           <span class="text-muted small fw-medium">SHA-256 Hash Integrity</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-lock-key fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">Encrypted</h4>
+        <h4 class="fw-bold mb-0 text-dark">Encrypted &amp; Verified</h4>
       </div>
     </div>
   </div>

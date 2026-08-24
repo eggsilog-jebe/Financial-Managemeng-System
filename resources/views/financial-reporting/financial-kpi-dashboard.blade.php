@@ -32,7 +32,7 @@
           <span class="text-muted small fw-medium">Days Sales Outstanding (DSO)</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
         </div>
-        <h4 class="fw-bold text-dark mb-0">0.0 Days</h4>
+        <h4 class="fw-bold text-dark mb-0">{{ $dso }} Days</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,16 +41,16 @@
           <span class="text-muted small fw-medium">Operating Profit Margin</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-trend-up fs-5"></i></span>
         </div>
-        <h4 class="fw-bold text-dark mb-0">0.0%</h4>
+        <h4 class="fw-bold text-dark mb-0">{{ $operatingProfitMargin }}%</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Avg Revenue Per Bed (ARPOB)</span>
-          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-bed fs-5"></i></span>
+          <span class="text-muted small fw-medium">Total YTD Revenue</span>
+          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-currency-circle-dollar fs-5"></i></span>
         </div>
-        <h4 class="fw-bold text-dark mb-0">₱0.00</h4>
+        <h4 class="fw-bold text-dark mb-0">₱{{ number_format($totalRevenue, 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -59,7 +59,7 @@
           <span class="text-muted small fw-medium">Current Working Ratio</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-scales fs-5"></i></span>
         </div>
-        <h4 class="fw-bold text-dark mb-0">0.0x</h4>
+        <h4 class="fw-bold text-dark mb-0">{{ $currentRatio }}x</h4>
       </div>
     </div>
   </div>

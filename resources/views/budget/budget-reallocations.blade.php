@@ -29,37 +29,37 @@
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Pending Transfer Requests</span>
-          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
+          <span class="text-muted small fw-medium">Monitored Department Units</span>
+          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-buildings fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">1 Request</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($budgets ?? collect())->count() }} Departments</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Approved Transfers (YTD)</span>
+          <span class="text-muted small fw-medium">Available Budget Pool</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">4 Approved</h4>
+        <h4 class="fw-bold mb-0 text-success">₱{{ number_format((float) ($budgets ?? collect())->sum('remaining_balance'), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Net Budget Impact</span>
+          <span class="text-muted small fw-medium">Total Allocated Cap</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-scales fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($budgets ?? collect())->sum('allocated_amount'), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Rejected Requests</span>
-          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-x-circle fs-5"></i></span>
+          <span class="text-muted small fw-medium">Transfer Reallocation Status</span>
+          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-shield-check fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">0 Requests</h4>
+        <h4 class="fw-bold mb-0 text-dark">Balanced</h4>
       </div>
     </div>
   </div>

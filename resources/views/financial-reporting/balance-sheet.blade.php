@@ -32,7 +32,7 @@
           <span class="text-muted small fw-medium">Total Assets</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-trend-up fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-success">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-success">₱{{ number_format($totalAssets, 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,7 +41,7 @@
           <span class="text-muted small fw-medium">Total Liabilities</span>
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-bank fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-danger">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-danger">₱{{ number_format($totalLiabilities, 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -50,7 +50,7 @@
           <span class="text-muted small fw-medium">Hospital Net Equity</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-scales fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-primary">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-primary">₱{{ number_format($totalEquity, 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -59,7 +59,7 @@
           <span class="text-muted small fw-medium">Current Working Ratio</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-shield-check fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">0.0x</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ $currentRatio }}x</h4>
       </div>
     </div>
   </div>
@@ -100,45 +100,20 @@
         <div class="card-body p-0">
           <table id="bsAssetsTable" class="table table-hover mb-0">
             <thead class="table-light fs-xs text-uppercase">
-              <tr><th>Asset Account Category</th><th class="text-end">Amount (₱)</th></tr>
+              <tr><th>Asset Account</th><th class="text-end">Balance (₱)</th></tr>
             </thead>
             <tbody>
-              <tr class="table-light fw-bold"><td colspan="2">1. Current Assets</td></tr>
-              <tr class="bs-line-row" style="cursor: pointer;" onclick="openBalanceSheetDetailsModal('Cash & Bank Equivalents', 'Current Assets', '₱4,850,000.00', '1010-MASTER')">
-                <td class="ps-4">Cash &amp; Bank Equivalents</td>
-                <td class="text-end font-monospace">₱4,850,000.00</td>
+              @forelse($assets as $acc)
+              @php $bal = (float) $acc->current_balance; @endphp
+              <tr class="bs-line-row" style="cursor: pointer;" onclick="openBalanceSheetDetailsModal('{{ addslashes($acc->name) }}', 'Asset', '₱{{ number_format($bal, 2) }}', '{{ $acc->code }}')">
+                <td class="ps-4">{{ $acc->name }}</td>
+                <td class="text-end font-monospace">₱{{ number_format($bal, 2) }}</td>
               </tr>
-              <tr class="bs-line-row" style="cursor: pointer;" onclick="openBalanceSheetDetailsModal('Accounts Receivable (AR)', 'Current Assets', '₱3,070,200.00', '1100-AR-PATIENT')">
-                <td class="ps-4">Accounts Receivable (AR - Patients &amp; HMOs)</td>
-                <td class="text-end font-monospace">₱3,070,200.00</td>
-              </tr>
-              <tr class="bs-line-row" style="cursor: pointer;" onclick="openBalanceSheetDetailsModal('Pharmacy Inventory', 'Current Assets', '₱990,000.00', '1200-INV-PHARM')">
-                <td class="ps-4">Pharmacy &amp; Medical Supplies Inventory</td>
-                <td class="text-end font-monospace">₱990,000.00</td>
-              </tr>
-              <tr class="fw-semibold"><td>Total Current Assets</td><td class="text-end text-success font-monospace">₱8,910,200.00</td></tr>
-              
-              <tr class="table-light fw-bold"><td colspan="2">2. Non-Current Assets</td></tr>
-              <tr class="bs-line-row" style="cursor: pointer;" onclick="openBalanceSheetDetailsModal('Medical Equipment', 'Non-Current Assets', '₱28,500,000.00', '1500-EQP-MED')">
-                <td class="ps-4">Medical Equipment &amp; MRI Scanners</td>
-                <td class="text-end font-monospace">₱28,500,000.00</td>
-              </tr>
-              <tr class="bs-line-row" style="cursor: pointer;" onclick="openBalanceSheetDetailsModal('Hospital Building', 'Non-Current Assets', '₱18,200,000.00', '1510-BLD-HOSP')">
-                <td class="ps-4">Hospital Building &amp; Infrastructure</td>
-                <td class="text-end font-monospace">₱18,200,000.00</td>
-              </tr>
-              <tr class="bs-line-row" style="cursor: pointer;" onclick="openBalanceSheetDetailsModal('Accumulated Depreciation', 'Non-Current Assets', '-₱1,500,000.00', '1590-DEP-ACC')">
-                <td class="ps-4 text-muted">Less: Accumulated Depreciation</td>
-                <td class="text-end font-monospace text-danger">-₱1,500,000.00</td>
-              </tr>
-              <tr class="fw-semibold"><td>Total Non-Current Assets</td><td class="text-end text-success font-monospace">₱45,200,000.00</td></tr>
+              @empty
+              <tr><td colspan="2" class="text-center py-3 text-muted">No asset accounts in database.</td></tr>
+              @endforelse
+              <tr class="fw-semibold table-success"><td>TOTAL ASSETS</td><td class="text-end text-success font-monospace">₱{{ number_format($totalAssets, 2) }}</td></tr>
             </tbody>
-            <tfoot class="table-success fw-bold">
-              <tr>
-                <td class="fs-6">TOTAL ASSETS</td>
-                <td class="text-end text-success fs-6 font-monospace">₱54,110,200.00</td>
-              </tr>
-            </tfoot>
           </table>
         </div>
       </div>
@@ -154,44 +129,33 @@
         <div class="card-body p-0">
           <table id="bsLiabilitiesTable" class="table table-hover mb-0">
             <thead class="table-light fs-xs text-uppercase">
-              <tr><th>Liabilities &amp; Equity Category</th><th class="text-end">Amount (₱)</th></tr>
+              <tr><th>Liabilities &amp; Equity</th><th class="text-end">Balance (₱)</th></tr>
             </thead>
             <tbody>
-              <tr class="table-light fw-bold"><td colspan="2">1. Current Liabilities</td></tr>
-              <tr class="bs-line-row" style="cursor: pointer;" onclick="openBalanceSheetDetailsModal('Accounts Payable (AP)', 'Current Liabilities', '₱910,500.00', '2010-AP-VEND')">
-                <td class="ps-4">Accounts Payable (AP Vendor Bills)</td>
-                <td class="text-end font-monospace">₱910,500.00</td>
+              <tr class="table-light fw-bold"><td colspan="2">Liabilities</td></tr>
+              @forelse($liabilities as $acc)
+              @php $bal = (float) $acc->current_balance; @endphp
+              <tr class="bs-line-row" style="cursor: pointer;" onclick="openBalanceSheetDetailsModal('{{ addslashes($acc->name) }}', 'Liability', '₱{{ number_format($bal, 2) }}', '{{ $acc->code }}')">
+                <td class="ps-4">{{ $acc->name }}</td>
+                <td class="text-end font-monospace text-danger">₱{{ number_format($bal, 2) }}</td>
               </tr>
-              <tr class="bs-line-row" style="cursor: pointer;" onclick="openBalanceSheetDetailsModal('Accrued Payroll', 'Current Liabilities', '₱0.00', '2020-PAYROLL')">
-                <td class="ps-4">Accrued Nurse &amp; Staff Payroll</td>
-                <td class="text-end font-monospace">₱0.00</td>
+              @empty
+              <tr><td colspan="2" class="text-center py-3 text-muted">No liability accounts.</td></tr>
+              @endforelse
+              <tr class="fw-semibold"><td>Total Liabilities</td><td class="text-end text-danger font-monospace">₱{{ number_format($totalLiabilities, 2) }}</td></tr>
+
+              <tr class="table-light fw-bold"><td colspan="2">Equity</td></tr>
+              @forelse($equity as $acc)
+              @php $bal = (float) $acc->current_balance; @endphp
+              <tr class="bs-line-row" style="cursor: pointer;" onclick="openBalanceSheetDetailsModal('{{ addslashes($acc->name) }}', 'Equity', '₱{{ number_format($bal, 2) }}', '{{ $acc->code }}')">
+                <td class="ps-4">{{ $acc->name }}</td>
+                <td class="text-end font-monospace text-primary">₱{{ number_format($bal, 2) }}</td>
               </tr>
-              <tr class="fw-semibold"><td>Total Current Liabilities</td><td class="text-end text-danger font-monospace">₱910,500.00</td></tr>
-              
-              <tr class="table-light fw-bold"><td colspan="2">2. Long-Term Liabilities</td></tr>
-              <tr class="bs-line-row" style="cursor: pointer;" onclick="openBalanceSheetDetailsModal('Equipment Term Loans', 'Long-Term Liabilities', '₱12,000,000.00', '2500-LOAN-EQUIP')">
-                <td class="ps-4">Medical Equipment Term Loans</td>
-                <td class="text-end font-monospace">₱12,000,000.00</td>
-              </tr>
-              <tr class="fw-semibold"><td>Total Liabilities</td><td class="text-end text-danger font-monospace">₱12,910,500.00</td></tr>
-              
-              <tr class="table-light fw-bold"><td colspan="2">3. Hospital Net Equity</td></tr>
-              <tr class="bs-line-row" style="cursor: pointer;" onclick="openBalanceSheetDetailsModal('Founding Capital Reserve', 'Net Equity', '₱25,000,000.00', '3010-CAP-FOUND')">
-                <td class="ps-4">Founding Capital Reserve</td>
-                <td class="text-end font-monospace">₱25,000,000.00</td>
-              </tr>
-              <tr class="bs-line-row" style="cursor: pointer;" onclick="openBalanceSheetDetailsModal('Retained Earnings', 'Net Equity', '₱16,199,700.00', '3020-RET-EARN')">
-                <td class="ps-4">Retained Earnings (Accumulated Net Profits)</td>
-                <td class="text-end font-monospace">₱16,199,700.00</td>
-              </tr>
-              <tr class="fw-semibold"><td>Total Net Equity</td><td class="text-end text-primary font-monospace">₱41,199,700.00</td></tr>
+              @empty
+              <tr><td colspan="2" class="text-center py-3 text-muted">No equity accounts.</td></tr>
+              @endforelse
+              <tr class="fw-semibold table-primary"><td>TOTAL LIABILITIES &amp; EQUITY</td><td class="text-end text-primary font-monospace">₱{{ number_format($totalLiabilities + $totalEquity, 2) }}</td></tr>
             </tbody>
-            <tfoot class="table-primary fw-bold">
-              <tr>
-                <td class="fs-6">TOTAL LIABILITIES &amp; EQUITY</td>
-                <td class="text-end text-primary fs-6 font-monospace">₱54,110,200.00</td>
-              </tr>
-            </tfoot>
           </table>
         </div>
       </div>

@@ -29,28 +29,28 @@
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Master Revenue Target</span>
+          <span class="text-muted small fw-medium">Master Allocated Budget</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-chart-line-up fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱120,000,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($totalAllocated ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Master Expense Cap</span>
+          <span class="text-muted small fw-medium">Master Expensed / Spent</span>
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-calculator fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱85,000,000.00</h4>
+        <h4 class="fw-bold mb-0 text-danger">₱{{ number_format((float) ($totalSpent ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Projected Operating Margin</span>
+          <span class="text-muted small fw-medium">Remaining Budget Pool</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-percent fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">29.17%</h4>
+        <h4 class="fw-bold mb-0 text-primary">₱{{ number_format((float) ($totalRemaining ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -59,7 +59,7 @@
           <span class="text-muted small fw-medium">Active Fiscal Plans</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-files fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">2 Plans</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($budgets ?? collect())->count() }} {{ Str::plural('Plan', ($budgets ?? collect())->count()) }}</h4>
       </div>
     </div>
   </div>

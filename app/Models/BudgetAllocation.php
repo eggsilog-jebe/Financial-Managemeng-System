@@ -25,4 +25,9 @@ final class BudgetAllocation extends Model
             'remaining_balance' => 'decimal:4',
         ];
     }
+
+    public function encumbrances(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(BudgetEncumbrance::class);
+    }
 }

@@ -26,17 +26,58 @@
     <nav class="sidebar-nav" aria-label="FMS systems">
       <p class="nav-title">Overview</p>
       <ul class="nav-list">
+        @can('access-general-ledger')
         <li>
-          <a class="nav-link{{ request()->routeIs('dashboard') ? ' active' : '' }}" href="{{ route('dashboard') }}" data-page="dashboard" data-nav-tooltip="Dashboard" aria-label="Dashboard" @if(request()->routeIs('dashboard')) aria-current="page" @endif>
+          <a class="nav-link{{ request()->routeIs('accounting.dashboard') || request()->routeIs('dashboard') ? ' active' : '' }}" href="{{ route('accounting.dashboard') }}" data-page="dashboard" data-nav-tooltip="Dashboard" aria-label="Dashboard">
             <i class="ph-fill ph-squares-four" aria-hidden="true"></i>
-            <span class="nav-label">Dashboard</span>
+            <span class="nav-label">Executive Dashboard</span>
           </a>
         </li>
+        @endcan
+
+        @can('access-cashier-pos')
+        <li>
+          <a class="nav-link{{ request()->routeIs('accounting.cashier.*') ? ' active' : '' }}" href="{{ route('accounting.cashier.index') }}" data-page="cashier" data-nav-tooltip="Cashier POS" aria-label="Cashier POS">
+            <i class="ph-fill ph-hand-coins" aria-hidden="true"></i>
+            <span class="nav-label">Cashier POS Desk</span>
+            <span class="badge bg-warning-subtle text-warning ms-auto fs-xs">POS</span>
+          </a>
+        </li>
+        @endcan
+
+        @can('access-general-ledger')
+        <li>
+          <a class="nav-link{{ request()->routeIs('accounting.general-ledger.*') ? ' active' : '' }}" href="{{ route('accounting.general-ledger.index') }}" data-page="gl-browser" data-nav-tooltip="GL Browser" aria-label="GL Browser">
+            <i class="ph-fill ph-book-open-text" aria-hidden="true"></i>
+            <span class="nav-label">Journal Browser</span>
+          </a>
+        </li>
+        @endcan
+
+        @can('access-financial-reports')
+        <li>
+          <a class="nav-link{{ request()->routeIs('accounting.reports.*') ? ' active' : '' }}" href="{{ route('accounting.reports.index') }}" data-page="reports-hub" data-nav-tooltip="Reports Hub" aria-label="Reports Hub">
+            <i class="ph-fill ph-chart-line-up" aria-hidden="true"></i>
+            <span class="nav-label">Financial Reports Hub</span>
+          </a>
+        </li>
+        @endcan
+
+        @can('access-period-closing')
+        <li>
+          <a class="nav-link{{ request()->routeIs('accounting.period-close.*') ? ' active' : '' }}" href="{{ route('accounting.period-close.index') }}" data-page="period-close" data-nav-tooltip="Period-End Locks" aria-label="Period-End Locks">
+            <i class="ph-fill ph-lock-key" aria-hidden="true"></i>
+            <span class="nav-label">Period-End Locks</span>
+            <span class="badge bg-danger-subtle text-danger ms-auto fs-xs">CFO</span>
+          </a>
+        </li>
+        @endcan
       </ul>
 
       <p class="nav-title">Transaction Core Modules</p>
       <ul class="nav-list nav-domain-list">
         <!-- 1. General Ledger -->
+        @can('access-general-ledger')
         <li class="nav-accordion{{ $isGl ? ' is-expanded is-active' : '' }}">
           <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('gl.chart-of-accounts') }}" aria-expanded="{{ $isGl ? 'true' : 'false' }}" aria-controls="nav-gl" aria-label="General Ledger" data-nav-tooltip="General Ledger">
             <i class="ph-fill ph-book-open" aria-hidden="true"></i>
@@ -48,11 +89,15 @@
             <li><a href="{{ route('gl.journal-entries') }}" class="{{ request()->routeIs('gl.journal-entries') ? 'active' : '' }}">Journal Entries</a></li>
             <li><a href="{{ route('gl.ledger-books') }}" class="{{ request()->routeIs('gl.ledger-books') ? 'active' : '' }}">Ledger Books</a></li>
             <li><a href="{{ route('gl.trial-balance') }}" class="{{ request()->routeIs('gl.trial-balance') ? 'active' : '' }}">Trial Balance</a></li>
+            @can('access-period-closing')
             <li><a href="{{ route('gl.period-end-closing') }}" class="{{ request()->routeIs('gl.period-end-closing') ? 'active' : '' }}">Period End Closing</a></li>
+            @endcan
           </ul>
         </li>
+        @endcan
 
         <!-- 2. Accounts Payable (AP) -->
+        @can('access-ap-procurement')
         <li class="nav-accordion{{ $isAp ? ' is-expanded is-active' : '' }}">
           <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('ap.vendors') }}" aria-expanded="{{ $isAp ? 'true' : 'false' }}" aria-controls="nav-ap" aria-label="Accounts Payable" data-nav-tooltip="Accounts Payable">
             <i class="ph-fill ph-receipt" aria-hidden="true"></i>
@@ -67,8 +112,10 @@
             <li><a href="{{ route('ap.ap-approvals') }}" class="{{ request()->routeIs('ap.ap-approvals') ? 'active' : '' }}">AP Payment Approvals</a></li>
           </ul>
         </li>
+        @endcan
 
         <!-- 3. Accounts Receivable (AR) -->
+        @can('access-ar-billing')
         <li class="nav-accordion{{ $isAr ? ' is-expanded is-active' : '' }}">
           <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('ar.customers') }}" aria-expanded="{{ $isAr ? 'true' : 'false' }}" aria-controls="nav-ar" aria-label="Accounts Receivable" data-nav-tooltip="Accounts Receivable">
             <i class="ph-fill ph-currency-circle-dollar" aria-hidden="true"></i>
@@ -83,8 +130,10 @@
             <li><a href="{{ route('ar.statements') }}" class="{{ request()->routeIs('ar.statements') ? 'active' : '' }}">Customer Statements</a></li>
           </ul>
         </li>
+        @endcan
 
         <!-- 4. Disbursement Management -->
+        @can('access-disbursements')
         <li class="nav-accordion{{ $isDisbursement ? ' is-expanded is-active' : '' }}">
           <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('disbursement.payment-requests') }}" aria-expanded="{{ $isDisbursement ? 'true' : 'false' }}" aria-controls="nav-disbursement" aria-label="Disbursement Management" data-nav-tooltip="Disbursement">
             <i class="ph-fill ph-arrows-out" aria-hidden="true"></i>
@@ -99,8 +148,10 @@
             <li><a href="{{ route('disbursement.petty-cash') }}" class="{{ request()->routeIs('disbursement.petty-cash') ? 'active' : '' }}">Petty Cash</a></li>
           </ul>
         </li>
+        @endcan
 
         <!-- 5. Collection Management -->
+        @can('access-cashier-pos')
         <li class="nav-accordion{{ $isCollection ? ' is-expanded is-active' : '' }}">
           <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('collection.receipts') }}" aria-expanded="{{ $isCollection ? 'true' : 'false' }}" aria-controls="nav-collection" aria-label="Collection Management" data-nav-tooltip="Collection">
             <i class="ph-fill ph-vault" aria-hidden="true"></i>
@@ -115,8 +166,10 @@
             <li><a href="{{ route('collection.payment-gateways') }}" class="{{ request()->routeIs('collection.payment-gateways') ? 'active' : '' }}">Payment Gateway Logs</a></li>
           </ul>
         </li>
+        @endcan
 
         <!-- 6. Budget Management -->
+        @can('access-disbursements')
         <li class="nav-accordion{{ $isBudget ? ' is-expanded is-active' : '' }}">
           <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('budget.fiscal-planning') }}" aria-expanded="{{ $isBudget ? 'true' : 'false' }}" aria-controls="nav-budget" aria-label="Budget Management" data-nav-tooltip="Budget">
             <i class="ph-fill ph-calculator" aria-hidden="true"></i>
@@ -131,8 +184,10 @@
             <li><a href="{{ route('budget.reallocations') }}" class="{{ request()->routeIs('budget.reallocations') ? 'active' : '' }}">Budget Reallocations</a></li>
           </ul>
         </li>
+        @endcan
 
         <!-- 7. Cash Management -->
+        @can('access-disbursements')
         <li class="nav-accordion{{ $isCash ? ' is-expanded is-active' : '' }}">
           <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('cash.bank-accounts') }}" aria-expanded="{{ $isCash ? 'true' : 'false' }}" aria-controls="nav-cash" aria-label="Cash Management" data-nav-tooltip="Cash Management">
             <i class="ph-fill ph-coins" aria-hidden="true"></i>
@@ -147,8 +202,10 @@
             <li><a href="{{ route('cash.liquidity') }}" class="{{ request()->routeIs('cash.liquidity') ? 'active' : '' }}">Liquidity Management</a></li>
           </ul>
         </li>
+        @endcan
 
         <!-- 8. Financial Reporting & Analytics -->
+        @can('access-financial-reports')
         <li class="nav-accordion{{ $isReporting ? ' is-expanded is-active' : '' }}">
           <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('reporting.balance-sheet') }}" aria-expanded="{{ $isReporting ? 'true' : 'false' }}" aria-controls="nav-reporting" aria-label="Financial Reporting & Analytics" data-nav-tooltip="Reporting">
             <i class="ph-fill ph-chart-line-up" aria-hidden="true"></i>
@@ -163,8 +220,10 @@
             <li><a href="{{ route('reporting.executive-reports') }}" class="{{ request()->routeIs('reporting.executive-reports') ? 'active' : '' }}">Executive Reports</a></li>
           </ul>
         </li>
+        @endcan
 
         <!-- 9. Tax Management -->
+        @can('access-financial-reports')
         <li class="nav-accordion{{ $isTax ? ' is-expanded is-active' : '' }}">
           <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('tax.tax-config') }}" aria-expanded="{{ $isTax ? 'true' : 'false' }}" aria-controls="nav-tax" aria-label="Tax Management" data-nav-tooltip="Tax Management">
             <i class="ph-fill ph-percent" aria-hidden="true"></i>
@@ -179,31 +238,30 @@
             <li><a href="{{ route('tax.tax-audit') }}" class="{{ request()->routeIs('tax.tax-audit') ? 'active' : '' }}">Tax Audit Trail</a></li>
           </ul>
         </li>
+        @endcan
       </ul>
     </nav>
 
     <footer class="sidebar-footer">
       <div class="sidebar-profile-wrap">
         <button class="sidebar-profile" id="profile-toggle" type="button" aria-label="Open account menu for FMS User" aria-haspopup="menu" aria-expanded="false" aria-controls="profile-menu">
-          <span class="profile-avatar" aria-hidden="true">FU</span>
+          <span class="profile-avatar" aria-hidden="true">{{ strtoupper(substr(auth()->user()->name ?? 'AD', 0, 2)) }}</span>
           <span class="profile-info">
-            <span class="profile-name">FMS Administrator</span>
-            <span class="profile-role">Transaction Core</span>
+            <span class="profile-name">{{ auth()->user()->name ?? 'Executive Demo User' }}</span>
+            <span class="profile-role badge bg-primary-subtle text-primary border border-primary-subtle py-0 px-2 mt-1">{{ auth()->user()->role ?? 'CFO' }}</span>
           </span>
           <i class="ph ph-caret-up-down profile-chevron" aria-hidden="true"></i>
         </button>
         <div class="profile-menu" id="profile-menu" role="menu" hidden>
-          <a class="profile-menu-link" href="#profile" role="menuitem"><i class="ph ph-user" aria-hidden="true"></i>Profile</a>
-          <a class="profile-menu-link" href="#settings" role="menuitem"><i class="ph ph-gear" aria-hidden="true"></i>Settings</a>
+          <a class="profile-menu-link" href="{{ route('accounting.dashboard') }}" role="menuitem"><i class="ph ph-squares-four" aria-hidden="true"></i>Dashboard</a>
+          <a class="profile-menu-link" href="{{ route('login') }}" role="menuitem"><i class="ph ph-arrows-clockwise" aria-hidden="true"></i>Switch Demo Role</a>
           <div class="profile-menu-divider" role="separator"></div>
-          <p class="profile-menu-label" id="appearance-menu-label">Appearance</p>
-          <div class="theme-options" role="group" aria-labelledby="appearance-menu-label">
-            <button type="button" role="menuitemradio" data-theme-option="light" aria-checked="false"><i class="ph ph-sun" aria-hidden="true"></i>Light</button>
-            <button type="button" role="menuitemradio" data-theme-option="dark" aria-checked="false"><i class="ph ph-moon" aria-hidden="true"></i>Dark</button>
-            <button type="button" role="menuitemradio" data-theme-option="system" aria-checked="false"><i class="ph ph-desktop" aria-hidden="true"></i>System</button>
-          </div>
-          <div class="profile-menu-divider" role="separator"></div>
-          <button class="profile-menu-link profile-menu-logout" type="button" role="menuitem" data-logout><i class="ph ph-sign-out" aria-hidden="true"></i>Logout</button>
+          <form method="POST" action="{{ route('logout') }}" id="logout-form">
+            @csrf
+            <button class="profile-menu-link text-danger border-0 bg-transparent w-100 text-start" type="submit" role="menuitem">
+              <i class="ph ph-sign-out text-danger" aria-hidden="true"></i>Logout
+            </button>
+          </form>
         </div>
       </div>
     </footer>

@@ -32,4 +32,9 @@ final class BankReconciliation extends Model
     {
         return $this->belongsTo(BankAccount::class);
     }
+
+    public function lines(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(BankStatementLine::class);
+    }
 }

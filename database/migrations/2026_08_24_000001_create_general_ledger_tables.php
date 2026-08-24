@@ -28,6 +28,7 @@ return new class extends Migration
             $table->string('description');
             $table->enum('type', ['GENERAL', 'ADJUSTING', 'CLOSING'])->default('GENERAL')->index();
             $table->enum('status', ['DRAFT', 'POSTED', 'REVERSED'])->default('DRAFT')->index();
+            $table->foreignId('reversed_by_entry_id')->nullable()->constrained('journal_entries')->nullOnDelete();
             $table->foreignId('posted_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('posted_at')->nullable();
             $table->timestamps();

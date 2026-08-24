@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Builder;
 
 final class Account extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'code',
         'name',
@@ -17,7 +20,18 @@ final class Account extends Model
         'normal_balance',
         'department',
         'is_active',
+        'type', // alias for category
     ];
+
+    public function setTypeAttribute(?string $value): void
+    {
+        if ($value) {
+            $this->attributes['category'] = $value;
+            if (! isset($this->attributes['normal_balance'])) {
+                $this->attributes['normal_balance'] = in_array(strtoupper($value), ['ASSET', 'EXPENSE'], true) ? 'DEBIT' : 'CREDIT';
+            }
+        }
+    }
 
     protected function casts(): array
     {

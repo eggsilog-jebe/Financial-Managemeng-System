@@ -13,8 +13,8 @@ readonly class JournalEntryData
         public string $referenceNumber,
         public string $entryDate,
         public string $description,
-        public string $type,
-        public int $postedBy,
-        public array $lines,
+        public string $type = 'GENERAL',
+        public ?int $postedBy = null,
+        public array $lines = [],
     ) {}
 }

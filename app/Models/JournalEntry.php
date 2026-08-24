@@ -17,6 +17,7 @@ final class JournalEntry extends Model
         'description',
         'type',
         'status',
+        'reversed_by_entry_id',
         'posted_by',
         'posted_at',
     ];
@@ -33,7 +34,10 @@ final class JournalEntry extends Model
     {
         static::updating(function (JournalEntry $entry): void {
             if ($entry->getOriginal('status') === 'POSTED') {
-                throw new DomainException("Posted Journal Entry [{$entry->reference_number}] is immutable and cannot be updated.");
+                $isReversal = $entry->isDirty('status') && $entry->status === 'REVERSED';
+                if (! $isReversal) {
+                    throw new DomainException("Posted Journal Entry [{$entry->reference_number}] is immutable and cannot be updated.");
+                }
             }
         });
 
@@ -52,5 +56,20 @@ final class JournalEntry extends Model
     public function postedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'posted_by');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'posted_by');
+    }
+
+    public function getTotalDebitAttribute(): string
+    {
+        return (string) $this->lines->sum('debit');
+    }
+
+    public function getTotalCreditAttribute(): string
+    {
+        return (string) $this->lines->sum('credit');
     }
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\Payment;
+use App\Models\OfficialReceipt;
 use App\Models\PaymentReceipt;
 use Illuminate\Contracts\View\View;
 
@@ -11,14 +13,17 @@ final class CollectionController extends Controller
 {
     public function paymentReceipts(): View
     {
-        $receipts       = PaymentReceipt::latest('receipt_date')->get();
-        $totalCollected = $receipts->sum('amount_paid');
-        $todayCollected = $receipts->where('receipt_date', today()->toDateString())->sum('amount_paid');
+        $payments = Payment::with(['patientAccount', 'invoice', 'officialReceipt'])->latest('payment_date')->get();
+
+        $totalCollected = $payments->sum('amount');
+        $cashCollected = $payments->where('payment_method', 'CASH')->sum('amount');
+        $digitalCollected = $payments->where('payment_method', '!=', 'CASH')->sum('amount');
 
         return view('collection.payment-receipts', compact(
-            'receipts',
+            'payments',
             'totalCollected',
-            'todayCollected',
+            'cashCollected',
+            'digitalCollected'
         ));
     }
 

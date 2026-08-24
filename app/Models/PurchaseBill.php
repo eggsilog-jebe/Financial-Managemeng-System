@@ -33,4 +33,19 @@ final class PurchaseBill extends Model
     {
         return $this->belongsTo(Vendor::class);
     }
+
+    public function items(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(BillItem::class);
+    }
+
+    public function threeWayMatch(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(ThreeWayMatch::class);
+    }
+
+    public function birCertificate(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Bir2307Certificate::class);
+    }
 }

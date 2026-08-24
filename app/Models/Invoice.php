@@ -33,4 +33,34 @@ final class Invoice extends Model
     {
         return $this->belongsTo(PatientAccount::class);
     }
+
+    public function items(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(InvoiceItem::class);
+    }
+
+    public function invoiceItems(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(InvoiceItem::class);
+    }
+
+    public function philhealthClaim(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(PhilhealthClaim::class);
+    }
+
+    public function hmoClaims(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(HmoClaim::class);
+    }
+
+    public function statutoryDiscounts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(StatutoryDiscount::class);
+    }
+
+    public function creditNotes(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(CreditNote::class);
+    }
 }

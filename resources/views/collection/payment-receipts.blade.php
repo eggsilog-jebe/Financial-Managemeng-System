@@ -24,96 +24,89 @@
     </div>
   </div>
 
-  <!-- Metric <!-- Primary Summary Cards -->
+  <!-- Primary Summary Cards -->
   <div class="row g-3 mb-4">
     <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Official Receipts Issued Today</span>
+          <span class="text-muted small fw-medium">Official Receipts Issued</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-receipt fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ count($receipts ?? []) }} Receipts</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ count($payments ?? []) }} Receipts</h4>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Daily Collections</span>
+          <span class="text-muted small fw-medium">Total Collections</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-hand-coins fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-success">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-success">₱{{ number_format((float) ($totalCollected ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
         <div class="d-flex align-items-center justify-content-between mb-1">
           <span class="text-muted small fw-medium">Cash Collections (In Drawer)</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-money fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($cashCollected ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
         <div class="d-flex align-items-center justify-content-between mb-1">
           <span class="text-muted small fw-medium">Card &amp; Digital Collections</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-credit-card fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($digitalCollected ?? 0), 2) }}</h4>
       </div>
     </div>
   </div>
 
   <!-- Data Table Card -->
-  <div class="card border-0 shadow-sm rounded-3">
+  <div class="card border-0 shadow-sm rounded-3 bg-white">
     <div class="card-body p-0">
       <div class="table-responsive">
         <table id="receiptTable" class="table table-hover align-middle mb-0">
           <thead class="table-light">
-            <tr>
-              <th>Receipt Ref #</th>
-              <th>Date &amp; Time</th>
-              <th>Payor / Patient Name</th>
-              <th>Payment Mode</th>
-              <th>Reference / Check No.</th>
-              <th class="text-end">Amount Paid (₱)</th>
-              <th>Status</th>
-              <th class="text-end">Actions</th>
+            <tr class="fs-xs text-muted text-uppercase">
+              <th>OR Serial #</th>
+              <th>Payment Date</th>
+              <th>Patient / Payor Name</th>
+              <th>Invoice Ref</th>
+              <th>Channel</th>
+              <th>Transaction Reference</th>
+              <th class="text-end">Amount Paid</th>
+              <th class="text-center">Action</th>
             </tr>
           </thead>
           <tbody>
-            @forelse($receipts ?? [] as $r)
-            @php
-              $or = is_array($r) ? $r['or'] : $r->receipt_number;
-              $date = is_array($r) ? $r['date'] : $r->receipt_date->format('Y-m-d H:i');
-              $payor = is_array($r) ? $r['payor'] : $r->payor_name;
-              $mode = is_array($r) ? $r['mode'] : $r->payment_mode;
-              $amt = is_array($r) ? $r['amount'] : ('₱' . number_format($r->amount_paid, 2));
-              $status = is_array($r) ? $r['status'] : $r->status;
-              $rData = [
-                'or' => $or,
-                'date' => $date,
-                'payor' => $payor,
-                'sub' => 'Collection Receipt',
-                'mode' => $mode,
-                'ref' => '-',
-                'amount' => $amt,
-                'status' => $status
-              ];
-            @endphp
-            <tr class="receipt-row" style="cursor: pointer;" onclick="openReceiptDetailsModal({{ json_encode($rData) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $or }}</span></td>
-              <td class="font-monospace fs-xs">{{ $date }}</td>
-              <td><div class="fw-bold text-dark">{{ $payor }}</div></td>
-              <td><span class="badge bg-info-subtle text-info">{{ $mode }}</span></td>
-              <td class="font-monospace fs-xs">-</td>
-              <td class="text-end font-monospace fw-bold text-success">{{ $amt }}</td>
-              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> {{ $status }}</span></td>
-              <td class="text-end"><button class="btn btn-sm btn-icon btn-outline-secondary" onclick="openReceiptDetailsModal({{ json_encode($rData) }})"><i class="ph ph-eye"></i></button></td>
+            @forelse($payments ?? [] as $pay)
+            <tr>
+              <td>
+                <span class="badge bg-success-subtle text-success font-monospace border border-success-subtle">
+                  {{ $pay->officialReceipt?->or_number ?? 'OR-' . date('Ymd') . '-000' . $pay->id }}
+                </span>
+              </td>
+              <td class="font-monospace fs-xs">{{ $pay->payment_date->format('M d, Y') }}</td>
+              <td>
+                <strong class="d-block text-dark">{{ $pay->patientAccount->full_name }}</strong>
+                <span class="fs-xs text-muted font-monospace">{{ $pay->patientAccount->patient_id_number }}</span>
+              </td>
+              <td><span class="badge bg-light text-dark font-monospace border">{{ $pay->invoice?->invoice_number ?? 'COP-SETTLED' }}</span></td>
+              <td><span class="badge bg-secondary-subtle text-secondary">{{ $pay->payment_method }}</span></td>
+              <td class="font-monospace fs-xs text-muted">{{ $pay->transaction_channel_ref ?? $pay->payment_reference }}</td>
+              <td class="text-end font-monospace fw-bold text-success">₱{{ number_format((float) $pay->amount, 2) }}</td>
+              <td class="text-center">
+                <a href="{{ route('accounting.print.or', $pay->id) }}" target="_blank" class="btn btn-sm btn-outline-primary p-1 px-2" title="Print Official Receipt">
+                  <i class="ph ph-printer"></i>
+                </a>
+              </td>
             </tr>
             @empty
             <tr>
-              <td colspan="8" class="text-center py-4 text-muted">No payment receipts recorded in database.</td>
+              <td colspan="8" class="text-center py-4 text-muted">No official payment receipts recorded in database.</td>
             </tr>
             @endforelse
           </tbody>
@@ -121,14 +114,7 @@
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="receiptSummaryText">Showing {{ count($receipts ?? []) }} Official Receipts</span>
-      <nav aria-label="Receipt Pagination">
-        <ul class="pagination pagination-sm mb-0">
-          <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
-          <li class="page-item active"><a class="page-link" href="#">1</a></li>
-          <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
-        </ul>
-      </nav>
+      <span class="text-muted fs-xs" id="receiptSummaryText">Showing {{ count($payments ?? []) }} Official Receipts</span>
     </div>
   </div>
 </div>

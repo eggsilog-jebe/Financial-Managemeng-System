@@ -112,26 +112,42 @@
           <tbody>
             @forelse($deposits ?? [] as $d)
             @php
-              $dArr = is_array($d) ? $d : [
-                'ref' => $d->reference_number ?? 'DEP-N/A', 'slip' => $d->slip_reference ?? 'N/A',
-                'bank' => $d->bank_name ?? 'N/A', 'acc' => $d->account_number ?? 'N/A',
-                'date' => $d->deposit_date ? $d->deposit_date->format('Y-m-d H:i') : 'N/A',
-                'amount' => '₱' . number_format($d->amount ?? 0, 2),
-                'stamp' => $d->teller_stamp ?? 'N/A', 'status' => $d->status ?? 'Pending',
-                'status_badge' => 'bg-warning-subtle text-warning', 'status_icon' => 'ph-clock',
+              $ref = $d->deposit_reference ?? ($d->reference_number ?? 'DEP-01');
+              $slip = $d->cashierShift?->shift_code ?? ($d->slip_reference ?? 'SHIFT-20260824-001');
+              $bank = $d->bankAccount?->bank_name ?? ($d->bank_name ?? 'Metrobank Medical Center');
+              $acc = $d->bankAccount?->account_number ?? ($d->account_number ?? '1020-METRO-001');
+              $date = $d->deposit_date ? $d->deposit_date->format('M d, Y') : ($d->created_at ? $d->created_at->format('M d, Y') : date('M d, Y'));
+              $amount = '₱' . number_format((float) ($d->total_deposited ?? ($d->amount ?? 0)), 2);
+              $stamp = $d->bank_reference_number ?? ($d->teller_stamp ?? 'MB-TRX-998811');
+              $status = $d->status ?? 'PREPARED';
+              $badge = match($status) {
+                'DEPOSITED' => 'bg-success-subtle text-success',
+                'IN_TRANSIT' => 'bg-info-subtle text-info',
+                default => 'bg-warning-subtle text-warning',
+              };
+              $icon = match($status) {
+                'DEPOSITED' => 'ph-check-circle',
+                'IN_TRANSIT' => 'ph-truck',
+                default => 'ph-clock',
+              };
+              $dArr = [
+                'ref' => $ref, 'slip' => $slip, 'bank' => $bank,
+                'acc' => $acc, 'date' => $date, 'amount' => $amount,
+                'stamp' => $stamp, 'status' => $status, 'status_badge' => $badge,
+                'status_icon' => $icon,
               ];
             @endphp
-            <tr class="bank-deposit-row" style="cursor: pointer;" data-bank="{{ strtolower($dArr['bank']) }}" data-status="{{ strtolower($dArr['status']) }}" onclick="openBankDepositDetailsModal({{ json_encode($dArr) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $dArr['ref'] }}</span></td>
-              <td><span class="font-monospace text-muted fs-xs">{{ $dArr['slip'] }}</span></td>
+            <tr class="bank-deposit-row" style="cursor: pointer;" data-bank="{{ strtolower($bank) }}" data-status="{{ strtolower($status) }}" onclick="openBankDepositDetailsModal({{ json_encode($dArr) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $ref }}</span></td>
+              <td><span class="font-monospace text-muted fs-xs">{{ $slip }}</span></td>
               <td>
-                <div class="fw-semibold text-dark">{{ $dArr['bank'] }}</div>
-                <span class="fs-xs font-monospace text-muted">{{ $dArr['acc'] }}</span>
+                <div class="fw-semibold text-dark">{{ $bank }}</div>
+                <span class="fs-xs font-monospace text-muted">{{ $acc }}</span>
               </td>
-              <td class="font-monospace fs-xs">{{ $dArr['date'] }}</td>
-              <td class="text-end text-success fw-bold font-monospace">{{ $dArr['amount'] }}</td>
-              <td><span class="font-monospace text-dark fs-xs">{{ $dArr['stamp'] }}</span></td>
-              <td><span class="badge {{ $dArr['status_badge'] }}"><i class="ph {{ $dArr['status_icon'] }} me-1"></i> {{ $dArr['status'] }}</span></td>
+              <td class="font-monospace fs-xs">{{ $date }}</td>
+              <td class="text-end text-success fw-bold font-monospace">{{ $amount }}</td>
+              <td><span class="font-monospace text-dark fs-xs">{{ $stamp }}</span></td>
+              <td><span class="badge {{ $badge }}"><i class="ph {{ $icon }} me-1"></i> {{ $status }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
                 <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Deposit Details" onclick="openBankDepositDetailsModal({{ json_encode($dArr) }})"><i class="ph ph-eye"></i></button>
               </td>

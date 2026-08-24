@@ -32,9 +32,9 @@ final class HospitalFinancialMockSeeder extends Seeder
         // 1. Ensure Standard Chart of Accounts is Seeded
         $this->call(PhilippineHealthcareChartOfAccountsSeeder::class);
 
-        // 2. Ensure Default Cashier Shift & Cashier User
+        // 2. Ensure Default Cashier Shifts across Hospital Stations
         $cashierUser = User::firstOrCreate(
-            ['email' => 'cashier@hospital.ph'],
+            ['email' => 'cashier@hospital.local'],
             ['name' => 'Maria Santos (Senior Cashier)', 'password' => bcrypt('password'), 'role' => 'Cashier']
         );
 
@@ -42,9 +42,41 @@ final class HospitalFinancialMockSeeder extends Seeder
             ['shift_code' => 'SHIFT-20260824-001'],
             [
                 'cashier_id'         => $cashierUser->id,
-                'opened_at'          => now()->startOfDay(),
+                'terminal_name'      => 'POS-MAIN-01 (Main Lobby)',
+                'opened_at'          => now()->startOfDay()->addHours(6),
                 'opening_cash_float' => 5000.00,
                 'status'             => 'OPEN',
+            ]
+        );
+
+        CashierShift::firstOrCreate(
+            ['shift_code' => 'SHIFT-20260824-002'],
+            [
+                'cashier_id'                => $cashierUser->id,
+                'terminal_name'             => 'POS-ER-01 (Emergency Room)',
+                'opened_at'                 => now()->startOfDay()->addHours(7),
+                'opening_cash_float'        => 3000.00,
+                'expected_cash'             => 14500.00,
+                'actual_cash_counted'       => 14500.00,
+                'total_digital_collections' => 8200.00,
+                'total_collections'         => 22700.00,
+                'status'                    => 'OPEN',
+            ]
+        );
+
+        CashierShift::firstOrCreate(
+            ['shift_code' => 'SHIFT-20260824-003'],
+            [
+                'cashier_id'                => $cashierUser->id,
+                'terminal_name'             => 'POS-PHARM-01 (Pharmacy Central)',
+                'opened_at'                 => now()->subDay()->startOfDay()->addHours(6),
+                'closed_at'                 => now()->subDay()->startOfDay()->addHours(18),
+                'opening_cash_float'        => 4000.00,
+                'expected_cash'             => 28350.00,
+                'actual_cash_counted'       => 28350.00,
+                'total_digital_collections' => 12400.00,
+                'total_collections'         => 40750.00,
+                'status'                    => 'CLOSED',
             ]
         );
 
@@ -59,6 +91,37 @@ final class HospitalFinancialMockSeeder extends Seeder
                 'currency'       => 'PHP',
                 'balance'        => 500000.00,
                 'status'         => 'Active',
+            ]
+        );
+
+        // 4. Ensure Realistic Shift Bank Deposits
+        \App\Models\BankDeposit::firstOrCreate(
+            ['deposit_reference' => 'DEP-20260824-001'],
+            [
+                'bank_account_id'       => $bank->id,
+                'cashier_shift_id'      => $shift->id,
+                'deposit_date'          => now()->toDateString(),
+                'cash_amount'           => 28350.00,
+                'check_amount'          => 0.00,
+                'total_deposited'       => 28350.00,
+                'bank_reference_number' => 'MB-TRX-99881122',
+                'validated_by_teller'   => 'L. Santos (Teller #4)',
+                'status'                => 'DEPOSITED',
+            ]
+        );
+
+        \App\Models\BankDeposit::firstOrCreate(
+            ['deposit_reference' => 'DEP-20260824-002'],
+            [
+                'bank_account_id'       => $bank->id,
+                'cashier_shift_id'      => $shift->id,
+                'deposit_date'          => now()->toDateString(),
+                'cash_amount'           => 14500.00,
+                'check_amount'          => 5000.00,
+                'total_deposited'       => 19500.00,
+                'bank_reference_number' => 'MB-TRX-99881123',
+                'validated_by_teller'   => 'L. Santos (Teller #4)',
+                'status'                => 'IN_TRANSIT',
             ]
         );
 

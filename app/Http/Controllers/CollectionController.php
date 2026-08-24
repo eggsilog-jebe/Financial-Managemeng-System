@@ -32,6 +32,7 @@ final class CollectionController extends Controller
     public function cashierDesk(): View
     {
         $shifts = CashierShift::with(['cashier', 'payments'])->latest('opened_at')->get();
+        $terminals = $shifts;
         $activeShift = CashierShift::where('status', 'OPEN')->first();
         
         $todayPayments = Payment::whereDate('payment_date', today())->get();
@@ -40,6 +41,7 @@ final class CollectionController extends Controller
 
         return view('collection.cashier-desk', compact(
             'shifts',
+            'terminals',
             'activeShift',
             'todayTotal',
             'cashReceipts'
@@ -49,9 +51,10 @@ final class CollectionController extends Controller
     public function depositSlips(): View
     {
         $deposits = BankDeposit::with(['bankAccount', 'cashierShift.cashier'])->latest('deposit_date')->get();
+        $slips = $deposits;
         $totalDeposits = $deposits->sum('total_deposited');
 
-        return view('collection.deposit-slips', compact('deposits', 'totalDeposits'));
+        return view('collection.deposit-slips', compact('deposits', 'slips', 'totalDeposits'));
     }
 
     public function bankDeposits(): View
@@ -70,8 +73,9 @@ final class CollectionController extends Controller
             ->latest('payment_date')
             ->get();
             
+        $gateways = $logs;
         $totalOnline = $logs->sum('amount');
 
-        return view('collection.payment-gateway-logs', compact('logs', 'totalOnline'));
+        return view('collection.payment-gateway-logs', compact('logs', 'gateways', 'totalOnline'));
     }
 }

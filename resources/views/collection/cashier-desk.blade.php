@@ -110,29 +110,38 @@
           <tbody>
             @forelse($terminals ?? [] as $t)
             @php
-              $tArr = is_array($t) ? $t : [
-                'id' => $t->terminal_id ?? 'TERM-N/A', 'location' => $t->location ?? 'N/A',
-                'sub' => $t->sub_location ?? 'N/A', 'cashier' => $t->cashier_name ?? 'N/A',
-                'float' => '₱' . number_format($t->opening_float ?? 0, 2),
-                'cash' => '₱' . number_format($t->current_cash ?? 0, 2),
-                'start' => $t->shift_started_at ? $t->shift_started_at->format('h:i A') : 'Closed',
-                'status' => $t->status ?? 'Closed', 'status_badge' => 'bg-secondary-subtle text-secondary',
-                'status_icon' => 'ph-minus-circle',
+              $tId = $t->shift_code ?? ($t->terminal_id ?? 'TERM-01');
+              $loc = $t->terminal_name ?? ($t->location ?? 'Hospital Main Counter');
+              $cashier = $t->cashier?->name ?? ($t->cashier_name ?? 'Active Cashier');
+              $float = '₱' . number_format((float) ($t->opening_cash_float ?? 0), 2);
+              $cash = '₱' . number_format((float) (($t->actual_cash_counted > 0) ? $t->actual_cash_counted : ($t->expected_cash ?? 0)), 2);
+              $start = $t->opened_at ? $t->opened_at->format('M d, h:i A') : 'Closed';
+              $status = $t->status ?? 'OPEN';
+              $badge = ($status === 'OPEN') ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary';
+              $icon = ($status === 'OPEN') ? 'ph-check-circle' : 'ph-lock';
+              $tArr = [
+                'id' => $tId, 'location' => $loc, 'sub' => 'Counter Terminal',
+                'cashier' => $cashier, 'float' => $float, 'cash' => $cash,
+                'start' => $start, 'status' => $status, 'status_badge' => $badge, 'status_icon' => $icon,
               ];
             @endphp
-            <tr class="terminal-row" style="cursor: pointer;" data-station="{{ strtolower($tArr['location']) }}" data-status="{{ strtolower($tArr['status']) }}" onclick="openTerminalDetailsModal({{ json_encode($tArr) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $tArr['id'] }}</span></td>
+            <tr class="terminal-row" style="cursor: pointer;" data-station="{{ strtolower($loc) }}" data-status="{{ strtolower($status) }}" onclick="openTerminalDetailsModal({{ json_encode($tArr) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $tId }}</span></td>
               <td>
-                <div class="fw-semibold text-dark">{{ $tArr['location'] }}</div>
-                <span class="fs-xs text-muted">{{ $tArr['sub'] }}</span>
+                <div class="fw-semibold text-dark">{{ $loc }}</div>
+                <span class="fs-xs text-muted">Hospital POS Counter</span>
               </td>
-              <td class="fw-semibold text-dark">{{ $tArr['cashier'] }}</td>
-              <td class="text-end text-muted font-monospace">{{ $tArr['float'] }}</td>
-              <td class="text-end text-success fw-bold font-monospace">{{ $tArr['cash'] }}</td>
-              <td><span class="text-nowrap font-monospace fs-xs">{{ $tArr['start'] }}</span></td>
-              <td><span class="badge {{ $tArr['status_badge'] }}"><i class="ph {{ $tArr['status_icon'] }} me-1"></i> {{ $tArr['status'] }}</span></td>
+              <td class="fw-semibold text-dark">{{ $cashier }}</td>
+              <td class="text-end text-muted font-monospace">{{ $float }}</td>
+              <td class="text-end text-success fw-bold font-monospace">{{ $cash }}</td>
+              <td><span class="text-nowrap font-monospace fs-xs">{{ $start }}</span></td>
+              <td><span class="badge {{ $badge }}"><i class="ph {{ $icon }} me-1"></i> {{ $status }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-primary py-1 px-2" data-bs-toggle="modal" data-bs-target="#openShiftModal"><i class="ph ph-play me-1"></i> Start Shift</button>
+                @if($status === 'OPEN')
+                  <span class="badge bg-success-subtle text-success border border-success-subtle py-1 px-2"><i class="ph ph-activity me-1"></i> Running</span>
+                @else
+                  <span class="badge bg-light text-muted border py-1 px-2"><i class="ph ph-lock me-1"></i> Shift Closed</span>
+                @endif
               </td>
             </tr>
             @empty

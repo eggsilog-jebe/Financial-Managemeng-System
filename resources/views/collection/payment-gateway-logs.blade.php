@@ -109,30 +109,48 @@
           <tbody>
             @forelse($gateways ?? [] as $g)
             @php
-              $gArr = is_array($g) ? $g : [
-                'txn' => $g->transaction_id ?? 'GW-N/A', 'provider' => $g->provider ?? 'N/A',
-                'provider_badge' => 'bg-success-subtle text-success', 'provider_icon' => 'ph-device-mobile',
-                'patient' => $g->patient_reference ?? 'N/A', 'sub' => $g->description ?? 'N/A',
-                'time' => $g->created_at ? $g->created_at->format('Y-m-d H:i') : 'N/A',
-                'gross' => '₱' . number_format($g->gross_amount ?? 0, 2),
-                'fee' => '₱' . number_format($g->gateway_fee ?? 0, 2),
-                'net' => '₱' . number_format($g->net_amount ?? 0, 2),
-                'status' => $g->status ?? 'Pending', 'status_badge' => 'bg-warning-subtle text-warning',
-                'merchant_id' => $g->merchant_id ?? 'N/A', 'payload' => '{}',
+              $txn = $g->transaction_channel_ref ?? ($g->payment_reference ?? 'GW-01');
+              $provider = match($g->payment_method ?? 'GCASH') {
+                'GCASH' => 'GCash E-Wallet',
+                'MAYA' => 'Maya E-Wallet',
+                'CREDIT_CARD' => 'Credit Card POS',
+                default => $g->payment_method ?? 'Digital Gateway',
+              };
+              $provBadge = match($g->payment_method ?? 'GCASH') {
+                'GCASH' => 'bg-primary-subtle text-primary',
+                'MAYA' => 'bg-success-subtle text-success',
+                default => 'bg-info-subtle text-info',
+              };
+              $provIcon = ($g->payment_method === 'CREDIT_CARD') ? 'ph-credit-card' : 'ph-device-mobile';
+              $patient = $g->patientAccount?->full_name ?? 'Walk-In Patient';
+              $sub = $g->patientAccount?->patient_id_number ?? 'PAT-2026-001';
+              $time = $g->payment_date ? $g->payment_date->format('M d, Y') : date('M d, Y');
+              $gross = (float) ($g->amount ?? 0);
+              $fee = $gross * 0.015; // 1.5% MDR gateway fee
+              $net = $gross - $fee;
+              $gArr = [
+                'txn' => $txn, 'provider' => $provider,
+                'provider_badge' => $provBadge, 'provider_icon' => $provIcon,
+                'patient' => $patient, 'sub' => $sub, 'time' => $time,
+                'gross' => '₱' . number_format($gross, 2),
+                'fee' => '₱' . number_format($fee, 2),
+                'net' => '₱' . number_format($net, 2),
+                'status' => 'SETTLED', 'status_badge' => 'bg-success-subtle text-success',
+                'merchant_id' => 'MID-HOSP-PH-0019', 'payload' => json_encode(['auth_code' => $txn, 'card_brand' => $g->payment_method]),
               ];
             @endphp
-            <tr class="gateway-row" style="cursor: pointer;" data-provider="{{ strtolower($gArr['provider']) }}" data-status="{{ strtolower($gArr['status']) }}" onclick="openGatewayDetailsModal({{ json_encode($gArr) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $gArr['txn'] }}</span></td>
-              <td><span class="badge {{ $gArr['provider_badge'] }}"><i class="ph {{ $gArr['provider_icon'] }} me-1"></i> {{ $gArr['provider'] }}</span></td>
+            <tr class="gateway-row" style="cursor: pointer;" data-provider="{{ strtolower($provider) }}" data-status="settled" onclick="openGatewayDetailsModal({{ json_encode($gArr) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $txn }}</span></td>
+              <td><span class="badge {{ $provBadge }}"><i class="ph {{ $provIcon }} me-1"></i> {{ $provider }}</span></td>
               <td>
-                <div class="fw-semibold text-dark">{{ $gArr['patient'] }}</div>
-                <span class="fs-xs text-muted">{{ $gArr['sub'] }}</span>
+                <div class="fw-semibold text-dark">{{ $patient }}</div>
+                <span class="fs-xs text-muted font-monospace">{{ $sub }}</span>
               </td>
-              <td class="font-monospace fs-xs">{{ $gArr['time'] }}</td>
-              <td class="text-end font-monospace">{{ $gArr['gross'] }}</td>
-              <td class="text-end font-monospace text-muted">{{ $gArr['fee'] }}</td>
-              <td class="text-end text-success fw-bold font-monospace">{{ $gArr['net'] }}</td>
-              <td><span class="badge {{ $gArr['status_badge'] }}">{{ $gArr['status'] }}</span></td>
+              <td class="font-monospace fs-xs">{{ $time }}</td>
+              <td class="text-end font-monospace">₱{{ number_format($gross, 2) }}</td>
+              <td class="text-end font-monospace text-muted">₱{{ number_format($fee, 2) }}</td>
+              <td class="text-end text-success fw-bold font-monospace">₱{{ number_format($net, 2) }}</td>
+              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> SETTLED</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
                 <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Payload Logs" onclick="openGatewayDetailsModal({{ json_encode($gArr) }})"><i class="ph ph-code"></i></button>
               </td>

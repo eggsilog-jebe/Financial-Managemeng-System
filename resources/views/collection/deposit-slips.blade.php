@@ -113,29 +113,44 @@
           <tbody>
             @forelse($slips ?? [] as $s)
             @php
-              $sArr = is_array($s) ? $s : [
-                'ref' => $s->slip_number ?? 'SLIP-N/A', 'date' => $s->slip_date ? $s->slip_date->format('Y-m-d') : 'N/A',
-                'sources' => $s->terminal_sources ?? 'N/A', 'bank' => $s->bank_name ?? 'N/A',
-                'acc' => $s->account_number ?? 'N/A',
-                'cash' => '₱' . number_format($s->cash_amount ?? 0, 2),
-                'check' => '₱' . number_format($s->check_amount ?? 0, 2),
-                'total' => '₱' . number_format(($s->cash_amount ?? 0) + ($s->check_amount ?? 0), 2),
-                'status' => $s->status ?? 'Pending', 'status_badge' => 'bg-warning-subtle text-warning',
-                'status_icon' => 'ph-clock', 'bag_seal' => $s->bag_seal ?? 'N/A',
+              $ref = $s->deposit_reference ?? ($s->slip_number ?? 'SLIP-01');
+              $date = $s->deposit_date ? $s->deposit_date->format('M d, Y') : ($s->slip_date ? $s->slip_date->format('Y-m-d') : date('M d, Y'));
+              $sources = $s->cashierShift?->terminal_name ?? ($s->terminal_sources ?? 'POS Main Counter');
+              $bank = $s->bankAccount?->bank_name ?? ($s->bank_name ?? 'Metrobank Medical Center');
+              $acc = $s->bankAccount?->account_number ?? ($s->account_number ?? '1020-METRO-001');
+              $cash = '₱' . number_format((float) ($s->cash_amount ?? 0), 2);
+              $check = '₱' . number_format((float) ($s->check_amount ?? 0), 2);
+              $total = '₱' . number_format((float) ($s->total_deposited ?? (($s->cash_amount ?? 0) + ($s->check_amount ?? 0))), 2);
+              $status = $s->status ?? 'PREPARED';
+              $badge = match($status) {
+                'DEPOSITED' => 'bg-success-subtle text-success',
+                'IN_TRANSIT' => 'bg-info-subtle text-info',
+                default => 'bg-warning-subtle text-warning',
+              };
+              $icon = match($status) {
+                'DEPOSITED' => 'ph-check-circle',
+                'IN_TRANSIT' => 'ph-truck',
+                default => 'ph-clock',
+              };
+              $sArr = [
+                'ref' => $ref, 'date' => $date, 'sources' => $sources,
+                'bank' => $bank, 'acc' => $acc, 'cash' => $cash,
+                'check' => $check, 'total' => $total, 'status' => $status,
+                'status_badge' => $badge, 'status_icon' => $icon, 'bag_seal' => $s->bank_reference_number ?? 'SEAL-2026-901',
               ];
             @endphp
-            <tr class="slip-row" style="cursor: pointer;" data-bank="{{ strtolower($sArr['bank']) }}" data-status="{{ strtolower($sArr['status']) }}" onclick="openSlipDetailsModal({{ json_encode($sArr) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $sArr['ref'] }}</span></td>
-              <td class="font-monospace fs-xs">{{ $sArr['date'] }}</td>
-              <td><span class="badge bg-light text-dark border">{{ $sArr['sources'] }}</span></td>
+            <tr class="slip-row" style="cursor: pointer;" data-bank="{{ strtolower($bank) }}" data-status="{{ strtolower($status) }}" onclick="openSlipDetailsModal({{ json_encode($sArr) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $ref }}</span></td>
+              <td class="font-monospace fs-xs">{{ $date }}</td>
+              <td><span class="badge bg-light text-dark border">{{ $sources }}</span></td>
               <td>
-                <div class="fw-semibold text-dark">{{ $sArr['bank'] }}</div>
-                <span class="fs-xs font-monospace text-muted">{{ $sArr['acc'] }}</span>
+                <div class="fw-semibold text-dark">{{ $bank }}</div>
+                <span class="fs-xs font-monospace text-muted">{{ $acc }}</span>
               </td>
-              <td class="text-end font-monospace">{{ $sArr['cash'] }}</td>
-              <td class="text-end font-monospace">{{ $sArr['check'] }}</td>
-              <td class="text-end text-success fw-bold font-monospace">{{ $sArr['total'] }}</td>
-              <td><span class="badge {{ $sArr['status_badge'] }}"><i class="ph {{ $sArr['status_icon'] }} me-1"></i> {{ $sArr['status'] }}</span></td>
+              <td class="text-end font-monospace">{{ $cash }}</td>
+              <td class="text-end font-monospace">{{ $check }}</td>
+              <td class="text-end text-success fw-bold font-monospace">{{ $total }}</td>
+              <td><span class="badge {{ $badge }}"><i class="ph {{ $icon }} me-1"></i> {{ $status }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
                 <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Slip Details" onclick="openSlipDetailsModal({{ json_encode($sArr) }})"><i class="ph ph-eye"></i></button>
               </td>

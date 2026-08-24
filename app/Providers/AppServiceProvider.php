@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +20,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Force HTTPS for all URLs in production (Vercel terminates SSL at edge,
+        // forwards requests as HTTP internally — without this, form actions and
+        // route() helper generate http:// URLs which browsers block as insecure).
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
+
         // Define Gates for Financial Segregation of Duties (SoD)
         \Illuminate\Support\Facades\Gate::define('access-cashier-pos', function ($user): bool {
             return in_array($user->role, ['Cashier', 'CFO', 'FinanceDirector'], true);

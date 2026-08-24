@@ -8,3 +8,5 @@ node_modules/
 phpunit.xml
 README.md
 storage/*.key
+# Prevent Vercel from serving this as a static file download
+public/index.php

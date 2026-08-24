@@ -11,13 +11,10 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        if (User::where('email', 'admin@hospital.fms')->doesntExist()) {
-            User::factory()->create([
-                'name' => 'Chief Accountant',
-                'email' => 'admin@hospital.fms',
-            ]);
-        }
-
-        $this->call(HospitalFmsSeeder::class);
+        $this->call([
+            PhilippineHealthcareChartOfAccountsSeeder::class,
+            FinancialRolesUserSeeder::class,
+            HospitalFinancialMockSeeder::class,
+        ]);
     }
 }

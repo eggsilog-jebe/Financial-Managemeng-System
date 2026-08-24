@@ -6,7 +6,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Payment;
 use App\Models\OfficialReceipt;
-use App\Models\PaymentReceipt;
+use App\Models\CashierShift;
+use App\Models\BankDeposit;
+use App\Models\BankAccount;
 use Illuminate\Contracts\View\View;
 
 final class CollectionController extends Controller
@@ -29,37 +31,46 @@ final class CollectionController extends Controller
 
     public function cashierDesk(): View
     {
-        $receipts         = PaymentReceipt::whereDate('receipt_date', today())->latest()->get();
-        $todayTotal       = $receipts->sum('amount_paid');
-        $cashReceipts     = $receipts->where('payment_method', 'Cash')->sum('amount_paid');
+        $shifts = CashierShift::with(['cashier', 'payments'])->latest('opened_at')->get();
+        $activeShift = CashierShift::where('status', 'OPEN')->first();
+        
+        $todayPayments = Payment::whereDate('payment_date', today())->get();
+        $todayTotal = $todayPayments->sum('amount');
+        $cashReceipts = $todayPayments->where('payment_method', 'CASH')->sum('amount');
 
         return view('collection.cashier-desk', compact(
-            'receipts',
+            'shifts',
+            'activeShift',
             'todayTotal',
-            'cashReceipts',
+            'cashReceipts'
         ));
     }
 
     public function depositSlips(): View
     {
-        $deposits = PaymentReceipt::latest('receipt_date')->get();
-        $totalDeposits = $deposits->sum('amount_paid');
+        $deposits = BankDeposit::with(['bankAccount', 'cashierShift.cashier'])->latest('deposit_date')->get();
+        $totalDeposits = $deposits->sum('total_deposited');
 
         return view('collection.deposit-slips', compact('deposits', 'totalDeposits'));
     }
 
     public function bankDeposits(): View
     {
-        $deposits     = PaymentReceipt::latest('receipt_date')->get();
-        $totalDeposits = $deposits->sum('amount_paid');
+        $deposits = BankDeposit::with(['bankAccount', 'cashierShift.cashier'])->latest('deposit_date')->get();
+        $totalDeposits = $deposits->sum('total_deposited');
+        $bankAccounts = BankAccount::where('status', 'Active')->get();
 
-        return view('collection.bank-deposits', compact('deposits', 'totalDeposits'));
+        return view('collection.bank-deposits', compact('deposits', 'totalDeposits', 'bankAccounts'));
     }
 
     public function paymentGatewayLogs(): View
     {
-        $logs         = PaymentReceipt::where('payment_method', '!=', 'Cash')->latest('receipt_date')->get();
-        $totalOnline  = $logs->sum('amount_paid');
+        $logs = Payment::with(['patientAccount', 'invoice', 'officialReceipt'])
+            ->where('payment_method', '!=', 'CASH')
+            ->latest('payment_date')
+            ->get();
+            
+        $totalOnline = $logs->sum('amount');
 
         return view('collection.payment-gateway-logs', compact('logs', 'totalOnline'));
     }

@@ -22,6 +22,7 @@
   ],
   "env": {
     "APP_URL": "https://deploy-fms.vercel.app",
+    "ASSET_URL": "https://deploy-fms.vercel.app",
     "APP_ENV": "production",
     "APP_DEBUG": "false",
     "APP_CONFIG_CACHE": "/tmp/config.php",

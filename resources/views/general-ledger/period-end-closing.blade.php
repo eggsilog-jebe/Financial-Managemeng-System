@@ -134,10 +134,7 @@
 
             @foreach($procedures as $proc)
             <tr class="procedure-row" style="cursor: pointer;" data-role="{{ $proc['role'] }}" data-status="{{ strtolower($proc['status']) }}" onclick="openProcedureDetailsModal({{ json_encode($proc) }})">
-              <td>
-                <div class="fw-bold text-dark">{{ $proc['title'] }}</div>
-                <span class="fs-xs text-muted">{{ $proc['desc'] }}</span>
-              </td>
+              <td><div class="fw-bold text-dark">{{ $proc['title'] }}</div></td>
               <td class="fs-xs text-muted">{{ $proc['officer'] }}</td>
               <td><span class="badge {{ $proc['status_badge'] }}"><i class="ph ph-check-circle me-1"></i> {{ $proc['status'] }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">

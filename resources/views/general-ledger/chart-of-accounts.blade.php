@@ -184,10 +184,7 @@
             @foreach($accounts as $acc)
             <tr class="account-row" style="cursor: pointer;" data-category="{{ $acc['cat_type'] }}" onclick="openAccountDetailsModal({{ json_encode($acc) }})">
               <td><span class="badge bg-secondary-subtle text-secondary font-monospace fs-xs px-2 py-1">{{ $acc['code'] }}</span></td>
-              <td>
-                <div class="fw-semibold text-dark">{{ $acc['name'] }}</div>
-                <span class="fs-xs text-muted">{{ $acc['desc'] }}</span>
-              </td>
+              <td><div class="fw-semibold text-dark">{{ $acc['name'] }}</div></td>
               <td><span class="badge {{ $acc['badge'] }}">{{ $acc['category'] }}</span></td>
               <td><span class="fs-xs text-muted">{{ $acc['dept'] }}</span></td>
               <td><span class="badge bg-light text-dark border font-monospace fs-xs">{{ $acc['type'] }}</span></td>
@@ -476,10 +473,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         newRow.innerHTML = `
           <td><span class="badge bg-secondary-subtle text-secondary font-monospace fs-xs px-2 py-1">${codeVal}</span></td>
-          <td>
-            <div class="fw-semibold text-dark">${nameVal}</div>
-            <span class="fs-xs text-muted">${descVal}</span>
-          </td>
+          <td><div class="fw-semibold text-dark">${nameVal}</div></td>
           <td><span class="badge ${badgeClass}">${categoryVal}</span></td>
           <td><span class="fs-xs text-muted">${deptVal}</span></td>
           <td><span class="badge bg-light text-dark border font-monospace fs-xs">${typeVal}</span></td>

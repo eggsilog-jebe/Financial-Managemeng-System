@@ -1,6 +1,6 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\GeneralLedger\PostJournalEntryController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -10,6 +10,7 @@ Route::get('/', function () {
 Route::prefix('general-ledger')->name('gl.')->group(function () {
     Route::get('/chart-of-accounts', fn() => view('general-ledger.chart-of-accounts'))->name('chart-of-accounts');
     Route::get('/journal-entries', fn() => view('general-ledger.journal-entries'))->name('journal-entries');
+    Route::post('/post-entry', PostJournalEntryController::class)->name('post-entry');
     Route::get('/ledger-books', fn() => view('general-ledger.ledger-books'))->name('ledger-books');
     Route::get('/trial-balance', fn() => view('general-ledger.trial-balance'))->name('trial-balance');
     Route::get('/period-end-closing', fn() => view('general-ledger.period-end-closing'))->name('period-end-closing');

@@ -31,7 +31,7 @@
           <span class="text-muted small fw-medium">Pending Check Releases</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-receipt fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱98,400.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format(($approvals ?? collect())->where('payment_method', 'check')->where('status', 'Pending')->sum('amount'), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-4">
@@ -40,7 +40,7 @@
           <span class="text-muted small fw-medium">Pending EFT Batches</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-bank fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱410,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format(($approvals ?? collect())->where('payment_method', 'eft')->where('status', 'Pending')->sum('amount'), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-4">
@@ -49,7 +49,7 @@
           <span class="text-muted small fw-medium">Released Today</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱168,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format(($approvals ?? collect())->where('status', 'Released')->sum('amount'), 2) }}</h4>
       </div>
     </div>
   </div>
@@ -88,36 +88,37 @@
             </tr>
           </thead>
           <tbody>
-            <tr id="row-DISB-APP-201" class="disb-row" data-level="cfo">
-              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">DISB-APP-201</span></td>
-              <td class="fw-semibold text-dark">Medical Staff Payroll Direct Batch</td>
-              <td><span class="badge bg-info-subtle text-info">EFT Direct Deposit</span></td>
-              <td>Metrobank Payroll #8841</td>
-              <td class="text-end fw-bold text-dark font-monospace">₱410,000.00</td>
-              <td><span class="badge bg-warning-subtle text-warning"><i class="ph ph-shield-star me-1"></i> CFO Authorization Needed</span></td>
-              <td class="status-cell"><span class="badge bg-warning-subtle text-warning"><i class="ph ph-clock me-1"></i> Pending Release</span></td>
+            @forelse($approvals ?? [] as $app)
+            @php
+              $id = is_array($app) ? $app['id'] : ($app->disbursement_code ?? 'DISB-'.$app->id);
+              $payee = is_array($app) ? $app['payee'] : ($app->payee_name ?? 'Payee');
+              $method = is_array($app) ? $app['method'] : ($app->payment_method ?? 'EFT Direct Deposit');
+              $bank = is_array($app) ? $app['bank'] : ($app->bank_account ?? 'Main Account');
+              $amt = is_array($app) ? $app['amount'] : ('₱' . number_format($app->amount ?? 0, 2));
+              $level = is_array($app) ? $app['level'] : ($app->level ?? 'controller');
+              $levelLabel = is_array($app) ? $app['level_label'] : ($app->level_label ?? 'Controller Sign-off');
+              $status = is_array($app) ? $app['status'] : ($app->status ?? 'Pending Release');
+            @endphp
+            <tr id="row-{{ $id }}" class="disb-row" data-level="{{ strtolower($level) }}">
+              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">{{ $id }}</span></td>
+              <td class="fw-semibold text-dark">{{ $payee }}</td>
+              <td><span class="badge bg-info-subtle text-info">{{ $method }}</span></td>
+              <td>{{ $bank }}</td>
+              <td class="text-end fw-bold text-dark font-monospace">{{ $amt }}</td>
+              <td><span class="badge bg-warning-subtle text-warning"><i class="ph ph-shield-star me-1"></i> {{ $levelLabel }}</span></td>
+              <td class="status-cell"><span class="badge bg-warning-subtle text-warning"><i class="ph ph-clock me-1"></i> {{ $status }}</span></td>
               <td class="text-end action-cell">
                 <div class="d-inline-flex align-items-center justify-content-end gap-2">
-                  <button class="btn btn-success" type="button" onclick="openDisbAuthorizeModal('DISB-APP-201', 'Medical Staff Payroll Direct Batch', '₱410,000.00', 'EFT Direct Deposit')"><i class="ph ph-check me-1"></i> Release Wire</button>
-                  <button class="btn btn-outline-danger" type="button" onclick="openDisbRejectModal('DISB-APP-201', 'Medical Staff Payroll Direct Batch', '₱410,000.00')"><i class="ph ph-x me-1"></i> Reject</button>
+                  <button class="btn btn-success" type="button" onclick="openDisbAuthorizeModal('{{ $id }}', '{{ $payee }}', '{{ $amt }}', '{{ $method }}')"><i class="ph ph-check me-1"></i> Authorize</button>
+                  <button class="btn btn-outline-danger" type="button" onclick="openDisbRejectModal('{{ $id }}', '{{ $payee }}', '{{ $amt }}')"><i class="ph ph-x me-1"></i> Reject</button>
                 </div>
               </td>
             </tr>
-            <tr id="row-DISB-APP-202" class="disb-row" data-level="controller">
-              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">DISB-APP-202</span></td>
-              <td class="fw-semibold text-dark">MedTech Diagnostics Inc</td>
-              <td><span class="badge bg-primary-subtle text-primary">Physical Crossed Check</span></td>
-              <td>Metrobank Operating #1020</td>
-              <td class="text-end fw-bold text-dark font-monospace">₱98,400.00</td>
-              <td><span class="badge bg-primary-subtle text-primary"><i class="ph ph-shield-check me-1"></i> Controller Sign-off</span></td>
-              <td class="status-cell"><span class="badge bg-warning-subtle text-warning"><i class="ph ph-clock me-1"></i> Pending Release</span></td>
-              <td class="text-end action-cell">
-                <div class="d-inline-flex align-items-center justify-content-end gap-2">
-                  <button class="btn btn-success" type="button" onclick="openDisbAuthorizeModal('DISB-APP-202', 'MedTech Diagnostics Inc', '₱98,400.00', 'Physical Crossed Check')"><i class="ph ph-check me-1"></i> Authorize Check</button>
-                  <button class="btn btn-outline-danger" type="button" onclick="openDisbRejectModal('DISB-APP-202', 'MedTech Diagnostics Inc', '₱98,400.00')"><i class="ph ph-x me-1"></i> Reject</button>
-                </div>
-              </td>
+            @empty
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">No pending disbursement approvals.</td>
             </tr>
+            @endforelse
           </tbody>
         </table>
       </div>

@@ -32,7 +32,7 @@
           <span class="text-muted small fw-medium">Total Assets</span>
           <span class="p-2 rounded-3 bg-success-subtle text-success fs-xs"><i class="ph ph-trend-up fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱8,450,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format(($accounts ?? collect())->where('category', 'Asset')->sum('current_balance'), 2) }}</h4>
       </div>
     </div>
     <div class="col">
@@ -41,7 +41,7 @@
           <span class="text-muted small fw-medium">Total Liabilities</span>
           <span class="p-2 rounded-3 bg-danger-subtle text-danger fs-xs"><i class="ph ph-warning-circle fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱2,120,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format(($accounts ?? collect())->where('category', 'Liability')->sum('current_balance'), 2) }}</h4>
       </div>
     </div>
     <div class="col">
@@ -50,7 +50,7 @@
           <span class="text-muted small fw-medium">Total Equity</span>
           <span class="p-2 rounded-3 bg-primary-subtle text-primary fs-xs"><i class="ph ph-scales fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱6,330,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format(($accounts ?? collect())->where('category', 'Equity')->sum('current_balance'), 2) }}</h4>
       </div>
     </div>
     <div class="col">
@@ -59,7 +59,7 @@
           <span class="text-muted small fw-medium">Operating Revenue</span>
           <span class="p-2 rounded-3 bg-info-subtle text-info fs-xs"><i class="ph ph-receipt fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱5,240,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format(($accounts ?? collect())->where('category', 'Revenue')->sum('current_balance'), 2) }}</h4>
       </div>
     </div>
     <div class="col">
@@ -68,7 +68,7 @@
           <span class="text-muted small fw-medium">Operating Expenses</span>
           <span class="p-2 rounded-3 bg-warning-subtle text-warning fs-xs"><i class="ph ph-chart-line-down fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱3,180,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format(($accounts ?? collect())->where('category', 'Expense')->sum('current_balance'), 2) }}</h4>
       </div>
     </div>
   </div>
@@ -114,93 +114,59 @@
               <th scope="col">Status</th>
               <th scope="col" class="text-end" style="width: 100px;">Actions</th>
             </tr>
-          </thead>
-          <tbody>
+                 <tbody>
+            @forelse($accounts as $acc)
             @php
-              $accounts = [
-                [
-                  'code' => '1010',
-                  'name' => 'Cash on Hand - Main Vault',
-                  'desc' => 'Physical currency drawer held in hospital main vault.',
-                  'category' => 'Asset',
-                  'cat_type' => 'assets',
-                  'dept' => 'Treasury / Cashier',
-                  'type' => 'Debit',
-                  'balance' => '₱250,000.00',
-                  'status' => 'Active',
-                  'badge' => 'bg-success-subtle text-success'
-                ],
-                [
-                  'code' => '1020',
-                  'name' => 'Operating Bank Account - Metrobank',
-                  'desc' => 'Primary commercial bank account for payroll and AP disbursements.',
-                  'category' => 'Asset',
-                  'cat_type' => 'assets',
-                  'dept' => 'Hospital Treasury',
-                  'type' => 'Debit',
-                  'balance' => '₱3,420,000.00',
-                  'status' => 'Active',
-                  'badge' => 'bg-success-subtle text-success'
-                ],
-                [
-                  'code' => '1050',
-                  'name' => 'Accounts Receivable - Patients & HMOs',
-                  'desc' => 'Outstanding billing receivables due from admitted patients and insurers.',
-                  'category' => 'Asset',
-                  'cat_type' => 'assets',
-                  'dept' => 'Patient Billing / AR',
-                  'type' => 'Debit',
-                  'balance' => '₱1,850,500.00',
-                  'status' => 'Active',
-                  'badge' => 'bg-success-subtle text-success'
-                ],
-                [
-                  'code' => '2010',
-                  'name' => 'Accounts Payable - Medical Suppliers',
-                  'desc' => 'Outstanding trade payables due to pharmaceutical and equipment vendors.',
-                  'category' => 'Liability',
-                  'cat_type' => 'liabilities',
-                  'dept' => 'Accounts Payable',
-                  'type' => 'Credit',
-                  'balance' => '₱910,500.00',
-                  'status' => 'Active',
-                  'badge' => 'bg-danger-subtle text-danger'
-                ],
-                [
-                  'code' => '3010',
-                  'name' => 'Founding Capital Reserve',
-                  'desc' => 'Original institutional endowment and capital reserves.',
-                  'category' => 'Equity',
-                  'cat_type' => 'equity',
-                  'dept' => 'Executive Office',
-                  'type' => 'Credit',
-                  'balance' => '₱6,330,000.00',
-                  'status' => 'Active',
-                  'badge' => 'bg-primary-subtle text-primary'
-                ],
+              $code = is_array($acc) ? $acc['code'] : $acc->code;
+              $name = is_array($acc) ? $acc['name'] : $acc->name;
+              $category = is_array($acc) ? $acc['category'] : ucfirst(strtolower($acc->category));
+              $catType = is_array($acc) ? $acc['cat_type'] : strtolower($acc->category);
+              $dept = is_array($acc) ? $acc['dept'] : ($acc->department ?? 'General');
+              $normalBalance = is_array($acc) ? $acc['type'] : ucfirst(strtolower($acc->normal_balance));
+              $status = is_array($acc) ? $acc['status'] : ($acc->is_active ? 'Active' : 'Inactive');
+              $badgeClass = match(strtolower($category)) {
+                'asset' => 'bg-success-subtle text-success',
+                'liability' => 'bg-danger-subtle text-danger',
+                'equity' => 'bg-primary-subtle text-primary',
+                'revenue' => 'bg-info-subtle text-info',
+                default => 'bg-warning-subtle text-warning',
+              };
+              $accData = [
+                'code' => $code,
+                'name' => $name,
+                'desc' => 'Chart of accounts ledger item for ' . $name,
+                'category' => $category,
+                'cat_type' => $catType,
+                'dept' => $dept,
+                'type' => $normalBalance,
+                'balance' => '₱' . number_format(is_array($acc) ? 250000 : 500000, 2),
+                'status' => $status,
+                'badge' => $badgeClass
               ];
             @endphp
-
-            @foreach($accounts as $acc)
-            <tr class="account-row" style="cursor: pointer;" data-category="{{ $acc['cat_type'] }}" onclick="openAccountDetailsModal({{ json_encode($acc) }})">
-              <td><span class="badge bg-secondary-subtle text-secondary font-monospace fs-xs px-2 py-1">{{ $acc['code'] }}</span></td>
-              <td><div class="fw-semibold text-dark">{{ $acc['name'] }}</div></td>
-              <td><span class="badge {{ $acc['badge'] }}">{{ $acc['category'] }}</span></td>
-              <td><span class="fs-xs text-muted">{{ $acc['dept'] }}</span></td>
-              <td><span class="badge bg-light text-dark border font-monospace fs-xs">{{ $acc['type'] }}</span></td>
-              <td class="text-end fw-bold text-dark font-monospace">{{ $acc['balance'] }}</td>
-              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check"></i> {{ $acc['status'] }}</span></td>
+            <tr class="account-row" style="cursor: pointer;" data-category="{{ $catType }}" onclick="openAccountDetailsModal({{ json_encode($accData) }})">
+              <td><span class="badge bg-secondary-subtle text-secondary font-monospace fs-xs px-2 py-1">{{ $code }}</span></td>
+              <td><div class="fw-semibold text-dark">{{ $name }}</div></td>
+              <td><span class="badge {{ $badgeClass }}">{{ $category }}</span></td>
+              <td><span class="fs-xs text-muted">{{ $dept }}</span></td>
+              <td><span class="badge bg-light text-dark border font-monospace fs-xs">{{ $normalBalance }}</span></td>
+              <td class="text-end fw-bold text-dark font-monospace">₱500,000.00</td>
+              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check"></i> {{ $status }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Account Details" onclick="openAccountDetailsModal({{ json_encode($acc) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Account Details" onclick="openAccountDetailsModal({{ json_encode($accData) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">No accounts registered in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="coaSummaryText">Showing {{ count($accounts) }} Accounts</span>
+      <span class="text-muted fs-xs" id="coaSummaryText">Showing {{ count($accounts ?? []) }} Accounts</span>
       <nav aria-label="COA Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

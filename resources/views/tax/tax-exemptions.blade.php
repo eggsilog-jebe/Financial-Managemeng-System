@@ -105,55 +105,31 @@
             </tr>
           </thead>
           <tbody>
-            @php
-              $exemptions = [
-                [
-                  'name' => 'RA 11534 (CREATE Act - Essential Medicines)',
-                  'desc' => 'Diabetes, Hypertension & Oncology Drugs',
-                  'cat' => 'meds',
-                  'basis' => 'BIR Revenue Regulation 04-2021',
-                  'ref' => 'BIR-CERT-2026-EX01',
-                  'gross' => '₱1,450,000.00',
-                  'saved' => '₱174,000.00',
-                  'status' => 'Enforced',
-                  'status_badge' => 'bg-success-subtle text-success'
-                ],
-                [
-                  'name' => 'RA 9994 / RA 10754 (Senior Citizen & PWD VAT Exemption)',
-                  'desc' => 'Inpatient & Outpatient Hospitalization',
-                  'cat' => 'senior',
-                  'basis' => 'DOF-BIR Joint Circular 001-2017',
-                  'ref' => 'BIR-CERT-2026-EX02',
-                  'gross' => '₱3,400,000.00',
-                  'saved' => '₱408,000.00',
-                  'status' => 'Enforced',
-                  'status_badge' => 'bg-success-subtle text-success'
-                ],
-              ];
-            @endphp
-
-            @foreach($exemptions as $e)
-            <tr class="exemption-row" style="cursor: pointer;" data-cat="{{ $e['cat'] }}" data-status="{{ strtolower($e['status']) }}" onclick="openExemptionDetailsModal({{ json_encode($e) }})">
+            @forelse($exemptions ?? [] as $e)
+            <tr class="exemption-row" style="cursor: pointer;" data-cat="{{ is_array($e) ? $e['cat'] : '' }}" data-status="{{ strtolower(is_array($e) ? $e['status'] : $e->status) }}" onclick="openExemptionDetailsModal({{ json_encode($e) }})">
               <td>
-                <div class="fw-bold text-dark">{{ $e['name'] }}</div>
-                <span class="fs-xs text-muted">{{ $e['desc'] }}</span>
+                <div class="fw-bold text-dark">{{ is_array($e) ? $e['name'] : $e->name }}</div>
               </td>
-              <td class="fs-xs text-muted">{{ $e['basis'] }}</td>
-              <td><span class="font-monospace text-primary fw-bold">{{ $e['ref'] }}</span></td>
-              <td class="text-end font-monospace fw-semibold">{{ $e['gross'] }}</td>
-              <td class="text-end text-success fw-bold font-monospace">{{ $e['saved'] }}</td>
-              <td><span class="badge {{ $e['status_badge'] }}"><i class="ph ph-check-circle me-1"></i> {{ $e['status'] }}</span></td>
+              <td class="fs-xs text-muted">{{ is_array($e) ? $e['basis'] : ($e->legal_basis ?? 'N/A') }}</td>
+              <td><span class="font-monospace text-primary fw-bold">{{ is_array($e) ? $e['ref'] : $e->reference_number }}</span></td>
+              <td class="text-end font-monospace fw-semibold">{{ is_array($e) ? $e['gross'] : ('₱' . number_format($e->exempt_gross, 2)) }}</td>
+              <td class="text-end text-success fw-bold font-monospace">{{ is_array($e) ? $e['saved'] : ('₱' . number_format($e->tax_saved, 2)) }}</td>
+              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> {{ is_array($e) ? $e['status'] : $e->status }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
                 <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Exemption Details" onclick="openExemptionDetailsModal({{ json_encode($e) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">No tax exemptions registered in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="exemptionSummaryText">Showing {{ count($exemptions) }} Tax Exemptions</span>
+      <span class="text-muted fs-xs" id="exemptionSummaryText">Showing {{ count($exemptions ?? []) }} Tax Exemptions</span>
       <nav aria-label="Exemption Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

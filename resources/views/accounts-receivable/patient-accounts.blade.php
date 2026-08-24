@@ -24,193 +24,103 @@
     </div>
   </div>
 
-  <!-- Metric Summary Cards -->
+  <!-- Primary Executive Summary Cards -->
   <div class="row g-3 mb-4">
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Active Admitted Inpatients</span>
-          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-user-list fs-5"></i></span>
+          <span class="text-muted small fw-medium">Active Payor Accounts</span>
+          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-users fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">142 Patients</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ count($accounts ?? []) }} Accounts</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Total Patient Receivables</span>
-          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-currency-circle-dollar fs-5"></i></span>
+          <span class="text-muted small fw-medium">Total Patient Receivable</span>
+          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-hand-coins fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱1,850,500.00</h4>
+        <h4 class="fw-bold mb-0 text-danger">₱0.00</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Active HMO Claims Pool</span>
+          <span class="text-muted small fw-medium">HMO Pending Guarantees</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-shield-check fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱1,220,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">PhilHealth Claim Receivables</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
+          <span class="text-muted small fw-medium">PhilHealth Claims Filed</span>
+          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-first-aid-kit fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱820,000.00</h4>
+        <h4 class="fw-bold mb-0 text-success">₱0.00</h4>
       </div>
     </div>
   </div>
 
-  <!-- Accounts Table Card -->
+  <!-- Data Table Card -->
   <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-transparent border-bottom p-3">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <!-- Sleek Executive Dropdown Select Filter -->
-        <div class="d-flex align-items-center gap-2">
-          <label for="payorCategorySelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Payor Category:</label>
-          <select id="payorCategorySelect" class="form-select form-select-sm bg-light" style="min-width: 220px;">
-            <option value="all" selected>All Payor Accounts</option>
-            <option value="inpatient self-pay">Admitted Inpatients</option>
-            <option value="commercial hmo">Commercial HMOs</option>
-            <option value="government guarantor">PhilHealth Scheme</option>
-          </select>
-        </div>
-
-        <!-- Search Box -->
-        <div class="search-box" style="width: 280px;">
-          <i class="ph ph-magnifying-glass"></i>
-          <input type="search" id="patientSearchInput" class="form-control form-control-sm" placeholder="Search patient name, account #, HMO...">
-        </div>
-      </div>
-    </div>
-
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table id="patientTable" class="table table-hover align-middle mb-0">
+        <table id="patientAccountTable" class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
-              <th>Account No</th>
-              <th>Patient / Guarantor Name</th>
+              <th>Account Code &amp; Patient Name</th>
               <th>Payor Category</th>
-              <th>Insurance Policy / Guarantee</th>
-              <th>Approved Cap</th>
+              <th>HMO Policy / Coverage</th>
+              <th>Coverage Limit</th>
               <th class="text-end">Balance Due (₱)</th>
               <th>Status</th>
               <th class="text-end">Action</th>
             </tr>
           </thead>
           <tbody>
+            @forelse($accounts ?? [] as $acc)
             @php
-              $accounts = [
-                [
-                  'acc' => 'AR-PAT-881',
-                  'name' => 'Juan Dela Cruz',
-                  'sub' => 'Patient #10429 — Room 402 (Inpatient Ward A)',
-                  'category' => 'Inpatient Self-Pay',
-                  'cat_badge' => 'bg-primary-subtle text-primary',
-                  'policy' => 'Maxicare HMO (POL-99210)',
-                  'cap' => '₱200,000.00',
-                  'balance' => '₱24,500.00',
-                  'status' => 'Active Admission',
-                  'status_badge' => 'bg-warning-subtle text-warning',
-                  'status_icon' => 'ph-bed',
-                  'phone' => '+63 917 882 1090',
-                  'guarantor' => 'Self / Maxicare Healthcare',
-                  'admission_date' => '2026-08-01'
-                ],
-                [
-                  'acc' => 'AR-HMO-004',
-                  'name' => 'PhilHealth Insurance Corp',
-                  'sub' => 'Government Healthcare Coverage Guarantee',
-                  'category' => 'Government Guarantor',
-                  'cat_badge' => 'bg-success-subtle text-success',
-                  'policy' => 'National Universal Coverage',
-                  'cap' => 'Unlimited Batch',
-                  'balance' => '₱820,000.00',
-                  'status' => 'Active Payor',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'status_icon' => 'ph-check',
-                  'phone' => '1800-10-PHILHEALTH',
-                  'guarantor' => 'Government Health Board',
-                  'admission_date' => 'Institutional Account'
-                ],
-                [
-                  'acc' => 'AR-PAT-884',
-                  'name' => 'Maria Santos',
-                  'sub' => 'Patient #10435 — Surgical Recovery Suite',
-                  'category' => 'Commercial HMO',
-                  'cat_badge' => 'bg-info-subtle text-info',
-                  'policy' => 'Intellicare HMO (POL-44109)',
-                  'cap' => '₱150,000.00',
-                  'balance' => '₱85,200.00',
-                  'status' => 'Pending Discharge',
-                  'status_badge' => 'bg-primary-subtle text-primary',
-                  'status_icon' => 'ph-clock',
-                  'phone' => '+63 918 441 9021',
-                  'guarantor' => 'Intellicare Corporate',
-                  'admission_date' => '2026-08-03'
-                ],
-                [
-                  'acc' => 'AR-HMO-012',
-                  'name' => 'Medicard Philippines Inc',
-                  'sub' => 'Commercial Corporate Healthcare Partner',
-                  'category' => 'Commercial HMO',
-                  'cat_badge' => 'bg-info-subtle text-info',
-                  'policy' => 'Corporate Fleet Policy',
-                  'cap' => '₱500,000.00',
-                  'balance' => '₱314,800.00',
-                  'status' => 'Active Payor',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'status_icon' => 'ph-check',
-                  'phone' => '+63 (02) 8884-8000',
-                  'guarantor' => 'Medicard Executive Desk',
-                  'admission_date' => 'Institutional Account'
-                ],
-                [
-                  'acc' => 'AR-PAT-889',
-                  'name' => 'Ricardo Reyes',
-                  'sub' => 'Patient #10450 — ICU Room 02',
-                  'category' => 'Inpatient Self-Pay',
-                  'cat_badge' => 'bg-primary-subtle text-primary',
-                  'policy' => 'Senior Citizen 20% Discount',
-                  'cap' => '₱100,000.00',
-                  'balance' => '₱42,000.00',
-                  'status' => 'Active Admission',
-                  'status_badge' => 'bg-warning-subtle text-warning',
-                  'status_icon' => 'ph-bed',
-                  'phone' => '+63 920 331 5092',
-                  'guarantor' => 'Elena Reyes (Spouse)',
-                  'admission_date' => '2026-08-06'
-                ],
+              $code = is_array($acc) ? $acc['acc'] : $acc->account_number;
+              $name = is_array($acc) ? $acc['name'] : $acc->patient_name;
+              $bal = is_array($acc) ? $acc['balance'] : ('₱' . number_format($acc->current_balance, 2));
+              $status = is_array($acc) ? $acc['status'] : $acc->status;
+              $aData = [
+                'acc' => $code,
+                'name' => $name,
+                'sub' => 'Patient Account',
+                'category' => 'Patient Payor',
+                'policy' => 'Standard Policy',
+                'cap' => '₱0.00',
+                'balance' => $bal,
+                'status' => $status
               ];
             @endphp
-
-            @foreach($accounts as $acc)
-            <tr class="patient-row" style="cursor: pointer;" data-category="{{ strtolower($acc['category']) }}" onclick="openPatientDetailsModal({{ json_encode($acc) }})">
-              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">{{ $acc['acc'] }}</span></td>
+            <tr class="account-row" style="cursor: pointer;" onclick="openPatientDetailsModal({{ json_encode($aData) }})">
               <td>
-                <div class="fw-semibold text-dark">{{ $acc['name'] }}</div>
-                <div class="text-muted fs-xs">{{ $acc['sub'] }}</div>
+                <div class="fw-bold text-dark">{{ $name }}</div>
+                <span class="fs-xs font-monospace text-muted">{{ $code }}</span>
               </td>
-              <td><span class="badge {{ $acc['cat_badge'] }}">{{ $acc['category'] }}</span></td>
-              <td>{{ $acc['policy'] }}</td>
-              <td class="font-monospace fs-xs">{{ $acc['cap'] }}</td>
-              <td class="text-end fw-bold text-danger font-monospace">{{ $acc['balance'] }}</td>
-              <td><span class="badge {{ $acc['status_badge'] }}"><i class="ph {{ $acc['status_icon'] }}"></i> {{ $acc['status'] }}</span></td>
-              <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Patient Ledger" onclick="openPatientDetailsModal({{ json_encode($acc) }})"><i class="ph ph-file-text"></i></button>
-              </td>
+              <td><span class="badge bg-primary-subtle text-primary">Patient Payor</span></td>
+              <td>Standard Policy</td>
+              <td>₱0.00</td>
+              <td class="text-end font-monospace fw-bold text-danger">{{ $bal }}</td>
+              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> {{ $status }}</span></td>
+              <td class="text-end"><button class="btn btn-sm btn-icon btn-outline-secondary" onclick="openPatientDetailsModal({{ json_encode($aData) }})"><i class="ph ph-eye"></i></button></td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">No patient/payor accounts registered in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="patientSummaryText">Showing {{ count($accounts) }} Payor Accounts</span>
+      <span class="text-muted fs-xs" id="patientSummaryText">Showing {{ count($accounts ?? []) }} Payor Accounts</span>
       <nav aria-label="Accounts Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

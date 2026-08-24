@@ -31,7 +31,7 @@
           <span class="text-muted small fw-medium">Tier 1: Dept Head (&lt; ₱50k)</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-user-check fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark" id="tier1Count">1 Pending</h4>
+        <h4 class="fw-bold mb-0 text-dark" id="tier1Count">{{ ($approvals ?? collect())->where('tier', 'tier 1')->count() }} Pending</h4>
       </div>
     </div>
     <div class="col-md-4">
@@ -40,7 +40,7 @@
           <span class="text-muted small fw-medium">Tier 2: Finance Officer (&lt; ₱250k)</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-shield-check fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark" id="tier2Count">1 Pending</h4>
+        <h4 class="fw-bold mb-0 text-dark" id="tier2Count">{{ ($approvals ?? collect())->where('tier', 'tier 2')->count() }} Pending</h4>
       </div>
     </div>
     <div class="col-md-4">
@@ -49,7 +49,7 @@
           <span class="text-muted small fw-medium">Tier 3: CFO Final Release (&gt; ₱250k)</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-shield-star fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark" id="tier3Count">1 Pending</h4>
+        <h4 class="fw-bold mb-0 text-dark" id="tier3Count">{{ ($approvals ?? collect())->where('tier', 'tier 3')->count() }} Pending</h4>
       </div>
     </div>
   </div>
@@ -93,51 +93,37 @@
             </tr>
           </thead>
           <tbody>
-            <tr id="row-AP-APP-101" class="approval-row" data-tier="tier 2">
-              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">AP-APP-101</span></td>
-              <td class="fw-semibold text-dark">PharmaCorp Philippines</td>
-              <td><span class="font-monospace text-primary">APV-2026-091</span></td>
-              <td>Pharmacy &amp; Therapeutics</td>
-              <td class="text-end fw-bold text-dark font-monospace">₱143,550.00</td>
-              <td><span class="badge bg-primary-subtle text-primary"><i class="ph ph-shield-check me-1"></i> Tier 2: Finance Officer</span></td>
-              <td class="status-cell"><span class="badge bg-warning-subtle text-warning"><i class="ph ph-clock me-1"></i> Pending Authorization</span></td>
+            @forelse($approvals ?? [] as $app)
+            @php
+              $id = is_array($app) ? $app['id'] : ($app->approval_code ?? 'APP-'.$app->id);
+              $vendor = is_array($app) ? $app['vendor'] : ($app->vendor->name ?? 'Vendor');
+              $voucher = is_array($app) ? $app['voucher'] : ($app->voucher_reference ?? 'N/A');
+              $dept = is_array($app) ? $app['dept'] : ($app->department ?? 'General');
+              $amt = is_array($app) ? $app['amount'] : ('₱' . number_format($app->amount ?? 0, 2));
+              $tier = is_array($app) ? $app['tier'] : ($app->tier ?? 'tier 1');
+              $tierLabel = is_array($app) ? $app['tier_label'] : ($app->tier_label ?? 'Tier 1: Dept Head');
+              $status = is_array($app) ? $app['status'] : ($app->status ?? 'Pending Authorization');
+            @endphp
+            <tr id="row-{{ $id }}" class="approval-row" data-tier="{{ strtolower($tier) }}">
+              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">{{ $id }}</span></td>
+              <td class="fw-semibold text-dark">{{ $vendor }}</td>
+              <td><span class="font-monospace text-primary">{{ $voucher }}</span></td>
+              <td>{{ $dept }}</td>
+              <td class="text-end fw-bold text-dark font-monospace">{{ $amt }}</td>
+              <td><span class="badge bg-primary-subtle text-primary"><i class="ph ph-shield-check me-1"></i> {{ $tierLabel }}</span></td>
+              <td class="status-cell"><span class="badge bg-warning-subtle text-warning"><i class="ph ph-clock me-1"></i> {{ $status }}</span></td>
               <td class="text-end action-cell">
                 <div class="d-inline-flex align-items-center justify-content-end gap-2">
-                  <button class="btn btn-success" type="button" onclick="openAuthorizeModal('AP-APP-101', 'PharmaCorp Philippines', '₱143,550.00', 'APV-2026-091')"><i class="ph ph-check"></i> Authorize</button>
-                  <button class="btn btn-outline-danger" type="button" onclick="openRejectModal('AP-APP-101', 'PharmaCorp Philippines', '₱143,550.00')"><i class="ph ph-x"></i> Reject</button>
+                  <button class="btn btn-success" type="button" onclick="openAuthorizeModal('{{ $id }}', '{{ $vendor }}', '{{ $amt }}', '{{ $voucher }}')"><i class="ph ph-check"></i> Authorize</button>
+                  <button class="btn btn-outline-danger" type="button" onclick="openRejectModal('{{ $id }}', '{{ $vendor }}', '{{ $amt }}')"><i class="ph ph-x"></i> Reject</button>
                 </div>
               </td>
             </tr>
-            <tr id="row-AP-APP-102" class="approval-row" data-tier="tier 3">
-              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">AP-APP-102</span></td>
-              <td class="fw-semibold text-dark">MedTech Diagnostics Inc</td>
-              <td><span class="font-monospace text-primary">APV-2026-092</span></td>
-              <td>Laboratory &amp; Radiology</td>
-              <td class="text-end fw-bold text-dark font-monospace">₱310,500.00</td>
-              <td><span class="badge bg-warning-subtle text-warning"><i class="ph ph-shield-star me-1"></i> Tier 3: CFO Release</span></td>
-              <td class="status-cell"><span class="badge bg-warning-subtle text-warning"><i class="ph ph-clock me-1"></i> Pending Authorization</span></td>
-              <td class="text-end action-cell">
-                <div class="d-inline-flex align-items-center justify-content-end gap-2">
-                  <button class="btn btn-success" type="button" onclick="openAuthorizeModal('AP-APP-102', 'MedTech Diagnostics Inc', '₱310,500.00', 'APV-2026-092')"><i class="ph ph-check"></i> Authorize</button>
-                  <button class="btn btn-outline-danger" type="button" onclick="openRejectModal('AP-APP-102', 'MedTech Diagnostics Inc', '₱310,500.00')"><i class="ph ph-x"></i> Reject</button>
-                </div>
-              </td>
+            @empty
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">No pending payment approvals.</td>
             </tr>
-            <tr id="row-AP-APP-103" class="approval-row" data-tier="tier 1">
-              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">AP-APP-103</span></td>
-              <td class="fw-semibold text-dark">Surgical Supplies &amp; Implants</td>
-              <td><span class="font-monospace text-primary">APV-2026-094</span></td>
-              <td>Surgery &amp; Operating Room</td>
-              <td class="text-end fw-bold text-dark font-monospace">₱18,500.00</td>
-              <td><span class="badge bg-info-subtle text-info"><i class="ph ph-user-check me-1"></i> Tier 1: Dept Head</span></td>
-              <td class="status-cell"><span class="badge bg-warning-subtle text-warning"><i class="ph ph-clock me-1"></i> Pending Authorization</span></td>
-              <td class="text-end action-cell">
-                <div class="d-inline-flex align-items-center justify-content-end gap-2">
-                  <button class="btn btn-success" type="button" onclick="openAuthorizeModal('AP-APP-103', 'Surgical Supplies & Implants', '₱18,500.00', 'APV-2026-094')"><i class="ph ph-check"></i> Authorize</button>
-                  <button class="btn btn-outline-danger" type="button" onclick="openRejectModal('AP-APP-103', 'Surgical Supplies & Implants', '₱18,500.00')"><i class="ph ph-x"></i> Reject</button>
-                </div>
-              </td>
-            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>

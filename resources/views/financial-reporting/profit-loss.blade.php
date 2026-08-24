@@ -32,7 +32,7 @@
           <span class="text-muted small fw-medium">Total Operating Revenue</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-trend-up fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-success">₱18,450,000.00</h4>
+        <h4 class="fw-bold mb-0 text-success">₱0.00</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,7 +41,7 @@
           <span class="text-muted small fw-medium">Operating Expenses (OPEX)</span>
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-calculator fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-danger">₱12,100,000.00</h4>
+        <h4 class="fw-bold mb-0 text-danger">₱0.00</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -50,7 +50,7 @@
           <span class="text-muted small fw-medium">Net Profit (EBITDA)</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-vault fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-primary">₱6,350,000.00</h4>
+        <h4 class="fw-bold mb-0 text-primary">₱0.00</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -59,7 +59,7 @@
           <span class="text-muted small fw-medium">Operating Net Margin %</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-percent fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">34.42%</h4>
+        <h4 class="fw-bold mb-0 text-dark">0.0%</h4>
       </div>
     </div>
   </div>

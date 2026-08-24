@@ -106,112 +106,50 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($vouchers ?? [] as $v)
             @php
-              $vouchers = [
-                [
-                  'ref' => 'APV-2026-091',
-                  'vendor' => 'PharmaCorp Philippines',
-                  'po' => 'PO-88210',
-                  'grn' => 'GRN-4410',
-                  'inv_date' => '2026-08-01',
-                  'due_date' => '2026-08-31',
-                  'gross' => '₱145,000.00',
-                  'ewt' => '-₱1,450.00',
-                  'net' => '₱143,550.00',
-                  'match' => '3-Way Matched',
-                  'match_badge' => 'bg-success-subtle text-success',
-                  'match_icon' => 'ph-check-double',
-                  'status' => 'Approved',
-                  'status_badge' => 'bg-primary-subtle text-primary',
-                  'particulars' => 'Bulk IV Fluids & Antibiotics Injectables Delivery',
-                  'po_amt' => '₱145,000.00',
-                  'grn_qty' => '1,000 Boxes (100% Received)'
-                ],
-                [
-                  'ref' => 'APV-2026-092',
-                  'vendor' => 'MedTech Diagnostics',
-                  'po' => 'PO-88215',
-                  'grn' => 'GRN-4419',
-                  'inv_date' => '2026-08-03',
-                  'due_date' => '2026-09-17',
-                  'gross' => '₱98,400.00',
-                  'ewt' => '-₱1,968.00',
-                  'net' => '₱96,432.00',
-                  'match' => '3-Way Matched',
-                  'match_badge' => 'bg-success-subtle text-success',
-                  'match_icon' => 'ph-check-double',
-                  'status' => 'Pending Review',
-                  'status_badge' => 'bg-warning-subtle text-warning',
-                  'particulars' => 'MRI & CT Scan Contrast Media Reagents',
-                  'po_amt' => '₱98,400.00',
-                  'grn_qty' => '50 Vials (100% Received)'
-                ],
-                [
-                  'ref' => 'APV-2026-093',
-                  'vendor' => 'Surgical Supplies & Implants',
-                  'po' => 'PO-88220',
-                  'grn' => 'GRN-HOLD',
-                  'inv_date' => '2026-08-05',
-                  'due_date' => '2026-09-04',
-                  'gross' => '₱52,000.00',
-                  'ewt' => '-₱520.00',
-                  'net' => '₱51,480.00',
-                  'match' => 'Qty Mismatch',
-                  'match_badge' => 'bg-danger-subtle text-danger',
-                  'match_icon' => 'ph-warning',
-                  'status' => 'On Hold',
-                  'status_badge' => 'bg-danger-subtle text-danger',
-                  'particulars' => 'Titanium Screws & Surgical Sutures',
-                  'po_amt' => '₱52,000.00',
-                  'grn_qty' => 'Shortfall: 10 Sutures Missing'
-                ],
-                [
-                  'ref' => 'APV-2026-094',
-                  'vendor' => 'Linde Medical Gases',
-                  'po' => 'PO-88231',
-                  'grn' => 'GRN-4450',
-                  'inv_date' => '2026-08-07',
-                  'due_date' => '2026-09-06',
-                  'gross' => '₱54,000.00',
-                  'ewt' => '-₱540.00',
-                  'net' => '₱53,460.00',
-                  'match' => '3-Way Matched',
-                  'match_badge' => 'bg-success-subtle text-success',
-                  'match_icon' => 'ph-check-double',
-                  'status' => 'Approved',
-                  'status_badge' => 'bg-primary-subtle text-primary',
-                  'particulars' => 'ICU Liquid Oxygen Tank Refill',
-                  'po_amt' => '₱54,000.00',
-                  'grn_qty' => '20 Tanks (100% Verified)'
-                ],
+              $vArr = is_array($v) ? $v : [
+                'ref' => $v->reference_number ?? 'APV-N/A', 'vendor' => $v->vendor_name ?? 'N/A',
+                'po' => $v->purchase_order_number ?? 'N/A', 'grn' => $v->grn_number ?? 'N/A',
+                'inv_date' => $v->invoice_date ? $v->invoice_date->format('Y-m-d') : 'N/A',
+                'due_date' => $v->due_date ? $v->due_date->format('Y-m-d') : 'N/A',
+                'gross' => '₱' . number_format($v->gross_amount ?? 0, 2),
+                'ewt' => '-₱' . number_format($v->ewt_amount ?? 0, 2),
+                'net' => '₱' . number_format($v->net_payable ?? 0, 2),
+                'match' => $v->match_status ?? 'Pending Match', 'match_badge' => 'bg-warning-subtle text-warning',
+                'match_icon' => 'ph-clock', 'status' => $v->status ?? 'Pending',
+                'status_badge' => 'bg-warning-subtle text-warning', 'particulars' => $v->particulars ?? 'N/A',
+                'po_amt' => '₱' . number_format($v->po_amount ?? 0, 2), 'grn_qty' => $v->grn_quantity ?? 'N/A',
               ];
             @endphp
-
-            @foreach($vouchers as $v)
-            <tr class="voucher-row" style="cursor: pointer;" data-status="{{ strtolower($v['status']) }}" onclick="openVoucherDetailsModal({{ json_encode($v) }})">
-              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">{{ $v['ref'] }}</span></td>
-              <td class="fw-semibold text-dark">{{ $v['vendor'] }}</td>
+            <tr class="voucher-row" style="cursor: pointer;" data-status="{{ strtolower($vArr['status']) }}" onclick="openVoucherDetailsModal({{ json_encode($vArr) }})">
+              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">{{ $vArr['ref'] }}</span></td>
+              <td class="fw-semibold text-dark">{{ $vArr['vendor'] }}</td>
               <td>
-                <div class="fs-xs"><span class="font-monospace text-primary">{{ $v['po'] }}</span> / <span class="font-monospace text-muted">{{ $v['grn'] }}</span></div>
+                <div class="fs-xs"><span class="font-monospace text-primary">{{ $vArr['po'] }}</span> / <span class="font-monospace text-muted">{{ $vArr['grn'] }}</span></div>
               </td>
-              <td class="font-monospace fs-xs">{{ $v['inv_date'] }}</td>
-              <td class="font-monospace fs-xs">{{ $v['due_date'] }}</td>
-              <td class="text-end font-monospace">{{ $v['gross'] }}</td>
-              <td class="text-end text-muted font-monospace">{{ $v['ewt'] }}</td>
-              <td class="text-end fw-bold text-dark font-monospace">{{ $v['net'] }}</td>
-              <td><span class="badge {{ $v['match_badge'] }}"><i class="ph {{ $v['match_icon'] }}"></i> {{ $v['match'] }}</span></td>
-              <td><span class="badge {{ $v['status_badge'] }}">{{ $v['status'] }}</span></td>
+              <td class="font-monospace fs-xs">{{ $vArr['inv_date'] }}</td>
+              <td class="font-monospace fs-xs">{{ $vArr['due_date'] }}</td>
+              <td class="text-end font-monospace">{{ $vArr['gross'] }}</td>
+              <td class="text-end text-muted font-monospace">{{ $vArr['ewt'] }}</td>
+              <td class="text-end fw-bold text-dark font-monospace">{{ $vArr['net'] }}</td>
+              <td><span class="badge {{ $vArr['match_badge'] }}"><i class="ph {{ $vArr['match_icon'] }}"></i> {{ $vArr['match'] }}</span></td>
+              <td><span class="badge {{ $vArr['status_badge'] }}">{{ $vArr['status'] }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View 3-Way Match Details" onclick="openVoucherDetailsModal({{ json_encode($v) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View 3-Way Match Details" onclick="openVoucherDetailsModal({{ json_encode($vArr) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="11" class="text-center py-4 text-muted">No AP vouchers recorded in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="voucherSummaryText">Showing {{ count($vouchers) }} AP Vouchers</span>
+      <span class="text-muted fs-xs" id="voucherSummaryText">Showing {{ count($vouchers ?? []) }} AP Vouchers</span>
       <nav aria-label="Vouchers Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

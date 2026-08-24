@@ -103,54 +103,36 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($procedures ?? [] as $proc)
             @php
-              $procedures = [
-                [
-                  'title' => '1. Accounts Payable & Vendor Bill Closure',
-                  'desc' => 'Confirm all July vendor invoices are approved & posted',
-                  'officer' => 'AP Lead Accountant',
-                  'role' => 'ap',
-                  'status' => 'Completed & Verified',
-                  'status_badge' => 'bg-success-subtle text-success'
-                ],
-                [
-                  'title' => '2. Bank Reconciliation & Cash Match',
-                  'desc' => 'Reconcile Metrobank & BDO bank statements',
-                  'officer' => 'Treasury Accountant',
-                  'role' => 'treasury',
-                  'status' => 'Pending Match',
-                  'status_badge' => 'bg-warning-subtle text-warning'
-                ],
-                [
-                  'title' => '3. Trial Balance Debit/Credit Verification',
-                  'desc' => 'Ensure total debits equal total credits with zero variance',
-                  'officer' => 'Senior GL Controller',
-                  'role' => 'gl',
-                  'status' => 'Completed & Verified',
-                  'status_badge' => 'bg-success-subtle text-success'
-                ],
+              $pArr = is_array($proc) ? $proc : [
+                'title' => $proc->title ?? 'Procedure',
+                'desc' => $proc->description ?? '',
+                'officer' => $proc->responsible_officer ?? 'N/A',
+                'role' => strtolower($proc->role ?? 'general'),
+                'status' => $proc->status ?? 'Pending',
+                'status_badge' => 'bg-warning-subtle text-warning',
               ];
             @endphp
-
-            @foreach($procedures as $proc)
-            <tr class="procedure-row" style="cursor: pointer;" data-role="{{ $proc['role'] }}" data-status="{{ strtolower($proc['status']) }}" onclick="openProcedureDetailsModal({{ json_encode($proc) }})">
-              <td><div class="fw-bold text-dark">{{ $proc['title'] }}</div></td>
-              <td class="fs-xs text-muted">{{ $proc['officer'] }}</td>
-              <td><span class="badge {{ $proc['status_badge'] }}"><i class="ph ph-check-circle me-1"></i> {{ $proc['status'] }}</span></td>
+            <tr class="procedure-row" style="cursor: pointer;" data-role="{{ $pArr['role'] }}" data-status="{{ strtolower($pArr['status']) }}" onclick="openProcedureDetailsModal({{ json_encode($pArr) }})">
+              <td><div class="fw-bold text-dark">{{ $pArr['title'] }}</div></td>
+              <td class="fs-xs text-muted">{{ $pArr['officer'] }}</td>
+              <td><span class="badge {{ $pArr['status_badge'] }}"><i class="ph ph-check-circle me-1"></i> {{ $pArr['status'] }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
-                @if($proc['status'] === 'Pending Match')
-                  <button class="btn btn-sm btn-outline-primary py-1 px-3 fs-xs me-1" onclick="verifyTask2()"><i class="ph ph-check me-1"></i> Verify &amp; Complete</button>
-                @endif
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Verification Log" onclick="openProcedureDetailsModal({{ json_encode($proc) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Verification Log" onclick="openProcedureDetailsModal({{ json_encode($pArr) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="4" class="text-center py-4 text-muted">No period-end procedures configured in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="procedureSummaryText">Showing {{ count($procedures) }} Month-End Procedures</span>
+      <span class="text-muted fs-xs" id="procedureSummaryText">Showing {{ count($procedures ?? []) }} Month-End Procedures</span>
       <nav aria-label="Procedure Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

@@ -32,7 +32,7 @@
           <span class="text-muted small fw-medium">Invoices Issued Today</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-receipt fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">28 Invoices</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ count($invoices ?? []) }} Invoices</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,7 +41,7 @@
           <span class="text-muted small fw-medium">Pending HMO Claims</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-shield-check fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱1,220,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format(($invoices ?? collect())->where('payor_type', 'hmo')->where('status', 'Pending')->sum('total_amount'), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -50,7 +50,7 @@
           <span class="text-muted small fw-medium">PhilHealth Coverage Claims</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-first-aid fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱650,500.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format(($invoices ?? collect())->where('payor_type', 'philhealth')->where('status', 'Pending')->sum('total_amount'), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -59,7 +59,7 @@
           <span class="text-muted small fw-medium">Paid &amp; Settled Invoices</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">91.4%</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ count($invoices ?? []) > 0 ? number_format((($invoices ?? collect())->where('status', 'Paid')->count() / count($invoices)) * 100, 1) : 0.0 }}%</h4>
       </div>
     </div>
   </div>
@@ -111,97 +111,46 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($invoices ?? [] as $inv)
             @php
-              $invoices = [
-                [
-                  'ref' => 'INV-2026-0881',
-                  'date' => '2026-08-08',
-                  'patient' => 'Juan Dela Cruz',
-                  'sub' => 'Patient ID: PAT-88412 — Inpatient Surgery',
-                  'payor' => 'Maxicare HMO',
-                  'payor_type' => 'hmo',
-                  'badge' => 'bg-info-subtle text-info',
-                  'billed' => '₱45,800.00',
-                  'status' => 'Pending Claim',
-                  'status_badge' => 'bg-warning-subtle text-warning',
-                  'status_icon' => 'ph-clock',
-                  'room' => '₱15,000.00',
-                  'or_fee' => '₱18,000.00',
-                  'pharma' => '₱12,800.00'
-                ],
-                [
-                  'ref' => 'INV-2026-0882',
-                  'date' => '2026-08-07',
-                  'patient' => 'PhilHealth Universal Coverage',
-                  'sub' => 'Government Statutory Benefit Deductions Pool',
-                  'payor' => 'PhilHealth Statutory',
-                  'payor_type' => 'philhealth',
-                  'badge' => 'bg-success-subtle text-success',
-                  'billed' => '₱820,000.00',
-                  'status' => 'Pending Claim',
-                  'status_badge' => 'bg-warning-subtle text-warning',
-                  'status_icon' => 'ph-clock',
-                  'room' => '₱300,000.00',
-                  'or_fee' => '₱250,000.00',
-                  'pharma' => '₱270,000.00'
-                ],
-                [
-                  'ref' => 'INV-2026-0883',
-                  'date' => '2026-08-06',
-                  'patient' => 'Maria Santos',
-                  'sub' => 'Patient ID: PAT-88435 — Surgical Recovery Suite',
-                  'payor' => 'Intellicare HMO',
-                  'payor_type' => 'hmo',
-                  'badge' => 'bg-info-subtle text-info',
-                  'billed' => '₱85,200.00',
-                  'status' => 'Partially Paid',
-                  'status_badge' => 'bg-info-subtle text-info',
-                  'status_icon' => 'ph-hourglass',
-                  'room' => '₱35,000.00',
-                  'or_fee' => '₱30,200.00',
-                  'pharma' => '₱20,000.00'
-                ],
-                [
-                  'ref' => 'INV-2026-0884',
-                  'date' => '2026-08-05',
-                  'patient' => 'Ricardo Reyes',
-                  'sub' => 'Patient ID: PAT-88450 — ICU Room 02',
-                  'payor' => 'Self-Pay Direct Cash',
-                  'payor_type' => 'patient',
-                  'badge' => 'bg-primary-subtle text-primary',
-                  'billed' => '₱42,000.00',
-                  'status' => 'Paid & Cleared',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'status_icon' => 'ph-check-circle',
-                  'room' => '₱20,000.00',
-                  'or_fee' => '₱12,000.00',
-                  'pharma' => '₱10,000.00'
-                ],
+              $ref = is_array($inv) ? $inv['ref'] : $inv->invoice_number;
+              $date = is_array($inv) ? $inv['date'] : $inv->invoice_date->format('Y-m-d');
+              $patient = is_array($inv) ? $inv['patient'] : ($inv->patientAccount->patient_name ?? 'Patient');
+              $payor = is_array($inv) ? $inv['payor'] : 'Payor';
+              $billed = is_array($inv) ? $inv['billed'] : ('₱' . number_format($inv->total_amount, 2));
+              $status = is_array($inv) ? $inv['status'] : $inv->status;
+              $iData = [
+                'ref' => $ref,
+                'date' => $date,
+                'patient' => $patient,
+                'sub' => 'Patient Billing',
+                'payor' => $payor,
+                'payor_type' => 'patient',
+                'badge' => 'bg-info-subtle text-info',
+                'billed' => $billed,
+                'status' => $status
               ];
             @endphp
-
-            @foreach($invoices as $inv)
-            <tr class="invoice-row" style="cursor: pointer;" data-payor="{{ $inv['payor_type'] }}" data-status="{{ strtolower($inv['status']) }}" onclick="openInvoiceDetailsModal({{ json_encode($inv) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $inv['ref'] }}</span></td>
-              <td class="font-monospace fs-xs">{{ $inv['date'] }}</td>
-              <td>
-                <div class="fw-semibold text-dark">{{ $inv['patient'] }}</div>
-                <span class="fs-xs text-muted">{{ $inv['sub'] }}</span>
-              </td>
-              <td><span class="badge {{ $inv['badge'] }}">{{ $inv['payor'] }}</span></td>
-              <td class="text-end font-monospace fw-bold text-dark">{{ $inv['billed'] }}</td>
-              <td><span class="badge {{ $inv['status_badge'] }}"><i class="ph {{ $inv['status_icon'] }} me-1"></i> {{ $inv['status'] }}</span></td>
-              <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Invoice Breakdown" onclick="openInvoiceDetailsModal({{ json_encode($inv) }})"><i class="ph ph-eye"></i></button>
-              </td>
+            <tr class="invoice-row" style="cursor: pointer;" onclick="openInvoiceDetailsModal({{ json_encode($iData) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $ref }}</span></td>
+              <td class="font-monospace fs-xs">{{ $date }}</td>
+              <td><div class="fw-bold text-dark">{{ $patient }}</div></td>
+              <td><span class="badge bg-info-subtle text-info">{{ $payor }}</span></td>
+              <td class="text-end font-monospace fw-bold text-danger">{{ $billed }}</td>
+              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> {{ $status }}</span></td>
+              <td class="text-end"><button class="btn btn-sm btn-icon btn-outline-secondary" onclick="openInvoiceDetailsModal({{ json_encode($iData) }})"><i class="ph ph-eye"></i></button></td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">No billing invoices issued in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="invoiceSummaryText">Showing {{ count($invoices) }} Billing Invoices</span>
+      <span class="text-muted fs-xs" id="invoiceSummaryText">Showing {{ count($invoices ?? []) }} Billing Invoices</span>
       <nav aria-label="Invoices Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

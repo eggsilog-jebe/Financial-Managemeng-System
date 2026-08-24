@@ -32,7 +32,7 @@
           <span class="text-muted small fw-medium">Total Debit Balance</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-arrow-up-right fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-success" id="tbTotalDebitCard">₱14,550,000.00</h4>
+        <h4 class="fw-bold mb-0 text-success" id="tbTotalDebitCard">₱0.00</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,7 +41,7 @@
           <span class="text-muted small fw-medium">Total Credit Balance</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-arrow-down-left fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-primary" id="tbTotalCreditCard">₱14,550,000.00</h4>
+        <h4 class="fw-bold mb-0 text-primary" id="tbTotalCreditCard">₱0.00</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -103,68 +103,45 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($accounts ?? [] as $acc)
             @php
-              $tbAccounts = [
-                [
-                  'code' => '1010',
-                  'title' => 'Metrobank Operating Cash Account',
-                  'category' => 'Asset',
-                  'category_key' => 'asset',
-                  'debit' => '₱4,850,000.00',
-                  'credit' => '-',
-                  'badge' => 'bg-success-subtle text-success'
-                ],
-                [
-                  'code' => '1200',
-                  'title' => 'Accounts Receivable (Patients & HMOs)',
-                  'category' => 'Asset',
-                  'category_key' => 'asset',
-                  'debit' => '₱3,070,200.00',
-                  'credit' => '-',
-                  'badge' => 'bg-success-subtle text-success'
-                ],
-                [
-                  'code' => '1300',
-                  'title' => 'Pharmacy Stock & Medicine Inventory',
-                  'category' => 'Asset',
-                  'category_key' => 'asset',
-                  'debit' => '₱980,000.00',
-                  'credit' => '-',
-                  'badge' => 'bg-success-subtle text-success'
-                ],
-                [
-                  'code' => '2010',
-                  'title' => 'Accounts Payable (Medical Suppliers & Vendors)',
-                  'category' => 'Liability',
-                  'category_key' => 'liability',
-                  'debit' => '-',
-                  'credit' => '₱2,100,000.00',
-                  'badge' => 'bg-danger-subtle text-danger'
-                ],
-                [
-                  'code' => '3010',
-                  'title' => 'Hospital Capital Reserve & Retained Earnings',
-                  'category' => 'Equity',
-                  'category_key' => 'equity',
-                  'debit' => '-',
-                  'credit' => '₱6,330,000.00',
-                  'badge' => 'bg-primary-subtle text-primary'
-                ],
+              $code = is_array($acc) ? $acc['code'] : $acc->code;
+              $title = is_array($acc) ? $acc['title'] : $acc->name;
+              $category = is_array($acc) ? $acc['category'] : ucfirst(strtolower($acc->category));
+              $catKey = is_array($acc) ? $acc['category_key'] : strtolower($acc->category);
+              $normalBal = is_array($acc) ? 'DEBIT' : $acc->normal_balance;
+              $badgeClass = match(strtolower($category)) {
+                'asset' => 'bg-success-subtle text-success',
+                'liability' => 'bg-danger-subtle text-danger',
+                'equity' => 'bg-primary-subtle text-primary',
+                'revenue' => 'bg-info-subtle text-info',
+                default => 'bg-warning-subtle text-warning',
+              };
+              $accData = [
+                'code' => $code,
+                'title' => $title,
+                'category' => $category,
+                'category_key' => $catKey,
+                'debit' => $normalBal === 'DEBIT' ? '₱0.00' : '-',
+                'credit' => $normalBal === 'CREDIT' ? '₱0.00' : '-',
+                'badge' => $badgeClass
               ];
             @endphp
-
-            @foreach($tbAccounts as $acc)
-            <tr class="tb-row" style="cursor: pointer;" data-category="{{ $acc['category_key'] }}" onclick="openTbDetailsModal({{ json_encode($acc) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $acc['code'] }}</span></td>
-              <td><div class="fw-bold text-dark">{{ $acc['title'] }}</div></td>
-              <td><span class="badge {{ $acc['badge'] }}">{{ $acc['category'] }}</span></td>
-              <td class="text-end @if($acc['debit'] !== '-') text-success fw-bold @else text-muted @endif font-monospace">{{ $acc['debit'] }}</td>
-              <td class="text-end @if($acc['credit'] !== '-') text-danger fw-bold @else text-muted @endif font-monospace">{{ $acc['credit'] }}</td>
+            <tr class="tb-row" style="cursor: pointer;" data-category="{{ $catKey }}" onclick="openTbDetailsModal({{ json_encode($accData) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $code }}</span></td>
+              <td><div class="fw-bold text-dark">{{ $title }}</div></td>
+              <td><span class="badge {{ $badgeClass }}">{{ $category }}</span></td>
+              <td class="text-end text-success fw-bold font-monospace">{{ $accData['debit'] }}</td>
+              <td class="text-end text-danger fw-bold font-monospace">{{ $accData['credit'] }}</td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Trial Balance Details" onclick="openTbDetailsModal({{ json_encode($acc) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Trial Balance Details" onclick="openTbDetailsModal({{ json_encode($accData) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="6" class="text-center py-4 text-muted">No trial balance records found in database.</td>
+            </tr>
+            @endforelse
           </tbody>
           <tfoot class="table-dark font-monospace fw-bold">
             <tr>
@@ -178,7 +155,7 @@
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="tbSummaryText">Showing {{ count($tbAccounts) }} Trial Balance Accounts</span>
+      <span class="text-muted fs-xs" id="tbSummaryText">Showing {{ count($accounts ?? []) }} Trial Balance Accounts</span>
       <nav aria-label="TB Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

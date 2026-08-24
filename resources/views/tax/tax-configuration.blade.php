@@ -106,66 +106,53 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($taxRules ?? [] as $r)
             @php
-              $rules = [
-                [
-                  'code' => 'TAX-EWT-DOC10',
-                  'name' => 'EWT - Professional Fees (Medical Consultants)',
-                  'atc' => 'WI010',
-                  'category' => 'Expanded Withholding Tax',
-                  'cat_type' => 'ewt',
-                  'rate' => '10.0%',
-                  'scope' => 'Visiting Doctors & Medical Consultants (< ₱3M Gross)',
-                  'status' => 'Active',
-                  'status_badge' => 'bg-success-subtle text-success'
-                ],
-                [
-                  'code' => 'TAX-EWT-SUP01',
-                  'name' => 'EWT - Medical & Hospital Equipment Suppliers',
-                  'atc' => 'WC158',
-                  'category' => 'Expanded Withholding Tax',
-                  'cat_type' => 'ewt',
-                  'rate' => '1.0%',
-                  'scope' => 'Purchase of Medical Goods & Pharmaceutical Supplies',
-                  'status' => 'Active',
-                  'status_badge' => 'bg-success-subtle text-success'
-                ],
-                [
-                  'code' => 'TAX-VAT-12',
-                  'name' => 'Standard Output Value Added Tax (VAT)',
-                  'atc' => 'WV010',
-                  'category' => 'Value Added Tax',
-                  'cat_type' => 'vat',
-                  'rate' => '12.0%',
-                  'scope' => 'Non-exempt hospital billings & pharmacy OTC sales',
-                  'status' => 'Active',
-                  'status_badge' => 'bg-success-subtle text-success'
-                ],
+              $code = is_array($r) ? $r['code'] : $r->tax_code;
+              $name = is_array($r) ? $r['name'] : $r->name;
+              $atc = is_array($r) ? $r['atc'] : $r->atc_code;
+              $category = is_array($r) ? $r['category'] : $r->category;
+              $catType = is_array($r) ? $r['cat_type'] : $r->cat_type;
+              $rate = is_array($r) ? $r['rate'] : number_format($r->rate, 1) . '%';
+              $scope = is_array($r) ? $r['scope'] : $r->scope;
+              $status = is_array($r) ? $r['status'] : $r->status;
+              $rData = [
+                'code' => $code,
+                'name' => $name,
+                'atc' => $atc,
+                'category' => $category,
+                'cat_type' => $catType,
+                'rate' => $rate,
+                'scope' => $scope,
+                'status' => $status,
+                'status_badge' => 'bg-success-subtle text-success'
               ];
             @endphp
-
-            @foreach($rules as $r)
-            <tr class="tax-row" style="cursor: pointer;" data-cat="{{ $r['cat_type'] }}" data-status="{{ strtolower($r['status']) }}" onclick="openTaxRuleDetailsModal({{ json_encode($r) }})">
+            <tr class="tax-row" style="cursor: pointer;" onclick="openTaxRuleDetailsModal({{ json_encode($rData) }})">
               <td>
-                <div class="fw-bold text-dark">{{ $r['name'] }}</div>
-                <span class="fs-xs font-monospace text-muted">{{ $r['code'] }}</span>
+                <div class="fw-bold text-dark">{{ $name }}</div>
+                <span class="fs-xs font-monospace text-muted">{{ $code }}</span>
               </td>
-              <td><span class="font-monospace text-primary fw-bold">{{ $r['atc'] }}</span></td>
-              <td><span class="badge bg-info-subtle text-info">{{ $r['category'] }}</span></td>
-              <td class="text-end font-monospace fw-bold text-danger">{{ $r['rate'] }}</td>
-              <td class="fs-xs text-muted">{{ $r['scope'] }}</td>
-              <td><span class="badge {{ $r['status_badge'] }}"><i class="ph ph-check-circle me-1"></i> {{ $r['status'] }}</span></td>
+              <td><span class="font-monospace text-primary fw-bold">{{ $atc }}</span></td>
+              <td><span class="badge bg-info-subtle text-info">{{ $category }}</span></td>
+              <td class="text-end font-monospace fw-bold text-danger">{{ $rate }}</td>
+              <td class="fs-xs text-muted">{{ $scope }}</td>
+              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> {{ $status }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Tax Rule Details" onclick="openTaxRuleDetailsModal({{ json_encode($r) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Tax Rule Details" onclick="openTaxRuleDetailsModal({{ json_encode($rData) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">No tax rules configured in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="taxSummaryText">Showing {{ count($rules) }} Tax Rules</span>
+      <span class="text-muted fs-xs" id="taxSummaryText">Showing {{ count($taxRules ?? []) }} Tax Rules</span>
       <nav aria-label="Tax Rule Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

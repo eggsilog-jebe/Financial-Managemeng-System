@@ -32,7 +32,7 @@
           <span class="text-muted small fw-medium">Active Bank Accounts</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-bank fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">4 Accounts</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ count($bankAccounts ?? []) }} Accounts</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,7 +41,7 @@
           <span class="text-muted small fw-medium">Combined Ledger Cash</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-vault fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-success">₱7,840,000.00</h4>
+        <h4 class="fw-bold mb-0 text-success">₱{{ number_format(($bankAccounts ?? collect())->sum('balance'), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -50,7 +50,7 @@
           <span class="text-muted small fw-medium">Main Operating Account</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-credit-card fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱4,850,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -105,56 +105,44 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($bankAccounts ?? [] as $acc)
             @php
-              $accounts = [
-                [
-                  'bank' => 'Metrobank - Main Branch',
-                  'no' => '1020-8841-99',
-                  'purpose' => 'Primary Operations & Payroll Payouts',
-                  'currency' => 'PHP (₱)',
-                  'balance' => '₱4,850,000.00',
-                  'gl_code' => '1010-01-METRO',
-                  'type' => 'operations'
-                ],
-                [
-                  'bank' => 'BDO Unibank - Medical City Branch',
-                  'no' => '0091-2384-12',
-                  'purpose' => 'Collections & HMO Deposits',
-                  'currency' => 'PHP (₱)',
-                  'balance' => '₱2,140,000.00',
-                  'gl_code' => '1010-02-BDO',
-                  'type' => 'collections'
-                ],
-                [
-                  'bank' => 'BPI - Healthcare Center Branch',
-                  'no' => '3341-9902-55',
-                  'purpose' => 'Emergency Capital Reserve',
-                  'currency' => 'PHP (₱)',
-                  'balance' => '₱850,000.00',
-                  'gl_code' => '1010-03-BPI',
-                  'type' => 'reserve'
-                ],
+              $bank = is_array($acc) ? $acc['bank'] : ($acc->name . ' (' . $acc->bank_name . ')');
+              $no = is_array($acc) ? $acc['no'] : $acc->account_number;
+              $purpose = is_array($acc) ? $acc['purpose'] : $acc->purpose;
+              $curr = is_array($acc) ? $acc['currency'] : $acc->currency;
+              $bal = is_array($acc) ? $acc['balance'] : ('₱' . number_format($acc->balance, 2));
+              $gl = is_array($acc) ? $acc['gl_code'] : $acc->gl_code;
+              $accData = [
+                'bank' => $bank,
+                'no' => $no,
+                'purpose' => $purpose,
+                'currency' => $curr,
+                'balance' => $bal,
+                'gl_code' => $gl
               ];
             @endphp
-
-            @foreach($accounts as $acc)
-            <tr class="account-row" style="cursor: pointer;" data-purpose="{{ strtolower($acc['purpose']) }}" data-currency="{{ strtolower($acc['currency']) }}" onclick="openBankAccountDetailsModal({{ json_encode($acc) }})">
-              <td class="fw-bold text-dark">{{ $acc['bank'] }}</td>
-              <td><span class="font-monospace text-primary fw-bold">{{ $acc['no'] }}</span></td>
-              <td class="fs-xs text-muted">{{ $acc['purpose'] }}</td>
-              <td><span class="badge bg-light text-dark border">{{ $acc['currency'] }}</span></td>
-              <td class="text-end text-success fw-bold font-monospace">{{ $acc['balance'] }}</td>
+            <tr class="account-row" style="cursor: pointer;" onclick="openBankAccountDetailsModal({{ json_encode($accData) }})">
+              <td class="fw-bold text-dark">{{ $bank }}</td>
+              <td><span class="font-monospace text-primary fw-bold">{{ $no }}</span></td>
+              <td class="fs-xs text-muted">{{ $purpose }}</td>
+              <td><span class="badge bg-light text-dark border">{{ $curr }}</span></td>
+              <td class="text-end text-success fw-bold font-monospace">{{ $bal }}</td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Account Details" onclick="openBankAccountDetailsModal({{ json_encode($acc) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Account Details" onclick="openBankAccountDetailsModal({{ json_encode($accData) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="6" class="text-center py-4 text-muted">No bank accounts registered in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="accountSummaryText">Showing {{ count($accounts) }} Bank Accounts</span>
+      <span class="text-muted fs-xs" id="accountSummaryText">Showing {{ count($bankAccounts ?? []) }} Bank Accounts</span>
       <nav aria-label="Account Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

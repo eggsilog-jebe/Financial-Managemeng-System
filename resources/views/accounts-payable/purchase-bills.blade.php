@@ -32,7 +32,7 @@
           <span class="text-muted small">Medical Gases &amp; Consumables</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-first-aid-kit fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱124,500.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
       </div>
     </div>
     <div class="col-md-4">
@@ -41,7 +41,7 @@
           <span class="text-muted small">Bio-Hazard &amp; Environmental Services</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-trash fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱88,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
       </div>
     </div>
     <div class="col-md-4">
@@ -50,7 +50,7 @@
           <span class="text-muted small">Facility Power &amp; Water Utilities</span>
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-lightning fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱645,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
       </div>
     </div>
   </div>
@@ -78,102 +78,106 @@
       </div>
     </div>
 
+  <!-- Metric Summary Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small fw-medium">Total Purchase Bills</span>
+          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-receipt fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold mb-0 text-dark">{{ count($bills ?? []) }} Bills</h4>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small fw-medium">Unpaid Supplier Bills</span>
+          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-clock-afternoon fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold mb-0 text-danger">₱0.00</h4>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small fw-medium">Paid Bills (This Period)</span>
+          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold mb-0 text-success">₱0.00</h4>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small fw-medium">Pending Manager Approvals</span>
+          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-stamp fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Table Card -->
+  <div class="card border-0 shadow-sm rounded-3">
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table id="purchaseBillsTable" class="table table-hover align-middle mb-0">
+        <table id="purchaseBillTable" class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
-              <th>Bill ID</th>
+              <th>Bill Reference #</th>
               <th>Supplier Name</th>
-              <th>Supply Category / Item Description</th>
+              <th>Bill Item / Description</th>
               <th>Bill Date</th>
               <th>Due Date</th>
-              <th class="text-end">Total Amount (₱)</th>
-              <th>Payment Status</th>
-              <th class="text-end">Action</th>
+              <th class="text-end">Total Amount</th>
+              <th>Status</th>
+              <th class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
+            @forelse($bills ?? [] as $inv)
             @php
-              $bills = [
-                [
-                  'id' => 'BILL-2026-801',
-                  'supplier' => 'Linde Medical Gases',
-                  'item' => 'ICU Oxygen Cylinder Tank Refill Batch',
-                  'date' => '2026-08-04',
-                  'due' => '2026-09-03',
-                  'amount' => '₱54,000.00',
-                  'status' => 'Unpaid',
-                  'badge' => 'bg-warning-subtle text-warning',
-                  'desc' => 'High-purity liquid oxygen refills for ICU ward manifolds & operating room emergency tanks.'
-                ],
-                [
-                  'id' => 'BILL-2026-802',
-                  'supplier' => 'Meralco Power Distribution',
-                  'item' => 'Hospital Electrical Grid Substation Utility Bill',
-                  'date' => '2026-08-01',
-                  'due' => '2026-08-16',
-                  'amount' => '₱437,000.00',
-                  'status' => 'Unpaid',
-                  'badge' => 'bg-warning-subtle text-warning',
-                  'desc' => 'Monthly high-voltage power grid usage for 24/7 hospital HVAC, surgical operating lights, and main vault.'
-                ],
-                [
-                  'id' => 'BILL-2026-803',
-                  'supplier' => 'BioClean Environmental Services',
-                  'item' => 'Bio-Hazardous Medical Waste Disposal & Incineration',
-                  'date' => '2026-08-02',
-                  'due' => '2026-09-01',
-                  'amount' => '₱88,000.00',
-                  'status' => 'Paid',
-                  'badge' => 'bg-success-subtle text-success',
-                  'desc' => 'DENR-compliant hazardous medical waste collection, sharps disposal, and bio-incineration services.'
-                ],
-                [
-                  'id' => 'BILL-2026-804',
-                  'supplier' => 'Manila Water Commercial',
-                  'item' => 'Medical Complex Filtration & Utility Water Meter',
-                  'date' => '2026-08-03',
-                  'due' => '2026-08-18',
-                  'amount' => '₱208,000.00',
-                  'status' => 'Partially Paid',
-                  'badge' => 'bg-info-subtle text-info',
-                  'desc' => 'Potable water supply & sterile filtration system main pipe utility bill for July 2026 cycle.'
-                ],
-                [
-                  'id' => 'BILL-2026-805',
-                  'supplier' => 'Surgical Supplies & Implants Co.',
-                  'item' => 'Orthopedic Titanium Screws & Surgical Sutures Batch #4',
-                  'date' => '2026-08-05',
-                  'due' => '2026-09-04',
-                  'amount' => '₱70,500.00',
-                  'status' => 'Unpaid',
-                  'badge' => 'bg-warning-subtle text-warning',
-                  'desc' => 'Sterilized titanium bone screws, joint replacement plates, and surgical suture spools for OR Suite 3.'
-                ],
+              $iArr = is_array($inv) ? $inv : [
+                'ref' => $inv->reference_number ?? 'APV-N/A',
+                'vendor_inv' => $inv->vendor_invoice_number ?? 'N/A',
+                'vendor' => $inv->vendor_name ?? 'N/A', 'sub' => $inv->description ?? 'N/A',
+                'date' => $inv->invoice_date ? $inv->invoice_date->format('Y-m-d') : 'N/A',
+                'due' => $inv->due_date ? $inv->due_date->format('Y-m-d') : 'N/A',
+                'amount' => '₱' . number_format($inv->amount ?? 0, 2),
+                'status' => $inv->status ?? 'Pending', 'status_badge' => 'bg-warning-subtle text-warning',
+                'status_icon' => 'ph-clock',
+                'terms' => $inv->payment_terms ?? 'NET 30', 'category' => strtolower($inv->category ?? 'general'),
               ];
-            @endphp
-
-            @foreach($bills as $b)
-            <tr class="bill-row" style="cursor: pointer;" data-status="{{ strtolower($b['status']) }}" onclick="openBillDetailsModal({{ json_encode($b) }})">
-              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">{{ $b['id'] }}</span></td>
-              <td class="fw-semibold text-dark">{{ $b['supplier'] }}</td>
-              <td><span class="text-dark">{{ $b['item'] }}</span></td>
-              <td class="font-monospace fs-xs">{{ $b['date'] }}</td>
-              <td class="font-monospace fs-xs">{{ $b['due'] }}</td>
-              <td class="text-end fw-bold text-dark font-monospace">{{ $b['amount'] }}</td>
-              <td><span class="badge {{ $b['badge'] }}">{{ $b['status'] }}</span></td>
+            <tr class="invoice-row" style="cursor: pointer;" data-category="{{ $iArr['category'] }}" data-status="{{ strtolower($iArr['status']) }}" onclick="openInvoiceDetailsModal({{ json_encode($iArr) }})">
+              <td>
+                <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">{{ $iArr['ref'] }}</span>
+                <div class="fs-xs text-muted font-monospace mt-1">{{ $iArr['vendor_inv'] }}</div>
+              </td>
+              <td>
+                <div class="fw-semibold text-dark">{{ $iArr['vendor'] }}</div>
+                <span class="fs-xs text-muted">{{ $iArr['sub'] }}</span>
+              </td>
+              <td class="font-monospace fs-xs">{{ $iArr['date'] }}</td>
+              <td class="font-monospace fs-xs">{{ $iArr['due'] }}</td>
+              <td class="text-end fw-bold text-dark font-monospace">{{ $iArr['amount'] }}</td>
+              <td>{{ $iArr['terms'] }}</td>
+              <td><span class="badge {{ $iArr['status_badge'] }}"><i class="ph {{ $iArr['status_icon'] }} me-1"></i> {{ $iArr['status'] }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Bill Details" onclick="openBillDetailsModal({{ json_encode($b) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Bill Details" onclick="openInvoiceDetailsModal({{ json_encode($iArr) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">No purchase bills recorded in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="billSummaryText">Showing {{ count($bills) }} Purchase Bills</span>
+      <span class="text-muted fs-xs" id="billSummaryText">Showing {{ count($bills ?? []) }} Purchase Bills</span>
       <nav aria-label="Bills Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

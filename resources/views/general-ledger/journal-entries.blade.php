@@ -106,62 +106,50 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($entries ?? [] as $je)
             @php
-              $entries = [
-                [
-                  'ref' => 'JE-2026-0045',
-                  'date' => '2026-08-10',
-                  'title' => 'Outpatient Lab Consultation & Testing Revenue Settlement',
-                  'debit' => '₱350,000.00',
-                  'credit' => '₱350,000.00',
-                  'status' => 'Posted',
-                  'type' => 'general',
-                  'badge' => 'bg-success-subtle text-success'
-                ],
-                [
-                  'ref' => 'JE-2026-0044',
-                  'date' => '2026-08-09',
-                  'title' => 'Bi-Weekly Medical Nursing & Administrative Staff Payroll Adjustment',
-                  'debit' => '₱2,450,000.00',
-                  'credit' => '₱2,450,000.00',
-                  'status' => 'Posted',
-                  'type' => 'general',
-                  'badge' => 'bg-success-subtle text-success'
-                ],
-                [
-                  'ref' => 'JE-2026-0043',
-                  'date' => '2026-08-08',
-                  'title' => 'Surgical Gloves & Oxygen Tank Emergency Stock Purchase',
-                  'debit' => '₱85,400.00',
-                  'credit' => '₱85,400.00',
-                  'status' => 'Posted',
-                  'type' => 'general',
-                  'badge' => 'bg-success-subtle text-success'
-                ],
+              $ref = is_array($je) ? $je['ref'] : $je->reference_number;
+              $date = is_array($je) ? $je['date'] : $je->entry_date->format('Y-m-d');
+              $title = is_array($je) ? $je['title'] : $je->description;
+              $status = is_array($je) ? $je['status'] : ucfirst(strtolower($je->status));
+              $type = is_array($je) ? $je['type'] : strtolower($je->type);
+              $debitSum = is_array($je) ? $je['debit'] : '₱' . number_format($je->lines->sum('debit'), 2);
+              $creditSum = is_array($je) ? $je['credit'] : '₱' . number_format($je->lines->sum('credit'), 2);
+              $jeData = [
+                'ref' => $ref,
+                'date' => $date,
+                'title' => $title,
+                'debit' => $debitSum,
+                'credit' => $creditSum,
+                'status' => $status,
+                'type' => $type,
+                'badge' => 'bg-success-subtle text-success'
               ];
             @endphp
-
-            @foreach($entries as $je)
-            <tr class="journal-row" style="cursor: pointer;" data-status="{{ strtolower($je['status']) }}" data-type="{{ strtolower($je['type']) }}" onclick="openJournalDetailsModal({{ json_encode($je) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $je['ref'] }}</span></td>
-              <td class="font-monospace fs-xs">{{ $je['date'] }}</td>
+            <tr class="journal-row" style="cursor: pointer;" data-status="{{ strtolower($status) }}" data-type="{{ strtolower($type) }}" onclick="openJournalDetailsModal({{ json_encode($jeData) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $ref }}</span></td>
+              <td class="font-monospace fs-xs">{{ $date }}</td>
               <td>
-                <div class="fw-semibold text-dark">{{ $je['title'] }}</div>
+                <div class="fw-semibold text-dark">{{ $title }}</div>
               </td>
-              <td class="text-end text-success fw-bold font-monospace">{{ $je['debit'] }}</td>
-              <td class="text-end text-danger fw-bold font-monospace">{{ $je['credit'] }}</td>
-              <td><span class="badge {{ $je['badge'] }}"><i class="ph ph-check-circle me-1"></i> {{ $je['status'] }}</span></td>
+              <td class="text-end text-success fw-bold font-monospace">{{ $debitSum }}</td>
+              <td class="text-end text-danger fw-bold font-monospace">{{ $creditSum }}</td>
+              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> {{ $status }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Journal Voucher" onclick="openJournalDetailsModal({{ json_encode($je) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Journal Voucher" onclick="openJournalDetailsModal({{ json_encode($jeData) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">No journal entries posted in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="journalSummaryText">Showing {{ count($entries) }} Journal Entries</span>
+      <span class="text-muted fs-xs" id="journalSummaryText">Showing {{ count($entries ?? []) }} Journal Entries</span>
       <nav aria-label="Journal Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

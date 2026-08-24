@@ -105,59 +105,44 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($plans ?? [] as $p)
             @php
-              $plans = [
-                [
-                  'title' => 'FY 2026 Approved Operating Master Plan',
-                  'sub' => 'Board Resolution Ref: RES-2025-99',
-                  'period' => 'Jan 01, 2026 - Dec 31, 2026',
-                  'year' => '2026',
-                  'revenue' => '₱120,000,000.00',
-                  'expense' => '₱85,000,000.00',
-                  'margin' => '₱35,000,000.00',
-                  'status' => 'Active Master Budget',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'status_icon' => 'ph-check-circle',
-                  'resolution' => 'RES-2025-99'
-                ],
-                [
-                  'title' => 'FY 2027 Expansion & Medical Tech Draft',
-                  'sub' => 'Preliminary Proposal',
-                  'period' => 'Jan 01, 2027 - Dec 31, 2027',
-                  'year' => '2027',
-                  'revenue' => '₱145,000,000.00',
-                  'expense' => '₱102,000,000.00',
-                  'margin' => '₱43,000,000.00',
-                  'status' => 'Under Review',
-                  'status_badge' => 'bg-warning-subtle text-warning',
-                  'status_icon' => 'ph-clock',
-                  'resolution' => 'DRAFT-FY27-01'
-                ],
+              $pArr = is_array($p) ? $p : [
+                'title' => $p->plan_name ?? 'N/A', 'sub' => $p->description ?? 'N/A',
+                'period' => ($p->start_date ?? 'N/A') . ' - ' . ($p->end_date ?? 'N/A'),
+                'year' => $p->fiscal_year ?? date('Y'),
+                'revenue' => '₱' . number_format($p->projected_revenue ?? 0, 2),
+                'expense' => '₱' . number_format($p->projected_expense ?? 0, 2),
+                'margin' => '₱' . number_format(($p->projected_revenue ?? 0) - ($p->projected_expense ?? 0), 2),
+                'status' => $p->status ?? 'Draft', 'status_badge' => 'bg-warning-subtle text-warning',
+                'status_icon' => 'ph-clock', 'resolution' => $p->resolution_number ?? 'N/A',
               ];
             @endphp
-
-            @foreach($plans as $p)
-            <tr class="plan-row" style="cursor: pointer;" data-year="{{ $p['year'] }}" data-status="{{ strtolower($p['status']) }}" onclick="openFiscalPlanDetailsModal({{ json_encode($p) }})">
+            <tr class="plan-row" style="cursor: pointer;" data-year="{{ $pArr['year'] }}" data-status="{{ strtolower($pArr['status']) }}" onclick="openFiscalPlanDetailsModal({{ json_encode($pArr) }})">
               <td>
-                <div class="fw-bold text-dark">{{ $p['title'] }}</div>
-                <span class="fs-xs text-muted">{{ $p['sub'] }}</span>
+                <div class="fw-bold text-dark">{{ $pArr['title'] }}</div>
+                <span class="fs-xs text-muted">{{ $pArr['sub'] }}</span>
               </td>
-              <td class="font-monospace fs-xs">{{ $p['period'] }}</td>
-              <td class="text-end text-success font-monospace">{{ $p['revenue'] }}</td>
-              <td class="text-end text-danger font-monospace">{{ $p['expense'] }}</td>
-              <td class="text-end text-primary fw-bold font-monospace">{{ $p['margin'] }}</td>
-              <td><span class="badge {{ $p['status_badge'] }}"><i class="ph {{ $p['status_icon'] }} me-1"></i> {{ $p['status'] }}</span></td>
+              <td class="font-monospace fs-xs">{{ $pArr['period'] }}</td>
+              <td class="text-end text-success font-monospace">{{ $pArr['revenue'] }}</td>
+              <td class="text-end text-danger font-monospace">{{ $pArr['expense'] }}</td>
+              <td class="text-end text-primary fw-bold font-monospace">{{ $pArr['margin'] }}</td>
+              <td><span class="badge {{ $pArr['status_badge'] }}"><i class="ph {{ $pArr['status_icon'] }} me-1"></i> {{ $pArr['status'] }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Plan Details" onclick="openFiscalPlanDetailsModal({{ json_encode($p) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Plan Details" onclick="openFiscalPlanDetailsModal({{ json_encode($pArr) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">No fiscal plans available in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="planSummaryText">Showing {{ count($plans) }} Fiscal Plans</span>
+      <span class="text-muted fs-xs" id="planSummaryText">Showing {{ count($plans ?? []) }} Fiscal Plans</span>
       <nav aria-label="Fiscal Plan Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

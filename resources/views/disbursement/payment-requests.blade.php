@@ -32,7 +32,7 @@
           <span class="text-muted small">Total Requisitions</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-file-text fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">12 Requisitions</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ count($requisitions ?? []) }} Requests</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,7 +41,7 @@
           <span class="text-muted small">Pending Approval</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱88,500.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -50,7 +50,7 @@
           <span class="text-muted small">Budget Verified</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">100% Encumbered</h4>
+        <h4 class="fw-bold mb-0 text-dark">0% Encumbered</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -59,7 +59,7 @@
           <span class="text-muted small">Released Payments</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-bank fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱410,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
       </div>
     </div>
   </div>
@@ -86,84 +86,58 @@
     </div>
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table id="reqTable" class="table table-hover align-middle mb-0">
+        <table id="requisitionTable" class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
-              <th>Req Ref</th>
-              <th>Department Origin</th>
-              <th>Payee / Vendor</th>
-              <th>Purpose &amp; Particulars</th>
-              <th>Budget Verification</th>
-              <th class="text-end">Requested Amount (₱)</th>
+              <th>Request Ref</th>
+              <th>Department</th>
+              <th>Payee Name</th>
+              <th>Purpose / Particulars</th>
+              <th>Encumbrance</th>
+              <th class="text-end">Amount</th>
               <th>Status</th>
-              <th class="text-end">Action</th>
+              <th class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
+            @forelse($requisitions ?? [] as $r)
             @php
-              $requisitions = [
-                [
-                  'ref' => 'REQ-2026-114',
-                  'dept' => 'Surgery & Operating Room',
-                  'dept_code' => 'surgery',
-                  'payee' => 'Surgical Supplies & Implants Co.',
-                  'purpose' => 'Emergency Sterilizer Maintenance Pack & Autoclave Seals',
-                  'cc' => 'Encumbered (CC-104)',
-                  'amount' => '₱18,500.00',
-                  'status' => 'Pending CFO Sign-off',
-                  'status_badge' => 'bg-warning-subtle text-warning',
-                  'status_icon' => 'ph-clock',
-                  'requested_by' => 'Dr. A. Ramos (Surgery Dept Head)'
-                ],
-                [
-                  'ref' => 'REQ-2026-115',
-                  'dept' => 'Emergency Room (ER)',
-                  'dept_code' => 'er',
-                  'payee' => 'Linde Medical Gases Philippines',
-                  'purpose' => 'Urgent Portable Oxygen Cylinder Refills (20 Units)',
-                  'cc' => 'Encumbered (CC-102)',
-                  'amount' => '₱22,000.00',
-                  'status' => 'Pending Dept Head',
-                  'status_badge' => 'bg-warning-subtle text-warning',
-                  'status_icon' => 'ph-clock',
-                  'requested_by' => 'Nurse Supervisor M. Cruz'
-                ],
-                [
-                  'ref' => 'REQ-2026-116',
-                  'dept' => 'Biomedical Engineering',
-                  'dept_code' => 'biomedical',
-                  'payee' => 'Siemens Healthcare Philippines',
-                  'purpose' => 'CT Scan X-Ray Tube Maintenance Replacement Parts',
-                  'cc' => 'Encumbered (CC-108)',
-                  'amount' => '₱48,000.00',
-                  'status' => 'Approved for EFT',
-                  'status_badge' => 'bg-primary-subtle text-primary',
-                  'status_icon' => 'ph-check-double',
-                  'requested_by' => 'Engr. R. Santos (Lead BioMed)'
-                ],
+              $ref = is_array($r) ? $r['ref'] : $r->request_number;
+              $dept = is_array($r) ? $r['dept'] : $r->department;
+              $payee = is_array($r) ? $r['payee'] : $r->payee_name;
+              $purpose = is_array($r) ? $r['purpose'] : $r->purpose;
+              $amt = is_array($r) ? $r['amount'] : ('₱' . number_format($r->amount, 2));
+              $status = is_array($r) ? $r['status'] : $r->status;
+              $rData = [
+                'ref' => $ref,
+                'dept' => $dept,
+                'payee' => $payee,
+                'purpose' => $purpose,
+                'amount' => $amt,
+                'status' => $status
               ];
             @endphp
-
-            @foreach($requisitions as $r)
-            <tr class="req-row" style="cursor: pointer;" data-dept="{{ $r['dept_code'] }}" onclick="openRequestDetailsModal({{ json_encode($r) }})">
-              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">{{ $r['ref'] }}</span></td>
-              <td class="fw-semibold text-dark">{{ $r['dept'] }}</td>
-              <td>{{ $r['payee'] }}</td>
-              <td><span class="text-truncate d-inline-block" style="max-width: 250px;">{{ $r['purpose'] }}</span></td>
-              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> {{ $r['cc'] }}</span></td>
-              <td class="text-end fw-bold text-dark font-monospace">{{ $r['amount'] }}</td>
-              <td><span class="badge {{ $r['status_badge'] }}"><i class="ph {{ $r['status_icon'] }} me-1"></i> {{ $r['status'] }}</span></td>
-              <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Requisition Document" onclick="openRequestDetailsModal({{ json_encode($r) }})"><i class="ph ph-eye"></i></button>
-              </td>
+            <tr class="req-row" style="cursor: pointer;" onclick="openRequestDetailsModal({{ json_encode($rData) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $ref }}</span></td>
+              <td class="fw-semibold text-dark">{{ $dept }}</td>
+              <td>{{ $payee }}</td>
+              <td class="fs-xs text-muted">{{ $purpose }}</td>
+              <td><span class="badge bg-success-subtle text-success">Verified</span></td>
+              <td class="text-end font-monospace fw-bold text-danger">{{ $amt }}</td>
+              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> {{ $status }}</span></td>
+              <td class="text-end"><button class="btn btn-sm btn-icon btn-outline-secondary" onclick="openRequestDetailsModal({{ json_encode($rData) }})"><i class="ph ph-eye"></i></button></td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">No payment requests recorded in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="reqSummaryText">Showing {{ count($requisitions) }} Requisitions</span>
+      <span class="text-muted fs-xs" id="reqSummaryText">Showing {{ count($requisitions ?? []) }} Requisitions</span>
       <nav aria-label="Requisitions Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

@@ -29,37 +29,37 @@
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Master Allocated</span>
+          <span class="text-muted small fw-medium">Total Fiscal Budget Cap</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-vault fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱85,000,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Encumbered / PO Committed</span>
+          <span class="text-muted small fw-medium">Encumbered Commitments (POs)</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-lock-key fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱18,200,000.00</h4>
+        <h4 class="fw-bold mb-0 text-danger">₱0.00</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Actual YTD Expended</span>
-          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-receipt fs-5"></i></span>
+          <span class="text-muted small fw-medium">Actual Expended Funds</span>
+          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-calculator fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱42,500,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Available Uncommitted</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-coins fs-5"></i></span>
+          <span class="text-muted small fw-medium">Remaining Liquid Capacity</span>
+          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-hand-coins fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱24,300,000.00</h4>
+        <h4 class="fw-bold mb-0 text-success">₱0.00</h4>
       </div>
     </div>
   </div>
@@ -107,60 +107,48 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($allocations ?? [] as $a)
             @php
-              $allocations = [
-                [
-                  'cc' => 'CC-101',
-                  'cat' => 'Pharmacy Medical Supplies',
-                  'sub' => 'Medical Supplies & Outpatient Drugs',
-                  'initial' => '₱25,000,000.00',
-                  'encumbered' => '₱6,500,000.00',
-                  'expended' => '₱12,800,000.00',
-                  'available' => '₱5,700,000.00'
-                ],
-                [
-                  'cc' => 'CC-102',
-                  'cat' => 'ICU Surgical Equipment',
-                  'sub' => 'Biomedical Maintenance & Calibration',
-                  'initial' => '₱18,000,000.00',
-                  'encumbered' => '₱4,200,000.00',
-                  'expended' => '₱9,100,000.00',
-                  'available' => '₱4,700,000.00'
-                ],
-                [
-                  'cc' => 'CC-104',
-                  'cat' => 'Facility Utilities & Power',
-                  'sub' => 'Power Grid & Generator Diesel Fuel',
-                  'initial' => '₱12,000,000.00',
-                  'encumbered' => '₱3,500,000.00',
-                  'expended' => '₱7,400,000.00',
-                  'available' => '₱1,100,000.00'
-                ],
+              $cc = is_array($a) ? $a['cc'] : $a->cost_center;
+              $cat = is_array($a) ? $a['cat'] : $a->category;
+              $sub = is_array($a) ? $a['sub'] : 'Category';
+              $initial = is_array($a) ? $a['initial'] : ('₱' . number_format($a->allocated_amount, 2));
+              $encumbered = is_array($a) ? $a['encumbered'] : ('₱' . number_format($a->encumbered_amount, 2));
+              $expended = is_array($a) ? $a['expended'] : ('₱' . number_format($a->expended_amount, 2));
+              $available = is_array($a) ? $a['available'] : ('₱' . number_format($a->allocated_amount - $a->expended_amount - $a->encumbered_amount, 2));
+              $aData = [
+                'cc' => $cc,
+                'cat' => $cat,
+                'sub' => $sub,
+                'initial' => $initial,
+                'encumbered' => $encumbered,
+                'expended' => $expended,
+                'available' => $available
               ];
             @endphp
-
-            @foreach($allocations as $a)
-            <tr class="allocation-row" style="cursor: pointer;" data-cc="{{ strtolower($a['cc']) }}" data-cat="{{ strtolower($a['cat']) }}" onclick="openAllocationDetailsModal({{ json_encode($a) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $a['cc'] }}</span></td>
+            <tr class="allocation-row" style="cursor: pointer;" onclick="openAllocationDetailsModal({{ json_encode($aData) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $cc }}</span></td>
               <td>
-                <div class="fw-semibold text-dark">{{ $a['cat'] }}</div>
-                <span class="fs-xs text-muted">{{ $a['sub'] }}</span>
+                <div class="fw-semibold text-dark">{{ $cat }}</div>
+                <span class="fs-xs text-muted">{{ $sub }}</span>
               </td>
-              <td class="text-end font-monospace fw-semibold">{{ $a['initial'] }}</td>
-              <td class="text-end text-warning font-monospace">{{ $a['encumbered'] }}</td>
-              <td class="text-end text-danger font-monospace">{{ $a['expended'] }}</td>
-              <td class="text-end text-success fw-bold font-monospace">{{ $a['available'] }}</td>
-              <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Allocation Details" onclick="openAllocationDetailsModal({{ json_encode($a) }})"><i class="ph ph-eye"></i></button>
-              </td>
+              <td class="text-end font-monospace fw-semibold">{{ $initial }}</td>
+              <td class="text-end text-warning font-monospace">{{ $encumbered }}</td>
+              <td class="text-end text-danger font-monospace">{{ $expended }}</td>
+              <td class="text-end text-success fw-bold font-monospace">{{ $available }}</td>
+              <td class="text-end"><button class="btn btn-sm btn-icon btn-outline-secondary" onclick="openAllocationDetailsModal({{ json_encode($aData) }})"><i class="ph ph-eye"></i></button></td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">No budget allocations configured in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="allocationSummaryText">Showing {{ count($allocations) }} Budget Allocations</span>
+      <span class="text-muted fs-xs" id="allocationSummaryText">Showing {{ count($allocations ?? []) }} Budget Allocations</span>
       <nav aria-label="Allocation Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

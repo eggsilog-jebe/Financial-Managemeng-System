@@ -106,58 +106,43 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($deposits ?? [] as $d)
             @php
-              $deposits = [
-                [
-                  'ref' => 'DEP-2026-302',
-                  'slip' => 'SLIP-2026-080',
-                  'bank' => 'Metrobank Operating',
-                  'acc' => '#1020-8841-99',
-                  'date' => '2026-08-07 15:30',
-                  'amount' => '₱125,400.00',
-                  'stamp' => 'MB-STAMP-99210',
-                  'status' => 'Verified by Bank',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'status_icon' => 'ph-check-circle'
-                ],
-                [
-                  'ref' => 'DEP-2026-301',
-                  'slip' => 'SLIP-2026-079',
-                  'bank' => 'BDO Collections',
-                  'acc' => '#0091-2384-12',
-                  'date' => '2026-08-06 16:15',
-                  'amount' => '₱98,000.00',
-                  'stamp' => 'BDO-TRX-10294',
-                  'status' => 'Verified by Bank',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'status_icon' => 'ph-check-circle'
-                ],
+              $dArr = is_array($d) ? $d : [
+                'ref' => $d->reference_number ?? 'DEP-N/A', 'slip' => $d->slip_reference ?? 'N/A',
+                'bank' => $d->bank_name ?? 'N/A', 'acc' => $d->account_number ?? 'N/A',
+                'date' => $d->deposit_date ? $d->deposit_date->format('Y-m-d H:i') : 'N/A',
+                'amount' => '₱' . number_format($d->amount ?? 0, 2),
+                'stamp' => $d->teller_stamp ?? 'N/A', 'status' => $d->status ?? 'Pending',
+                'status_badge' => 'bg-warning-subtle text-warning', 'status_icon' => 'ph-clock',
               ];
             @endphp
-
-            @foreach($deposits as $d)
-            <tr class="bank-deposit-row" style="cursor: pointer;" data-bank="{{ strtolower($d['bank']) }}" data-status="{{ strtolower($d['status']) }}" onclick="openBankDepositDetailsModal({{ json_encode($d) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $d['ref'] }}</span></td>
-              <td><span class="font-monospace text-muted fs-xs">{{ $d['slip'] }}</span></td>
+            <tr class="bank-deposit-row" style="cursor: pointer;" data-bank="{{ strtolower($dArr['bank']) }}" data-status="{{ strtolower($dArr['status']) }}" onclick="openBankDepositDetailsModal({{ json_encode($dArr) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $dArr['ref'] }}</span></td>
+              <td><span class="font-monospace text-muted fs-xs">{{ $dArr['slip'] }}</span></td>
               <td>
-                <div class="fw-semibold text-dark">{{ $d['bank'] }}</div>
-                <span class="fs-xs font-monospace text-muted">{{ $d['acc'] }}</span>
+                <div class="fw-semibold text-dark">{{ $dArr['bank'] }}</div>
+                <span class="fs-xs font-monospace text-muted">{{ $dArr['acc'] }}</span>
               </td>
-              <td class="font-monospace fs-xs">{{ $d['date'] }}</td>
-              <td class="text-end text-success fw-bold font-monospace">{{ $d['amount'] }}</td>
-              <td><span class="font-monospace text-dark fs-xs">{{ $d['stamp'] }}</span></td>
-              <td><span class="badge {{ $d['status_badge'] }}"><i class="ph {{ $d['status_icon'] }} me-1"></i> {{ $d['status'] }}</span></td>
+              <td class="font-monospace fs-xs">{{ $dArr['date'] }}</td>
+              <td class="text-end text-success fw-bold font-monospace">{{ $dArr['amount'] }}</td>
+              <td><span class="font-monospace text-dark fs-xs">{{ $dArr['stamp'] }}</span></td>
+              <td><span class="badge {{ $dArr['status_badge'] }}"><i class="ph {{ $dArr['status_icon'] }} me-1"></i> {{ $dArr['status'] }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Deposit Details" onclick="openBankDepositDetailsModal({{ json_encode($d) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Deposit Details" onclick="openBankDepositDetailsModal({{ json_encode($dArr) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">No bank deposits recorded in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="bankDepositSummaryText">Showing {{ count($deposits) }} Bank Deposits</span>
+      <span class="text-muted fs-xs" id="bankDepositSummaryText">Showing {{ count($deposits ?? []) }} Bank Deposits</span>
       <nav aria-label="Bank Deposit Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

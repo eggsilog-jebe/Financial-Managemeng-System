@@ -32,7 +32,7 @@
           <span class="text-muted small fw-medium">Published Board Packs</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-file-pdf fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">6 Reports</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ count($reports ?? []) }} Reports</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,7 +41,7 @@
           <span class="text-muted small fw-medium">Pending Draft Packs</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-pencil-simple fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">1 Draft</h4>
+        <h4 class="fw-bold mb-0 text-dark">0 Drafts</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -50,7 +50,7 @@
           <span class="text-muted small fw-medium">Next Board Meeting</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-calendar-blank fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">Sep 15, 2026</h4>
+        <h4 class="fw-bold mb-0 text-dark">N/A</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -104,35 +104,8 @@
             </tr>
           </thead>
           <tbody>
-            @php
-              $reports = [
-                [
-                  'title' => 'Q2 2026 Executive Financial Performance Pack',
-                  'sub' => 'Includes Balance Sheet, P&L, Cash Flow & KPI Analytics',
-                  'period' => 'Apr 01 - Jun 30, 2026',
-                  'year' => '2026',
-                  'author' => 'Office of the Chief Financial Officer',
-                  'date' => '2026-07-10',
-                  'status' => 'Published to Board',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'resolution' => 'BOARD-RES-2026-Q2'
-                ],
-                [
-                  'title' => 'Q1 2026 Quarterly Board Financial Summary',
-                  'sub' => 'Includes EBITDA margin analysis & ARPOB yield',
-                  'period' => 'Jan 01 - Mar 31, 2026',
-                  'year' => '2026',
-                  'author' => 'Office of the Chief Financial Officer',
-                  'date' => '2026-04-12',
-                  'status' => 'Published to Board',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'resolution' => 'BOARD-RES-2026-Q1'
-                ],
-              ];
-            @endphp
-
-            @foreach($reports as $rep)
-            <tr class="report-row" style="cursor: pointer;" data-year="{{ $rep['year'] }}" data-status="{{ strtolower($rep['status']) }}" onclick="openExecutiveReportDetailsModal({{ json_encode($rep) }})">
+            @forelse($reports ?? [] as $rep)
+            <tr class="report-row" style="cursor: pointer;">
               <td>
                 <div class="fw-bold text-dark">{{ $rep['title'] }}</div>
                 <span class="fs-xs text-muted">{{ $rep['sub'] }}</span>
@@ -140,18 +113,27 @@
               <td class="font-monospace fs-xs">{{ $rep['period'] }}</td>
               <td class="fs-xs text-muted">{{ $rep['author'] }}</td>
               <td class="font-monospace fs-xs">{{ $rep['date'] }}</td>
-              <td><span class="badge {{ $rep['status_badge'] }}"><i class="ph ph-check-circle me-1"></i> {{ $rep['status'] }}</span></td>
-              <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Board Pack Details" onclick="openExecutiveReportDetailsModal({{ json_encode($rep) }})"><i class="ph ph-eye"></i></button>
-              </td>
+              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> {{ $rep['status'] }}</span></td>
+              <td class="text-end"><button class="btn btn-sm btn-icon btn-outline-secondary"><i class="ph ph-eye"></i></button></td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="6" class="text-center py-4 text-muted">No executive reports generated in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="reportSummaryText">Showing {{ count($reports) }} Executive Reports</span>
+      <span class="text-muted fs-xs" id="reportSummaryText">Showing {{ count($reports ?? []) }} Executive Reports</span>
+              <td class="fs-xs text-muted">{{ $rep['author'] }}</td>
+              <td class="font-monospace fs-xs">{{ $rep['date'] }}</td>
+              <td><span class="badge {{ $rep['status_badge'] }}"><i class="ph ph-check-circle me-1"></i> {{ $rep['status'] }}</span></td>
+              <td class="text-end" onclick="event.stopPropagation();">
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Board Pack Details" onclick="openExecutiveReportDetailsModal({{ json_encode($rep) }})"><i class="ph ph-eye"></i></button>
+    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
+      <span class="text-muted fs-xs" id="reportSummaryText">Showing {{ count($reports ?? []) }} Executive Reports</span>
       <nav aria-label="Report Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

@@ -105,60 +105,58 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($transfers ?? [] as $t)
             @php
-              $transfers = [
-                [
-                  'ref' => 'TRF-2026-088',
-                  'from' => 'BDO Collections',
-                  'from_no' => '#0091-2384-12',
-                  'to' => 'Metrobank Operating',
-                  'to_no' => '#1020-8841-99',
-                  'amount' => '₱500,000.00',
-                  'date' => '2026-08-07',
-                  'status' => 'Completed & Posted',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'method' => 'PESONet Interbank Transfer'
-                ],
-                [
-                  'ref' => 'TRF-2026-087',
-                  'from' => 'Metrobank Operating',
-                  'from_no' => '#1020-8841-99',
-                  'to' => 'BPI Payroll Account',
-                  'to_no' => '#0012-4412-00',
-                  'amount' => '₱850,000.00',
-                  'date' => '2026-08-06',
-                  'status' => 'Pending Treasury Approval',
-                  'status_badge' => 'bg-warning-subtle text-warning',
-                  'method' => 'Internal Bank Clearing'
-                ],
+              $ref = is_array($t) ? $t['ref'] : $t->reference_number;
+              $from = is_array($t) ? $t['from'] : $t->source_account;
+              $fromNo = is_array($t) ? $t['from_no'] : $t->source_number;
+              $to = is_array($t) ? $t['to'] : $t->destination_account;
+              $toNo = is_array($t) ? $t['to_no'] : $t->destination_number;
+              $amt = is_array($t) ? $t['amount'] : ('₱' . number_format($t->amount, 2));
+              $date = is_array($t) ? $t['date'] : $t->transfer_date->format('Y-m-d');
+              $status = is_array($t) ? $t['status'] : $t->status;
+              $method = is_array($t) ? $t['method'] : $t->transfer_method;
+              $tData = [
+                'ref' => $ref,
+                'from' => $from,
+                'from_no' => $fromNo,
+                'to' => $to,
+                'to_no' => $toNo,
+                'amount' => $amt,
+                'date' => $date,
+                'status' => $status,
+                'status_badge' => 'bg-success-subtle text-success',
+                'method' => $method
               ];
             @endphp
-
-            @foreach($transfers as $t)
-            <tr class="transfer-row" style="cursor: pointer;" data-source="{{ strtolower($t['from']) }}" data-status="{{ strtolower($t['status']) }}" onclick="openFundTransferDetailsModal({{ json_encode($t) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $t['ref'] }}</span></td>
+            <tr class="transfer-row" style="cursor: pointer;" onclick="openFundTransferDetailsModal({{ json_encode($tData) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $ref }}</span></td>
               <td>
-                <div class="fw-semibold text-dark">{{ $t['from'] }}</div>
-                <span class="fs-xs font-monospace text-muted">{{ $t['from_no'] }}</span>
+                <div class="fw-semibold text-dark">{{ $from }}</div>
+                <span class="fs-xs font-monospace text-muted">{{ $fromNo }}</span>
               </td>
               <td>
-                <div class="fw-semibold text-dark">{{ $t['to'] }}</div>
-                <span class="fs-xs font-monospace text-muted">{{ $t['to_no'] }}</span>
+                <div class="fw-semibold text-dark">{{ $to }}</div>
+                <span class="fs-xs font-monospace text-muted">{{ $toNo }}</span>
               </td>
-              <td class="text-end text-success fw-bold font-monospace">{{ $t['amount'] }}</td>
-              <td class="font-monospace fs-xs">{{ $t['date'] }}</td>
-              <td><span class="badge {{ $t['status_badge'] }}"><i class="ph ph-check-circle me-1"></i> {{ $t['status'] }}</span></td>
+              <td class="text-end text-success fw-bold font-monospace">{{ $amt }}</td>
+              <td class="font-monospace fs-xs">{{ $date }}</td>
+              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> {{ $status }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Transfer Audit" onclick="openFundTransferDetailsModal({{ json_encode($t) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Transfer Audit" onclick="openFundTransferDetailsModal({{ json_encode($tData) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">No fund transfers recorded in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="transferSummaryText">Showing {{ count($transfers) }} Fund Transfers</span>
+      <span class="text-muted fs-xs" id="transferSummaryText">Showing {{ count($transfers ?? []) }} Fund Transfers</span>
       <nav aria-label="Transfer Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

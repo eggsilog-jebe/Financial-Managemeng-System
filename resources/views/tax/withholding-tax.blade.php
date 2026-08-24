@@ -32,7 +32,7 @@
           <span class="text-muted small fw-medium">Form 2307 Issued (Month)</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-file-text fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">42 Certificates</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ count($certificates ?? []) }} Certificates</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,7 +41,7 @@
           <span class="text-muted small fw-medium">Total Tax Withheld (EWT)</span>
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-scissors fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-danger">₱384,500.00</h4>
+        <h4 class="fw-bold mb-0 text-danger">₱{{ number_format(($certificates ?? collect())->sum('tax_withheld'), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -50,7 +50,7 @@
           <span class="text-muted small fw-medium">Total Gross Income Base</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-currency-circle-dollar fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱3,845,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format(($certificates ?? collect())->sum('gross_income'), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -106,58 +106,57 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($certificates ?? [] as $c)
             @php
-              $certs = [
-                [
-                  'num' => 'C2307-2026-881',
-                  'payee' => 'Dr. Roberto Gomez',
-                  'role' => 'Visiting Cardiology Consultant',
-                  'payee_type' => 'doctor',
-                  'tin' => '102-391-441-000',
-                  'atc' => 'WI010 (10%)',
-                  'gross' => '₱120,000.00',
-                  'tax' => '₱12,000.00',
-                  'form' => 'BIR Form 2307',
-                  'form_type' => '2307'
-                ],
-                [
-                  'num' => 'C2307-2026-880',
-                  'payee' => 'Metro Pharma Distributors Corp',
-                  'role' => 'Medical Consumables Supplier',
-                  'payee_type' => 'supplier',
-                  'tin' => '008-992-101-000',
-                  'atc' => 'WC158 (1%)',
-                  'gross' => '₱450,000.00',
-                  'tax' => '₱4,500.00',
-                  'form' => 'BIR Form 2307',
-                  'form_type' => '2307'
-                ],
+              $num = is_array($c) ? $c['num'] : $c->cert_number;
+              $payee = is_array($c) ? $c['payee'] : $c->payee_name;
+              $role = is_array($c) ? $c['role'] : ($c->payee_role ?? 'Payee');
+              $payeeType = is_array($c) ? $c['payee_type'] : $c->payee_type;
+              $tin = is_array($c) ? $c['tin'] : $c->tin;
+              $atc = is_array($c) ? $c['atc'] : $c->atc_code;
+              $gross = is_array($c) ? $c['gross'] : ('₱' . number_format($c->gross_income, 2));
+              $tax = is_array($c) ? $c['tax'] : ('₱' . number_format($c->tax_withheld, 2));
+              $form = is_array($c) ? $c['form'] : ('BIR Form ' . $c->form_type);
+              $formType = is_array($c) ? $c['form_type'] : $c->form_type;
+              $cData = [
+                'num' => $num,
+                'payee' => $payee,
+                'role' => $role,
+                'payee_type' => $payeeType,
+                'tin' => $tin,
+                'atc' => $atc,
+                'gross' => $gross,
+                'tax' => $tax,
+                'form' => $form,
+                'form_type' => $formType
               ];
             @endphp
-
-            @foreach($certs as $c)
-            <tr class="cert-row" style="cursor: pointer;" data-form="{{ $c['form_type'] }}" data-payee="{{ $c['payee_type'] }}" onclick="openCertDetailsModal({{ json_encode($c) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $c['num'] }}</span></td>
+            <tr class="cert-row" style="cursor: pointer;" onclick="openCertDetailsModal({{ json_encode($cData) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $num }}</span></td>
               <td>
-                <div class="fw-semibold text-dark">{{ $c['payee'] }}</div>
-                <span class="fs-xs text-muted">{{ $c['role'] }}</span>
+                <div class="fw-semibold text-dark">{{ $payee }}</div>
+                <span class="fs-xs text-muted">{{ $role }}</span>
               </td>
-              <td><span class="font-monospace text-muted">{{ $c['tin'] }}</span></td>
-              <td><span class="badge bg-light text-dark border font-monospace">{{ $c['atc'] }}</span></td>
-              <td class="text-end font-monospace fw-semibold">{{ $c['gross'] }}</td>
-              <td class="text-end text-danger fw-bold font-monospace">{{ $c['tax'] }}</td>
-              <td><span class="badge bg-primary-subtle text-primary">{{ $c['form'] }}</span></td>
+              <td><span class="font-monospace text-muted">{{ $tin }}</span></td>
+              <td><span class="badge bg-light text-dark border font-monospace">{{ $atc }}</span></td>
+              <td class="text-end font-monospace fw-semibold">{{ $gross }}</td>
+              <td class="text-end text-danger fw-bold font-monospace">{{ $tax }}</td>
+              <td><span class="badge bg-primary-subtle text-primary">{{ $form }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Certificate Details" onclick="openCertDetailsModal({{ json_encode($c) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Certificate Details" onclick="openCertDetailsModal({{ json_encode($cData) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">No tax certificates issued in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="certSummaryText">Showing {{ count($certs) }} Tax Certificates</span>
+      <span class="text-muted fs-xs" id="certSummaryText">Showing {{ count($certificates ?? []) }} Tax Certificates</span>
       <nav aria-label="Certificate Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

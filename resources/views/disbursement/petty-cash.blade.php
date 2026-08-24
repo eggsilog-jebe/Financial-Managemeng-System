@@ -97,57 +97,46 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($pcvs ?? [] as $p)
             @php
-              $pcvs = [
-                [
-                  'ref' => 'PCV-2026-081',
-                  'date' => '2026-08-06',
-                  'claimant' => 'ER Desk Nurse',
-                  'dept' => 'Emergency Room',
-                  'purpose' => 'Urgent Courier Fee for Reference Lab Specimen Transport',
-                  'amount' => '₱85.00',
-                  'status' => 'Receipt Attached',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'status_icon' => 'ph-check',
-                  'receipt_no' => 'OR-LAB-88120'
-                ],
-                [
-                  'ref' => 'PCV-2026-082',
-                  'date' => '2026-08-07',
-                  'claimant' => 'OR Head Nurse',
-                  'dept' => 'Surgery & Operating Room',
-                  'purpose' => 'Emergency Distilled Water for Sterilizer Reservoir',
-                  'amount' => '₱240.00',
-                  'status' => 'Receipt Attached',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'status_icon' => 'ph-check',
-                  'receipt_no' => 'OR-SUP-99412'
-                ],
+              $pArr = is_array($p) ? $p : [
+                'ref' => $p->reference_number ?? 'PCV-N/A',
+                'date' => $p->voucher_date ? $p->voucher_date->format('Y-m-d') : 'N/A',
+                'claimant' => $p->claimant ?? 'N/A',
+                'dept' => $p->department ?? 'N/A',
+                'purpose' => $p->purpose ?? 'N/A',
+                'amount' => '₱' . number_format($p->amount ?? 0, 2),
+                'status' => $p->status ?? 'Pending',
+                'status_badge' => 'bg-warning-subtle text-warning',
+                'status_icon' => 'ph-clock',
+                'receipt_no' => $p->receipt_number ?? 'N/A',
               ];
             @endphp
-
-            @foreach($pcvs as $p)
-            <tr class="pcv-row" style="cursor: pointer;" data-status="{{ strtolower($p['status']) }}" onclick="openPcvDetailsModal({{ json_encode($p) }})">
-              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">{{ $p['ref'] }}</span></td>
-              <td class="font-monospace fs-xs">{{ $p['date'] }}</td>
+            <tr class="pcv-row" style="cursor: pointer;" data-status="{{ strtolower($pArr['status']) }}" onclick="openPcvDetailsModal({{ json_encode($pArr) }})">
+              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">{{ $pArr['ref'] }}</span></td>
+              <td class="font-monospace fs-xs">{{ $pArr['date'] }}</td>
               <td>
-                <div class="fw-semibold text-dark">{{ $p['claimant'] }}</div>
-                <div class="text-muted fs-xs">{{ $p['dept'] }}</div>
+                <div class="fw-semibold text-dark">{{ $pArr['claimant'] }}</div>
+                <div class="text-muted fs-xs">{{ $pArr['dept'] }}</div>
               </td>
-              <td><span class="text-truncate d-inline-block" style="max-width: 250px;">{{ $p['purpose'] }}</span></td>
-              <td class="text-end fw-bold text-dark font-monospace">{{ $p['amount'] }}</td>
-              <td><span class="badge {{ $p['status_badge'] }}"><i class="ph {{ $p['status_icon'] }} me-1"></i> {{ $p['status'] }}</span></td>
+              <td><span class="text-truncate d-inline-block" style="max-width: 250px;">{{ $pArr['purpose'] }}</span></td>
+              <td class="text-end fw-bold text-dark font-monospace">{{ $pArr['amount'] }}</td>
+              <td><span class="badge {{ $pArr['status_badge'] }}"><i class="ph {{ $pArr['status_icon'] }} me-1"></i> {{ $pArr['status'] }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Receipt Attachment" onclick="openPcvDetailsModal({{ json_encode($p) }})"><i class="ph ph-file-image"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Receipt Attachment" onclick="openPcvDetailsModal({{ json_encode($pArr) }})"><i class="ph ph-file-image"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">No petty cash vouchers recorded in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="pcvSummaryText">Showing {{ count($pcvs) }} Petty Cash Vouchers</span>
+      <span class="text-muted fs-xs" id="pcvSummaryText">Showing {{ count($pcvs ?? []) }} Petty Cash Vouchers</span>
       <nav aria-label="PCV Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

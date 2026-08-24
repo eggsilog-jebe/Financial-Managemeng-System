@@ -32,7 +32,7 @@
           <span class="text-muted small fw-medium">Active GL Accounts</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-book-open fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">48 Accounts</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ count($accounts ?? []) }} Accounts</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,7 +41,7 @@
           <span class="text-muted small fw-medium">Total YTD Debit Movement</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-arrow-up-right fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-success">₱54,110,200.00</h4>
+        <h4 class="fw-bold mb-0 text-success">₱0.00</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -50,7 +50,7 @@
           <span class="text-muted small fw-medium">Total YTD Credit Movement</span>
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-arrow-down-left fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-danger">₱54,110,200.00</h4>
+        <h4 class="fw-bold mb-0 text-danger">₱0.00</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -109,75 +109,54 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($accounts ?? [] as $acc)
             @php
-              $glAccounts = [
-                [
-                  'code' => '1010',
-                  'name' => 'Metrobank Operating Cash Account',
-                  'type' => 'Asset',
-                  'type_key' => 'asset',
-                  'opening' => '₱2,500,000.00',
-                  'debit' => '+₱8,450,000.00',
-                  'credit' => '-₱6,100,000.00',
-                  'ending' => '₱4,850,000.00',
-                  'badge' => 'bg-success-subtle text-success'
-                ],
-                [
-                  'code' => '1200',
-                  'name' => 'Accounts Receivable (Patients & HMOs)',
-                  'type' => 'Asset',
-                  'type_key' => 'asset',
-                  'opening' => '₱1,850,000.00',
-                  'debit' => '+₱7,620,000.00',
-                  'credit' => '-₱6,399,800.00',
-                  'ending' => '₱3,070,200.00',
-                  'badge' => 'bg-success-subtle text-success'
-                ],
-                [
-                  'code' => '2010',
-                  'name' => 'Accounts Payable (Medical Suppliers & Vendors)',
-                  'type' => 'Liability',
-                  'type_key' => 'liability',
-                  'opening' => '₱980,000.00',
-                  'debit' => '+₱3,400,000.00',
-                  'credit' => '-₱4,520,000.00',
-                  'ending' => '₱2,100,000.00',
-                  'badge' => 'bg-danger-subtle text-danger'
-                ],
-                [
-                  'code' => '3010',
-                  'name' => 'Hospital Capital Reserve & Retained Capital',
-                  'type' => 'Equity',
-                  'type_key' => 'equity',
-                  'opening' => '₱6,330,000.00',
-                  'debit' => '+₱0.00',
-                  'credit' => '-₱0.00',
-                  'ending' => '₱6,330,000.00',
-                  'badge' => 'bg-primary-subtle text-primary'
-                ],
+              $code = is_array($acc) ? $acc['code'] : $acc->code;
+              $name = is_array($acc) ? $acc['name'] : $acc->name;
+              $type = is_array($acc) ? $acc['type'] : ucfirst(strtolower($acc->category));
+              $typeKey = is_array($acc) ? $acc['type_key'] : strtolower($acc->category);
+              $badgeClass = match(strtolower($type)) {
+                'asset' => 'bg-success-subtle text-success',
+                'liability' => 'bg-danger-subtle text-danger',
+                'equity' => 'bg-primary-subtle text-primary',
+                'revenue' => 'bg-info-subtle text-info',
+                default => 'bg-warning-subtle text-warning',
+              };
+              $glData = [
+                'code' => $code,
+                'name' => $name,
+                'type' => $type,
+                'type_key' => $typeKey,
+                'opening' => '₱0.00',
+                'debit' => '+₱0.00',
+                'credit' => '-₱0.00',
+                'ending' => '₱0.00',
+                'badge' => $badgeClass
               ];
             @endphp
-
-            @foreach($glAccounts as $gl)
-            <tr class="gl-row" style="cursor: pointer;" data-type="{{ $gl['type_key'] }}" onclick="openLedgerBookDetailsModal({{ json_encode($gl) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $gl['code'] }}</span></td>
-              <td><div class="fw-bold text-dark">{{ $gl['name'] }}</div></td>
-              <td><span class="badge {{ $gl['badge'] }}">{{ $gl['type'] }}</span></td>
-              <td class="text-end font-monospace">{{ $gl['opening'] }}</td>
-              <td class="text-end text-success font-monospace">{{ $gl['debit'] }}</td>
-              <td class="text-end text-danger font-monospace">{{ $gl['credit'] }}</td>
-              <td class="text-end text-primary fw-bold font-monospace">{{ $gl['ending'] }}</td>
+            <tr class="gl-row" style="cursor: pointer;" data-type="{{ $typeKey }}" onclick="openLedgerBookDetailsModal({{ json_encode($glData) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $code }}</span></td>
+              <td><div class="fw-bold text-dark">{{ $name }}</div></td>
+              <td><span class="badge {{ $badgeClass }}">{{ $type }}</span></td>
+              <td class="text-end font-monospace">₱0.00</td>
+              <td class="text-end text-success font-monospace">+₱0.00</td>
+              <td class="text-end text-danger font-monospace">-₱0.00</td>
+              <td class="text-end text-primary fw-bold font-monospace">₱0.00</td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Account Movement Ledger" onclick="openLedgerBookDetailsModal({{ json_encode($gl) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Account Movement Ledger" onclick="openLedgerBookDetailsModal({{ json_encode($glData) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">No ledger accounts registered in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="glSummaryText">Showing {{ count($glAccounts) }} Ledger Account Books</span>
+      <span class="text-muted fs-xs" id="glSummaryText">Showing {{ count($accounts ?? []) }} Ledger Account Books</span>
       <nav aria-label="GL Book Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

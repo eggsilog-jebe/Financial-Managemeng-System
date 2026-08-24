@@ -32,7 +32,7 @@
           <span class="text-muted small fw-medium">Days Sales Outstanding (DSO)</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
         </div>
-        <h4 class="fw-bold text-dark mb-0">42.5 Days</h4>
+        <h4 class="fw-bold text-dark mb-0">0.0 Days</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,7 +41,7 @@
           <span class="text-muted small fw-medium">Operating Profit Margin</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-trend-up fs-5"></i></span>
         </div>
-        <h4 class="fw-bold text-dark mb-0">34.4%</h4>
+        <h4 class="fw-bold text-dark mb-0">0.0%</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -50,7 +50,7 @@
           <span class="text-muted small fw-medium">Avg Revenue Per Bed (ARPOB)</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-bed fs-5"></i></span>
         </div>
-        <h4 class="fw-bold text-dark mb-0">₱12,400.00</h4>
+        <h4 class="fw-bold text-dark mb-0">₱0.00</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -59,7 +59,7 @@
           <span class="text-muted small fw-medium">Current Working Ratio</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-scales fs-5"></i></span>
         </div>
-        <h4 class="fw-bold text-dark mb-0">2.4x</h4>
+        <h4 class="fw-bold text-dark mb-0">0.0x</h4>
       </div>
     </div>
   </div>
@@ -104,72 +104,26 @@
             </tr>
           </thead>
           <tbody>
-            @php
-              $kpis = [
-                [
-                  'name' => 'HMO Collection Efficiency Rate',
-                  'desc' => 'Maxicare, Intellicare & PhilHealth claims paid vs filed',
-                  'category' => 'Collection & Credit',
-                  'target' => '> 90.0%',
-                  'value' => '94.2%',
-                  'status' => 'Optimal / Target Met',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'cat' => 'collection'
-                ],
-                [
-                  'name' => 'Inpatient Bed Occupancy Rate',
-                  'desc' => 'Active ward admissions vs total bed capacity',
-                  'category' => 'Operational Productivity',
-                  'target' => '> 75.0%',
-                  'value' => '82.5%',
-                  'status' => 'Optimal / Target Met',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'cat' => 'operating'
-                ],
-                [
-                  'name' => 'Pharmacy Gross Margin Yield',
-                  'desc' => 'Revenue contribution from drug dispensing',
-                  'category' => 'Operational Productivity',
-                  'target' => '> 35.0%',
-                  'value' => '41.0%',
-                  'status' => 'Optimal / Target Met',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'cat' => 'operating'
-                ],
-                [
-                  'name' => 'Bad Debt & Uncollectible Reserve Ratio',
-                  'desc' => 'Percentage of defaulted receivables',
-                  'category' => 'Collection & Credit',
-                  'target' => '< 3.0%',
-                  'value' => '1.8%',
-                  'status' => 'Compliant',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'cat' => 'collection'
-                ],
-              ];
-            @endphp
-
-            @foreach($kpis as $k)
-            <tr class="kpi-row" style="cursor: pointer;" data-cat="{{ $k['cat'] }}" data-status="{{ strtolower($k['status']) }}" onclick="openKpiDetailsModal({{ json_encode($k) }})">
-              <td>
-                <div class="fw-bold text-dark">{{ $k['name'] }}</div>
-                <span class="fs-xs text-muted">{{ $k['desc'] }}</span>
-              </td>
-              <td><span class="badge bg-light text-dark border">{{ $k['category'] }}</span></td>
-              <td class="font-monospace fs-xs">{{ $k['target'] }}</td>
-              <td class="text-end font-monospace fw-bold text-success">{{ $k['value'] }}</td>
-              <td><span class="badge {{ $k['status_badge'] }}"><i class="ph ph-check-circle me-1"></i> {{ $k['status'] }}</span></td>
-              <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Metric Details" onclick="openKpiDetailsModal({{ json_encode($k) }})"><i class="ph ph-eye"></i></button>
-              </td>
+            @forelse($kpis ?? [] as $kpi)
+            <tr class="kpi-row" style="cursor: pointer;">
+              <td><div class="fw-bold text-dark">{{ $kpi['name'] }}</div></td>
+              <td><span class="badge bg-info-subtle text-info">{{ $kpi['category'] }}</span></td>
+              <td class="font-monospace fs-xs">{{ $kpi['target'] }}</td>
+              <td class="text-end font-monospace fw-bold text-primary">{{ $kpi['value'] }}</td>
+              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> {{ $kpi['status'] }}</span></td>
+              <td class="text-end"><button class="btn btn-sm btn-icon btn-outline-secondary"><i class="ph ph-eye"></i></button></td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="6" class="text-center py-4 text-muted">No KPI metrics registered in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="kpiSummaryText">Showing {{ count($kpis) }} Analytics Metrics</span>
+      <span class="text-muted fs-xs" id="kpiSummaryText">Showing {{ count($kpis ?? []) }} Analytics Metrics</span>
       <nav aria-label="KPI Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

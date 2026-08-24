@@ -110,93 +110,44 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($statements ?? [] as $s)
             @php
-              $statements = [
-                [
-                  'ref' => 'SOA-2026-0701',
-                  'payor' => 'Maxicare Healthcare Corp',
-                  'sub' => 'Contract Ref: HMO-MAX-2026',
-                  'type' => 'HMO Corporate',
-                  'type_code' => 'hmo',
-                  'badge' => 'bg-info-subtle text-info',
-                  'date' => '2026-08-01',
-                  'balance' => '₱1,220,000.00',
-                  'status' => 'Sent - Awaiting Payment',
-                  'status_code' => 'sent',
-                  'status_badge' => 'bg-warning-subtle text-warning',
-                  'status_icon' => 'ph-clock',
-                  'period' => 'July 2026 Billing Pack'
-                ],
-                [
-                  'ref' => 'SOA-2026-0702',
-                  'payor' => 'Intellicare / Asuris Healthcare',
-                  'sub' => 'Contract Ref: HMO-INT-2026',
-                  'type' => 'HMO Corporate',
-                  'type_code' => 'hmo',
-                  'badge' => 'bg-info-subtle text-info',
-                  'date' => '2026-08-01',
-                  'balance' => '₱650,500.00',
-                  'status' => 'Sent - Awaiting Payment',
-                  'status_code' => 'sent',
-                  'status_badge' => 'bg-warning-subtle text-warning',
-                  'status_icon' => 'ph-clock',
-                  'period' => 'July 2026 Billing Pack'
-                ],
-                [
-                  'ref' => 'SOA-2026-0703',
-                  'payor' => 'PhilHealth Insurance Corp',
-                  'sub' => 'National Statutory Benefit Pool Batch',
-                  'type' => 'Government Guarantor',
-                  'type_code' => 'government',
-                  'badge' => 'bg-success-subtle text-success',
-                  'date' => '2026-08-01',
-                  'balance' => '₱820,000.00',
-                  'status' => 'Sent - Awaiting Payment',
-                  'status_code' => 'sent',
-                  'status_badge' => 'bg-warning-subtle text-warning',
-                  'status_icon' => 'ph-clock',
-                  'period' => 'July 2026 Billing Pack'
-                ],
-                [
-                  'ref' => 'SOA-2026-0704',
-                  'payor' => 'Medicard Philippines Inc',
-                  'sub' => 'Corporate Fleet Billing Account',
-                  'type' => 'HMO Corporate',
-                  'type_code' => 'hmo',
-                  'badge' => 'bg-info-subtle text-info',
-                  'date' => '2026-08-01',
-                  'balance' => '₱314,800.00',
-                  'status' => 'Paid & Settled',
-                  'status_code' => 'paid',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'status_icon' => 'ph-check-circle',
-                  'period' => 'July 2026 Billing Pack'
-                ],
+              $sArr = is_array($s) ? $s : [
+                'ref' => $s->reference_number ?? 'SOA-N/A', 'payor' => $s->payor_name ?? 'N/A',
+                'sub' => $s->description ?? 'N/A', 'type' => $s->payor_type ?? 'N/A',
+                'type_code' => strtolower($s->payor_type ?? 'general'), 'badge' => 'bg-info-subtle text-info',
+                'date' => $s->statement_date ? $s->statement_date->format('Y-m-d') : 'N/A',
+                'balance' => '₱' . number_format($s->outstanding_balance ?? 0, 2),
+                'status' => $s->status ?? 'Pending', 'status_code' => strtolower($s->status ?? 'pending'),
+                'status_badge' => 'bg-warning-subtle text-warning', 'status_icon' => 'ph-clock',
+                'period' => $s->billing_period ?? 'N/A',
               ];
             @endphp
-
-            @foreach($statements as $s)
-            <tr class="soa-row" style="cursor: pointer;" data-type="{{ $s['type_code'] }}" data-status="{{ $s['status_code'] }}" onclick="openSoaDetailsModal({{ json_encode($s) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $s['ref'] }}</span></td>
+            <tr class="soa-row" style="cursor: pointer;" data-type="{{ $sArr['type_code'] }}" data-status="{{ $sArr['status_code'] }}" onclick="openSoaDetailsModal({{ json_encode($sArr) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $sArr['ref'] }}</span></td>
               <td>
-                <div class="fw-bold text-dark">{{ $s['payor'] }}</div>
-                <span class="fs-xs text-muted">{{ $s['sub'] }}</span>
+                <div class="fw-bold text-dark">{{ $sArr['payor'] }}</div>
+                <span class="fs-xs text-muted">{{ $sArr['sub'] }}</span>
               </td>
-              <td><span class="badge {{ $s['badge'] }}">{{ $s['type'] }}</span></td>
-              <td class="font-monospace fs-xs">{{ $s['date'] }}</td>
-              <td class="text-end text-danger fw-bold font-monospace">{{ $s['balance'] }}</td>
-              <td><span class="badge {{ $s['status_badge'] }}"><i class="ph {{ $s['status_icon'] }} me-1"></i> {{ $s['status'] }}</span></td>
+              <td><span class="badge {{ $sArr['badge'] }}">{{ $sArr['type'] }}</span></td>
+              <td class="font-monospace fs-xs">{{ $sArr['date'] }}</td>
+              <td class="text-end text-danger fw-bold font-monospace">{{ $sArr['balance'] }}</td>
+              <td><span class="badge {{ $sArr['status_badge'] }}"><i class="ph {{ $sArr['status_icon'] }} me-1"></i> {{ $sArr['status'] }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View SOA Details" onclick="openSoaDetailsModal({{ json_encode($s) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View SOA Details" onclick="openSoaDetailsModal({{ json_encode($sArr) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">No customer statements recorded in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="soaSummaryText">Showing {{ count($statements) }} Statements</span>
+      <span class="text-muted fs-xs" id="soaSummaryText">Showing {{ count($statements ?? []) }} Statements</span>
       <nav aria-label="SOAs Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

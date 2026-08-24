@@ -99,55 +99,44 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($checks ?? [] as $c)
             @php
-              $checks = [
-                [
-                  'chk_no' => 'CHK-004812',
-                  'date' => '2026-08-04',
-                  'payee' => 'PharmaCorp Philippines',
-                  'bank' => 'Metrobank Operating #1020',
-                  'voucher' => 'APV-2026-091',
-                  'amount' => '₱120,000.00',
-                  'status' => 'Cleared by Bank',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'status_icon' => 'ph-check-circle',
-                  'disb_officer' => 'J. Dela Cruz (Treasury Officer)'
-                ],
-                [
-                  'chk_no' => 'CHK-004813',
-                  'date' => '2026-08-06',
-                  'payee' => 'MedTech Diagnostics Inc',
-                  'bank' => 'Metrobank Operating #1020',
-                  'voucher' => 'APV-2026-092',
-                  'amount' => '₱98,400.00',
-                  'status' => 'Outstanding (In Transit)',
-                  'status_badge' => 'bg-warning-subtle text-warning',
-                  'status_icon' => 'ph-clock',
-                  'disb_officer' => 'J. Dela Cruz (Treasury Officer)'
-                ],
+              $cArr = is_array($c) ? $c : [
+                'chk_no' => $c->check_number ?? 'CHK-N/A',
+                'date' => $c->check_date ? $c->check_date->format('Y-m-d') : 'N/A',
+                'payee' => $c->payee_name ?? 'N/A',
+                'bank' => $c->bank_name ?? 'N/A',
+                'voucher' => $c->voucher_reference ?? 'N/A',
+                'amount' => '₱' . number_format($c->amount ?? 0, 2),
+                'status' => $c->status ?? 'Pending',
+                'status_badge' => 'bg-warning-subtle text-warning',
+                'status_icon' => 'ph-clock',
+                'disb_officer' => $c->disbursing_officer ?? 'N/A',
               ];
             @endphp
-
-            @foreach($checks as $c)
-            <tr class="check-row" style="cursor: pointer;" data-status="{{ strtolower($c['status']) }}" onclick="openCheckDetailsModal({{ json_encode($c) }})">
-              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">{{ $c['chk_no'] }}</span></td>
-              <td class="font-monospace fs-xs">{{ $c['date'] }}</td>
-              <td class="fw-semibold text-dark">{{ $c['payee'] }}</td>
-              <td><span class="fs-xs text-muted">{{ $c['bank'] }}</span></td>
-              <td><span class="font-monospace text-primary">{{ $c['voucher'] }}</span></td>
-              <td class="text-end fw-bold text-dark font-monospace">{{ $c['amount'] }}</td>
-              <td><span class="badge {{ $c['status_badge'] }}"><i class="ph {{ $c['status_icon'] }} me-1"></i> {{ $c['status'] }}</span></td>
+            <tr class="check-row" style="cursor: pointer;" data-status="{{ strtolower($cArr['status']) }}" onclick="openCheckDetailsModal({{ json_encode($cArr) }})">
+              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">{{ $cArr['chk_no'] }}</span></td>
+              <td class="font-monospace fs-xs">{{ $cArr['date'] }}</td>
+              <td class="fw-semibold text-dark">{{ $cArr['payee'] }}</td>
+              <td><span class="fs-xs text-muted">{{ $cArr['bank'] }}</span></td>
+              <td><span class="font-monospace text-primary">{{ $cArr['voucher'] }}</span></td>
+              <td class="text-end fw-bold text-dark font-monospace">{{ $cArr['amount'] }}</td>
+              <td><span class="badge {{ $cArr['status_badge'] }}"><i class="ph {{ $cArr['status_icon'] }} me-1"></i> {{ $cArr['status'] }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Check Copy" onclick="openCheckDetailsModal({{ json_encode($c) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Check Copy" onclick="openCheckDetailsModal({{ json_encode($cArr) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">No checks registered in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="checkSummaryText">Showing {{ count($checks) }} Checks</span>
+      <span class="text-muted fs-xs" id="checkSummaryText">Showing {{ count($checks ?? []) }} Checks</span>
       <nav aria-label="Check Register Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

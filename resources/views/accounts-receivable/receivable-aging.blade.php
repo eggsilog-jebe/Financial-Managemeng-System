@@ -32,7 +32,7 @@
           <span class="text-muted small">Days Sales Outstanding (DSO)</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
         </div>
-        <h4 class="fw-bold text-dark mb-0">42.5 Days</h4>
+        <h4 class="fw-bold text-dark mb-0">0.0 Days</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,7 +41,7 @@
           <span class="text-muted small">0-30 Days (Current)</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
         </div>
-        <h4 class="fw-bold text-dark mb-0">₱1,065,000.00</h4>
+        <h4 class="fw-bold text-dark mb-0">₱{{ number_format(($arAging ?? collect())->sum('current_0_30'), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -50,7 +50,7 @@
           <span class="text-muted small">31-60 Days (Submitted)</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-hourglass fs-5"></i></span>
         </div>
-        <h4 class="fw-bold text-dark mb-0">₱390,200.00</h4>
+        <h4 class="fw-bold text-dark mb-0">₱{{ number_format(($arAging ?? collect())->sum('current_31_60'), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -59,7 +59,7 @@
           <span class="text-muted small">61-90+ Days (High Risk)</span>
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-warning fs-5"></i></span>
         </div>
-        <h4 class="fw-bold text-dark mb-0">₱125,000.00</h4>
+        <h4 class="fw-bold text-dark mb-0">₱{{ number_format(($arAging ?? collect())->sum('current_61_90') + ($arAging ?? collect())->sum('over_90'), 2) }}</h4>
       </div>
     </div>
   </div>
@@ -103,74 +103,43 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($arAging ?? [] as $a)
             @php
-              $arAging = [
-                [
-                  'payor' => 'PhilHealth Insurance Corp',
-                  'type' => 'Government Guarantor',
-                  'badge' => 'bg-success-subtle text-success',
-                  'c0_30' => '₱450,000.00',
-                  'c31_60' => '₱250,000.00',
-                  'c61_90' => '₱120,000.00',
-                  'c90_plus' => '₱0.00',
-                  'total' => '₱820,000.00'
-                ],
-                [
-                  'payor' => 'Maxicare HMO Philippines',
-                  'type' => 'Commercial HMO',
-                  'badge' => 'bg-info-subtle text-info',
-                  'c0_30' => '₱320,000.00',
-                  'c31_60' => '₱80,000.00',
-                  'c61_90' => '₱0.00',
-                  'c90_plus' => '₱0.00',
-                  'total' => '₱400,000.00'
-                ],
-                [
-                  'payor' => 'Intellicare HMO',
-                  'type' => 'Commercial HMO',
-                  'badge' => 'bg-info-subtle text-info',
-                  'c0_30' => '₱185,000.00',
-                  'c31_60' => '₱45,200.00',
-                  'c61_90' => '₱0.00',
-                  'c90_plus' => '₱0.00',
-                  'total' => '₱230,200.00'
-                ],
-                [
-                  'payor' => 'Inpatient Self-Pay Ward Accounts',
-                  'type' => 'Self-Pay Patient',
-                  'badge' => 'bg-primary-subtle text-primary',
-                  'c0_30' => '₱110,000.00',
-                  'c31_60' => '₱15,000.00',
-                  'c61_90' => '₱5,000.00',
-                  'c90_plus' => '₱0.00',
-                  'total' => '₱130,000.00'
-                ],
+              $aArr = is_array($a) ? $a : [
+                'payor' => $a->payor_name ?? 'N/A', 'type' => $a->payor_type ?? 'N/A',
+                'badge' => 'bg-info-subtle text-info',
+                'c0_30' => '₱' . number_format($a->current_0_30 ?? 0, 2),
+                'c31_60' => '₱' . number_format($a->current_31_60 ?? 0, 2),
+                'c61_90' => '₱' . number_format($a->current_61_90 ?? 0, 2),
+                'c90_plus' => '₱' . number_format($a->over_90 ?? 0, 2),
+                'total' => '₱' . number_format(($a->current_0_30 ?? 0) + ($a->current_31_60 ?? 0) + ($a->current_61_90 ?? 0) + ($a->over_90 ?? 0), 2),
               ];
             @endphp
-
-            @foreach($arAging as $a)
-            <tr class="ar-aging-row" style="cursor: pointer;" data-type="{{ strtolower($a['type']) }}" onclick="openArAgingDetailsModal({{ json_encode($a) }})">
-              <td class="fw-semibold text-dark">{{ $a['payor'] }}</td>
-              <td><span class="badge {{ $a['badge'] }}">{{ $a['type'] }}</span></td>
-              <td class="text-end @if($a['c0_30'] !== '₱0.00') text-success fw-semibold @else text-muted @endif font-monospace">{{ $a['c0_30'] }}</td>
-              <td class="text-end @if($a['c31_60'] !== '₱0.00') text-warning fw-semibold @else text-muted @endif font-monospace">{{ $a['c31_60'] }}</td>
-              <td class="text-end @if($a['c61_90'] !== '₱0.00') text-danger fw-semibold @else text-muted @endif font-monospace">{{ $a['c61_90'] }}</td>
-              <td class="text-end @if($a['c90_plus'] !== '₱0.00') text-danger fw-bold @else text-muted @endif font-monospace">{{ $a['c90_plus'] }}</td>
-              <td class="text-end fw-bold text-dark font-monospace">{{ $a['total'] }}</td>
+            <tr class="ar-aging-row" style="cursor: pointer;" data-type="{{ strtolower($aArr['type']) }}" onclick="openArAgingDetailsModal({{ json_encode($aArr) }})">
+              <td class="fw-semibold text-dark">{{ $aArr['payor'] }}</td>
+              <td><span class="badge {{ $aArr['badge'] }}">{{ $aArr['type'] }}</span></td>
+              <td class="text-end @if($aArr['c0_30'] !== '₱0.00') text-success fw-semibold @else text-muted @endif font-monospace">{{ $aArr['c0_30'] }}</td>
+              <td class="text-end @if($aArr['c31_60'] !== '₱0.00') text-warning fw-semibold @else text-muted @endif font-monospace">{{ $aArr['c31_60'] }}</td>
+              <td class="text-end @if($aArr['c61_90'] !== '₱0.00') text-danger fw-semibold @else text-muted @endif font-monospace">{{ $aArr['c61_90'] }}</td>
+              <td class="text-end @if($aArr['c90_plus'] !== '₱0.00') text-danger fw-bold @else text-muted @endif font-monospace">{{ $aArr['c90_plus'] }}</td>
+              <td class="text-end fw-bold text-dark font-monospace">{{ $aArr['total'] }}</td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Aging Details" onclick="openArAgingDetailsModal({{ json_encode($a) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View AR Details" onclick="openArAgingDetailsModal({{ json_encode($aArr) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
-          </tbody>
+            @empty
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">No receivable aging records in database.</td>
+            </tr>
+            @endforelse
           <tfoot class="table-light font-monospace fw-bold">
             <tr>
               <td colspan="2" class="text-end">Total AR Outstanding:</td>
-              <td class="text-end text-success">₱1,065,000.00</td>
-              <td class="text-end text-warning">₱390,200.00</td>
-              <td class="text-end text-danger">₱125,000.00</td>
+              <td class="text-end text-success">₱0.00</td>
+              <td class="text-end text-warning">₱0.00</td>
+              <td class="text-end text-danger">₱0.00</td>
               <td class="text-end text-muted">₱0.00</td>
-              <td class="text-end text-primary">₱1,580,200.00</td>
+              <td class="text-end text-primary">₱0.00</td>
             </tr>
           </tfoot>
         </table>

@@ -107,83 +107,47 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($gateways ?? [] as $g)
             @php
-              $gateways = [
-                [
-                  'txn' => 'GW-PAY-98124',
-                  'provider' => 'PayMaya / GCash',
-                  'provider_badge' => 'bg-success-subtle text-success',
-                  'provider_icon' => 'ph-device-mobile',
-                  'patient' => 'AR-PAT-881',
-                  'sub' => 'Outpatient Consultation',
-                  'time' => '2026-08-08 14:15',
-                  'gross' => '₱2,500.00',
-                  'fee' => '₱37.50',
-                  'net' => '₱2,462.50',
-                  'status' => 'Settled',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'merchant_id' => 'MERCHANT-HOSPITAL-09',
-                  'payload' => "{\n  \"event\": \"payment.settled\",\n  \"transaction_id\": \"GW-PAY-98124\",\n  \"amount\": 2500.00,\n  \"currency\": \"PHP\",\n  \"provider\": \"paymaya\",\n  \"settlement_status\": \"SUCCESS\"\n}"
-                ],
-                [
-                  'txn' => 'GW-PAY-98123',
-                  'provider' => 'Credit Card Gateway',
-                  'provider_badge' => 'bg-info-subtle text-info',
-                  'provider_icon' => 'ph-credit-card',
-                  'patient' => 'AR-PAT-992',
-                  'sub' => 'Inpatient Partial Deposit',
-                  'time' => '2026-08-08 11:30',
-                  'gross' => '₱15,000.00',
-                  'fee' => '₱225.00',
-                  'net' => '₱14,775.00',
-                  'status' => 'Settled',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'merchant_id' => 'MERCHANT-HOSPITAL-09',
-                  'payload' => "{\n  \"event\": \"payment.settled\",\n  \"transaction_id\": \"GW-PAY-98123\",\n  \"amount\": 15000.00,\n  \"currency\": \"PHP\",\n  \"provider\": \"stripe_card\",\n  \"settlement_status\": \"SUCCESS\"\n}"
-                ],
-                [
-                  'txn' => 'GW-PAY-98122',
-                  'provider' => 'GCash QR',
-                  'provider_badge' => 'bg-warning-subtle text-warning',
-                  'provider_icon' => 'ph-device-mobile',
-                  'patient' => 'AR-PAT-771',
-                  'sub' => 'Pharmacy Outpatient',
-                  'time' => '2026-08-08 09:05',
-                  'gross' => '₱1,200.00',
-                  'fee' => '₱0.00',
-                  'net' => '₱0.00',
-                  'status' => 'Failed / Expired',
-                  'status_badge' => 'bg-danger-subtle text-danger',
-                  'merchant_id' => 'MERCHANT-HOSPITAL-09',
-                  'payload' => "{\n  \"event\": \"payment.expired\",\n  \"transaction_id\": \"GW-PAY-98122\",\n  \"amount\": 1200.00,\n  \"settlement_status\": \"TIMEOUT\"\n}"
-                ],
+              $gArr = is_array($g) ? $g : [
+                'txn' => $g->transaction_id ?? 'GW-N/A', 'provider' => $g->provider ?? 'N/A',
+                'provider_badge' => 'bg-success-subtle text-success', 'provider_icon' => 'ph-device-mobile',
+                'patient' => $g->patient_reference ?? 'N/A', 'sub' => $g->description ?? 'N/A',
+                'time' => $g->created_at ? $g->created_at->format('Y-m-d H:i') : 'N/A',
+                'gross' => '₱' . number_format($g->gross_amount ?? 0, 2),
+                'fee' => '₱' . number_format($g->gateway_fee ?? 0, 2),
+                'net' => '₱' . number_format($g->net_amount ?? 0, 2),
+                'status' => $g->status ?? 'Pending', 'status_badge' => 'bg-warning-subtle text-warning',
+                'merchant_id' => $g->merchant_id ?? 'N/A', 'payload' => '{}',
               ];
             @endphp
-
-            @foreach($gateways as $g)
-            <tr class="gateway-row" style="cursor: pointer;" data-provider="{{ strtolower($g['provider']) }}" data-status="{{ strtolower($g['status']) }}" onclick="openGatewayDetailsModal({{ json_encode($g) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $g['txn'] }}</span></td>
-              <td><span class="badge {{ $g['provider_badge'] }}"><i class="ph {{ $g['provider_icon'] }} me-1"></i> {{ $g['provider'] }}</span></td>
+            <tr class="gateway-row" style="cursor: pointer;" data-provider="{{ strtolower($gArr['provider']) }}" data-status="{{ strtolower($gArr['status']) }}" onclick="openGatewayDetailsModal({{ json_encode($gArr) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $gArr['txn'] }}</span></td>
+              <td><span class="badge {{ $gArr['provider_badge'] }}"><i class="ph {{ $gArr['provider_icon'] }} me-1"></i> {{ $gArr['provider'] }}</span></td>
               <td>
-                <div class="fw-semibold text-dark">{{ $g['patient'] }}</div>
-                <span class="fs-xs text-muted">{{ $g['sub'] }}</span>
+                <div class="fw-semibold text-dark">{{ $gArr['patient'] }}</div>
+                <span class="fs-xs text-muted">{{ $gArr['sub'] }}</span>
               </td>
-              <td class="font-monospace fs-xs">{{ $g['time'] }}</td>
-              <td class="text-end font-monospace">{{ $g['gross'] }}</td>
-              <td class="text-end font-monospace text-muted">{{ $g['fee'] }}</td>
-              <td class="text-end text-success fw-bold font-monospace">{{ $g['net'] }}</td>
-              <td><span class="badge {{ $g['status_badge'] }}">{{ $g['status'] }}</span></td>
+              <td class="font-monospace fs-xs">{{ $gArr['time'] }}</td>
+              <td class="text-end font-monospace">{{ $gArr['gross'] }}</td>
+              <td class="text-end font-monospace text-muted">{{ $gArr['fee'] }}</td>
+              <td class="text-end text-success fw-bold font-monospace">{{ $gArr['net'] }}</td>
+              <td><span class="badge {{ $gArr['status_badge'] }}">{{ $gArr['status'] }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Payload Logs" onclick="openGatewayDetailsModal({{ json_encode($g) }})"><i class="ph ph-code"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Payload Logs" onclick="openGatewayDetailsModal({{ json_encode($gArr) }})"><i class="ph ph-code"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="9" class="text-center py-4 text-muted">No gateway transactions recorded in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="gatewaySummaryText">Showing {{ count($gateways) }} Gateway Logs</span>
+      <span class="text-muted fs-xs" id="gatewaySummaryText">Showing {{ count($gateways ?? []) }} Gateway Logs</span>
       <nav aria-label="Gateway Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

@@ -107,63 +107,46 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($slips ?? [] as $s)
             @php
-              $slips = [
-                [
-                  'ref' => 'SLIP-2026-081',
-                  'date' => '2026-08-08',
-                  'sources' => 'TERM-01, TERM-02',
-                  'bank' => 'Metrobank - Main',
-                  'acc' => '1020-8841-99',
-                  'cash' => '₱35,000.00',
-                  'check' => '₱10,200.00',
-                  'total' => '₱45,200.00',
-                  'status' => 'Ready for Transport',
-                  'status_badge' => 'bg-primary-subtle text-primary',
-                  'status_icon' => 'ph-truck',
-                  'bag_seal' => 'SEAL-BAG-99201'
-                ],
-                [
-                  'ref' => 'SLIP-2026-080',
-                  'date' => '2026-08-07',
-                  'sources' => 'TERM-03 (Pharmacy)',
-                  'bank' => 'BDO Unibank - Collections',
-                  'acc' => '0091-2384-12',
-                  'cash' => '₱105,400.00',
-                  'check' => '₱64,800.00',
-                  'total' => '₱170,200.00',
-                  'status' => 'Deposited at Branch',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'status_icon' => 'ph-check-circle',
-                  'bag_seal' => 'SEAL-BAG-99180'
-                ],
+              $sArr = is_array($s) ? $s : [
+                'ref' => $s->slip_number ?? 'SLIP-N/A', 'date' => $s->slip_date ? $s->slip_date->format('Y-m-d') : 'N/A',
+                'sources' => $s->terminal_sources ?? 'N/A', 'bank' => $s->bank_name ?? 'N/A',
+                'acc' => $s->account_number ?? 'N/A',
+                'cash' => '₱' . number_format($s->cash_amount ?? 0, 2),
+                'check' => '₱' . number_format($s->check_amount ?? 0, 2),
+                'total' => '₱' . number_format(($s->cash_amount ?? 0) + ($s->check_amount ?? 0), 2),
+                'status' => $s->status ?? 'Pending', 'status_badge' => 'bg-warning-subtle text-warning',
+                'status_icon' => 'ph-clock', 'bag_seal' => $s->bag_seal ?? 'N/A',
               ];
             @endphp
-
-            @foreach($slips as $s)
-            <tr class="slip-row" style="cursor: pointer;" data-bank="{{ strtolower($s['bank']) }}" data-status="{{ strtolower($s['status']) }}" onclick="openSlipDetailsModal({{ json_encode($s) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $s['ref'] }}</span></td>
-              <td class="font-monospace fs-xs">{{ $s['date'] }}</td>
-              <td><span class="badge bg-light text-dark border">{{ $s['sources'] }}</span></td>
+            <tr class="slip-row" style="cursor: pointer;" data-bank="{{ strtolower($sArr['bank']) }}" data-status="{{ strtolower($sArr['status']) }}" onclick="openSlipDetailsModal({{ json_encode($sArr) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $sArr['ref'] }}</span></td>
+              <td class="font-monospace fs-xs">{{ $sArr['date'] }}</td>
+              <td><span class="badge bg-light text-dark border">{{ $sArr['sources'] }}</span></td>
               <td>
-                <div class="fw-semibold text-dark">{{ $s['bank'] }}</div>
-                <span class="fs-xs font-monospace text-muted">{{ $s['acc'] }}</span>
+                <div class="fw-semibold text-dark">{{ $sArr['bank'] }}</div>
+                <span class="fs-xs font-monospace text-muted">{{ $sArr['acc'] }}</span>
               </td>
-              <td class="text-end font-monospace">{{ $s['cash'] }}</td>
-              <td class="text-end font-monospace">{{ $s['check'] }}</td>
-              <td class="text-end text-success fw-bold font-monospace">{{ $s['total'] }}</td>
-              <td><span class="badge {{ $s['status_badge'] }}"><i class="ph {{ $s['status_icon'] }} me-1"></i> {{ $s['status'] }}</span></td>
+              <td class="text-end font-monospace">{{ $sArr['cash'] }}</td>
+              <td class="text-end font-monospace">{{ $sArr['check'] }}</td>
+              <td class="text-end text-success fw-bold font-monospace">{{ $sArr['total'] }}</td>
+              <td><span class="badge {{ $sArr['status_badge'] }}"><i class="ph {{ $sArr['status_icon'] }} me-1"></i> {{ $sArr['status'] }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Slip Details" onclick="openSlipDetailsModal({{ json_encode($s) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Slip Details" onclick="openSlipDetailsModal({{ json_encode($sArr) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="9" class="text-center py-4 text-muted">No deposit slips recorded in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="slipSummaryText">Showing {{ count($slips) }} Batch Slips</span>
+      <span class="text-muted fs-xs" id="slipSummaryText">Showing {{ count($slips ?? []) }} Batch Slips</span>
       <nav aria-label="Deposit Slip Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

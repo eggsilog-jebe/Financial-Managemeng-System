@@ -105,53 +105,44 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($logs ?? [] as $l)
             @php
-              $logs = [
-                [
-                  'time' => '2026-08-08 14:22:10',
-                  'user' => 'tax_officer_1',
-                  'ip' => '192.168.1.45',
-                  'category' => 'EWT 2307 Form Generation',
-                  'cat_type' => 'ewt',
-                  'voucher' => 'C2307-2026-881',
-                  'impact' => '-₱12,000.00',
-                  'hash' => 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
-                ],
-                [
-                  'time' => '2026-08-07 10:14:00',
-                  'user' => 'cfo_user',
-                  'ip' => '192.168.1.10',
-                  'category' => 'Statutory Return Filing',
-                  'cat_type' => 'return',
-                  'voucher' => 'FORM 2550Q',
-                  'impact' => '-₱215,000.00',
-                  'hash' => '8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4'
-                ],
+              $lArr = is_array($l) ? $l : [
+                'time' => $l->created_at->format('Y-m-d H:i:s'),
+                'user' => $l->user ?? 'System',
+                'ip' => $l->ip_address ?? 'N/A',
+                'category' => $l->event_category ?? 'Tax Event',
+                'cat_type' => strtolower($l->event_type ?? 'general'),
+                'voucher' => $l->source_voucher ?? 'N/A',
+                'impact' => '₱' . number_format($l->tax_impact ?? 0, 2),
+                'hash' => $l->hash ?? str_repeat('0', 64),
               ];
             @endphp
-
-            @foreach($logs as $l)
-            <tr class="audit-row" style="cursor: pointer;" data-cat="{{ $l['cat_type'] }}" data-user="{{ strtolower($l['user']) }}" onclick="openTaxAuditDetailsModal({{ json_encode($l) }})">
-              <td><span class="text-nowrap font-monospace fs-xs">{{ $l['time'] }}</span></td>
+            <tr class="audit-row" style="cursor: pointer;" data-cat="{{ $lArr['cat_type'] }}" data-user="{{ strtolower($lArr['user']) }}" onclick="openTaxAuditDetailsModal({{ json_encode($lArr) }})">
+              <td><span class="text-nowrap font-monospace fs-xs">{{ $lArr['time'] }}</span></td>
               <td>
-                <div class="fw-semibold text-dark">{{ $l['user'] }}</div>
-                <span class="fs-xs text-muted">IP: {{ $l['ip'] }}</span>
+                <div class="fw-semibold text-dark">{{ $lArr['user'] }}</div>
+                <span class="fs-xs text-muted">IP: {{ $lArr['ip'] }}</span>
               </td>
-              <td><span class="badge bg-info-subtle text-info">{{ $l['category'] }}</span></td>
-              <td><span class="font-monospace text-primary fw-bold">{{ $l['voucher'] }}</span></td>
-              <td class="text-end text-danger fw-bold font-monospace">{{ $l['impact'] }}</td>
-              <td><span class="font-monospace fs-xs text-muted">{{ substr($l['hash'], 0, 24) }}...</span></td>
+              <td><span class="badge bg-info-subtle text-info">{{ $lArr['category'] }}</span></td>
+              <td><span class="font-monospace text-primary fw-bold">{{ $lArr['voucher'] }}</span></td>
+              <td class="text-end text-danger fw-bold font-monospace">{{ $lArr['impact'] }}</td>
+              <td><span class="font-monospace fs-xs text-muted">{{ substr($lArr['hash'], 0, 24) }}...</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Payload Snapshot" onclick="openTaxAuditDetailsModal({{ json_encode($l) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Payload Snapshot" onclick="openTaxAuditDetailsModal({{ json_encode($lArr) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">No tax audit entries recorded in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="auditSummaryText">Showing {{ count($logs) }} Audit Entries</span>
+      <span class="text-muted fs-xs" id="auditSummaryText">Showing {{ count($logs ?? []) }} Audit Entries</span>
       <nav aria-label="Audit Log Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

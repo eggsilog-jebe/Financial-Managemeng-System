@@ -24,179 +24,104 @@
     </div>
   </div>
 
-  <!-- Metric Summary Cards -->
+  <!-- Metric <!-- Primary Summary Cards -->
   <div class="row g-3 mb-4">
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Receipts Issued Today</span>
+          <span class="text-muted small fw-medium">Official Receipts Issued Today</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-receipt fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">48 Receipts</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ count($receipts ?? []) }} Receipts</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Cash Collections</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-money fs-5"></i></span>
+          <span class="text-muted small fw-medium">Total Daily Collections</span>
+          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-hand-coins fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱92,400.00</h4>
+        <h4 class="fw-bold mb-0 text-success">₱0.00</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Non-Cash (Card / E-Wallet)</span>
-          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-credit-card fs-5"></i></span>
+          <span class="text-muted small fw-medium">Cash Collections (In Drawer)</span>
+          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-money fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱92,100.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Voided / Cancelled Receipts</span>
-          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-prohibited fs-5"></i></span>
+          <span class="text-muted small fw-medium">Card &amp; Digital Collections</span>
+          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-credit-card fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">1 OR</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
       </div>
     </div>
   </div>
 
   <!-- Data Table Card -->
   <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-transparent border-bottom p-3">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <div class="d-flex align-items-center gap-2">
-          <label for="modeSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Payment Mode:</label>
-          <select id="modeSelect" class="form-select form-select-sm bg-light" style="min-width: 180px;">
-            <option value="" selected>All Payment Modes</option>
-            <option value="credit card">Credit / Debit Card</option>
-            <option value="cash">Cash Payment</option>
-            <option value="check">Bank Check</option>
-          </select>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-          <label for="orStatusSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap">Status:</label>
-          <select id="orStatusSelect" class="form-select form-select-sm bg-light" style="min-width: 160px;">
-            <option value="" selected>All Statuses</option>
-            <option value="valid">Valid / Cleared</option>
-            <option value="voided">Voided</option>
-          </select>
-        </div>
-        <div class="search-box ms-auto" style="width: 260px;">
-          <i class="ph ph-magnifying-glass"></i>
-          <input type="search" id="receiptSearchInput" class="form-control form-control-sm" placeholder="Search OR #, patient, ref...">
-        </div>
-      </div>
-    </div>
     <div class="card-body p-0">
       <div class="table-responsive">
         <table id="receiptTable" class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
-              <th>OR Number</th>
+              <th>Receipt Ref #</th>
               <th>Date &amp; Time</th>
               <th>Payor / Patient Name</th>
               <th>Payment Mode</th>
               <th>Reference / Check No.</th>
               <th class="text-end">Amount Paid (₱)</th>
-              <th>Issued By</th>
               <th>Status</th>
               <th class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
+            @forelse($receipts ?? [] as $r)
             @php
-              $receipts = [
-                [
-                  'or' => 'OR-2026-9901',
-                  'date' => '2026-08-08 14:22',
-                  'payor' => 'David Miller',
-                  'sub' => 'Patient ID: PAT-88412',
-                  'mode' => 'Credit Card (Visa)',
-                  'mode_code' => 'credit card',
-                  'mode_badge' => 'bg-info-subtle text-info',
-                  'mode_icon' => 'ph-credit-card',
-                  'ref' => 'TXN-774102',
-                  'amount' => '₱6,400.00',
-                  'issuer' => 'Anna Reyes (Main POS)',
-                  'status' => 'Valid',
-                  'status_badge' => 'bg-success-subtle text-success'
-                ],
-                [
-                  'or' => 'OR-2026-9900',
-                  'date' => '2026-08-08 13:45',
-                  'payor' => 'Maria Clara Santos',
-                  'sub' => 'Patient ID: PAT-99201',
-                  'mode' => 'Cash',
-                  'mode_code' => 'cash',
-                  'mode_badge' => 'bg-success-subtle text-success',
-                  'mode_icon' => 'ph-money',
-                  'ref' => '-',
-                  'amount' => '₱12,500.00',
-                  'issuer' => 'Anna Reyes (Main POS)',
-                  'status' => 'Valid',
-                  'status_badge' => 'bg-success-subtle text-success'
-                ],
-                [
-                  'or' => 'OR-2026-9899',
-                  'date' => '2026-08-08 11:10',
-                  'payor' => 'Maxicare Healthcare Corp',
-                  'sub' => 'HMO Billing Ref: HMO-2026-04',
-                  'mode' => 'Bank Check',
-                  'mode_code' => 'check',
-                  'mode_badge' => 'bg-warning-subtle text-warning',
-                  'mode_icon' => 'ph-bank',
-                  'ref' => 'BDO-CHK-44910',
-                  'amount' => '₱65,000.00',
-                  'issuer' => 'Carlos Vance (Billing Desk)',
-                  'status' => 'Valid',
-                  'status_badge' => 'bg-success-subtle text-success'
-                ],
-                [
-                  'or' => 'OR-2026-9898',
-                  'date' => '2026-08-08 09:30',
-                  'payor' => 'Robert Chen',
-                  'sub' => 'Patient ID: PAT-77312',
-                  'mode' => 'Cash (Voided)',
-                  'mode_code' => 'cash',
-                  'mode_badge' => 'bg-danger-subtle text-danger',
-                  'mode_icon' => 'ph-prohibited',
-                  'ref' => '-',
-                  'amount' => '₱3,200.00',
-                  'issuer' => 'Anna Reyes (Main POS)',
-                  'status' => 'Voided',
-                  'status_badge' => 'bg-danger-subtle text-danger'
-                ],
+              $or = is_array($r) ? $r['or'] : $r->receipt_number;
+              $date = is_array($r) ? $r['date'] : $r->receipt_date->format('Y-m-d H:i');
+              $payor = is_array($r) ? $r['payor'] : $r->payor_name;
+              $mode = is_array($r) ? $r['mode'] : $r->payment_mode;
+              $amt = is_array($r) ? $r['amount'] : ('₱' . number_format($r->amount_paid, 2));
+              $status = is_array($r) ? $r['status'] : $r->status;
+              $rData = [
+                'or' => $or,
+                'date' => $date,
+                'payor' => $payor,
+                'sub' => 'Collection Receipt',
+                'mode' => $mode,
+                'ref' => '-',
+                'amount' => $amt,
+                'status' => $status
               ];
             @endphp
-
-            @foreach($receipts as $r)
-            <tr class="receipt-row" style="cursor: pointer;" data-mode="{{ $r['mode_code'] }}" data-status="{{ strtolower($r['status']) }}" onclick="openReceiptDetailsModal({{ json_encode($r) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $r['or'] }}</span></td>
-              <td><span class="text-nowrap font-monospace fs-xs">{{ $r['date'] }}</span></td>
-              <td>
-                <div class="fw-semibold text-dark">{{ $r['payor'] }}</div>
-                <span class="fs-xs text-muted">{{ $r['sub'] }}</span>
-              </td>
-              <td><span class="badge {{ $r['mode_badge'] }}"><i class="ph {{ $r['mode_icon'] }} me-1"></i> {{ $r['mode'] }}</span></td>
-              <td><span class="font-monospace text-muted fs-xs">{{ $r['ref'] }}</span></td>
-              <td class="text-end fw-bold text-dark font-monospace">{{ $r['amount'] }}</td>
-              <td class="fs-xs text-muted">{{ $r['issuer'] }}</td>
-              <td><span class="badge {{ $r['status_badge'] }}">{{ $r['status'] }}</span></td>
-              <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View OR Details" onclick="openReceiptDetailsModal({{ json_encode($r) }})"><i class="ph ph-eye"></i></button>
-              </td>
+            <tr class="receipt-row" style="cursor: pointer;" onclick="openReceiptDetailsModal({{ json_encode($rData) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $or }}</span></td>
+              <td class="font-monospace fs-xs">{{ $date }}</td>
+              <td><div class="fw-bold text-dark">{{ $payor }}</div></td>
+              <td><span class="badge bg-info-subtle text-info">{{ $mode }}</span></td>
+              <td class="font-monospace fs-xs">-</td>
+              <td class="text-end font-monospace fw-bold text-success">{{ $amt }}</td>
+              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> {{ $status }}</span></td>
+              <td class="text-end"><button class="btn btn-sm btn-icon btn-outline-secondary" onclick="openReceiptDetailsModal({{ json_encode($rData) }})"><i class="ph ph-eye"></i></button></td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">No payment receipts recorded in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="receiptSummaryText">Showing {{ count($receipts) }} Official Receipts</span>
+      <span class="text-muted fs-xs" id="receiptSummaryText">Showing {{ count($receipts ?? []) }} Official Receipts</span>
       <nav aria-label="Receipt Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

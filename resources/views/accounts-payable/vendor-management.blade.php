@@ -32,7 +32,7 @@
           <span class="text-muted small">Total Active Vendors</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-buildings fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">48 Suppliers</h4>
+        <h4 class="fw-bold mb-0 text-dark">0 Vendors</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,7 +41,8 @@
           <span class="text-muted small">Total AP Liabilities</span>
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-trend-down fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱1,240,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱0
+        </h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -93,10 +94,9 @@
         <table id="vendorTable" class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
-              <th>Vendor Code</th>
-              <th>Supplier Name</th>
+              <th>Supplier Name &amp; Code</th>
               <th>Category</th>
-              <th>TIN Number</th>
+              <th>Tax Identification (TIN)</th>
               <th>Payment Terms</th>
               <th>EWT Rate</th>
               <th class="text-end">Balance Due (₱)</th>
@@ -105,120 +105,47 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($vendors ?? [] as $v)
             @php
-              $vendors = [
-                [
-                  'code' => 'VEND-PHARM-01',
-                  'name' => 'PharmaCorp Philippines',
-                  'category' => 'Pharmaceuticals',
-                  'tin' => '102-481-992-000',
-                  'terms' => '2/10 Net 30',
-                  'ewt' => '1% Goods EWT',
-                  'balance' => '₱420,000.00',
-                  'status' => 'Active',
-                  'cat_badge' => 'bg-primary-subtle text-primary',
-                  'desc' => 'Primary hospital contractor for bulk IV fluid solutions, ICU injectable antibiotics, emergency cardiac epinephrine, and seasonal influenza vaccines. Certified under FDA License No. CDRR-2026-9041.',
-                  'contact' => 'Maria Santos (Key Account Director)',
-                  'phone' => '+63 (02) 8842-1090',
-                  'email' => 'accounts.payable@pharmacorp.ph',
-                  'address' => 'PharmaCorp Hub, 45 Medical City Blvd, Ortigas Center, Pasig City',
-                  'credit_limit' => '₱1,500,000.00'
-                ],
-                [
-                  'code' => 'VEND-MED-02',
-                  'name' => 'MedTech Diagnostics Inc',
-                  'category' => 'Medical Equipment',
-                  'tin' => '204-819-331-000',
-                  'terms' => 'Net 60',
-                  'ewt' => '2% Services EWT',
-                  'balance' => '₱310,500.00',
-                  'status' => 'Active',
-                  'cat_badge' => 'bg-info-subtle text-info',
-                  'desc' => 'Authorized distributor and service technician for MRI/CT scan contrast reagents, digital X-Ray film cassettes, ultrasound probe sanitizers, and diagnostic imaging calibration.',
-                  'contact' => 'Engr. Roberto Cruz (Medical Devices Lead)',
-                  'phone' => '+63 (02) 8631-4400',
-                  'email' => 'service@medtechdiagnostics.ph',
-                  'address' => 'Unit 1204 MedTech Tower, Chino Roces Ave, Makati City',
-                  'credit_limit' => '₱2,000,000.00'
-                ],
-                [
-                  'code' => 'VEND-GAS-03',
-                  'name' => 'Linde Medical Gases Philippines',
-                  'category' => 'Medical Gases',
-                  'tin' => '301-992-114-000',
-                  'terms' => 'Net 30',
-                  'ewt' => '1% Goods EWT',
-                  'balance' => '₱54,000.00',
-                  'status' => 'Active',
-                  'cat_badge' => 'bg-warning-subtle text-warning',
-                  'desc' => 'High-purity medical oxygen cylinder refill services, ICU manifold piping maintenance, liquid nitrogen tanks, and nitrous oxide gas supply for operating theaters.',
-                  'contact' => 'Dennis Villamin (Industrial Sales Representative)',
-                  'phone' => '+63 (02) 8520-7711',
-                  'email' => 'orders.ph@linde-med.com',
-                  'address' => 'Linde Industrial Estate, Sta. Rosa-Tagaytay Road, Laguna',
-                  'credit_limit' => '₱500,000.00'
-                ],
-                [
-                  'code' => 'VEND-SURG-04',
-                  'name' => 'Surgical Supplies & Implants Co.',
-                  'category' => 'Medical Equipment',
-                  'tin' => '405-112-990-000',
-                  'terms' => 'Net 45',
-                  'ewt' => '1% Goods EWT',
-                  'balance' => '₱18,500.00',
-                  'status' => 'Active',
-                  'cat_badge' => 'bg-info-subtle text-info',
-                  'desc' => 'Specialized titanium orthopedic screws, sterile surgical sutures, laparoscopic trocars, sterile drapes, and single-use surgical blade cartridges.',
-                  'contact' => 'Dr. Arlene Reyes (Surgical Consultant Liaison)',
-                  'phone' => '+63 (02) 8712-3090',
-                  'email' => 'sales@surgicalsupplies.ph',
-                  'address' => '88 BioTech Plaza, Fairview, Quezon City',
-                  'credit_limit' => '₱800,000.00'
-                ],
-                [
-                  'code' => 'VEND-UTIL-05',
-                  'name' => 'Meralco Power Distribution',
-                  'category' => 'Utilities & Services',
-                  'tin' => '509-330-100-000',
-                  'terms' => 'Net 15',
-                  'ewt' => '2% Services EWT',
-                  'balance' => '₱437,000.00',
-                  'status' => 'Active',
-                  'cat_badge' => 'bg-secondary-subtle text-secondary',
-                  'desc' => 'Primary high-voltage electrical grid provider for 24/7 hospital emergency rooms, intensive care units, HVAC cooling towers, and facility infrastructure.',
-                  'contact' => 'Key Accounts Enterprise Desk',
-                  'phone' => '16211 (Corporate Meralco)',
-                  'email' => 'enterprise@meralco.com.ph',
-                  'address' => 'Meralco Center, Ortigas Avenue, Pasig City',
-                  'credit_limit' => '₱3,000,000.00'
-                ],
+              $code = is_array($v) ? $v['code'] : $v->code;
+              $name = is_array($v) ? $v['name'] : $v->name;
+              $tin = is_array($v) ? $v['tin'] : ($v->tin ?? 'N/A');
+              $status = is_array($v) ? $v['status'] : $v->status;
+              $vData = [
+                'code' => $code,
+                'name' => $name,
+                'category' => 'Medical Supplier',
+                'tin' => $tin,
+                'terms' => 'Net 30',
+                'ewt' => '1% EWT',
+                'balance' => '₱0.00',
+                'status' => $status
               ];
             @endphp
-
-            @foreach($vendors as $v)
-            <tr class="vendor-row" style="cursor: pointer;" data-category="{{ strtolower($v['category']) }}" onclick="openVendorDetailsModal({{ json_encode($v) }})">
-              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">{{ $v['code'] }}</span></td>
-              <td><div class="fw-semibold text-dark">{{ $v['name'] }}</div></td>
-              <td><span class="badge {{ $v['cat_badge'] }}">{{ $v['category'] }}</span></td>
-              <td><span class="font-monospace fs-xs">{{ $v['tin'] }}</span></td>
-              <td><span class="badge bg-light text-dark border">{{ $v['terms'] }}</span></td>
-              <td><span class="badge bg-info-subtle text-info">{{ $v['ewt'] }}</span></td>
-              <td class="text-end fw-bold text-danger">{{ $v['balance'] }}</td>
-              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check"></i> {{ $v['status'] }}</span></td>
-              <td class="text-end" onclick="event.stopPropagation();">
-                <div class="d-flex justify-content-end gap-1">
-                  <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Supplier Details" onclick="openVendorDetailsModal({{ json_encode($v) }})"><i class="ph ph-eye"></i></button>
-                  <button class="btn btn-sm btn-icon btn-outline-secondary" title="Edit Vendor" onclick="alert('Edit Vendor modal for {{ $v['code'] }}');"><i class="ph ph-pencil-simple"></i></button>
-                </div>
+            <tr class="vendor-row" style="cursor: pointer;" onclick="openVendorDetailsModal({{ json_encode($vData) }})">
+              <td>
+                <div class="fw-bold text-dark">{{ $name }}</div>
+                <span class="fs-xs font-monospace text-muted">{{ $code }}</span>
               </td>
+              <td><span class="badge bg-primary-subtle text-primary">Medical Supplier</span></td>
+              <td><span class="font-monospace text-muted">{{ $tin }}</span></td>
+              <td>Net 30</td>
+              <td>1% EWT</td>
+              <td class="text-end font-monospace fw-bold text-danger">₱0.00</td>
+              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> {{ $status }}</span></td>
+              <td class="text-end"><button class="btn btn-sm btn-icon btn-outline-secondary" title="View Vendor Details" onclick="openVendorDetailsModal({{ json_encode($vData) }})"><i class="ph ph-eye"></i></button></td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">No vendors registered in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="vendorSummaryText">Showing {{ count($vendors) }} Active Suppliers</span>
+      <span class="text-muted fs-xs" id="vendorSummaryText">Showing {{ count($vendors ?? []) }} Active Suppliers</span>
       <nav aria-label="Vendors Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

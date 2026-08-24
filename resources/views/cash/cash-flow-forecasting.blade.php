@@ -106,70 +106,40 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($forecasts ?? [] as $f)
             @php
-              $forecasts = [
-                [
-                  'period' => 'Week 1 (Aug 08 - Aug 14)',
-                  'start' => '₱7,840,000.00',
-                  'inflow' => '+₱1,850,000.00',
-                  'outflow' => '-₱1,400,000.00',
-                  'end' => '₱8,290,000.00',
-                  'status' => 'Healthy Buffer',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'horizon' => '30'
-                ],
-                [
-                  'period' => 'Week 2 (Aug 15 - Aug 21)',
-                  'start' => '₱8,290,000.00',
-                  'inflow' => '+₱1,650,000.00',
-                  'outflow' => '-₱1,300,000.00',
-                  'end' => '₱8,640,000.00',
-                  'status' => 'Healthy Buffer',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'horizon' => '30'
-                ],
-                [
-                  'period' => 'Week 3 (Aug 22 - Aug 28)',
-                  'start' => '₱8,640,000.00',
-                  'inflow' => '+₱1,700,000.00',
-                  'outflow' => '-₱1,250,000.00',
-                  'end' => '₱9,090,000.00',
-                  'status' => 'Healthy Buffer',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'horizon' => '30'
-                ],
-                [
-                  'period' => 'Week 4 (Aug 29 - Sep 04)',
-                  'start' => '₱9,090,000.00',
-                  'inflow' => '+₱1,600,000.00',
-                  'outflow' => '-₱1,270,000.00',
-                  'end' => '₱9,420,000.00',
-                  'status' => 'Target Liquidity Surpassed',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'horizon' => '30'
-                ],
+              $fArr = is_array($f) ? $f : [
+                'period' => $f->period_label ?? 'N/A',
+                'start' => '₱' . number_format($f->opening_balance ?? 0, 2),
+                'inflow' => '+₱' . number_format($f->projected_inflow ?? 0, 2),
+                'outflow' => '-₱' . number_format($f->projected_outflow ?? 0, 2),
+                'end' => '₱' . number_format($f->ending_balance ?? 0, 2),
+                'status' => $f->status ?? 'Projected', 'status_badge' => 'bg-info-subtle text-info',
+                'horizon' => $f->horizon_days ?? '30',
               ];
             @endphp
-
-            @foreach($forecasts as $f)
-            <tr class="forecast-row" style="cursor: pointer;" data-horizon="{{ $f['horizon'] }}" onclick="openForecastDetailsModal({{ json_encode($f) }})">
-              <td><span class="fw-bold text-dark">{{ $f['period'] }}</span></td>
-              <td class="text-end font-monospace">{{ $f['start'] }}</td>
-              <td class="text-end text-success font-monospace">{{ $f['inflow'] }}</td>
-              <td class="text-end text-danger font-monospace">{{ $f['outflow'] }}</td>
-              <td class="text-end text-primary fw-bold font-monospace">{{ $f['end'] }}</td>
-              <td><span class="badge {{ $f['status_badge'] }}"><i class="ph ph-check-circle me-1"></i> {{ $f['status'] }}</span></td>
+            <tr class="forecast-row" style="cursor: pointer;" data-horizon="{{ $fArr['horizon'] }}" onclick="openForecastDetailsModal({{ json_encode($fArr) }})">
+              <td><span class="fw-bold text-dark">{{ $fArr['period'] }}</span></td>
+              <td class="text-end font-monospace">{{ $fArr['start'] }}</td>
+              <td class="text-end text-success font-monospace">{{ $fArr['inflow'] }}</td>
+              <td class="text-end text-danger font-monospace">{{ $fArr['outflow'] }}</td>
+              <td class="text-end text-primary fw-bold font-monospace">{{ $fArr['end'] }}</td>
+              <td><span class="badge {{ $fArr['status_badge'] }}"><i class="ph ph-check-circle me-1"></i> {{ $fArr['status'] }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Weekly Breakout" onclick="openForecastDetailsModal({{ json_encode($f) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Weekly Breakout" onclick="openForecastDetailsModal({{ json_encode($fArr) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">No cash flow forecasts available in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="forecastSummaryText">Showing {{ count($forecasts) }} Forecast Weeks</span>
+      <span class="text-muted fs-xs" id="forecastSummaryText">Showing {{ count($forecasts ?? []) }} Forecast Weeks</span>
       <nav aria-label="Forecast Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

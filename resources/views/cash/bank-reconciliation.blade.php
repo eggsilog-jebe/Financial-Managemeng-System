@@ -105,66 +105,43 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($reconciliations ?? [] as $rec)
             @php
-              $reconciliations = [
-                [
-                  'date' => '2026-08-07',
-                  'item' => 'DEP-2026-302 Armored Deposit',
-                  'stamp' => 'Machine Teller Stamp #MB-STAMP-99210',
-                  'ref' => 'DEP-2026-302',
-                  'bank_amt' => '+₱125,400.00',
-                  'cash_amt' => '+₱125,400.00',
-                  'status' => 'Matched',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'account' => 'metrobank'
-                ],
-                [
-                  'date' => '2026-08-06',
-                  'item' => 'EFT Payout - General Hospital Supplier',
-                  'stamp' => 'Electronic Clearance Ref #EFT-88912',
-                  'ref' => 'CHK-2026-809',
-                  'bank_amt' => '-₱45,000.00',
-                  'cash_amt' => '-₱45,000.00',
-                  'status' => 'Matched',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'account' => 'metrobank'
-                ],
-                [
-                  'date' => '2026-08-05',
-                  'item' => 'Over-the-Counter Patient Cash Deposit',
-                  'stamp' => 'Branch Teller Stamp #BDO-STAMP-1029',
-                  'ref' => 'DEP-2026-301',
-                  'bank_amt' => '+₱88,200.00',
-                  'cash_amt' => '+₱88,200.00',
-                  'status' => 'Matched',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'account' => 'bdo'
-                ],
+              $rArr = is_array($rec) ? $rec : [
+                'date' => $rec->transaction_date ? $rec->transaction_date->format('Y-m-d') : 'N/A',
+                'item' => $rec->description ?? 'N/A', 'stamp' => $rec->reference_stamp ?? 'N/A',
+                'ref' => $rec->reference_number ?? 'N/A',
+                'bank_amt' => ($rec->bank_amount >= 0 ? '+' : '') . '₱' . number_format($rec->bank_amount ?? 0, 2),
+                'cash_amt' => ($rec->cash_amount >= 0 ? '+' : '') . '₱' . number_format($rec->cash_amount ?? 0, 2),
+                'status' => $rec->status ?? 'Unmatched', 'status_badge' => 'bg-warning-subtle text-warning',
+                'account' => strtolower($rec->bank_account ?? 'general'),
               ];
             @endphp
-
-            @foreach($reconciliations as $rec)
-            <tr class="recon-row" style="cursor: pointer;" data-account="{{ $rec['account'] }}" data-status="{{ strtolower($rec['status']) }}" onclick="openReconciliationDetailsModal({{ json_encode($rec) }})">
-              <td class="font-monospace fs-xs">{{ $rec['date'] }}</td>
+            <tr class="recon-row" style="cursor: pointer;" data-account="{{ $rArr['account'] }}" data-status="{{ strtolower($rArr['status']) }}" onclick="openReconciliationDetailsModal({{ json_encode($rArr) }})">
+              <td class="font-monospace fs-xs">{{ $rArr['date'] }}</td>
               <td>
-                <div class="fw-semibold text-dark">{{ $rec['item'] }}</div>
-                <span class="fs-xs text-muted">{{ $rec['stamp'] }}</span>
+                <div class="fw-semibold text-dark">{{ $rArr['item'] }}</div>
+                <span class="fs-xs text-muted">{{ $rArr['stamp'] }}</span>
               </td>
-              <td><span class="font-monospace text-primary fw-bold">{{ $rec['ref'] }}</span></td>
-              <td class="text-end font-monospace fw-semibold">{{ $rec['bank_amt'] }}</td>
-              <td class="text-end font-monospace fw-semibold">{{ $rec['cash_amt'] }}</td>
-              <td><span class="badge {{ $rec['status_badge'] }}"><i class="ph ph-check-circle me-1"></i> {{ $rec['status'] }}</span></td>
+              <td><span class="font-monospace text-primary fw-bold">{{ $rArr['ref'] }}</span></td>
+              <td class="text-end font-monospace fw-semibold">{{ $rArr['bank_amt'] }}</td>
+              <td class="text-end font-monospace fw-semibold">{{ $rArr['cash_amt'] }}</td>
+              <td><span class="badge {{ $rArr['status_badge'] }}"><i class="ph ph-check-circle me-1"></i> {{ $rArr['status'] }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Match Audit" onclick="openReconciliationDetailsModal({{ json_encode($rec) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Match Audit" onclick="openReconciliationDetailsModal({{ json_encode($rArr) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">No reconciliation entries in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="reconSummaryText">Showing {{ count($reconciliations) }} Reconciled Line Items</span>
+      <span class="text-muted fs-xs" id="reconSummaryText">Showing {{ count($reconciliations ?? []) }} Reconciled Line Items</span>
       <nav aria-label="Reconciliation Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

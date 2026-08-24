@@ -105,84 +105,45 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($agingRecords ?? [] as $a)
             @php
-              $agingRecords = [
-                [
-                  'vendor' => 'PharmaCorp Philippines',
-                  'category' => 'Pharmaceuticals',
-                  'c0_30' => '₱320,000.00',
-                  'c31_60' => '₱100,000.00',
-                  'c61_90' => '₱0.00',
-                  'c90_plus' => '₱0.00',
-                  'total' => '₱420,000.00',
-                  'cat_badge' => 'bg-primary-subtle text-primary'
-                ],
-                [
-                  'vendor' => 'MedTech Diagnostics Inc',
-                  'category' => 'Medical Devices',
-                  'c0_30' => '₱225,200.00',
-                  'c31_60' => '₱40,000.00',
-                  'c61_90' => '₱45,300.00',
-                  'c90_plus' => '₱0.00',
-                  'total' => '₱310,500.00',
-                  'cat_badge' => 'bg-info-subtle text-info'
-                ],
-                [
-                  'vendor' => 'Linde Medical Gases Philippines',
-                  'category' => 'Medical Gases',
-                  'c0_30' => '₱54,000.00',
-                  'c31_60' => '₱0.00',
-                  'c61_90' => '₱0.00',
-                  'c90_plus' => '₱0.00',
-                  'total' => '₱54,000.00',
-                  'cat_badge' => 'bg-warning-subtle text-warning'
-                ],
-                [
-                  'vendor' => 'Surgical Supplies & Implants Co.',
-                  'category' => 'Surgical Consumables',
-                  'c0_30' => '₱18,500.00',
-                  'c31_60' => '₱0.00',
-                  'c61_90' => '₱0.00',
-                  'c90_plus' => '₱0.00',
-                  'total' => '₱18,500.00',
-                  'cat_badge' => 'bg-info-subtle text-info'
-                ],
-                [
-                  'vendor' => 'Meralco Power Distribution',
-                  'category' => 'Utilities',
-                  'c0_30' => '₱392,000.00',
-                  'c31_60' => '₱45,000.00',
-                  'c61_90' => '₱0.00',
-                  'c90_plus' => '₱0.00',
-                  'total' => '₱437,000.00',
-                  'cat_badge' => 'bg-secondary-subtle text-secondary'
-                ],
+              $aArr = is_array($a) ? $a : [
+                'vendor' => $a->vendor_name ?? 'N/A', 'category' => $a->category ?? 'N/A',
+                'c0_30' => '₱' . number_format($a->current_0_30 ?? 0, 2),
+                'c31_60' => '₱' . number_format($a->current_31_60 ?? 0, 2),
+                'c61_90' => '₱' . number_format($a->current_61_90 ?? 0, 2),
+                'c90_plus' => '₱' . number_format($a->over_90 ?? 0, 2),
+                'total' => '₱' . number_format(($a->current_0_30 ?? 0) + ($a->current_31_60 ?? 0) + ($a->current_61_90 ?? 0) + ($a->over_90 ?? 0), 2),
+                'cat_badge' => 'bg-primary-subtle text-primary',
               ];
             @endphp
-
-            @foreach($agingRecords as $a)
-            <tr class="aging-row" style="cursor: pointer;" data-category="{{ strtolower($a['category']) }}" onclick="openAgingDetailsModal({{ json_encode($a) }})">
-              <td class="fw-semibold text-dark">{{ $a['vendor'] }}</td>
-              <td><span class="badge {{ $a['cat_badge'] }}">{{ $a['category'] }}</span></td>
-              <td class="text-end @if($a['c0_30'] !== '₱0.00') text-success fw-semibold @else text-muted @endif font-monospace">{{ $a['c0_30'] }}</td>
-              <td class="text-end @if($a['c31_60'] !== '₱0.00') text-warning fw-semibold @else text-muted @endif font-monospace">{{ $a['c31_60'] }}</td>
-              <td class="text-end @if($a['c61_90'] !== '₱0.00') text-danger fw-semibold @else text-muted @endif font-monospace">{{ $a['c61_90'] }}</td>
-              <td class="text-end @if($a['c90_plus'] !== '₱0.00') text-danger fw-bold @else text-muted @endif font-monospace">{{ $a['c90_plus'] }}</td>
-              <td class="text-end fw-bold text-dark font-monospace">{{ $a['total'] }}</td>
+            <tr class="aging-row" style="cursor: pointer;" data-category="{{ strtolower($aArr['category']) }}" onclick="openAgingDetailsModal({{ json_encode($aArr) }})">
+              <td class="fw-semibold text-dark">{{ $aArr['vendor'] }}</td>
+              <td><span class="badge {{ $aArr['cat_badge'] }}">{{ $aArr['category'] }}</span></td>
+              <td class="text-end @if($aArr['c0_30'] !== '₱0.00') text-success fw-semibold @else text-muted @endif font-monospace">{{ $aArr['c0_30'] }}</td>
+              <td class="text-end @if($aArr['c31_60'] !== '₱0.00') text-warning fw-semibold @else text-muted @endif font-monospace">{{ $aArr['c31_60'] }}</td>
+              <td class="text-end @if($aArr['c61_90'] !== '₱0.00') text-danger fw-semibold @else text-muted @endif font-monospace">{{ $aArr['c61_90'] }}</td>
+              <td class="text-end @if($aArr['c90_plus'] !== '₱0.00') text-danger fw-bold @else text-muted @endif font-monospace">{{ $aArr['c90_plus'] }}</td>
+              <td class="text-end fw-bold text-dark font-monospace">{{ $aArr['total'] }}</td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Aging Details" onclick="openAgingDetailsModal({{ json_encode($a) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Aging Details" onclick="openAgingDetailsModal({{ json_encode($aArr) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">No payable aging records in database.</td>
+            </tr>
+            @endforelse
           </tbody>
           <tfoot class="table-light font-monospace fw-bold">
             <tr>
               <td colspan="2" class="text-end">Summary Totals:</td>
-              <td class="text-end text-success">₱1,009,700.00</td>
-              <td class="text-end text-warning">₱185,000.00</td>
-              <td class="text-end text-danger">₱45,300.00</td>
+              <td class="text-end text-success">₱0.00</td>
+              <td class="text-end text-warning">₱0.00</td>
+              <td class="text-end text-danger">₱0.00</td>
               <td class="text-end text-muted">₱0.00</td>
-              <td class="text-end text-primary">₱1,240,000.00</td>
+              <td class="text-end text-primary">₱0.00</td>
+              <td></td>
             </tr>
           </tfoot>
         </table>

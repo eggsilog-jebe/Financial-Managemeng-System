@@ -1,5 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\GeneralLedgerController;
+use App\Http\Controllers\CashManagementController;
+use App\Http\Controllers\TaxManagementController;
 use App\Http\Controllers\GeneralLedger\PostJournalEntryController;
 
 Route::get('/', function () {
@@ -8,12 +14,12 @@ Route::get('/', function () {
 
 // 1. General Ledger
 Route::prefix('general-ledger')->name('gl.')->group(function () {
-    Route::get('/chart-of-accounts', fn() => view('general-ledger.chart-of-accounts'))->name('chart-of-accounts');
-    Route::get('/journal-entries', fn() => view('general-ledger.journal-entries'))->name('journal-entries');
+    Route::get('/chart-of-accounts', [GeneralLedgerController::class, 'chartOfAccounts'])->name('chart-of-accounts');
+    Route::get('/journal-entries', [GeneralLedgerController::class, 'journalEntries'])->name('journal-entries');
     Route::post('/post-entry', PostJournalEntryController::class)->name('post-entry');
-    Route::get('/ledger-books', fn() => view('general-ledger.ledger-books'))->name('ledger-books');
-    Route::get('/trial-balance', fn() => view('general-ledger.trial-balance'))->name('trial-balance');
-    Route::get('/period-end-closing', fn() => view('general-ledger.period-end-closing'))->name('period-end-closing');
+    Route::get('/ledger-books', [GeneralLedgerController::class, 'ledgerBooks'])->name('ledger-books');
+    Route::get('/trial-balance', [GeneralLedgerController::class, 'trialBalance'])->name('trial-balance');
+    Route::get('/period-end-closing', [GeneralLedgerController::class, 'periodEndClosing'])->name('period-end-closing');
 });
 
 // 2. Accounts Payable
@@ -63,11 +69,11 @@ Route::prefix('budget-management')->name('budget.')->group(function () {
 
 // 7. Cash Management
 Route::prefix('cash-management')->name('cash.')->group(function () {
-    Route::get('/bank-accounts', fn() => view('cash.bank-accounts'))->name('bank-accounts');
-    Route::get('/cash-flow-forecasting', fn() => view('cash.cash-flow-forecasting'))->name('cash-flow-forecast');
-    Route::get('/bank-reconciliation', fn() => view('cash.bank-reconciliation'))->name('bank-reconciliation');
-    Route::get('/fund-transfers', fn() => view('cash.fund-transfers'))->name('fund-transfers');
-    Route::get('/liquidity-management', fn() => view('cash.liquidity-management'))->name('liquidity');
+    Route::get('/bank-accounts', [CashManagementController::class, 'bankAccounts'])->name('bank-accounts');
+    Route::get('/cash-flow-forecasting', [CashManagementController::class, 'cashFlowForecasting'])->name('cash-flow-forecast');
+    Route::get('/bank-reconciliation', [CashManagementController::class, 'bankReconciliation'])->name('bank-reconciliation');
+    Route::get('/fund-transfers', [CashManagementController::class, 'fundTransfers'])->name('fund-transfers');
+    Route::get('/liquidity-management', [CashManagementController::class, 'liquidityManagement'])->name('liquidity');
 });
 
 // 8. Financial Reporting & Analytics
@@ -81,9 +87,9 @@ Route::prefix('financial-reporting')->name('reporting.')->group(function () {
 
 // 9. Tax Management
 Route::prefix('tax-management')->name('tax.')->group(function () {
-    Route::get('/tax-configuration', fn() => view('tax.tax-configuration'))->name('tax-config');
-    Route::get('/withholding-tax', fn() => view('tax.withholding-tax'))->name('withholding-tax');
-    Route::get('/tax-returns', fn() => view('tax.tax-returns'))->name('tax-returns');
-    Route::get('/tax-exemptions', fn() => view('tax.tax-exemptions'))->name('tax-exemptions');
-    Route::get('/tax-audit-trail', fn() => view('tax.tax-audit-trail'))->name('tax-audit');
+    Route::get('/tax-configuration', [TaxManagementController::class, 'taxConfiguration'])->name('tax-config');
+    Route::get('/withholding-tax', [TaxManagementController::class, 'withholdingTax'])->name('withholding-tax');
+    Route::get('/tax-returns', [TaxManagementController::class, 'taxReturns'])->name('tax-returns');
+    Route::get('/tax-exemptions', [TaxManagementController::class, 'taxExemptions'])->name('tax-exemptions');
+    Route::get('/tax-audit-trail', [TaxManagementController::class, 'taxAuditTrail'])->name('tax-audit');
 });

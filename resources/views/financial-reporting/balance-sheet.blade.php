@@ -32,7 +32,7 @@
           <span class="text-muted small fw-medium">Total Assets</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-trend-up fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-success">₱54,110,200.00</h4>
+        <h4 class="fw-bold mb-0 text-success">₱0.00</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,7 +41,7 @@
           <span class="text-muted small fw-medium">Total Liabilities</span>
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-bank fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-danger">₱12,910,500.00</h4>
+        <h4 class="fw-bold mb-0 text-danger">₱0.00</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -50,7 +50,7 @@
           <span class="text-muted small fw-medium">Hospital Net Equity</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-scales fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-primary">₱41,199,700.00</h4>
+        <h4 class="fw-bold mb-0 text-primary">₱0.00</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -59,7 +59,7 @@
           <span class="text-muted small fw-medium">Current Working Ratio</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-shield-check fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">9.78x</h4>
+        <h4 class="fw-bold mb-0 text-dark">0.0x</h4>
       </div>
     </div>
   </div>

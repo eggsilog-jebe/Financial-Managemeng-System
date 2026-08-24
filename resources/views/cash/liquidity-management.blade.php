@@ -103,58 +103,38 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($indicators ?? [] as $ind)
             @php
-              $indicators = [
-                [
-                  'name' => 'Days Cash on Hand (DCOH)',
-                  'desc' => 'Operating cash divided by daily hospital burn rate',
-                  'target' => '> 40.0 Days',
-                  'value' => '48.2 Days',
-                  'status' => 'Compliant',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'cat' => 'operating'
-                ],
-                [
-                  'name' => 'Quick Ratio (Acid-Test)',
-                  'desc' => '(Cash + AR) divided by Current Liabilities',
-                  'target' => '> 1.5x',
-                  'value' => '2.41x',
-                  'status' => 'Compliant',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'cat' => 'solvency'
-                ],
-                [
-                  'name' => 'Working Capital Net Reserve',
-                  'desc' => 'Liquid unrestricted cash reserves available',
-                  'target' => '> ₱5,000,000.00',
-                  'value' => '₱5,840,000.00',
-                  'status' => 'Compliant',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'cat' => 'operating'
-                ],
+              $iArr = is_array($ind) ? $ind : [
+                'name' => $ind->indicator_name ?? 'N/A', 'desc' => $ind->description ?? 'N/A',
+                'target' => $ind->target_value ?? 'N/A', 'value' => $ind->current_value ?? 'N/A',
+                'status' => $ind->status ?? 'N/A', 'status_badge' => 'bg-warning-subtle text-warning',
+                'cat' => strtolower($ind->category ?? 'general'),
               ];
             @endphp
-
-            @foreach($indicators as $ind)
-            <tr class="liquidity-row" style="cursor: pointer;" data-cat="{{ $ind['cat'] }}" data-status="{{ strtolower($ind['status']) }}" onclick="openLiquidityDetailsModal({{ json_encode($ind) }})">
+            <tr class="liquidity-row" style="cursor: pointer;" data-cat="{{ $iArr['cat'] }}" data-status="{{ strtolower($iArr['status']) }}" onclick="openLiquidityDetailsModal({{ json_encode($iArr) }})">
               <td>
-                <div class="fw-bold text-dark">{{ $ind['name'] }}</div>
-                <span class="fs-xs text-muted">{{ $ind['desc'] }}</span>
+                <div class="fw-bold text-dark">{{ $iArr['name'] }}</div>
+                <span class="fs-xs text-muted">{{ $iArr['desc'] }}</span>
               </td>
-              <td class="font-monospace fs-xs">{{ $ind['target'] }}</td>
-              <td class="text-end font-monospace fw-bold text-success">{{ $ind['value'] }}</td>
-              <td><span class="badge {{ $ind['status_badge'] }}"><i class="ph ph-check-circle me-1"></i> {{ $ind['status'] }}</span></td>
+              <td class="font-monospace fs-xs">{{ $iArr['target'] }}</td>
+              <td class="text-end font-monospace fw-bold text-success">{{ $iArr['value'] }}</td>
+              <td><span class="badge {{ $iArr['status_badge'] }}"><i class="ph ph-check-circle me-1"></i> {{ $iArr['status'] }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Ratio Breakdown" onclick="openLiquidityDetailsModal({{ json_encode($ind) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Ratio Breakdown" onclick="openLiquidityDetailsModal({{ json_encode($iArr) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="5" class="text-center py-4 text-muted">No liquidity indicators configured in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="liquiditySummaryText">Showing {{ count($indicators) }} Solvency Ratios</span>
+      <span class="text-muted fs-xs" id="liquiditySummaryText">Showing {{ count($indicators ?? []) }} Solvency Ratios</span>
       <nav aria-label="Liquidity Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

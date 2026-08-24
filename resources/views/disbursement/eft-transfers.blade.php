@@ -89,59 +89,46 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($efts ?? [] as $e)
             @php
-              $efts = [
-                [
-                  'ref' => 'EFT-2026-901',
-                  'type' => 'Direct Payroll Batch',
-                  'type_code' => 'payroll',
-                  'badge' => 'bg-primary-subtle text-primary',
-                  'bank' => 'BDO Unibank (**** 4819)',
-                  'purpose' => 'Bi-Weekly Medical Staff & Nurse Payroll Direct Deposit',
-                  'date' => '2026-08-05',
-                  'amount' => '₱410,000.00',
-                  'status' => 'Settled / Transferred',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'status_icon' => 'ph-check-circle',
-                  'bank_ref' => 'BDO-WIRE-889104'
-                ],
-                [
-                  'ref' => 'EFT-2026-902',
-                  'type' => 'PESONet Supplier Wire',
-                  'type_code' => 'pesonet',
-                  'badge' => 'bg-info-subtle text-info',
-                  'bank' => 'Bank of the Philippine Islands (**** 9912)',
-                  'purpose' => 'Siemens Healthcare CT Maintenance Spare Parts Payment',
-                  'date' => '2026-08-06',
-                  'amount' => '₱48,000.00',
-                  'status' => 'Settled / Transferred',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'status_icon' => 'ph-check-circle',
-                  'bank_ref' => 'BPI-PESO-440129'
-                ],
+              $eArr = is_array($e) ? $e : [
+                'ref' => $e->reference_number ?? 'EFT-N/A',
+                'type' => $e->transfer_type ?? 'EFT',
+                'type_code' => strtolower($e->transfer_type ?? 'eft'),
+                'badge' => 'bg-primary-subtle text-primary',
+                'bank' => $e->bank_name ?? 'N/A',
+                'purpose' => $e->purpose ?? 'N/A',
+                'date' => $e->transfer_date ? $e->transfer_date->format('Y-m-d') : 'N/A',
+                'amount' => '₱' . number_format($e->amount ?? 0, 2),
+                'status' => $e->status ?? 'Pending',
+                'status_badge' => 'bg-warning-subtle text-warning',
+                'status_icon' => 'ph-clock',
+                'bank_ref' => $e->bank_reference ?? 'N/A',
               ];
             @endphp
-
-            @foreach($efts as $e)
-            <tr class="eft-row" style="cursor: pointer;" data-type="{{ $e['type_code'] }}" onclick="openEftDetailsModal({{ json_encode($e) }})">
-              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">{{ $e['ref'] }}</span></td>
-              <td><span class="badge {{ $e['badge'] }}">{{ $e['type'] }}</span></td>
-              <td class="fs-xs fw-semibold text-dark">{{ $e['bank'] }}</td>
-              <td><span class="text-truncate d-inline-block" style="max-width: 250px;">{{ $e['purpose'] }}</span></td>
-              <td class="font-monospace fs-xs">{{ $e['date'] }}</td>
-              <td class="text-end fw-bold text-dark font-monospace">{{ $e['amount'] }}</td>
-              <td><span class="badge {{ $e['status_badge'] }}"><i class="ph {{ $e['status_icon'] }} me-1"></i> {{ $e['status'] }}</span></td>
+            <tr class="eft-row" style="cursor: pointer;" data-type="{{ $eArr['type_code'] }}" onclick="openEftDetailsModal({{ json_encode($eArr) }})">
+              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">{{ $eArr['ref'] }}</span></td>
+              <td><span class="badge {{ $eArr['badge'] }}">{{ $eArr['type'] }}</span></td>
+              <td class="fs-xs fw-semibold text-dark">{{ $eArr['bank'] }}</td>
+              <td><span class="text-truncate d-inline-block" style="max-width: 250px;">{{ $eArr['purpose'] }}</span></td>
+              <td class="font-monospace fs-xs">{{ $eArr['date'] }}</td>
+              <td class="text-end fw-bold text-dark font-monospace">{{ $eArr['amount'] }}</td>
+              <td><span class="badge {{ $eArr['status_badge'] }}"><i class="ph {{ $eArr['status_icon'] }} me-1"></i> {{ $eArr['status'] }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Remittance File" onclick="openEftDetailsModal({{ json_encode($e) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Remittance File" onclick="openEftDetailsModal({{ json_encode($eArr) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">No EFT transfers recorded in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="eftSummaryText">Showing {{ count($efts) }} Bank Transfers</span>
+      <span class="text-muted fs-xs" id="eftSummaryText">Showing {{ count($efts ?? []) }} Bank Transfers</span>
       <nav aria-label="EFT Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

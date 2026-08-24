@@ -32,7 +32,7 @@
           <span class="text-muted small fw-medium">Filed Returns (This Year)</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">8 Returns</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ count($returns ?? []) }} Returns</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,7 +41,7 @@
           <span class="text-muted small fw-medium">Total Tax Paid (YTD)</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-bank fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-primary">₱1,425,000.00</h4>
+        <h4 class="fw-bold mb-0 text-primary">₱{{ number_format(($returns ?? collect())->where('status', 'PAID')->sum('tax_due'), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -50,7 +50,7 @@
           <span class="text-muted small fw-medium">Pending Tax Payable</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-danger">₱215,000.00</h4>
+        <h4 class="fw-bold mb-0 text-danger">₱{{ number_format(($returns ?? collect())->where('status', 'DRAFT')->sum('tax_due'), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -106,55 +106,53 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($returns ?? [] as $ret)
             @php
-              $returns = [
-                [
-                  'code' => 'BIR FORM 2550Q',
-                  'form_type' => '2550',
-                  'title' => 'Quarterly Value Added Tax Return',
-                  'ref' => 'eFPS Confirmation Ref: 9940129',
-                  'period' => 'Q2 2026',
-                  'due' => '2026-08-25',
-                  'payable' => '₱215,000.00',
-                  'status' => 'Pending Payment',
-                  'status_badge' => 'bg-warning-subtle text-warning'
-                ],
-                [
-                  'code' => 'BIR FORM 1601EQ',
-                  'form_type' => '1601',
-                  'title' => 'Quarterly Remittance of Creditable Income Taxes (EWT)',
-                  'ref' => 'eFPS Payment Confirmation Ref: 881024',
-                  'period' => 'Q1 2026',
-                  'due' => '2026-04-30',
-                  'payable' => '₱340,000.00',
-                  'status' => 'Filed & Remitted',
-                  'status_badge' => 'bg-success-subtle text-success'
-                ],
+              $code = is_array($ret) ? $ret['code'] : ('BIR FORM ' . $ret->form_type);
+              $formType = is_array($ret) ? $ret['form_type'] : $ret->form_type;
+              $title = is_array($ret) ? $ret['title'] : ($ret->form_type . ' Tax Return');
+              $ref = is_array($ret) ? $ret['ref'] : ('Ref: ' . $ret->return_number);
+              $period = is_array($ret) ? $ret['period'] : $ret->period_covered;
+              $due = is_array($ret) ? $ret['due'] : ($ret->filing_date ? $ret->filing_date->format('Y-m-d') : 'N/A');
+              $payable = is_array($ret) ? $ret['payable'] : ('₱' . number_format($ret->tax_due, 2));
+              $status = is_array($ret) ? $ret['status'] : $ret->status;
+              $retData = [
+                'code' => $code,
+                'form_type' => $formType,
+                'title' => $title,
+                'ref' => $ref,
+                'period' => $period,
+                'due' => $due,
+                'payable' => $payable,
+                'status' => $status,
+                'status_badge' => 'bg-success-subtle text-success'
               ];
             @endphp
-
-            @foreach($returns as $ret)
-            <tr class="return-row" style="cursor: pointer;" data-form="{{ $ret['form_type'] }}" data-status="{{ strtolower($ret['status']) }}" onclick="openTaxReturnDetailsModal({{ json_encode($ret) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $ret['code'] }}</span></td>
+            <tr class="return-row" style="cursor: pointer;" onclick="openTaxReturnDetailsModal({{ json_encode($retData) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $code }}</span></td>
               <td>
-                <div class="fw-semibold text-dark">{{ $ret['title'] }}</div>
-                <span class="fs-xs text-muted">{{ $ret['ref'] }}</span>
+                <div class="fw-semibold text-dark">{{ $title }}</div>
+                <span class="fs-xs text-muted">{{ $ref }}</span>
               </td>
-              <td class="font-monospace fs-xs">{{ $ret['period'] }}</td>
-              <td class="font-monospace fs-xs">{{ $ret['due'] }}</td>
-              <td class="text-end font-monospace fw-bold text-danger">{{ $ret['payable'] }}</td>
-              <td><span class="badge {{ $ret['status_badge'] }}"><i class="ph ph-clock me-1"></i> {{ $ret['status'] }}</span></td>
+              <td class="font-monospace fs-xs">{{ $period }}</td>
+              <td class="font-monospace fs-xs">{{ $due }}</td>
+              <td class="text-end font-monospace fw-bold text-danger">{{ $payable }}</td>
+              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> {{ $status }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Return Details" onclick="openTaxReturnDetailsModal({{ json_encode($ret) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Return Details" onclick="openTaxReturnDetailsModal({{ json_encode($retData) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">No tax returns filed in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="returnSummaryText">Showing {{ count($returns) }} Statutory Returns</span>
+      <span class="text-muted fs-xs" id="returnSummaryText">Showing {{ count($returns ?? []) }} Statutory Returns</span>
       <nav aria-label="Return Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

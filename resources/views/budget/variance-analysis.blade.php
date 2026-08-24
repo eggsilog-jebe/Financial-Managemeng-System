@@ -106,72 +106,44 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($variances ?? [] as $v)
             @php
-              $variances = [
-                [
-                  'item' => 'Pharmacy Medical Supplies & Antibiotics',
-                  'cc' => 'CC-101 (Pharmacy)',
-                  'budget' => '₱2,500,000.00',
-                  'actual' => '₱2,280,000.00',
-                  'variance' => '+₱220,000.00',
-                  'pct' => '+8.8%',
-                  'pct_class' => 'text-success',
-                  'status' => 'Favorable (Under Budget)',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'status_icon' => 'ph-check-circle',
-                  'type' => 'favorable'
-                ],
-                [
-                  'item' => 'Facility Electric Utility & Generator Power',
-                  'cc' => 'CC-104 (Facilities)',
-                  'budget' => '₱600,000.00',
-                  'actual' => '₱645,000.00',
-                  'variance' => '-₱45,000.00',
-                  'pct' => '-7.5%',
-                  'pct_class' => 'text-danger',
-                  'status' => 'Unfavorable (Over Budget)',
-                  'status_badge' => 'bg-danger-subtle text-danger',
-                  'status_icon' => 'ph-warning-circle',
-                  'type' => 'unfavorable'
-                ],
-                [
-                  'item' => 'ICU Surgical Equipment Maintenance',
-                  'cc' => 'CC-102 (ICU Care)',
-                  'budget' => '₱1,800,000.00',
-                  'actual' => '₱1,450,000.00',
-                  'variance' => '+₱350,000.00',
-                  'pct' => '+19.4%',
-                  'pct_class' => 'text-success',
-                  'status' => 'Favorable (Under Budget)',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'status_icon' => 'ph-check-circle',
-                  'type' => 'favorable'
-                ],
+              $vArr = is_array($v) ? $v : [
+                'item' => $v->budget_item ?? 'N/A', 'cc' => $v->cost_center ?? 'N/A',
+                'budget' => '₱' . number_format($v->budgeted_amount ?? 0, 2),
+                'actual' => '₱' . number_format($v->actual_amount ?? 0, 2),
+                'variance' => ($v->variance_amount >= 0 ? '+' : '') . '₱' . number_format($v->variance_amount ?? 0, 2),
+                'pct' => ($v->variance_pct >= 0 ? '+' : '') . number_format($v->variance_pct ?? 0, 1) . '%',
+                'pct_class' => ($v->variance_amount ?? 0) >= 0 ? 'text-success' : 'text-danger',
+                'status' => $v->status ?? 'N/A', 'status_badge' => 'bg-info-subtle text-info',
+                'status_icon' => 'ph-chart-bar', 'type' => 'favorable',
               ];
             @endphp
-
-            @foreach($variances as $v)
-            <tr class="variance-row" style="cursor: pointer;" data-type="{{ $v['type'] }}" data-cc="{{ strtolower($v['cc']) }}" onclick="openVarianceDetailsModal({{ json_encode($v) }})">
+            <tr class="variance-row" style="cursor: pointer;" data-type="{{ $vArr['type'] }}" data-cc="{{ strtolower($vArr['cc']) }}" onclick="openVarianceDetailsModal({{ json_encode($vArr) }})">
               <td>
-                <div class="fw-bold text-dark">{{ $v['item'] }}</div>
-                <span class="fs-xs text-muted">Cost Center: {{ $v['cc'] }}</span>
+                <div class="fw-bold text-dark">{{ $vArr['item'] }}</div>
+                <span class="fs-xs text-muted">Cost Center: {{ $vArr['cc'] }}</span>
               </td>
-              <td class="text-end font-monospace">{{ $v['budget'] }}</td>
-              <td class="text-end font-monospace">{{ $v['actual'] }}</td>
-              <td class="text-end {{ $v['pct_class'] }} fw-bold font-monospace">{{ $v['variance'] }}</td>
-              <td><span class="{{ $v['pct_class'] }} fw-semibold">{{ $v['pct'] }}</span></td>
-              <td><span class="badge {{ $v['status_badge'] }}"><i class="ph {{ $v['status_icon'] }} me-1"></i> {{ $v['status'] }}</span></td>
+              <td class="text-end font-monospace">{{ $vArr['budget'] }}</td>
+              <td class="text-end font-monospace">{{ $vArr['actual'] }}</td>
+              <td class="text-end {{ $vArr['pct_class'] }} fw-bold font-monospace">{{ $vArr['variance'] }}</td>
+              <td><span class="{{ $vArr['pct_class'] }} fw-semibold">{{ $vArr['pct'] }}</span></td>
+              <td><span class="badge {{ $vArr['status_badge'] }}"><i class="ph {{ $vArr['status_icon'] }} me-1"></i> {{ $vArr['status'] }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Variance Details" onclick="openVarianceDetailsModal({{ json_encode($v) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Variance Details" onclick="openVarianceDetailsModal({{ json_encode($vArr) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">No variance records available in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="varianceSummaryText">Showing {{ count($variances) }} Variance Items</span>
+      <span class="text-muted fs-xs" id="varianceSummaryText">Showing {{ count($variances ?? []) }} Variance Items</span>
       <nav aria-label="Variance Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

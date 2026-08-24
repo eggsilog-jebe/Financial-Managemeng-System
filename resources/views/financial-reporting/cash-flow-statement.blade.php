@@ -32,7 +32,7 @@
           <span class="text-muted small fw-medium">Operating Cash Inflow</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-hand-coins fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-success">+₱4,200,000.00</h4>
+        <h4 class="fw-bold mb-0 text-success">+₱0.00</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,7 +41,7 @@
           <span class="text-muted small fw-medium">Investing Cash Outflow</span>
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-shopping-bag fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-danger">-₱1,500,000.00</h4>
+        <h4 class="fw-bold mb-0 text-danger">-₱0.00</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -50,7 +50,7 @@
           <span class="text-muted small fw-medium">Financing Cash Outflow</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-bank fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">-₱500,000.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">-₱0.00</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -59,7 +59,7 @@
           <span class="text-muted small fw-medium">Net Cash Position Increase</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-scales fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-primary">+₱2,200,000.00</h4>
+        <h4 class="fw-bold mb-0 text-primary">+₱0.00</h4>
       </div>
     </div>
   </div>

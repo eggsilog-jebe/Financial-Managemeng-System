@@ -106,76 +106,50 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($departments ?? [] as $d)
             @php
-              $departments = [
-                [
-                  'code' => 'DEPT-ICU-01',
-                  'name' => 'Cardiology & ICU Care',
-                  'head' => 'Dr. Alejandro Santos',
-                  'cap' => '₱22,000,000.00',
-                  'spent' => '₱12,700,000.00',
-                  'available' => '₱9,300,000.00',
-                  'burn' => '57.7%',
-                  'burn_val' => 57.7,
-                  'burn_class' => 'bg-info',
-                  'burn_status' => 'normal'
-                ],
-                [
-                  'code' => 'DEPT-PHARM-02',
-                  'name' => 'Pharmacy & Medical Therapeutics',
-                  'head' => 'Pharm. Elena Rostova',
-                  'cap' => '₱25,000,000.00',
-                  'spent' => '₱19,300,000.00',
-                  'available' => '₱5,700,000.00',
-                  'burn' => '77.2%',
-                  'burn_val' => 77.2,
-                  'burn_class' => 'bg-warning',
-                  'burn_status' => 'high'
-                ],
-                [
-                  'code' => 'DEPT-ER-03',
-                  'name' => 'Emergency Room Operations',
-                  'head' => 'Dr. Marcus Vance',
-                  'cap' => '₱18,000,000.00',
-                  'spent' => '₱8,500,000.00',
-                  'available' => '₱9,500,000.00',
-                  'burn' => '47.2%',
-                  'burn_val' => 47.2,
-                  'burn_class' => 'bg-success',
-                  'burn_status' => 'normal'
-                ],
+              $dArr = is_array($d) ? $d : [
+                'code' => $d->department_code ?? 'N/A', 'name' => $d->name ?? 'N/A',
+                'head' => $d->department_head ?? 'N/A',
+                'cap' => '₱' . number_format($d->budget_cap ?? 0, 2),
+                'spent' => '₱' . number_format($d->amount_spent ?? 0, 2),
+                'available' => '₱' . number_format(($d->budget_cap ?? 0) - ($d->amount_spent ?? 0), 2),
+                'burn' => number_format($d->burn_rate ?? 0, 1) . '%',
+                'burn_val' => $d->burn_rate ?? 0, 'burn_class' => 'bg-info', 'burn_status' => 'normal',
               ];
             @endphp
-
-            @foreach($departments as $d)
-            <tr class="dept-row" style="cursor: pointer;" data-wing="{{ strtolower($d['name']) }}" data-burn="{{ $d['burn_status'] }}" onclick="openDepartmentDetailsModal({{ json_encode($d) }})">
+            <tr class="dept-row" style="cursor: pointer;" data-wing="{{ strtolower($dArr['name']) }}" data-burn="{{ $dArr['burn_status'] }}" onclick="openDepartmentDetailsModal({{ json_encode($dArr) }})">
               <td>
-                <div class="fw-bold text-dark">{{ $d['name'] }}</div>
-                <span class="fs-xs font-monospace text-muted">{{ $d['code'] }}</span>
+                <div class="fw-bold text-dark">{{ $dArr['name'] }}</div>
+                <span class="fs-xs font-monospace text-muted">{{ $dArr['code'] }}</span>
               </td>
-              <td>{{ $d['head'] }}</td>
-              <td class="text-end font-monospace fw-semibold">{{ $d['cap'] }}</td>
-              <td class="text-end text-primary font-monospace">{{ $d['spent'] }}</td>
-              <td class="text-end text-success fw-bold font-monospace">{{ $d['available'] }}</td>
+              <td>{{ $dArr['head'] }}</td>
+              <td class="text-end font-monospace fw-semibold">{{ $dArr['cap'] }}</td>
+              <td class="text-end text-primary font-monospace">{{ $dArr['spent'] }}</td>
+              <td class="text-end text-success fw-bold font-monospace">{{ $dArr['available'] }}</td>
               <td>
                 <div class="d-flex align-items-center gap-2">
                   <div class="progress flex-grow-1" style="height: 6px;">
-                    <div class="progress-bar {{ $d['burn_class'] }}" style="width: {{ $d['burn_val'] }}%;"></div>
+                    <div class="progress-bar {{ $dArr['burn_class'] }}" style="width: {{ $dArr['burn_val'] }}%;"></div>
                   </div>
-                  <span class="fs-xs fw-semibold">{{ $d['burn'] }}</span>
+                  <span class="fs-xs fw-semibold">{{ $dArr['burn'] }}</span>
                 </div>
               </td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Department Details" onclick="openDepartmentDetailsModal({{ json_encode($d) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Department Details" onclick="openDepartmentDetailsModal({{ json_encode($dArr) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">No departmental budgets in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="deptSummaryText">Showing {{ count($departments) }} Departmental Budgets</span>
+      <span class="text-muted fs-xs" id="deptSummaryText">Showing {{ count($departments ?? []) }} Departmental Budgets</span>
       <nav aria-label="Department Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

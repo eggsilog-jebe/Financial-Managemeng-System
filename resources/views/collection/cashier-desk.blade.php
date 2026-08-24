@@ -108,86 +108,44 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($terminals ?? [] as $t)
             @php
-              $terminals = [
-                [
-                  'id' => 'TERM-01',
-                  'location' => 'Main Discharge Desk',
-                  'sub' => 'Building A - Ground Floor',
-                  'cashier' => 'Anna Reyes',
-                  'float' => '₱5,000.00',
-                  'cash' => '₱45,200.00',
-                  'start' => '07:00 AM (Today)',
-                  'status' => 'Open Shift',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'status_icon' => 'ph-circle-wavy-check'
-                ],
-                [
-                  'id' => 'TERM-02',
-                  'location' => 'Emergency Room (ER) Cashier',
-                  'sub' => 'Emergency Ward Entrance',
-                  'cashier' => 'Mark Morales',
-                  'float' => '₱5,000.00',
-                  'cash' => '₱38,150.00',
-                  'start' => '07:00 AM (Today)',
-                  'status' => 'Open Shift',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'status_icon' => 'ph-circle-wavy-check'
-                ],
-                [
-                  'id' => 'TERM-03',
-                  'location' => 'Pharmacy Central Station',
-                  'sub' => 'Outpatient Pharmacy Annex',
-                  'cashier' => 'Sarah Gomez',
-                  'float' => '₱3,000.00',
-                  'cash' => '₱59,050.00',
-                  'start' => '08:00 AM (Today)',
-                  'status' => 'Open Shift',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'status_icon' => 'ph-circle-wavy-check'
-                ],
-                [
-                  'id' => 'TERM-04',
-                  'location' => 'Outpatient Consultation Desk',
-                  'sub' => 'Clinic Building 2F',
-                  'cashier' => 'James Cruz',
-                  'float' => '₱3,000.00',
-                  'cash' => '₱0.00',
-                  'start' => 'Closed',
-                  'status' => 'Closed Shift',
-                  'status_badge' => 'bg-secondary-subtle text-secondary',
-                  'status_icon' => 'ph-minus-circle'
-                ],
+              $tArr = is_array($t) ? $t : [
+                'id' => $t->terminal_id ?? 'TERM-N/A', 'location' => $t->location ?? 'N/A',
+                'sub' => $t->sub_location ?? 'N/A', 'cashier' => $t->cashier_name ?? 'N/A',
+                'float' => '₱' . number_format($t->opening_float ?? 0, 2),
+                'cash' => '₱' . number_format($t->current_cash ?? 0, 2),
+                'start' => $t->shift_started_at ? $t->shift_started_at->format('h:i A') : 'Closed',
+                'status' => $t->status ?? 'Closed', 'status_badge' => 'bg-secondary-subtle text-secondary',
+                'status_icon' => 'ph-minus-circle',
               ];
             @endphp
-
-            @foreach($terminals as $t)
-            <tr class="terminal-row" style="cursor: pointer;" data-station="{{ strtolower($t['location']) }}" data-status="{{ strtolower($t['status']) }}" onclick="openTerminalDetailsModal({{ json_encode($t) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $t['id'] }}</span></td>
+            <tr class="terminal-row" style="cursor: pointer;" data-station="{{ strtolower($tArr['location']) }}" data-status="{{ strtolower($tArr['status']) }}" onclick="openTerminalDetailsModal({{ json_encode($tArr) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $tArr['id'] }}</span></td>
               <td>
-                <div class="fw-semibold text-dark">{{ $t['location'] }}</div>
-                <span class="fs-xs text-muted">{{ $t['sub'] }}</span>
+                <div class="fw-semibold text-dark">{{ $tArr['location'] }}</div>
+                <span class="fs-xs text-muted">{{ $tArr['sub'] }}</span>
               </td>
-              <td class="fw-semibold text-dark">{{ $t['cashier'] }}</td>
-              <td class="text-end text-muted font-monospace">{{ $t['float'] }}</td>
-              <td class="text-end text-success fw-bold font-monospace">{{ $t['cash'] }}</td>
-              <td><span class="text-nowrap font-monospace fs-xs">{{ $t['start'] }}</span></td>
-              <td><span class="badge {{ $t['status_badge'] }}"><i class="ph {{ $t['status_icon'] }} me-1"></i> {{ $t['status'] }}</span></td>
+              <td class="fw-semibold text-dark">{{ $tArr['cashier'] }}</td>
+              <td class="text-end text-muted font-monospace">{{ $tArr['float'] }}</td>
+              <td class="text-end text-success fw-bold font-monospace">{{ $tArr['cash'] }}</td>
+              <td><span class="text-nowrap font-monospace fs-xs">{{ $tArr['start'] }}</span></td>
+              <td><span class="badge {{ $tArr['status_badge'] }}"><i class="ph {{ $tArr['status_icon'] }} me-1"></i> {{ $tArr['status'] }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
-                @if($t['status'] === 'Open Shift')
-                <button class="btn btn-sm btn-outline-primary py-1 px-2" data-bs-toggle="modal" data-bs-target="#closeShiftModal"><i class="ph ph-stop-circle me-1"></i> Close &amp; Remit</button>
-                @else
                 <button class="btn btn-sm btn-primary py-1 px-2" data-bs-toggle="modal" data-bs-target="#openShiftModal"><i class="ph ph-play me-1"></i> Start Shift</button>
-                @endif
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="8" class="text-center py-4 text-muted">No cashier terminals configured in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="terminalSummaryText">Showing {{ count($terminals) }} Terminals</span>
+      <span class="text-muted fs-xs" id="terminalSummaryText">Showing {{ count($terminals ?? []) }} Terminals</span>
       <nav aria-label="Terminal Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

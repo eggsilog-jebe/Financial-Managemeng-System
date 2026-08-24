@@ -105,50 +105,38 @@
             </tr>
           </thead>
           <tbody>
+            @forelse($reallocations ?? [] as $r)
             @php
-              $reallocations = [
-                [
-                  'ref' => 'REAL-2026-05',
-                  'from' => 'Radiology & Imaging',
-                  'to' => 'Facilities & Utilities',
-                  'amount' => '₱150,000.00',
-                  'reason' => 'Coverage for power generator fuel rate hike',
-                  'status' => 'Pending CFO Review',
-                  'status_badge' => 'bg-warning-subtle text-warning',
-                  'status_icon' => 'ph-clock'
-                ],
-                [
-                  'ref' => 'REAL-2026-04',
-                  'from' => 'Outpatient Clinic',
-                  'to' => 'ICU & Emergency',
-                  'amount' => '₱50,000.00',
-                  'reason' => 'Emergency Ventilator Parts Acquisition',
-                  'status' => 'Approved',
-                  'status_badge' => 'bg-success-subtle text-success',
-                  'status_icon' => 'ph-check-circle'
-                ],
+              $rArr = is_array($r) ? $r : [
+                'ref' => $r->reference_number ?? 'REAL-N/A',
+                'from' => $r->source_department ?? 'N/A', 'to' => $r->destination_department ?? 'N/A',
+                'amount' => '₱' . number_format($r->amount ?? 0, 2),
+                'reason' => $r->reason ?? 'N/A', 'status' => $r->status ?? 'Pending',
+                'status_badge' => 'bg-warning-subtle text-warning', 'status_icon' => 'ph-clock',
               ];
             @endphp
-
-            @foreach($reallocations as $r)
-            <tr class="realloc-row" style="cursor: pointer;" data-from="{{ strtolower($r['from']) }}" data-status="{{ strtolower($r['status']) }}" onclick="openReallocationDetailsModal({{ json_encode($r) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $r['ref'] }}</span></td>
-              <td><span class="badge bg-light text-dark border">{{ $r['from'] }}</span></td>
-              <td><span class="badge bg-light text-dark border">{{ $r['to'] }}</span></td>
-              <td class="text-end text-success fw-bold font-monospace">{{ $r['amount'] }}</td>
-              <td class="fs-xs text-muted">{{ $r['reason'] }}</td>
-              <td><span class="badge {{ $r['status_badge'] }}"><i class="ph {{ $r['status_icon'] }} me-1"></i> {{ $r['status'] }}</span></td>
+            <tr class="realloc-row" style="cursor: pointer;" data-from="{{ strtolower($rArr['from']) }}" data-status="{{ strtolower($rArr['status']) }}" onclick="openReallocationDetailsModal({{ json_encode($rArr) }})">
+              <td><span class="font-monospace text-primary fw-bold">{{ $rArr['ref'] }}</span></td>
+              <td><span class="badge bg-light text-dark border">{{ $rArr['from'] }}</span></td>
+              <td><span class="badge bg-light text-dark border">{{ $rArr['to'] }}</span></td>
+              <td class="text-end text-success fw-bold font-monospace">{{ $rArr['amount'] }}</td>
+              <td class="fs-xs text-muted">{{ $rArr['reason'] }}</td>
+              <td><span class="badge {{ $rArr['status_badge'] }}"><i class="ph {{ $rArr['status_icon'] }} me-1"></i> {{ $rArr['status'] }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Transfer Details" onclick="openReallocationDetailsModal({{ json_encode($r) }})"><i class="ph ph-eye"></i></button>
+                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Transfer Details" onclick="openReallocationDetailsModal({{ json_encode($rArr) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">No budget reallocations recorded in database.</td>
+            </tr>
+            @endforelse
           </tbody>
         </table>
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="reallocSummaryText">Showing {{ count($reallocations) }} Transfer Requests</span>
+      <span class="text-muted fs-xs" id="reallocSummaryText">Showing {{ count($reallocations ?? []) }} Transfer Requests</span>
       <nav aria-label="Reallocation Pagination">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>

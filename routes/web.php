@@ -27,7 +27,12 @@ Route::get('/login/quick/{role}', [LoginController::class, 'quickLogin'])->name(
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/logout', [LoginController::class, 'logout'])->name('logout.get');
 
-Route::get('/', DashboardController::class)->name('dashboard');
+Route::get('/', function () {
+    if (! auth()->check()) {
+        return redirect()->route('login');
+    }
+    return app(DashboardController::class)();
+})->name('dashboard');
 
 // 1. General Ledger
 Route::prefix('general-ledger')->name('gl.')->group(function () {

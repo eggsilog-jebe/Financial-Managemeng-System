@@ -2,6 +2,7 @@
   "version": 2,
   "framework": null,
   "outputDirectory": "public",
+  "buildCommand": "npm install && npm run build",
   "functions": {
     "api/index.php": {
       "runtime": "vercel-php@0.7.2"

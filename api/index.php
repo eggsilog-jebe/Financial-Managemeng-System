@@ -32,6 +32,18 @@ foreach ($tmpDirs as $dir) {
 putenv("VIEW_COMPILED_PATH={$tmpStorage}/framework/views");
 $_ENV['VIEW_COMPILED_PATH'] = "{$tmpStorage}/framework/views";
 
+putenv('APP_NAME=HIMS');
+$_ENV['APP_NAME'] = 'HIMS';
+$_SERVER['APP_NAME'] = 'HIMS';
+
+putenv('SESSION_DRIVER=database');
+$_ENV['SESSION_DRIVER'] = 'database';
+$_SERVER['SESSION_DRIVER'] = 'database';
+
+putenv('SESSION_COOKIE=hims_session');
+$_ENV['SESSION_COOKIE'] = 'hims_session';
+$_SERVER['SESSION_COOKIE'] = 'hims_session';
+
 putenv('APP_MAINTENANCE_DRIVER=file');
 $_ENV['APP_MAINTENANCE_DRIVER'] = 'file';
 $_SERVER['APP_MAINTENANCE_DRIVER'] = 'file';

@@ -30,8 +30,9 @@ final class LoginController extends Controller
             'password' => ['required', 'string'],
         ]);
 
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+        if (Auth::attempt($credentials, $request->boolean('remember', true))) {
             $request->session()->regenerate();
+            $request->session()->save();
 
             $user = Auth::user();
 
@@ -63,8 +64,9 @@ final class LoginController extends Controller
         $user = \App\Models\User::where('email', $email)->first();
 
         if ($user) {
-            Auth::login($user);
+            Auth::login($user, true);
             request()->session()->regenerate();
+            request()->session()->save();
 
             return match ($user->role) {
                 'Cashier' => redirect()->route('collection.cashier-desk'),

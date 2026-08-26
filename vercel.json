@@ -37,9 +37,13 @@
     "APP_PACKAGES_CACHE": "/tmp/bootstrap/cache/packages.php",
     "APP_ROUTES_CACHE": "/tmp/bootstrap/cache/routes.php",
     "APP_SERVICES_CACHE": "/tmp/bootstrap/cache/services.php",
-    "VIEW_COMPILED_PATH": "/tmp/storage/framework/views",
+    "APP_NAME": "HIMS",
+    "SESSION_DRIVER": "database",
+    "SESSION_COOKIE": "hims_session",
+    "SESSION_SECURE_COOKIE": "true",
+    "SESSION_LIFETIME": "120",
+    "SESSION_SAME_SITE": "lax",
     "CACHE_STORE": "array",
-    "SESSION_DRIVER": "cookie",
     "LOG_CHANNEL": "stderr"
   }
 }

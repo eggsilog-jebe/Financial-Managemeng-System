@@ -21,4 +21,15 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
         );
+        $exceptions->render(function (\Throwable $e, Request $request) {
+            if (env('APP_DEBUG', true) || $request->has('debug') || !app()->isProduction()) {
+                return response(
+                    "<h1>Deployment Debug Exception:</h1>" .
+                    "<p><strong>Message:</strong> " . htmlspecialchars($e->getMessage()) . "</p>" .
+                    "<p><strong>File:</strong> " . htmlspecialchars($e->getFile()) . ":" . $e->getLine() . "</p>" .
+                    "<pre style='background:#f4f4f4;padding:15px;border-radius:6px;overflow-x:auto;'>" . htmlspecialchars($e->getTraceAsString()) . "</pre>",
+                    500
+                );
+            }
+        });
     })->create();

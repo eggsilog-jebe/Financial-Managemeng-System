@@ -28,6 +28,14 @@ foreach ($tmpDirs as $dir) {
 putenv("VIEW_COMPILED_PATH={$tmpStorage}/framework/views");
 $_ENV['VIEW_COMPILED_PATH'] = "{$tmpStorage}/framework/views";
 
+// Fallback APP_KEY if not configured in Vercel environment variables
+if (empty(getenv('APP_KEY')) && empty($_ENV['APP_KEY'])) {
+    $fallbackAppKey = 'base64:94hD0B9520SllpUQqbmizcIlFw0xahZVzvYBKMQXyeo=';
+    putenv("APP_KEY={$fallbackAppKey}");
+    $_ENV['APP_KEY'] = $fallbackAppKey;
+    $_SERVER['APP_KEY'] = $fallbackAppKey;
+}
+
 // If using SQLite, copy bundled SQLite database to /tmp if needed so it's writable
 $dbConnection = getenv('DB_CONNECTION') ?: ($_ENV['DB_CONNECTION'] ?? 'sqlite');
 if ($dbConnection === 'sqlite') {

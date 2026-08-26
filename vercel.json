@@ -21,8 +21,10 @@
     { "src": "/(.*)",                   "dest": "/api/index.php" }
   ],
   "env": {
+    "APP_KEY": "base64:94hD0B9520SllpUQqbmizcIlFw0xahZVzvYBKMQXyeo=",
     "APP_ENV": "production",
     "APP_DEBUG": "false",
+    "DB_CONNECTION": "sqlite",
     "APP_CONFIG_CACHE": "/tmp/storage/framework/cache/config.php",
     "APP_EVENTS_CACHE": "/tmp/storage/framework/cache/events.php",
     "APP_PACKAGES_CACHE": "/tmp/storage/framework/cache/packages.php",

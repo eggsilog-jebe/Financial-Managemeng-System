@@ -52,6 +52,29 @@ if (file_exists($root . '/bootstrap/cache/services.php') && !file_exists("{$tmpB
     copy($root . '/bootstrap/cache/services.php', "{$tmpBootstrap}/services.php");
 }
 
+// Ensure non-existent dev packages (e.g. pail, collision) are not loaded in production
+if (file_exists("{$tmpBootstrap}/packages.php")) {
+    require_once $root . '/vendor/autoload.php';
+    $packages = require "{$tmpBootstrap}/packages.php";
+    $changed = false;
+    foreach ($packages as $pkg => $cfg) {
+        if (!empty($cfg['providers'])) {
+            $filtered = array_values(array_filter($cfg['providers'], fn ($p) => class_exists($p)));
+            if (count($filtered) !== count($cfg['providers'])) {
+                $packages[$pkg]['providers'] = $filtered;
+                $changed = true;
+            }
+            if (empty($packages[$pkg]['providers'])) {
+                unset($packages[$pkg]);
+                $changed = true;
+            }
+        }
+    }
+    if ($changed) {
+        file_put_contents("{$tmpBootstrap}/packages.php", '<?php return ' . var_export($packages, true) . ';');
+    }
+}
+
 // Fallback APP_KEY if not configured in Vercel environment variables
 if (empty(getenv('APP_KEY')) && empty($_ENV['APP_KEY'])) {
     $fallbackAppKey = 'base64:94hD0B9520SllpUQqbmizcIlFw0xahZVzvYBKMQXyeo=';

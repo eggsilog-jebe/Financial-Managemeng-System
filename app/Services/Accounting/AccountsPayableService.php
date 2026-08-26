@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services\Accounting;
 
+use App\DTOs\Accounting\PurchaseBillCreateData;
 use App\DTOs\JournalEntryData;
 use App\DTOs\JournalLineData;
+use App\DTOs\PurchaseBillItemData;
 use App\DTOs\VendorBillIngestionData;
 use App\Models\Account;
 use App\Models\BillItem;
@@ -20,18 +22,19 @@ use Illuminate\Support\Facades\DB;
 final class AccountsPayableService
 {
     public function __construct(
-        private readonly JournalEntryService $journalEntryService
+        private readonly JournalEntryService $journalEntryService,
+        private readonly CasAuditTrailService $auditTrailService,
     ) {}
 
     /**
-     * Ingest vendor bill, execute 3-Way Match validation, calculate BIR Form 2307 EWT,
+     * Ingest vendor bill from API/DTO, execute 3-Way Match validation, calculate BIR Form 2307 EWT,
      * and automatically post balanced Double-Entry AP journal entry.
      */
-    public function ingestVendorBillAndPostAP(VendorBillIngestionData $data): PurchaseBill
+    public function ingestVendorBillAndPostAP(VendorBillIngestionData|PurchaseBillCreateData $data): PurchaseBill
     {
         return DB::transaction(function () use ($data): PurchaseBill {
             $vendor = Vendor::findOrFail($data->vendorId);
-            $doctor = $data->doctorId ? DoctorProfile::find($data->doctorId) : null;
+            $doctor = property_exists($data, 'doctorId') && $data->doctorId ? DoctorProfile::find($data->doctorId) : null;
 
             // 1. Calculate Gross, BIR EWT Withholding, and Net Payable across line items
             $totalGross = '0.0000';
@@ -40,17 +43,19 @@ final class AccountsPayableService
             $calculatedItems = [];
 
             foreach ($data->items as $item) {
-                $gross = $item->getGrossAmount();
+                $qty = is_array($item) ? (string) ($item['quantity'] ?? '1') : (string) $item->quantity;
+                $unitPrice = is_array($item) ? (string) ($item['unit_price'] ?? '0') : (string) $item->unitPrice;
+                $gross = bcmul($qty, $unitPrice, 4);
                 $totalGross = bcadd($totalGross, $gross, 4);
 
-                // Determine ATC Tax Rate
-                $ewtRate = match ($item->atc_code ?? $item->atcCode) {
-                    'WI158'          => '0.0100', // 1% Goods
-                    'WI160'          => '0.0200', // 2% Services
+                $atc = is_array($item) ? ($item['atc_code'] ?? 'WI158') : ($item->atcCode ?? 'WI158');
+
+                // Determine ATC Tax Rate: 1% goods, 2% services, 10% medical PF
+                $ewtRate = match (strtoupper($atc)) {
+                    'WI158', 'WC158' => '0.0100', // 1% Goods
+                    'WI160', 'WC160' => '0.0200', // 2% Services
                     'WI010'          => '0.1000', // 10% Medical PF (Individual)
                     'WI020'          => '0.1500', // 15% Medical PF (Individual >3M)
-                    'WC158'          => '0.0100', // 1% Corporate Goods
-                    'WC160'          => '0.0200', // 2% Corporate Services
                     default          => '0.0100',
                 };
 
@@ -66,23 +71,38 @@ final class AccountsPayableService
                 $totalNetPayable = bcadd($totalNetPayable, $netPayable, 4);
 
                 $calculatedItems[] = [
-                    'item'       => $item,
-                    'gross'      => $gross,
-                    'ewtRate'    => $ewtRate,
-                    'ewtAmount'  => $ewtAmount,
-                    'netPayable' => $netPayable,
+                    'itemCode'    => is_array($item) ? ($item['item_code'] ?? 'ITEM') : $item->itemCode,
+                    'description' => is_array($item) ? ($item['description'] ?? 'Item Description') : $item->description,
+                    'expenseType' => is_array($item) ? ($item['expense_type'] ?? 'GOODS_INVENTORY') : $item->expenseType,
+                    'quantity'    => $qty,
+                    'unitPrice'   => $unitPrice,
+                    'gross'       => $gross,
+                    'atcCode'     => $atc,
+                    'ewtRate'     => $ewtRate,
+                    'ewtAmount'   => $ewtAmount,
+                    'netPayable'  => $netPayable,
                 ];
             }
 
             // 2. Perform 3-Way Match Verification (PO vs GRN vs Vendor Invoice)
-            $priceVariance = bcsub($totalGross, $data->poAmount, 4);
+            $poAmount = property_exists($data, 'poAmount') ? (string) $data->poAmount : $totalGross;
+            $grnAmount = property_exists($data, 'grnAmount') ? (string) $data->grnAmount : $totalGross;
+
+            $priceVariance = bcsub($totalGross, $poAmount, 4);
+            $receiptVariance = bcsub($totalGross, $grnAmount, 4);
+
             $matchStatus = 'MATCHED';
             if (bccomp($priceVariance, '0.0000', 4) !== 0) {
                 $matchStatus = bccomp($priceVariance, '0.0000', 4) > 0 ? 'OVER_BILLED' : 'PRICE_MISMATCH';
+            } elseif (bccomp($receiptVariance, '0.0000', 4) !== 0) {
+                $matchStatus = 'QTY_MISMATCH';
             }
 
             // 3. Create Master Purchase Bill
-            $billNumber = 'BILL-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(3)));
+            $billNumber = property_exists($data, 'billNumber') && $data->billNumber
+                ? $data->billNumber
+                : ('BILL-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(3))));
+
             $bill = PurchaseBill::create([
                 'bill_number'  => $billNumber,
                 'vendor_id'    => $vendor->id,
@@ -90,7 +110,7 @@ final class AccountsPayableService
                 'due_date'     => $data->dueDate,
                 'total_amount' => $totalGross,
                 'paid_amount'  => '0.0000',
-                'status'       => 'UNPAID',
+                'status'       => ($matchStatus === 'MATCHED') ? 'APPROVED' : 'UNPAID',
             ]);
 
             // 4. Record 3-Way Match Record
@@ -99,27 +119,27 @@ final class AccountsPayableService
                 'po_number'             => $data->poNumber,
                 'grn_number'            => $data->grnNumber,
                 'vendor_invoice_number' => $data->vendorInvoiceNumber,
-                'po_amount'             => $data->poAmount,
-                'grn_amount'            => $data->grnAmount,
+                'po_amount'             => $poAmount,
+                'grn_amount'            => $grnAmount,
                 'invoice_amount'        => $totalGross,
                 'price_variance'        => $priceVariance,
                 'quantity_variance'     => '0.00',
                 'match_status'          => $matchStatus,
-                'approved_by'           => auth()->id(),
-                'approved_at'           => now(),
+                'approved_by'           => ($matchStatus === 'MATCHED' && auth()->check()) ? auth()->id() : null,
+                'approved_at'           => ($matchStatus === 'MATCHED') ? now() : null,
             ]);
 
             // 5. Persist Bill Items
             foreach ($calculatedItems as $c) {
                 BillItem::create([
                     'purchase_bill_id' => $bill->id,
-                    'item_code'        => $c['item']->itemCode,
-                    'description'      => $c['item']->description,
-                    'expense_type'     => $c['item']->expenseType,
-                    'quantity'         => $c['item']->quantity,
-                    'unit_price'       => $c['item']->unitPrice,
+                    'item_code'        => $c['itemCode'],
+                    'description'      => $c['description'],
+                    'expense_type'     => $c['expenseType'],
+                    'quantity'         => $c['quantity'],
+                    'unit_price'       => $c['unitPrice'],
                     'gross_amount'     => $c['gross'],
-                    'atc_code'         => $c['item']->atcCode,
+                    'atc_code'         => $c['atcCode'],
                     'ewt_rate'         => $c['ewtRate'],
                     'ewt_amount'       => $c['ewtAmount'],
                     'net_payable'      => $c['netPayable'],
@@ -138,7 +158,7 @@ final class AccountsPayableService
                     'period_to'          => $data->dueDate,
                     'payee_name'         => $doctor ? $doctor->full_name : $vendor->name,
                     'payee_tin'          => $doctor ? $doctor->tin : ($vendor->tin ?? '000-000-000-000'),
-                    'atc_code'           => $calculatedItems[0]['item']->atcCode ?? 'WI158',
+                    'atc_code'           => $calculatedItems[0]['atcCode'] ?? 'WI158',
                     'tax_base_amount'    => $totalGross,
                     'tax_rate'           => $calculatedItems[0]['ewtRate'] ?? '0.0100',
                     'tax_withheld'       => $totalEwt,
@@ -147,7 +167,18 @@ final class AccountsPayableService
             }
 
             // 7. Post General Ledger AP Double-Entry Journal
-            $this->postAPDoubleEntry($bill, $data, $vendor, $totalGross, $totalNetPayable, $totalEwt);
+            $this->postAPDoubleEntry($bill, $data->billDate, $vendor, $totalGross, $totalNetPayable, $totalEwt);
+
+            // Log event in BIR CAS audit trail
+            $this->auditTrailService->logFinancialEvent(
+                auditable: $bill,
+                action: 'INSERT',
+                oldValues: null,
+                newValues: $bill->toArray(),
+                userId: auth()->id(),
+                userName: auth()->user()?->name ?? 'System Service',
+                ipAddress: request()?->ip() ?? '127.0.0.1',
+            );
 
             return $bill->loadMissing(['items', 'threeWayMatch', 'birCertificate', 'vendor']);
         });
@@ -155,7 +186,7 @@ final class AccountsPayableService
 
     private function postAPDoubleEntry(
         PurchaseBill $bill,
-        VendorBillIngestionData $data,
+        string $billDate,
         Vendor $vendor,
         string $totalGross,
         string $netPayable,
@@ -204,8 +235,8 @@ final class AccountsPayableService
         }
 
         $entryData = new JournalEntryData(
-            referenceNumber: $bill->bill_number,
-            entryDate: $data->billDate,
+            referenceNumber: 'JE-AP-' . $bill->bill_number,
+            entryDate: $billDate,
             description: "AP accrual & EWT deduction for {$bill->bill_number} ({$vendor->name})",
             type: 'GENERAL',
             postedBy: auth()->id(),

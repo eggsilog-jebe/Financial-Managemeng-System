@@ -37,7 +37,7 @@ final class LoginController extends Controller
 
             // Redirect appropriately based on user role
             return match ($user->role ?? 'StaffAccountant') {
-                'Cashier' => redirect()->intended(route('accounting.cashier.index')),
+                'Cashier' => redirect()->intended(route('collection.cashier-desk')),
                 default   => redirect()->intended(route('accounting.dashboard')),
             };
         }
@@ -67,7 +67,7 @@ final class LoginController extends Controller
             request()->session()->regenerate();
 
             return match ($user->role) {
-                'Cashier' => redirect()->route('accounting.cashier.index'),
+                'Cashier' => redirect()->route('collection.cashier-desk'),
                 default   => redirect()->route('accounting.dashboard'),
             };
         }

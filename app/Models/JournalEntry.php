@@ -63,6 +63,21 @@ final class JournalEntry extends Model
         return $this->belongsTo(User::class, 'posted_by');
     }
 
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'posted_by');
+    }
+
+    public function reversedByEntry(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class, 'reversed_by_entry_id');
+    }
+
+    public function reversalOf(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(JournalEntry::class, 'reversed_by_entry_id');
+    }
+
     public function getTotalDebitAttribute(): string
     {
         return (string) $this->lines->sum('debit');
@@ -71,5 +86,23 @@ final class JournalEntry extends Model
     public function getTotalCreditAttribute(): string
     {
         return (string) $this->lines->sum('credit');
+    }
+
+    /** @param \Illuminate\Database\Eloquent\Builder<JournalEntry> $query */
+    public function scopePosted(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->where('status', 'POSTED');
+    }
+
+    /** @param \Illuminate\Database\Eloquent\Builder<JournalEntry> $query */
+    public function scopeDraft(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->where('status', 'DRAFT');
+    }
+
+    /** @param \Illuminate\Database\Eloquent\Builder<JournalEntry> $query */
+    public function scopeReversed(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->where('status', 'REVERSED');
     }
 }

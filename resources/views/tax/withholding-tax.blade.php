@@ -18,7 +18,12 @@
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Withholding Tax Certificates (BIR Form 2307 / 2306)</h1>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <x-integration-badge 
+          type="internal" 
+          :systems="['Accounts Payable', 'BIR Form 2307', 'BIR Form 1601-EQ']" 
+          description="Tracks expanded withholding tax (EWT) and generates 2307 certificates." 
+      />
       <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Exporting BIR DAT E-Submission file...');"><i class="ph ph-file-arrow-down me-1"></i> Export BIR E-Submission</button>
       <button id="btnIssueCert" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#issueCertModal"><i class="ph ph-plus-circle me-1"></i> Issue 2307 Certificate</button>
     </div>

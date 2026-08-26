@@ -12,15 +12,46 @@
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb mb-1 fs-xs">
           <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
-          <li class="breadcrumb-item">General Ledger</li>
+          <li class="breadcrumb-item"><a href="{{ route('gl.journal-entries') }}">General Ledger</a></li>
           <li class="breadcrumb-item active">Trial Balance</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Statement of Trial Balance</h1>
+      <h1 class="h3 mb-0 font-weight-bold text-dark">Statement of General Ledger Trial Balance</h1>
+      <p class="text-muted fs-xs mb-0">Real-time audit verification hub asserting strict double-entry equality ($\sum \text{Debits} = \sum \text{Credits}$).</p>
     </div>
-    <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="window.print()"><i class="ph ph-printer me-1"></i> Print Statement</button>
-      <button class="btn btn-primary btn-sm" type="button" onclick="alert('Trial Balance PDF Statement exported!');"><i class="ph ph-file-pdf me-1"></i> Export Trial Balance PDF</button>
+    <div class="d-flex align-items-center gap-2">
+      <x-integration-badge 
+          type="internal" 
+          :systems="['General Ledger']" 
+          description="Real-time double-entry trial balance invariance verifier." 
+      />
+      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="window.print()">
+        <i class="ph ph-printer me-1"></i> Print Statement
+      </button>
+      <a href="{{ route('gl.trial-balance.export', ['as_of_date' => $asOfDate, 'hide_zero_balances' => $hideZeroBalances ? '1' : '0', 'category' => $selectedCategory]) }}" class="btn btn-primary btn-sm">
+        <i class="ph ph-file-arrow-down me-1"></i> Export Trial Balance (CSV)
+      </a>
+    </div>
+  </div>
+
+  <!-- Real-Time Audit Status Banner -->
+  <div class="p-3 mb-4 rounded-3 border d-flex align-items-center justify-content-between {{ $isBalanced ? 'bg-success-subtle text-success border-success' : 'bg-danger-subtle text-danger border-danger' }}">
+    <div class="d-flex align-items-center gap-3">
+      <i class="ph {{ $isBalanced ? 'ph-shield-check' : 'ph-warning-octagon' }} fs-2"></i>
+      <div>
+        <h5 class="fw-bold mb-0 {{ $isBalanced ? 'text-success' : 'text-danger' }}">
+          {{ $isBalanced ? 'TRIAL BALANCE IS BALANCED & AUDIT VERIFIED' : 'OUT OF BALANCE - VARIANCE DETECTED' }}
+        </h5>
+        <span class="fs-xs">
+          {{ $isBalanced ? 'Total debits exactly equal total credits across all active balance sheet and nominal accounts.' : 'A double-entry variance has been detected. Check unposted drafts or unbalanced journal lines.' }}
+        </span>
+      </div>
+    </div>
+    <div class="text-end font-monospace">
+      <span class="fs-xs text-uppercase d-block">Variance Discrepancy</span>
+      <span class="fs-4 fw-bold {{ $isBalanced ? 'text-success' : 'text-danger' }}">
+        ₱{{ number_format(abs($discrepancy ?? 0), 2) }}
+      </span>
     </div>
   </div>
 
@@ -29,37 +60,37 @@
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Debit Balance</span>
+          <span class="text-muted small fw-medium">Total Debit Balances</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-arrow-up-right fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-success" id="tbTotalDebitCard">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-success font-monospace">₱{{ number_format($totalDebitBalance ?? 0, 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Credit Balance</span>
+          <span class="text-muted small fw-medium">Total Credit Balances</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-arrow-down-left fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-primary" id="tbTotalCreditCard">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-primary font-monospace">₱{{ number_format($totalCreditBalance ?? 0, 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Balance Discrepancy</span>
-          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-scales fs-5"></i></span>
+          <span class="text-muted small fw-medium">Accounts in Report</span>
+          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-book-open fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark" id="tbDiscrepancyCard">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ count($rows ?? []) }} Accounts</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
           <span class="text-muted small fw-medium">Audit Verification</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-shield-check fs-5"></i></span>
+          <span class="badge bg-secondary-subtle text-secondary p-2 rounded-2"><i class="ph ph-stamp fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">Passed</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ $isBalanced ? 'GAAP Compliant' : 'Unbalanced' }}</h4>
       </div>
     </div>
   </div>
@@ -67,247 +98,116 @@
   <!-- Data Table Card -->
   <div class="card border-0 shadow-sm rounded-3">
     <div class="card-header bg-transparent border-bottom p-3">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <div class="d-flex align-items-center gap-2">
-          <label for="tbCategorySelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Category:</label>
-          <select id="tbCategorySelect" class="form-select form-select-sm bg-light" style="min-width: 200px;">
-            <option value="" selected>All Categories</option>
-            <option value="asset">Assets</option>
-            <option value="liability">Liabilities</option>
-            <option value="equity">Equity</option>
-            <option value="revenue">Revenue</option>
-            <option value="expense">Expenses</option>
-          </select>
+      <form method="GET" action="{{ route('gl.trial-balance') }}">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+          <!-- As Of Date -->
+          <div class="d-flex align-items-center gap-2">
+            <label for="tbDateInput" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-calendar me-1"></i> As-Of Date:</label>
+            <input type="date" name="as_of_date" id="tbDateInput" class="form-control form-control-sm bg-light" value="{{ $asOfDate ?? date('Y-m-d') }}" onchange="this.form.submit()">
+          </div>
+
+          <!-- Category -->
+          <div class="d-flex align-items-center gap-2">
+            <label for="tbCategorySelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Category:</label>
+            <select name="category" id="tbCategorySelect" class="form-select form-select-sm bg-light" style="min-width: 170px;" onchange="this.form.submit()">
+              <option value="" {{ empty($selectedCategory) ? 'selected' : '' }}>All Categories</option>
+              <option value="ASSET" {{ ($selectedCategory ?? '') === 'ASSET' ? 'selected' : '' }}>Assets (1000s)</option>
+              <option value="LIABILITY" {{ ($selectedCategory ?? '') === 'LIABILITY' ? 'selected' : '' }}>Liabilities (2000s)</option>
+              <option value="EQUITY" {{ ($selectedCategory ?? '') === 'EQUITY' ? 'selected' : '' }}>Equity (3000s)</option>
+              <option value="REVENUE" {{ ($selectedCategory ?? '') === 'REVENUE' ? 'selected' : '' }}>Revenue (4000s)</option>
+              <option value="EXPENSE" {{ ($selectedCategory ?? '') === 'EXPENSE' ? 'selected' : '' }}>Expenses (5000s)</option>
+            </select>
+          </div>
+
+          <!-- Hide Zero-Balance Toggle -->
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" name="hide_zero_balances" value="1" id="hideZeroToggle" {{ $hideZeroBalances ? 'checked' : '' }} onchange="this.form.submit()">
+            <label class="form-check-label small fw-semibold" for="hideZeroToggle">Hide Zero-Balance Accounts</label>
+          </div>
+
+          <!-- Search Bar -->
+          <div class="search-box ms-auto" style="width: 260px;">
+            <i class="ph ph-magnifying-glass"></i>
+            <input type="search" name="q" id="tbSearchInput" class="form-control form-control-sm" placeholder="Search account code, title..." value="{{ $search ?? '' }}">
+          </div>
         </div>
-        <div class="d-flex align-items-center gap-2">
-          <label for="tbDateInput" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-calendar me-1"></i> As-Of Date:</label>
-          <input type="date" id="tbDateInput" class="form-control form-control-sm bg-light" value="{{ date('Y-m-d') }}" style="min-width: 170px;">
-        </div>
-        <div class="search-box ms-auto" style="width: 260px;">
-          <i class="ph ph-magnifying-glass"></i>
-          <input type="search" id="tbSearchInput" class="form-control form-control-sm" placeholder="Search account code, title...">
-        </div>
-      </div>
+      </form>
     </div>
+
     <div class="card-body p-0">
       <div class="table-responsive">
         <table id="trialBalanceTable" class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
-              <th>Account Code</th>
+              <th style="width: 120px;">Account Code</th>
               <th>Account Title</th>
               <th>Category</th>
-              <th class="text-end">Debit Balance (₱)</th>
-              <th class="text-end">Credit Balance (₱)</th>
-              <th class="text-end">Actions</th>
+              <th>Normal Balance</th>
+              <th class="text-end" style="width: 180px;">Debit Balance (₱)</th>
+              <th class="text-end" style="width: 180px;">Credit Balance (₱)</th>
+              <th class="text-end" style="width: 100px;">Ledger</th>
             </tr>
           </thead>
           <tbody>
-            @forelse($accounts ?? [] as $acc)
+            @forelse($rows as $row)
             @php
-              $code      = $acc->code;
-              $title     = $acc->name;
-              $category  = ucfirst(strtolower($acc->category));
-              $catKey    = strtolower($acc->category);
-              $normalBal = $acc->normal_balance;
-              $balance   = (float) $acc->current_balance;
-              $badgeClass = match(strtolower($category)) {
-                'asset'     => 'bg-success-subtle text-success',
-                'liability' => 'bg-danger-subtle text-danger',
-                'equity'    => 'bg-primary-subtle text-primary',
-                'revenue'   => 'bg-info-subtle text-info',
-                default     => 'bg-warning-subtle text-warning',
+              $debitVal = (float) $row['debit'];
+              $creditVal = (float) $row['credit'];
+              $catUpper = strtoupper((string) $row['category']);
+              $badgeClass = match($catUpper) {
+                'ASSET'     => 'bg-success-subtle text-success',
+                'LIABILITY' => 'bg-danger-subtle text-danger',
+                'EQUITY'    => 'bg-primary-subtle text-primary',
+                'REVENUE'   => 'bg-info-subtle text-info',
+                'EXPENSE'   => 'bg-warning-subtle text-warning',
+                default     => 'bg-secondary-subtle text-secondary',
               };
-              $accData = [
-                'code'         => $code,
-                'title'        => $title,
-                'category'     => $category,
-                'category_key' => $catKey,
-                'debit'        => strtoupper($normalBal) === 'DEBIT' ? '₱' . number_format($balance, 2) : '-',
-                'credit'       => strtoupper($normalBal) === 'CREDIT' ? '₱' . number_format($balance, 2) : '-',
-                'badge'        => $badgeClass,
-              ];
             @endphp
-            <tr class="tb-row" style="cursor: pointer;" data-category="{{ $catKey }}" onclick="openTbDetailsModal({{ json_encode($accData) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $code }}</span></td>
-              <td><div class="fw-bold text-dark">{{ $title }}</div></td>
-              <td><span class="badge {{ $badgeClass }}">{{ $category }}</span></td>
-              <td class="text-end text-success fw-bold font-monospace">{{ $accData['debit'] }}</td>
-              <td class="text-end text-danger fw-bold font-monospace">{{ $accData['credit'] }}</td>
-              <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Trial Balance Details" onclick="openTbDetailsModal({{ json_encode($accData) }})"><i class="ph ph-eye"></i></button>
+            <tr>
+              <td><span class="badge bg-secondary-subtle text-secondary font-monospace fs-xs px-2 py-1">{{ $row['code'] }}</span></td>
+              <td><div class="fw-semibold text-dark">{{ $row['name'] }}</div></td>
+              <td><span class="badge {{ $badgeClass }} fs-xs">{{ $catUpper }}</span></td>
+              <td><span class="badge bg-light text-dark border font-monospace fs-xs">{{ $row['normal_balance'] }}</span></td>
+              <td class="text-end font-monospace {{ $debitVal > 0 ? 'fw-bold text-dark' : 'text-muted' }}">
+                {{ $debitVal > 0 ? '₱' . number_format($debitVal, 2) : '-' }}
+              </td>
+              <td class="text-end font-monospace {{ $creditVal > 0 ? 'fw-bold text-dark' : 'text-muted' }}">
+                {{ $creditVal > 0 ? '₱' . number_format($creditVal, 2) : '-' }}
+              </td>
+              <td class="text-end">
+                <a href="{{ route('gl.ledger-books', ['account_id' => $row['id'], 'end_date' => $asOfDate]) }}" class="btn btn-sm btn-icon btn-outline-secondary" title="View Account Ledger Book">
+                  <i class="ph ph-book-open"></i>
+                </a>
               </td>
             </tr>
             @empty
             <tr>
-              <td colspan="6" class="text-center py-4 text-muted">No trial balance records found in database.</td>
+              <td colspan="7" class="text-center py-5 text-muted">
+                <i class="ph ph-scales fs-2 d-block mb-2 text-secondary"></i>
+                No account balances found matching criteria.
+              </td>
             </tr>
             @endforelse
           </tbody>
-          <tfoot class="table-dark font-monospace fw-bold">
+          <tfoot class="table-light fw-bold">
             <tr>
-              <td colspan="3" class="text-end fs-6">TOTAL TRIAL BALANCE:</td>
-              <td class="text-end text-success fs-6" id="footDebitTotal">₱{{ number_format($totalDebitBalance, 2) }}</td>
-              <td class="text-end text-info fs-6" id="footCreditTotal">₱{{ number_format($totalCreditBalance, 2) }}</td>
+              <td colspan="4" class="text-end">TRIAL BALANCE TOTALS:</td>
+              <td class="text-end font-monospace text-success fs-5">₱{{ number_format($totalDebitBalance ?? 0, 2) }}</td>
+              <td class="text-end font-monospace text-primary fs-5">₱{{ number_format($totalCreditBalance ?? 0, 2) }}</td>
               <td></td>
             </tr>
           </tfoot>
         </table>
       </div>
     </div>
+
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="tbSummaryText">Showing {{ count($accounts ?? []) }} Trial Balance Accounts</span>
-      <nav aria-label="TB Pagination">
-        <ul class="pagination pagination-sm mb-0">
-          <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
-          <li class="page-item active"><a class="page-link" href="#">1</a></li>
-          <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
-        </ul>
-      </nav>
-    </div>
-  </div>
-</div>
-
-<!-- Modal: In-Depth Trial Balance Details (Executive Design) -->
-<div class="modal fade" id="tbDetailsModal" tabindex="-1" aria-labelledby="tbDetailsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-      <div class="modal-header bg-white border-bottom p-4 pb-3">
-        <div>
-          <div class="d-flex align-items-center gap-2 mb-1">
-            <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1" id="detailTbCode">1010</span>
-            <span class="badge bg-success-subtle text-success" id="detailTbCategory">Asset</span>
-          </div>
-          <h4 class="modal-title fw-bold text-dark mb-0" id="detailTbTitle">Metrobank Operating Cash Account</h4>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-
-      <div class="modal-body p-4 bg-light-subtle">
-        <div class="row g-3 mb-4">
-          <div class="col-md-6">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Debit Balance</span>
-              <h4 class="fw-bold text-success mb-0 font-monospace" id="detailTbDebit">₱4,850,000.00</h4>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Credit Balance</span>
-              <h4 class="fw-bold text-danger mb-0 font-monospace" id="detailTbCredit">-</h4>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white border rounded-3 p-3 mb-4">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-scales me-1 text-primary"></i> Trial Balance Equality Scope</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">As-Of Reporting Date</span>
-              <span class="font-monospace fw-bold text-dark">{{ date('Y-m-d') }}</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">General Ledger Trial Solvency</span>
-              <span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> Equal Debit &amp; Credit Solvency</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Audit Trail & Segregation of Duties -->
-        <div class="bg-white border rounded-3 p-3">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-success"></i> Audit Trail &amp; Double-Entry Verification</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Audit Verification Status:</span>
-              <span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> Passed Trial Balance Audit</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">System Audit Stamp:</span>
-              <span class="font-monospace text-muted">LOG-TB-2026-001 | {{ date('Y-m-d H:i:s') }} PST</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer bg-white border-top p-3">
-        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-sm btn-primary" onclick="alert('Exporting Trial Balance Audit PDF...');"><i class="ph ph-file-text me-1"></i> Export Account Audit</button>
-      </div>
+      <span class="text-muted fs-xs">Report As of: {{ $asOfDate }} | BIR CAS Compliant</span>
+      <span class="fw-bold fs-xs {{ $isBalanced ? 'text-success' : 'text-danger' }}">
+        <i class="ph {{ $isBalanced ? 'ph-check-circle' : 'ph-x-circle' }} me-1"></i>
+        {{ $isBalanced ? 'Double-Entry Invariance Satisfied (0.00 Variance)' : 'Double-Entry Invariance Broken' }}
+      </span>
     </div>
   </div>
 </div>
 @endsection
-
-@push('scripts')
-<script>
-function openTbDetailsModal(acc) {
-  if (!acc) return;
-
-  document.getElementById('detailTbTitle').textContent = acc.title || 'Account Title';
-  document.getElementById('detailTbCode').textContent = acc.code || '0000';
-  document.getElementById('detailTbCategory').textContent = acc.category || 'Asset';
-  document.getElementById('detailTbDebit').textContent = acc.debit || '-';
-  document.getElementById('detailTbCredit').textContent = acc.credit || '-';
-
-  const modalEl = document.getElementById('tbDetailsModal');
-  if (modalEl && window.bootstrap) {
-    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-    modalInstance.show();
-  }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  const searchInput = document.getElementById('tbSearchInput');
-  const categorySelect = document.getElementById('tbCategorySelect');
-  const summaryText = document.getElementById('tbSummaryText');
-
-  function filterTrialBalance() {
-    const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
-    const selectedCategory = categorySelect ? categorySelect.value.toLowerCase() : '';
-    const rows = document.querySelectorAll('.tb-row');
-    let visibleCount = 0;
-
-    rows.forEach(function(row) {
-      const rowCategory = row.getAttribute('data-category') || '';
-      const rowText = row.textContent.toLowerCase();
-
-      const matchCategory = !selectedCategory || rowCategory === selectedCategory;
-      const matchSearch = !searchQuery || rowText.includes(searchQuery);
-
-      if (matchCategory && matchSearch) {
-        row.style.display = '';
-        visibleCount++;
-      } else {
-        row.style.display = 'none';
-      }
-    });
-
-    if (summaryText) {
-      summaryText.textContent = `Showing ${visibleCount} Trial Balance Account${visibleCount !== 1 ? 's' : ''}`;
-    }
-
-    let emptyRow = document.getElementById('noTBRow');
-    const tbody = document.querySelector('#trialBalanceTable tbody');
-    if (visibleCount === 0) {
-      if (!emptyRow && tbody) {
-        emptyRow = document.createElement('tr');
-        emptyRow.id = 'noTBRow';
-        emptyRow.innerHTML = `<td colspan="6" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No accounts found matching the current filter.</td>`;
-        tbody.appendChild(emptyRow);
-      }
-      if (emptyRow) emptyRow.style.display = '';
-    } else if (emptyRow) {
-      emptyRow.style.display = 'none';
-    }
-  }
-
-  if (searchInput) {
-    searchInput.addEventListener('input', filterTrialBalance);
-    searchInput.addEventListener('keyup', filterTrialBalance);
-  }
-  if (categorySelect) categorySelect.addEventListener('change', filterTrialBalance);
-
-  filterTrialBalance();
-});
-</script>
-@endpush

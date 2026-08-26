@@ -16,50 +16,85 @@
           <li class="breadcrumb-item active">Journal Entries</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Double-Entry Journal Entries</h1>
+      <h1 class="h3 mb-0 font-weight-bold text-dark">Double-Entry Journal Entries</h1>
+      <p class="text-muted fs-xs mb-0">Record, verify, post, and reverse GAAP/IFRS balanced transactions in the hospital transaction ledger.</p>
     </div>
-    <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Exporting Journal Entry Log PDF...');"><i class="ph ph-file-arrow-down me-1"></i> Export Journal Log</button>
-      <button id="btnNewJournal" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#newJournalModal"><i class="ph ph-plus-circle me-1"></i> New Journal Entry</button>
+    <div class="d-flex align-items-center gap-2">
+      <x-integration-badge 
+          type="internal" 
+          :systems="['Subledgers (AP, AR, Cash, Disbursement, Collection)']" 
+          description="Central double-entry posting engine and general journal register." 
+      />
+      <a href="{{ route('gl.ledger-books.export') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="ph ph-file-arrow-down me-1"></i> Export Master GL
+      </a>
+      <button id="btnNewJournal" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#newJournalModal">
+        <i class="ph ph-plus-circle me-1"></i> New Journal Entry
+      </button>
     </div>
   </div>
+
+  @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show rounded-3 fs-sm" role="alert">
+      <i class="ph ph-check-circle me-1"></i> {{ session('success') }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
+
+  @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show rounded-3 fs-sm" role="alert">
+      <i class="ph ph-warning-circle me-1"></i> {{ session('error') }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
+
+  @if($errors->any())
+    <div class="alert alert-danger alert-dismissible fade show rounded-3 fs-sm" role="alert">
+      <ul class="mb-0 ps-3">
+        @foreach($errors->all() as $err)
+          <li>{{ $err }}</li>
+        @endforeach
+      </ul>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
 
   <!-- Metric Summary Cards -->
   <div class="row g-3 mb-4">
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Debit Volume (Month)</span>
+          <span class="text-muted small fw-medium">Monthly Debit Volume</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-arrow-up-right fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($monthlyDebitTotal, 2) }}</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($monthlyDebitTotal ?? 0, 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Credit Volume (Month)</span>
+          <span class="text-muted small fw-medium">Monthly Credit Volume</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-arrow-down-left fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($monthlyCreditTotal, 2) }}</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($monthlyCreditTotal ?? 0, 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Posted Journal Entries</span>
+          <span class="text-muted small fw-medium">Posted to Ledger</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ $postedCount }} {{ Str::plural('Entry', $postedCount) }}</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ $postedCount ?? 0 }} {{ Str::plural('Entry', $postedCount ?? 0) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Unposted Draft Entries</span>
+          <span class="text-muted small fw-medium">Draft / Pending Entries</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ $draftCount }} {{ Str::plural('Draft', $draftCount) }}</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ $draftCount ?? 0 }} {{ Str::plural('Draft', $draftCount ?? 0) }}</h4>
       </div>
     </div>
   </div>
@@ -67,211 +102,335 @@
   <!-- Data Table Card -->
   <div class="card border-0 shadow-sm rounded-3">
     <div class="card-header bg-transparent border-bottom p-3">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <div class="d-flex align-items-center gap-2">
-          <label for="journalStatusSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Status:</label>
-          <select id="journalStatusSelect" class="form-select form-select-sm bg-light" style="min-width: 180px;">
-            <option value="" selected>All Posting Statuses</option>
-            <option value="posted">Posted to Ledger</option>
-            <option value="draft">Draft Entry</option>
-          </select>
+      <form method="GET" action="{{ route('gl.journal-entries') }}">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+          <div class="d-flex align-items-center gap-2">
+            <label for="journalStatusSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Status:</label>
+            <select name="status" id="journalStatusSelect" class="form-select form-select-sm bg-light" style="min-width: 160px;" onchange="this.form.submit()">
+              <option value="" {{ empty($selectedStatus) ? 'selected' : '' }}>All Statuses</option>
+              <option value="POSTED" {{ ($selectedStatus ?? '') === 'POSTED' ? 'selected' : '' }}>POSTED</option>
+              <option value="DRAFT" {{ ($selectedStatus ?? '') === 'DRAFT' ? 'selected' : '' }}>DRAFT</option>
+              <option value="REVERSED" {{ ($selectedStatus ?? '') === 'REVERSED' ? 'selected' : '' }}>REVERSED</option>
+            </select>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <label for="journalTypeSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap">Type:</label>
+            <select name="type" id="journalTypeSelect" class="form-select form-select-sm bg-light" style="min-width: 160px;" onchange="this.form.submit()">
+              <option value="" {{ empty($selectedType) ? 'selected' : '' }}>All Types</option>
+              <option value="GENERAL" {{ ($selectedType ?? '') === 'GENERAL' ? 'selected' : '' }}>General Journal</option>
+              <option value="ADJUSTING" {{ ($selectedType ?? '') === 'ADJUSTING' ? 'selected' : '' }}>Adjusting Entry</option>
+              <option value="CLOSING" {{ ($selectedType ?? '') === 'CLOSING' ? 'selected' : '' }}>Closing Entry</option>
+            </select>
+          </div>
+          <div class="search-box ms-auto" style="width: 260px;">
+            <i class="ph ph-magnifying-glass"></i>
+            <input type="search" name="q" id="journalSearchInput" class="form-control form-control-sm" placeholder="Search entry ref, description..." value="{{ $search ?? '' }}">
+          </div>
         </div>
-        <div class="d-flex align-items-center gap-2">
-          <label for="journalTypeSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap">Type:</label>
-          <select id="journalTypeSelect" class="form-select form-select-sm bg-light" style="min-width: 180px;">
-            <option value="" selected>All Journal Types</option>
-            <option value="general">General Journal</option>
-            <option value="adjusting">Adjusting Entry</option>
-            <option value="closing">Closing Entry</option>
-          </select>
-        </div>
-        <div class="search-box ms-auto" style="width: 260px;">
-          <i class="ph ph-magnifying-glass"></i>
-          <input type="search" id="journalSearchInput" class="form-control form-control-sm" placeholder="Search entry ref, description...">
-        </div>
-      </div>
+      </form>
     </div>
+
     <div class="card-body p-0">
       <div class="table-responsive">
         <table id="journalTable" class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
-              <th>Entry Ref</th>
+              <th style="width: 40px;"></th>
+              <th>Entry Ref #</th>
               <th>Date</th>
-              <th>Journal Description</th>
-              <th class="text-end">Debit Amount (₱)</th>
-              <th class="text-end">Credit Amount (₱)</th>
+              <th>Type</th>
+              <th>Narrative / Description</th>
+              <th class="text-end">Total Debit (₱)</th>
+              <th class="text-end">Total Credit (₱)</th>
               <th>Status</th>
-              <th class="text-end">Actions</th>
+              <th>Created By</th>
+              <th class="text-end" style="width: 160px;">Actions</th>
             </tr>
           </thead>
           <tbody>
-            @forelse($entries ?? [] as $je)
+            @forelse($entries as $entry)
             @php
-              $ref       = $je->reference_number;
-              $date      = $je->entry_date->format('Y-m-d');
-              $title     = $je->description;
-              $status    = ucfirst(strtolower($je->status));
-              $type      = strtolower($je->type);
-              $debitSum  = '₱' . number_format($je->lines->sum('debit'), 2);
-              $creditSum = '₱' . number_format($je->lines->sum('credit'), 2);
-              $jeData = [
-                'ref'    => $ref,
-                'date'   => $date,
-                'title'  => $title,
-                'debit'  => $debitSum,
-                'credit' => $creditSum,
-                'status' => $status,
-                'type'   => $type,
-                'badge'  => $status === 'Posted' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning',
-              ];
+              $totalDebit = (float) $entry->lines->sum('debit');
+              $totalCredit = (float) $entry->lines->sum('credit');
+              $statusClass = match($entry->status) {
+                'POSTED'   => 'bg-success-subtle text-success',
+                'DRAFT'    => 'bg-warning-subtle text-warning',
+                'REVERSED' => 'bg-danger-subtle text-danger',
+                default    => 'bg-secondary-subtle text-secondary',
+              };
+              $collapseId = 'linesCollapse-' . $entry->id;
             @endphp
-            <tr class="journal-row" style="cursor: pointer;" data-status="{{ strtolower($status) }}" data-type="{{ strtolower($type) }}" onclick="openJournalDetailsModal({{ json_encode($jeData) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $ref }}</span></td>
-              <td class="font-monospace fs-xs">{{ $date }}</td>
+            <!-- Main Row -->
+            <tr class="align-middle">
               <td>
-                <div class="fw-semibold text-dark">{{ $title }}</div>
+                <button class="btn btn-sm btn-icon btn-light border-0 py-0" type="button" data-bs-toggle="collapse" data-bs-target="#{{ $collapseId }}" aria-expanded="false" aria-controls="{{ $collapseId }}" title="Expand/Collapse Lines">
+                  <i class="ph ph-caret-down"></i>
+                </button>
               </td>
-              <td class="text-end text-success fw-bold font-monospace">{{ $debitSum }}</td>
-              <td class="text-end text-danger fw-bold font-monospace">{{ $creditSum }}</td>
-              <td><span class="badge {{ $jeData['badge'] }}"><i class="ph ph-check-circle me-1"></i> {{ $status }}</span></td>
-              <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Journal Voucher" onclick="openJournalDetailsModal({{ json_encode($jeData) }})"><i class="ph ph-eye"></i></button>
+              <td>
+                <span class="badge bg-secondary-subtle text-dark font-monospace fs-xs px-2 py-1">{{ $entry->reference_number }}</span>
+              </td>
+              <td><span class="fs-xs font-monospace text-muted">{{ $entry->entry_date->format('Y-m-d') }}</span></td>
+              <td><span class="badge bg-light text-dark border fs-xs">{{ $entry->type }}</span></td>
+              <td>
+                <div class="fw-semibold text-dark fs-sm">{{ $entry->description }}</div>
+                @if($entry->reversed_by_entry_id && $entry->reversedByEntry)
+                  <span class="fs-xs text-danger d-block">
+                    <i class="ph ph-arrow-u-down-left me-1"></i>Reversed by {{ $entry->reversedByEntry->reference_number }}
+                  </span>
+                @endif
+              </td>
+              <td class="text-end fw-bold text-dark font-monospace fs-sm">₱{{ number_format($totalDebit, 2) }}</td>
+              <td class="text-end fw-bold text-dark font-monospace fs-sm">₱{{ number_format($totalCredit, 2) }}</td>
+              <td>
+                <span class="badge {{ $statusClass }} font-monospace fs-xs px-2 py-1">
+                  {{ $entry->status }}
+                </span>
+              </td>
+              <td><span class="fs-xs text-muted">{{ $entry->creator?->name ?? 'System User' }}</span></td>
+              <td class="text-end">
+                <div class="d-flex justify-content-end gap-1">
+                  @if($entry->status === 'DRAFT')
+                    <form action="{{ route('gl.journal-entries.post', $entry->id) }}" method="POST" class="d-inline">
+                      @csrf
+                      <button type="submit" class="btn btn-sm btn-success py-1 px-2" title="Post to General Ledger">
+                        <i class="ph ph-check me-1"></i> Post
+                      </button>
+                    </form>
+                  @elseif($entry->status === 'POSTED')
+                    <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2" title="Reverse Journal Entry" onclick="openReverseModal({{ $entry->id }}, '{{ $entry->reference_number }}')">
+                      <i class="ph ph-arrow-u-down-left me-1"></i> Reverse
+                    </button>
+                  @else
+                    <span class="badge bg-secondary-subtle text-secondary fs-xs">VOIDED</span>
+                  @endif
+                </div>
+              </td>
+            </tr>
+
+            <!-- Nested Debit/Credit Lines (Expandable Accordion) -->
+            <tr class="p-0 border-0">
+              <td colspan="10" class="p-0 border-0">
+                <div class="collapse" id="{{ $collapseId }}">
+                  <div class="p-3 bg-light-subtle border-start border-4 border-primary ms-3 me-3 my-2 rounded-2">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <span class="fw-bold fs-xs text-uppercase text-secondary">
+                        <i class="ph ph-list-numbers me-1 text-primary"></i> Journal Entry Lines Breakdown (#{{ $entry->reference_number }})
+                      </span>
+                      <span class="fs-xs text-muted">Posted: {{ $entry->posted_at ? $entry->posted_at->format('Y-m-d H:i') : 'Pending Post' }}</span>
+                    </div>
+                    <table class="table table-sm table-bordered bg-white mb-0 fs-xs">
+                      <thead class="table-light">
+                        <tr>
+                          <th style="width: 120px;">Account Code</th>
+                          <th>Account Title</th>
+                          <th>Line Memo</th>
+                          <th class="text-end" style="width: 140px;">Debit (₱)</th>
+                          <th class="text-end" style="width: 140px;">Credit (₱)</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @foreach($entry->lines as $line)
+                        <tr>
+                          <td><span class="badge bg-secondary-subtle text-secondary font-monospace">{{ $line->account->code ?? 'N/A' }}</span></td>
+                          <td class="fw-semibold text-dark">{{ $line->account->name ?? 'Unknown Account' }}</td>
+                          <td class="text-muted">{{ $line->memo ?? '-' }}</td>
+                          <td class="text-end font-monospace {{ (float)$line->debit > 0 ? 'fw-bold text-dark' : 'text-muted' }}">
+                            {{ (float)$line->debit > 0 ? '₱' . number_format((float)$line->debit, 2) : '-' }}
+                          </td>
+                          <td class="text-end font-monospace {{ (float)$line->credit > 0 ? 'fw-bold text-dark' : 'text-muted' }}">
+                            {{ (float)$line->credit > 0 ? '₱' . number_format((float)$line->credit, 2) : '-' }}
+                          </td>
+                        </tr>
+                        @endforeach
+                      </tbody>
+                      <tfoot class="table-light fw-bold">
+                        <tr>
+                          <td colspan="3" class="text-end">Balance Invariance Assertion:</td>
+                          <td class="text-end font-monospace text-success">₱{{ number_format($totalDebit, 2) }}</td>
+                          <td class="text-end font-monospace text-success">₱{{ number_format($totalCredit, 2) }}</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
               </td>
             </tr>
             @empty
             <tr>
-              <td colspan="7" class="text-center py-4 text-muted">No journal entries posted in database.</td>
+              <td colspan="10" class="text-center py-5 text-muted">
+                <i class="ph ph-receipt-x fs-2 d-block mb-2 text-secondary"></i>
+                No journal entries found matching criteria.
+              </td>
             </tr>
             @endforelse
           </tbody>
         </table>
       </div>
     </div>
+
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="journalSummaryText">Showing {{ count($entries ?? []) }} Journal Entries</span>
-      <nav aria-label="Journal Pagination">
-        <ul class="pagination pagination-sm mb-0">
-          <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
-          <li class="page-item active"><a class="page-link" href="#">1</a></li>
-          <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
-        </ul>
-      </nav>
+      <span class="text-muted fs-xs">Showing {{ $entries->count() }} of {{ $entries->total() }} entries</span>
+      {{ $entries->links() }}
     </div>
   </div>
 </div>
 
-<!-- Modal: In-Depth Journal Details (Executive Design) -->
-<div class="modal fade" id="journalDetailsModal" tabindex="-1" aria-labelledby="journalDetailsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-      <div class="modal-header bg-white border-bottom p-4 pb-3">
-        <div>
-          <div class="d-flex align-items-center gap-2 mb-1">
-            <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1" id="detailJeRef">JE-2026-0045</span>
-            <span class="badge bg-success-subtle text-success" id="detailJeStatus"><i class="ph ph-check-circle me-1"></i> Posted to Ledger</span>
-          </div>
-          <h4 class="modal-title fw-bold text-dark mb-0" id="detailJeTitle">Outpatient Lab Consultation &amp; Testing Revenue Settlement</h4>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-
-      <div class="modal-body p-4 bg-light-subtle">
-        <div class="row g-3 mb-4">
-          <div class="col-md-6">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Total Debit Amount</span>
-              <h4 class="fw-bold text-success mb-0 font-monospace" id="detailJeDebit">₱350,000.00</h4>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Total Credit Amount</span>
-              <h4 class="fw-bold text-danger mb-0 font-monospace" id="detailJeCredit">₱350,000.00</h4>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white border rounded-3 p-3 mb-4">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-book-open me-1 text-primary"></i> Journal Entry Metadata</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Journal Voucher Posting Date</span>
-              <span class="font-monospace fw-bold text-dark" id="detailJeDate">2026-08-10</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">Double-Entry Accounting Rule</span>
-              <span class="font-monospace text-primary fw-bold">Balanced Debit / Credit Double Entry</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Audit Trail & Segregation of Duties -->
-        <div class="bg-white border rounded-3 p-3">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-success"></i> Audit Trail &amp; General Ledger Verification</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">General Ledger Posting Verification:</span>
-              <span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> Verified by Chief Accountant</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">System Audit Stamp:</span>
-              <span class="font-monospace text-muted">LOG-JE-2026-0045 | {{ date('Y-m-d H:i:s') }} PST</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer bg-white border-top p-3">
-        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-sm btn-primary" onclick="alert('Exporting Journal Voucher PDF...');"><i class="ph ph-printer me-1"></i> Print Journal Voucher</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal: New Journal Entry -->
+<!-- Modal: New Manual Journal Entry Builder (Dynamic Repeater + Real-Time BCMath Invariance Counter) -->
 <div class="modal fade" id="newJournalModal" tabindex="-1" aria-labelledby="newJournalModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title font-weight-bold" id="newJournalModalLabel"><i class="ph ph-plus-circle me-2 text-primary"></i>Post Double-Entry Journal Voucher</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header bg-primary text-white p-3 px-4">
+        <h5 class="modal-title fw-bold" id="newJournalModalLabel"><i class="ph ph-receipt me-2"></i>Create Manual Journal Entry</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body p-4">
-        <form id="newJournalForm">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Journal Entry Date <span class="text-danger">*</span></label>
-              <input type="date" id="modalEntryDate" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
+
+      <form action="{{ route('gl.journal-entries.store') }}" method="POST" id="journalEntryForm">
+        @csrf
+        <div class="modal-body p-4">
+          <!-- Header Information -->
+          <div class="row g-3 mb-4 p-3 bg-light-subtle rounded-3 border">
+            <div class="col-md-3">
+              <label class="form-label small fw-semibold">Entry Date <span class="text-danger">*</span></label>
+              <input type="date" name="entry_date" id="entryDateInput" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
+              <div class="form-text fs-xs">Must fall in an OPEN fiscal period.</div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-3">
               <label class="form-label small fw-semibold">Journal Type <span class="text-danger">*</span></label>
-              <select id="modalJournalType" class="form-select form-select-sm" required>
-                <option value="General">General Journal</option>
-                <option value="Adjusting">Adjusting Entry</option>
-                <option value="Closing">Closing Entry</option>
+              <select name="type" class="form-select form-select-sm" required>
+                <option value="GENERAL">GENERAL</option>
+                <option value="ADJUSTING">ADJUSTING</option>
+                <option value="CLOSING">CLOSING</option>
               </select>
             </div>
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Balanced Debit / Credit Amount (₱) <span class="text-danger">*</span></label>
-              <input type="number" id="modalAmount" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace" placeholder="0.00" value="150000.00" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Target Debit Account <span class="text-danger">*</span></label>
-              <input type="text" class="form-control form-control-sm" value="1010 - Cash on Hand - Main Vault" required>
-            </div>
-            <div class="col-12">
-              <label class="form-label small fw-semibold">Journal Explanation / Remarks <span class="text-danger">*</span></label>
-              <input type="text" id="modalDescription" class="form-control form-control-sm" placeholder="e.g. Settlement of outpatient consultation fees..." required>
+              <label class="form-label small fw-semibold">Description / Narrative <span class="text-danger">*</span></label>
+              <input type="text" name="description" class="form-control form-control-sm" placeholder="e.g. Monthly Accrual of Biomedical Oxygen Supplies" required>
             </div>
           </div>
-          <div class="d-flex justify-content-end gap-2 mt-4">
+
+          <!-- Line Items Repeater -->
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="fw-bold mb-0 text-dark fs-sm text-uppercase"><i class="ph ph-list-plus me-1 text-primary"></i> Debit &amp; Credit Line Items</h6>
+            <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddLineBtn" onclick="addJournalLineRow()">
+              <i class="ph ph-plus me-1"></i> Add Line
+            </button>
+          </div>
+
+          <div class="table-responsive mb-3">
+            <table class="table table-sm table-bordered align-middle mb-0" id="linesTable">
+              <thead class="table-light">
+                <tr>
+                  <th style="width: 32%;">General Ledger Account <span class="text-danger">*</span></th>
+                  <th style="width: 28%;">Line Memo / Reference</th>
+                  <th style="width: 18%;" class="text-end">Debit (₱)</th>
+                  <th style="width: 18%;" class="text-end">Credit (₱)</th>
+                  <th style="width: 4%;"></th>
+                </tr>
+              </thead>
+              <tbody id="linesTableBody">
+                <!-- Line Row 1 (Debit default) -->
+                <tr class="line-row">
+                  <td>
+                    <select name="lines[0][account_id]" class="form-select form-select-sm account-selector" required>
+                      <option value="" disabled selected>Select Account...</option>
+                      @foreach($accounts as $acc)
+                        <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }} ({{ $acc->category }})</option>
+                      @endforeach
+                    </select>
+                  </td>
+                  <td><input type="text" name="lines[0][memo]" class="form-control form-control-sm" placeholder="Line memo..."></td>
+                  <td><input type="number" step="0.01" min="0" name="lines[0][debit]" class="form-control form-control-sm text-end debit-input font-monospace" placeholder="0.00" value="0.00" oninput="calculateBalance()"></td>
+                  <td><input type="number" step="0.01" min="0" name="lines[0][credit]" class="form-control form-control-sm text-end credit-input font-monospace" placeholder="0.00" value="0.00" oninput="calculateBalance()"></td>
+                  <td class="text-center"><button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="removeJournalLine(this)"><i class="ph ph-trash"></i></button></td>
+                </tr>
+
+                <!-- Line Row 2 (Credit default) -->
+                <tr class="line-row">
+                  <td>
+                    <select name="lines[1][account_id]" class="form-select form-select-sm account-selector" required>
+                      <option value="" disabled selected>Select Account...</option>
+                      @foreach($accounts as $acc)
+                        <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }} ({{ $acc->category }})</option>
+                      @endforeach
+                    </select>
+                  </td>
+                  <td><input type="text" name="lines[1][memo]" class="form-control form-control-sm" placeholder="Line memo..."></td>
+                  <td><input type="number" step="0.01" min="0" name="lines[1][debit]" class="form-control form-control-sm text-end debit-input font-monospace" placeholder="0.00" value="0.00" oninput="calculateBalance()"></td>
+                  <td><input type="number" step="0.01" min="0" name="lines[1][credit]" class="form-control form-control-sm text-end credit-input font-monospace" placeholder="0.00" value="0.00" oninput="calculateBalance()"></td>
+                  <td class="text-center"><button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="removeJournalLine(this)"><i class="ph ph-trash"></i></button></td>
+                </tr>
+              </tbody>
+              <tfoot class="table-light">
+                <tr class="fw-bold">
+                  <td colspan="2" class="text-end">Double-Entry Totals:</td>
+                  <td class="text-end font-monospace" id="totalDebitsDisplay">₱0.00</td>
+                  <td class="text-end font-monospace" id="totalCreditsDisplay">₱0.00</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <!-- Real-Time Invariance Status Banner -->
+          <div id="balanceStatusBanner" class="p-3 rounded-3 border d-flex align-items-center justify-content-between bg-danger-subtle text-danger">
+            <div class="d-flex align-items-center gap-2">
+              <i class="ph ph-warning-circle fs-4" id="bannerIcon"></i>
+              <div>
+                <span class="fw-bold d-block" id="bannerStatusTitle">Unbalanced Journal Entry</span>
+                <span class="fs-xs" id="bannerStatusSubtitle">Total debits must strictly equal total credits before posting.</span>
+              </div>
+            </div>
+            <div class="text-end">
+              <span class="fs-xs text-muted d-block">Variance:</span>
+              <span class="fw-bold font-monospace fs-5" id="varianceAmount">₱0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer bg-light p-3 d-flex justify-content-between">
+          <div>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="auto_post" value="1" id="autoPostSwitch" checked>
+              <label class="form-check-label small fw-semibold" for="autoPostSwitch">Immediately Post to General Ledger</label>
+            </div>
+          </div>
+          <div class="d-flex gap-2">
             <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-check me-1"></i> Post Journal Entry</button>
+            <button type="submit" class="btn btn-sm btn-primary px-4 fw-semibold" id="btnSubmitJournal" disabled>
+              <i class="ph ph-check me-1"></i> Submit Journal Entry
+            </button>
           </div>
-        </form>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Reverse Journal Entry (Reason justification for CAS audit) -->
+<div class="modal fade" id="reverseModal" tabindex="-1" aria-labelledby="reverseModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header bg-danger text-white p-3 px-4">
+        <h5 class="modal-title fw-bold" id="reverseModalLabel"><i class="ph ph-arrow-u-down-left me-2"></i>Reverse Journal Entry</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
+      <form id="reverseForm" method="POST" action="">
+        @csrf
+        <div class="modal-body p-4">
+          <p class="fs-sm text-muted">
+            You are about to reverse posted journal entry <strong id="reverseEntryRef" class="font-monospace text-dark">JE-0000</strong>. This will generate an automated counter-balancing journal entry swapping all debits and credits, mark the original entry as <strong>REVERSED</strong>, and record an immutable BIR CAS audit trail.
+          </p>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Justification Reason for Reversal <span class="text-danger">*</span></label>
+            <textarea name="reason" class="form-control form-control-sm" rows="3" placeholder="Provide reason for adjustment / correction..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer bg-light p-3">
+          <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-sm btn-danger px-3"><i class="ph ph-arrow-u-down-left me-1"></i> Confirm Reversal</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
@@ -279,161 +438,103 @@
 
 @push('scripts')
 <script>
-function openJournalDetailsModal(je) {
-  if (!je) return;
+let lineIndex = 2;
 
-  document.getElementById('detailJeTitle').textContent = je.title || 'Journal Description';
-  document.getElementById('detailJeRef').textContent = je.ref || 'JE-000';
-  document.getElementById('detailJeDate').textContent = je.date || '-';
-  document.getElementById('detailJeDebit').textContent = je.debit || '₱0.00';
-  document.getElementById('detailJeCredit').textContent = je.credit || '₱0.00';
+const accountsData = {!! json_encode($accounts->map(fn ($a) => ['id' => $a->id, 'code' => $a->code, 'name' => $a->name, 'category' => $a->category])) !!};
 
-  const statusEl = document.getElementById('detailJeStatus');
-  if (statusEl) {
-    statusEl.textContent = je.status;
-    statusEl.className = 'badge ' + (je.badge || 'bg-success-subtle text-success');
+function addJournalLineRow() {
+  const tbody = document.getElementById('linesTableBody');
+  const tr = document.createElement('tr');
+  tr.className = 'line-row';
+
+  let optionsHtml = '<option value="" disabled selected>Select Account...</option>';
+  accountsData.forEach(acc => {
+    optionsHtml += `<option value="${acc.id}">${acc.code} - ${acc.name} (${acc.category})</option>`;
+  });
+
+  tr.innerHTML = `
+    <td>
+      <select name="lines[${lineIndex}][account_id]" class="form-select form-select-sm account-selector" required>
+        ${optionsHtml}
+      </select>
+    </td>
+    <td><input type="text" name="lines[${lineIndex}][memo]" class="form-control form-control-sm" placeholder="Line memo..."></td>
+    <td><input type="number" step="0.01" min="0" name="lines[${lineIndex}][debit]" class="form-control form-control-sm text-end debit-input font-monospace" placeholder="0.00" value="0.00" oninput="calculateBalance()"></td>
+    <td><input type="number" step="0.01" min="0" name="lines[${lineIndex}][credit]" class="form-control form-control-sm text-end credit-input font-monospace" placeholder="0.00" value="0.00" oninput="calculateBalance()"></td>
+    <td class="text-center"><button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="removeJournalLine(this)"><i class="ph ph-trash"></i></button></td>
+  `;
+
+  tbody.appendChild(tr);
+  lineIndex++;
+  calculateBalance();
+}
+
+function removeJournalLine(btn) {
+  const rows = document.querySelectorAll('.line-row');
+  if (rows.length <= 2) {
+    alert('A double-entry journal entry requires at least 2 lines (debit and credit).');
+    return;
   }
+  btn.closest('tr').remove();
+  calculateBalance();
+}
 
-  const modalEl = document.getElementById('journalDetailsModal');
+function calculateBalance() {
+  let totalDebit = 0;
+  let totalCredit = 0;
+
+  document.querySelectorAll('.debit-input').forEach(input => {
+    const val = parseFloat(input.value) || 0;
+    totalDebit += val;
+  });
+
+  document.querySelectorAll('.credit-input').forEach(input => {
+    const val = parseFloat(input.value) || 0;
+    totalCredit += val;
+  });
+
+  document.getElementById('totalDebitsDisplay').textContent = '₱' + totalDebit.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById('totalCreditsDisplay').textContent = '₱' + totalCredit.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const diff = Math.abs(totalDebit - totalCredit);
+  document.getElementById('varianceAmount').textContent = '₱' + diff.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const banner = document.getElementById('balanceStatusBanner');
+  const icon = document.getElementById('bannerIcon');
+  const title = document.getElementById('bannerStatusTitle');
+  const subtitle = document.getElementById('bannerStatusSubtitle');
+  const submitBtn = document.getElementById('btnSubmitJournal');
+
+  const isBalanced = diff < 0.001 && totalDebit > 0;
+
+  if (isBalanced) {
+    banner.className = 'p-3 rounded-3 border d-flex align-items-center justify-content-between bg-success-subtle text-success';
+    icon.className = 'ph ph-check-circle fs-4';
+    title.textContent = 'Double-Entry Invariance Satisfied: BALANCED';
+    subtitle.textContent = 'Total Debits equal Total Credits (₱' + totalDebit.toLocaleString('en-PH', { minimumFractionDigits: 2 }) + '). Ready for posting.';
+    submitBtn.disabled = false;
+  } else {
+    banner.className = 'p-3 rounded-3 border d-flex align-items-center justify-content-between bg-danger-subtle text-danger';
+    icon.className = 'ph ph-warning-circle fs-4';
+    title.textContent = 'Unbalanced Journal Entry';
+    subtitle.textContent = totalDebit === 0 ? 'Enter non-zero debit and credit amounts.' : 'Total debits must strictly equal total credits before posting.';
+    submitBtn.disabled = true;
+  }
+}
+
+function openReverseModal(entryId, refNumber) {
+  document.getElementById('reverseEntryRef').textContent = refNumber;
+  const form = document.getElementById('reverseForm');
+  form.action = "{{ url('/general-ledger/journal-entries') }}/" + entryId + "/reverse";
+
+  const modalEl = document.getElementById('reverseModal');
   if (modalEl && window.bootstrap) {
-    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-    modalInstance.show();
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
   }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-  const searchInput = document.getElementById('journalSearchInput');
-  const statusSelect = document.getElementById('journalStatusSelect');
-  const typeSelect = document.getElementById('journalTypeSelect');
-  const summaryText = document.getElementById('journalSummaryText');
-  const btnNewJournal = document.getElementById('btnNewJournal');
-
-  if (btnNewJournal) {
-    btnNewJournal.addEventListener('click', function() {
-      const modalEl = document.getElementById('newJournalModal');
-      if (modalEl && window.bootstrap) {
-        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-        modalInstance.show();
-      }
-    });
-  }
-
-  function filterJournals() {
-    const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
-    const selectedStatus = statusSelect ? statusSelect.value.toLowerCase() : '';
-    const selectedType = typeSelect ? typeSelect.value.toLowerCase() : '';
-    const rows = document.querySelectorAll('.journal-row');
-    let visibleCount = 0;
-
-    rows.forEach(function(row) {
-      const rowStatus = row.getAttribute('data-status') || '';
-      const rowType = row.getAttribute('data-type') || '';
-      const rowText = row.textContent.toLowerCase();
-
-      const matchStatus = !selectedStatus || rowStatus.includes(selectedStatus);
-      const matchType = !selectedType || rowType.includes(selectedType);
-      const matchSearch = !searchQuery || rowText.includes(searchQuery);
-
-      if (matchStatus && matchType && matchSearch) {
-        row.style.display = '';
-        visibleCount++;
-      } else {
-        row.style.display = 'none';
-      }
-    });
-
-    if (summaryText) {
-      summaryText.textContent = `Showing ${visibleCount} Journal Entr${visibleCount !== 1 ? 'ies' : 'y'}`;
-    }
-
-    let emptyRow = document.getElementById('noJournalRow');
-    const tbody = document.querySelector('#journalTable tbody');
-    if (visibleCount === 0) {
-      if (!emptyRow && tbody) {
-        emptyRow = document.createElement('tr');
-        emptyRow.id = 'noJournalRow';
-        emptyRow.innerHTML = `<td colspan="7" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No journal entries found matching the current filter.</td>`;
-        tbody.appendChild(emptyRow);
-      }
-      if (emptyRow) emptyRow.style.display = '';
-    } else if (emptyRow) {
-      emptyRow.style.display = 'none';
-    }
-  }
-
-  if (searchInput) {
-    searchInput.addEventListener('input', filterJournals);
-    searchInput.addEventListener('keyup', filterJournals);
-  }
-  if (statusSelect) statusSelect.addEventListener('change', filterJournals);
-  if (typeSelect) typeSelect.addEventListener('change', filterJournals);
-
-  const newJournalForm = document.getElementById('newJournalForm');
-  if (newJournalForm) {
-    newJournalForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-
-      const dateVal = document.getElementById('modalEntryDate').value;
-      const typeVal = document.getElementById('modalJournalType').value;
-      const descVal = document.getElementById('modalDescription').value;
-      const rawAmount = parseFloat(document.getElementById('modalAmount').value || 0);
-      const formattedAmount = '₱' + rawAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const nextRef = 'JE-2026-00' + Math.floor(46 + Math.random() * 50);
-
-      const jeObj = {
-        ref: nextRef,
-        date: dateVal,
-        title: descVal,
-        debit: formattedAmount,
-        credit: formattedAmount,
-        status: 'Posted',
-        type: typeVal.toLowerCase(),
-        badge: 'bg-success-subtle text-success'
-      };
-
-      const tbody = document.querySelector('#journalTable tbody');
-      if (tbody) {
-        const newRow = document.createElement('tr');
-        newRow.className = 'journal-row';
-        newRow.style.cursor = 'pointer';
-        newRow.setAttribute('data-status', 'posted');
-        newRow.setAttribute('data-type', typeVal.toLowerCase());
-
-        newRow.onclick = function() { openJournalDetailsModal(jeObj); };
-
-        newRow.innerHTML = `
-          <td><span class="font-monospace text-primary fw-bold">${nextRef}</span></td>
-          <td class="font-monospace fs-xs">${dateVal}</td>
-          <td><div class="fw-semibold text-dark">${descVal}</div></td>
-          <td class="text-end text-success fw-bold font-monospace">${formattedAmount}</td>
-          <td class="text-end text-danger fw-bold font-monospace">${formattedAmount}</td>
-          <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> Posted</span></td>
-          <td class="text-end" onclick="event.stopPropagation();">
-            <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Journal Voucher"><i class="ph ph-eye"></i></button>
-          </td>
-        `;
-
-        const eyeBtn = newRow.querySelector('button[title="View Journal Voucher"]');
-        if (eyeBtn) {
-          eyeBtn.onclick = function(ex) {
-            ex.stopPropagation();
-            openJournalDetailsModal(jeObj);
-          };
-        }
-
-        tbody.insertBefore(newRow, tbody.firstChild);
-      }
-
-      const modalEl = document.getElementById('newJournalModal');
-      const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-      if (modalInstance) modalInstance.hide();
-
-      newJournalForm.reset();
-      filterJournals();
-    });
-  }
-
-  filterJournals();
+  calculateBalance();
 });
 </script>
 @endpush

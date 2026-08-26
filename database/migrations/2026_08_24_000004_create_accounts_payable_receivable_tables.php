@@ -30,7 +30,7 @@ return new class extends Migration
             $table->date('due_date')->index();
             $table->decimal('total_amount', 15, 4);
             $table->decimal('paid_amount', 15, 4)->default(0.0000);
-            $table->enum('status', ['UNPAID', 'PARTIAL', 'PAID', 'OVERDUE'])->default('UNPAID')->index();
+            $table->string('status', 30)->default('UNPAID')->index();
             $table->timestamps();
         });
 

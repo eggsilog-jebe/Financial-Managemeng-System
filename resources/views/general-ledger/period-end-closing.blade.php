@@ -12,27 +12,63 @@
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb mb-1 fs-xs">
           <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
-          <li class="breadcrumb-item">General Ledger</li>
+          <li class="breadcrumb-item"><a href="{{ route('gl.journal-entries') }}">General Ledger</a></li>
           <li class="breadcrumb-item active">Period-End Closing</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Period-End Financial Closing &amp; GL Locking</h1>
+      <h1 class="h3 mb-0 font-weight-bold text-dark">Period-End Financial Closing &amp; GL Locking</h1>
+      <p class="text-muted fs-xs mb-0">Manage 12-month fiscal periods, enforce soft GL transaction freezes, and execute CFO nominal account rollovers.</p>
     </div>
-    <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Running pre-closing audit scan...');"><i class="ph ph-list-checks me-1"></i> Pre-Closing Audit</button>
-      <button id="btnClosePeriod" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#closePeriodModal"><i class="ph ph-lock-key me-1"></i> Execute Period Close</button>
+    <div class="d-flex align-items-center gap-2">
+      <x-integration-badge 
+          type="internal" 
+          :systems="['Fiscal Periods', 'Audit Logs']" 
+          description="Fiscal period cutoff lock and hard-close compliance control." 
+      />
+      <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#initYearModal">
+        <i class="ph ph-calendar-plus me-1"></i> Initialize Fiscal Year
+      </button>
+      <a href="{{ route('gl.trial-balance') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="ph ph-shield-check me-1"></i> Pre-Closing Trial Balance
+      </a>
     </div>
   </div>
+
+  @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show rounded-3 fs-sm" role="alert">
+      <i class="ph ph-check-circle me-1"></i> {{ session('success') }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
+
+  @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show rounded-3 fs-sm" role="alert">
+      <i class="ph ph-warning-circle me-1"></i> {{ session('error') }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
+
+  @if($errors->any())
+    <div class="alert alert-danger alert-dismissible fade show rounded-3 fs-sm" role="alert">
+      <ul class="mb-0 ps-3">
+        @foreach($errors->all() as $err)
+          <li>{{ $err }}</li>
+        @endforeach
+      </ul>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
 
   <!-- Metric Summary Cards -->
   <div class="row g-3 mb-4">
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Current Active Period</span>
+          <span class="text-muted small fw-medium">Active Operating Period</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-calendar-blank fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark" id="activePeriodText">{{ $activePeriod ?? date('F Y') }}</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ $activePeriod ?? date('F Y') }}</h4>
+        <span class="fs-xs text-muted">Current Month Ledger</span>
       </div>
     </div>
     <div class="col-md-3">
@@ -41,190 +77,206 @@
           <span class="text-muted small fw-medium">Unposted Draft Entries</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark" id="pendingTasksCount">{{ $unpostedEntriesCount ?? 0 }} {{ Str::plural('Entry', $unpostedEntriesCount ?? 0) }}</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ $unpostedEntriesCount ?? 0 }} {{ Str::plural('Entry', $unpostedEntriesCount ?? 0) }}</h4>
+        <span class="fs-xs text-muted">Must be posted before close</span>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
           <span class="text-muted small fw-medium">Total Ledger Entries</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-lock fs-5"></i></span>
+          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-receipt fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark" id="closedPeriodsCount">{{ $totalEntriesCount ?? 0 }} Entries</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ $totalEntriesCount ?? 0 }} Entries</h4>
+        <span class="fs-xs text-muted">Lifetime transactions recorded</span>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">GL Lock Integrity</span>
-          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-shield-check fs-5"></i></span>
+          <span class="text-muted small fw-medium">GL Closing Integrity</span>
+          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-lock-key fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark" id="lockStatusText">{{ ($unpostedEntriesCount ?? 0) === 0 ? 'Audited & Secure' : 'Pending Verification' }}</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ ($unpostedEntriesCount ?? 0) === 0 ? 'Ready for Close' : 'Drafts Pending' }}</h4>
+        <span class="fs-xs text-muted">BIR CAS Chain Verified</span>
       </div>
     </div>
   </div>
 
-  <!-- Closing Checklist Table Card -->
+  <!-- Periods Management Table -->
   <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-transparent border-bottom p-3">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <div class="d-flex align-items-center gap-2">
-          <label for="procedureStatusSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Verification Status:</label>
-          <select id="procedureStatusSelect" class="form-select form-select-sm bg-light" style="min-width: 200px;">
-            <option value="" selected>All Statuses</option>
-            <option value="completed">Completed &amp; Verified</option>
-            <option value="pending">Pending Match</option>
+    <div class="card-header bg-transparent border-bottom p-3 d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-2">
+        <form method="GET" action="{{ route('gl.period-end-closing') }}" class="d-flex align-items-center gap-2">
+          <label for="fySelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Fiscal Year:</label>
+          <select name="fiscal_year" id="fySelect" class="form-select form-select-sm bg-light" style="min-width: 140px;" onchange="this.form.submit()">
+            @foreach($allYears as $yr)
+              <option value="{{ $yr }}" {{ $yr === $selectedYear ? 'selected' : '' }}>FY {{ $yr }}</option>
+            @endforeach
           </select>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-          <label for="procedureOfficerSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap">Officer Role:</label>
-          <select id="procedureOfficerSelect" class="form-select form-select-sm bg-light" style="min-width: 200px;">
-            <option value="" selected>All Roles</option>
-            <option value="ap">AP Lead Accountant</option>
-            <option value="treasury">Treasury Accountant</option>
-            <option value="gl">Senior GL Controller</option>
-          </select>
-        </div>
-        <div class="search-box ms-auto" style="width: 260px;">
-          <i class="ph ph-magnifying-glass"></i>
-          <input type="search" id="procedureSearchInput" class="form-control form-control-sm" placeholder="Search procedure name, officer...">
-        </div>
+        </form>
+      </div>
+
+      <div class="fs-xs text-muted">
+        <i class="ph ph-shield-check text-success me-1"></i> Segregation of Duties: CFO Hard Close Required for Retained Earnings Rollover
       </div>
     </div>
+
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table id="closingChecklistTable" class="table table-hover align-middle mb-0">
+        <table class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
-              <th>Checklist Procedure</th>
-              <th>Responsible Officer</th>
-              <th>Verification Status</th>
-              <th class="text-end">Actions</th>
+              <th style="width: 130px;">Period Code</th>
+              <th style="width: 80px;">Month #</th>
+              <th>Date Range</th>
+              <th>Period Status</th>
+              <th>Closed By</th>
+              <th>Closed At</th>
+              <th>Closing Journal Entry Ref</th>
+              <th class="text-end" style="width: 220px;">Actions</th>
             </tr>
           </thead>
           <tbody>
-            @forelse($procedures ?? [] as $proc)
+            @forelse($periods as $period)
             @php
-              $pArr = is_array($proc) ? $proc : [
-                'title' => $proc->title ?? 'Procedure',
-                'desc' => $proc->description ?? '',
-                'officer' => $proc->responsible_officer ?? 'N/A',
-                'role' => strtolower($proc->role ?? 'general'),
-                'status' => $proc->status ?? 'Pending',
-                'status_badge' => 'bg-warning-subtle text-warning',
-              ];
+              $isClosed = $period->isClosed();
+              $isLocked = $period->isLocked();
+              $isOpen   = $period->isOpen();
+
+              $statusBadge = match($period->status) {
+                'AUDITED', 'CLOSED' => 'bg-dark text-white',
+                'LOCKED'            => 'bg-warning-subtle text-warning border border-warning',
+                default             => 'bg-success-subtle text-success border border-success',
+              };
+
+              $monthName = \Carbon\Carbon::createFromDate((int)$period->fiscal_year, $period->period_number, 1)->format('F');
             @endphp
-            <tr class="procedure-row" style="cursor: pointer;" data-role="{{ $pArr['role'] }}" data-status="{{ strtolower($pArr['status']) }}" onclick="openProcedureDetailsModal({{ json_encode($pArr) }})">
-              <td><div class="fw-bold text-dark">{{ $pArr['title'] }}</div></td>
-              <td class="fs-xs text-muted">{{ $pArr['officer'] }}</td>
-              <td><span class="badge {{ $pArr['status_badge'] }}"><i class="ph ph-check-circle me-1"></i> {{ $pArr['status'] }}</span></td>
-              <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Verification Log" onclick="openProcedureDetailsModal({{ json_encode($pArr) }})"><i class="ph ph-eye"></i></button>
+            <tr>
+              <td>
+                <span class="badge bg-secondary-subtle text-dark font-monospace fs-xs px-2 py-1">
+                  {{ $period->period_code }}
+                </span>
+                <span class="d-block fs-xs text-muted mt-1">{{ $monthName }} {{ $period->fiscal_year }}</span>
+              </td>
+              <td><span class="fw-bold font-monospace">M{{ str_pad((string)$period->period_number, 2, '0', STR_PAD_LEFT) }}</span></td>
+              <td>
+                <span class="fs-xs font-monospace text-muted">
+                  {{ $period->start_date->format('Y-m-d') }} &rarr; {{ $period->end_date->format('Y-m-d') }}
+                </span>
+              </td>
+              <td>
+                <span class="badge {{ $statusBadge }} font-monospace fs-xs px-2 py-1">
+                  <i class="ph {{ $isClosed ? 'ph-lock-simple' : ($isLocked ? 'ph-warning' : 'ph-check') }} me-1"></i>
+                  {{ $period->status }}
+                </span>
+              </td>
+              <td><span class="fs-xs text-muted">{{ $period->closedByUser?->name ?? '-' }}</span></td>
+              <td><span class="fs-xs text-muted">{{ $period->closed_at ? $period->closed_at->format('Y-m-d H:i') : '-' }}</span></td>
+              <td>
+                @if($period->closingJournalEntry)
+                  <a href="{{ route('gl.journal-entries', ['q' => $period->closingJournalEntry->reference_number]) }}" class="badge bg-primary-subtle text-primary text-decoration-none font-monospace fs-xs">
+                    {{ $period->closingJournalEntry->reference_number }}
+                  </a>
+                @else
+                  <span class="fs-xs text-muted">-</span>
+                @endif
+              </td>
+              <td class="text-end">
+                <div class="d-flex justify-content-end gap-1">
+                  @if($isOpen)
+                    <!-- Soft Lock Action -->
+                    <form action="{{ route('gl.period-end-closing.lock', $period->id) }}" method="POST" class="d-inline">
+                      @csrf
+                      <button type="submit" class="btn btn-sm btn-outline-warning py-1 px-2" title="Lock Period (Freeze regular entries)">
+                        <i class="ph ph-lock me-1"></i> Soft Lock
+                      </button>
+                    </form>
+                  @endif
+
+                  @if(!$isClosed)
+                    <!-- Hard Close & Rollover Action (CFO only) -->
+                    <button type="button" class="btn btn-sm btn-danger py-1 px-2" title="Hard Close Period & Rollover Nominal Balances to Retained Earnings" onclick="openHardCloseModal({{ $period->id }}, '{{ $period->period_code }}', '{{ $monthName }} {{ $period->fiscal_year }}')">
+                      <i class="ph ph-lock-key me-1"></i> Hard Close (CFO)
+                    </button>
+                  @else
+                    <span class="badge bg-secondary-subtle text-muted fs-xs py-1 px-2">
+                      <i class="ph ph-check-circle me-1"></i> AUDITED &amp; CLOSED
+                    </span>
+                  @endif
+                </div>
               </td>
             </tr>
             @empty
             <tr>
-              <td colspan="4" class="text-center py-4 text-muted">No period-end procedures configured in database.</td>
+              <td colspan="8" class="text-center py-5 text-muted">
+                No fiscal periods found for FY {{ $selectedYear }}. Click "Initialize Fiscal Year" to populate 12 months.
+              </td>
             </tr>
             @endforelse
           </tbody>
         </table>
       </div>
     </div>
-    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="procedureSummaryText">Showing {{ count($procedures ?? []) }} Month-End Procedures</span>
-      <nav aria-label="Procedure Pagination">
-        <ul class="pagination pagination-sm mb-0">
-          <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
-          <li class="page-item active"><a class="page-link" href="#">1</a></li>
-          <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
-        </ul>
-      </nav>
+    <div class="card-footer bg-transparent border-top p-3 d-flex justify-content-between align-items-center">
+      <span class="text-muted fs-xs">Fiscal Year {{ $selectedYear }} Periods Registry</span>
+      <span class="fs-xs text-muted">BIR CAS Compliant Period Lock Engine</span>
     </div>
   </div>
 </div>
 
-<!-- Modal: In-Depth Procedure Details (Executive Design) -->
-<div class="modal fade" id="procedureDetailsModal" tabindex="-1" aria-labelledby="procedureDetailsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-      <div class="modal-header bg-white border-bottom p-4 pb-3">
-        <div>
-          <div class="d-flex align-items-center gap-2 mb-1">
-            <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">MONTH-END CLOSE</span>
-            <span class="badge bg-success-subtle text-success" id="detailProcStatus"><i class="ph ph-check-circle me-1"></i> Completed &amp; Verified</span>
-          </div>
-          <h4 class="modal-title fw-bold text-dark mb-0" id="detailProcTitle">1. Accounts Payable &amp; Vendor Bill Closure</h4>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-
-      <div class="modal-body p-4 bg-light-subtle">
-        <div class="bg-white border rounded-3 p-3 mb-4">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-list-checks me-1 text-primary"></i> Procedure Scope &amp; Officer Responsibility</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Responsible Officer Title</span>
-              <span class="font-monospace fw-bold text-dark" id="detailProcOfficer">AP Lead Accountant</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">Procedure Description</span>
-              <span class="text-muted" id="detailProcDesc">Confirm all July vendor invoices are approved &amp; posted</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Audit Trail & Segregation of Duties -->
-        <div class="bg-white border rounded-3 p-3">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-success"></i> Audit Trail &amp; Sign-Off Verification</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">GL Closing Authorization:</span>
-              <span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> Pre-Closing Audit Verified</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">System Audit Stamp:</span>
-              <span class="font-monospace text-muted">LOG-CLOSE-2026-001 | {{ date('Y-m-d H:i:s') }} PST</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer bg-white border-top p-3">
-        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-sm btn-primary" onclick="alert('Exporting Procedure Verification Sign-off...');"><i class="ph ph-file-text me-1"></i> Export Sign-Off Brief</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal: Execute Period Close -->
-<div class="modal fade" id="closePeriodModal" tabindex="-1" aria-labelledby="closePeriodModalLabel" aria-hidden="true">
+<!-- Modal: Initialize Fiscal Year -->
+<div class="modal fade" id="initYearModal" tabindex="-1" aria-labelledby="initYearModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title font-weight-bold" id="closePeriodModalLabel"><i class="ph ph-lock-key me-2 text-danger"></i>Execute Fiscal Period Close</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header bg-primary text-white p-3 px-4">
+        <h5 class="modal-title fw-bold" id="initYearModalLabel"><i class="ph ph-calendar-plus me-2"></i>Initialize Fiscal Year Periods</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body p-4">
-        <form id="closePeriodForm">
+      <form action="{{ route('gl.period-end-closing.initialize') }}" method="POST">
+        @csrf
+        <div class="modal-body p-4">
+          <p class="fs-sm text-muted">
+            This action will generate 12 monthly fiscal period rows (M01 through M12) with status <strong>OPEN</strong> for the selected fiscal calendar year.
+          </p>
           <div class="mb-3">
-            <label class="form-label small fw-semibold">Select Fiscal Period to Close <span class="text-danger">*</span></label>
-            <select id="modalClosePeriod" class="form-select form-select-sm" required>
-              <option value="July 2026">July 2026 (Month-End Close)</option>
-              <option value="Q2 2026">Q2 2026 (Quarter-End Close)</option>
-            </select>
+            <label class="form-label small fw-semibold">Fiscal Year (YYYY) <span class="text-danger">*</span></label>
+            <input type="text" name="fiscal_year" class="form-control form-control-sm font-monospace" placeholder="e.g. 2026" value="{{ date('Y') }}" required pattern="\d{4}">
           </div>
-          <div class="alert alert-warning fs-xs mb-3">
-            <i class="ph ph-warning me-1"></i>
-            <strong>Warning:</strong> Closing this period will permanently lock all General Ledger journal postings for the selected timeframe.
-          </div>
-          <div class="d-flex justify-content-end gap-2 mt-4">
-            <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-sm btn-danger"><i class="ph ph-lock me-1"></i> Confirm &amp; Lock Period</button>
-          </div>
-        </form>
+        </div>
+        <div class="modal-footer bg-light p-3">
+          <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-sm btn-primary px-3"><i class="ph ph-check me-1"></i> Initialize Periods</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Hard Close & Rollover Modal (CFO Segregation of Duties) -->
+<div class="modal fade" id="hardCloseModal" tabindex="-1" aria-labelledby="hardCloseModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header bg-danger text-white p-3 px-4">
+        <h5 class="modal-title fw-bold" id="hardCloseModalLabel"><i class="ph ph-lock-key me-2"></i>Execute Fiscal Hard Close &amp; Rollover</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
+      <form id="hardCloseForm" method="POST" action="">
+        @csrf
+        <div class="modal-body p-4">
+          <div class="alert alert-warning rounded-3 fs-xs mb-3">
+            <i class="ph ph-warning-octagon me-1"></i>
+            <strong>CFO Authorization Required:</strong> Hard-closing period <strong id="closePeriodCode">2026-M01</strong> will permanently lock all transactions for <span id="closePeriodMonth">January 2026</span> and generate a closing journal entry zeroing all REVENUE &amp; EXPENSE accounts into <strong>3020 Retained Earnings</strong>.
+          </div>
+          <p class="fs-xs text-muted mb-0">
+            Once closed, no further transactions, corrections, or adjustments can be posted to this period date range.
+          </p>
+        </div>
+        <div class="modal-footer bg-light p-3">
+          <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-sm btn-danger px-4 fw-semibold"><i class="ph ph-lock-key me-1"></i> Execute Hard Close</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
@@ -232,127 +284,17 @@
 
 @push('scripts')
 <script>
-function openProcedureDetailsModal(proc) {
-  if (!proc) return;
+function openHardCloseModal(periodId, periodCode, periodMonth) {
+  document.getElementById('closePeriodCode').textContent = periodCode;
+  document.getElementById('closePeriodMonth').textContent = periodMonth;
 
-  document.getElementById('detailProcTitle').textContent = proc.title || 'Procedure Title';
-  document.getElementById('detailProcDesc').textContent = proc.desc || '-';
-  document.getElementById('detailProcOfficer').textContent = proc.officer || '-';
+  const form = document.getElementById('hardCloseForm');
+  form.action = "{{ url('/general-ledger/period-end-closing') }}/" + periodId + "/close";
 
-  const statusEl = document.getElementById('detailProcStatus');
-  if (statusEl) {
-    statusEl.textContent = proc.status;
-    statusEl.className = 'badge ' + (proc.status_badge || 'bg-success-subtle text-success');
-  }
-
-  const modalEl = document.getElementById('procedureDetailsModal');
+  const modalEl = document.getElementById('hardCloseModal');
   if (modalEl && window.bootstrap) {
-    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-    modalInstance.show();
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
   }
 }
-
-function verifyTask2() {
-  const pendingCard = document.getElementById('pendingTasksCount');
-
-  if (pendingCard) {
-    pendingCard.textContent = '0 Tasks (Ready)';
-    pendingCard.className = 'fw-bold mb-0 text-success';
-  }
-
-  alert('Procedure "2. Bank Reconciliation & Cash Match" marked as Verified!');
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  const searchInput = document.getElementById('procedureSearchInput');
-  const statusSelect = document.getElementById('procedureStatusSelect');
-  const officerSelect = document.getElementById('procedureOfficerSelect');
-  const summaryText = document.getElementById('procedureSummaryText');
-  const btnClosePeriod = document.getElementById('btnClosePeriod');
-
-  if (btnClosePeriod) {
-    btnClosePeriod.addEventListener('click', function() {
-      const modalEl = document.getElementById('closePeriodModal');
-      if (modalEl && window.bootstrap) {
-        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-        modalInstance.show();
-      }
-    });
-  }
-
-  function filterProcedures() {
-    const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
-    const selectedStatus = statusSelect ? statusSelect.value.toLowerCase() : '';
-    const selectedRole = officerSelect ? officerSelect.value.toLowerCase() : '';
-    const rows = document.querySelectorAll('.procedure-row');
-    let visibleCount = 0;
-
-    rows.forEach(function(row) {
-      const rowRole = row.getAttribute('data-role') || '';
-      const rowStatus = row.getAttribute('data-status') || '';
-      const rowText = row.textContent.toLowerCase();
-
-      const matchRole = !selectedRole || rowRole.includes(selectedRole);
-      const matchStatus = !selectedStatus || rowStatus.includes(selectedStatus);
-      const matchSearch = !searchQuery || rowText.includes(searchQuery);
-
-      if (matchRole && matchStatus && matchSearch) {
-        row.style.display = '';
-        visibleCount++;
-      } else {
-        row.style.display = 'none';
-      }
-    });
-
-    if (summaryText) {
-      summaryText.textContent = `Showing ${visibleCount} Month-End Procedure${visibleCount !== 1 ? 's' : ''}`;
-    }
-
-    let emptyRow = document.getElementById('noProcedureRow');
-    const tbody = document.querySelector('#closingChecklistTable tbody');
-    if (visibleCount === 0) {
-      if (!emptyRow && tbody) {
-        emptyRow = document.createElement('tr');
-        emptyRow.id = 'noProcedureRow';
-        emptyRow.innerHTML = `<td colspan="4" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No procedures found matching the current filter.</td>`;
-        tbody.appendChild(emptyRow);
-      }
-      if (emptyRow) emptyRow.style.display = '';
-    } else if (emptyRow) {
-      emptyRow.style.display = 'none';
-    }
-  }
-
-  if (searchInput) {
-    searchInput.addEventListener('input', filterProcedures);
-    searchInput.addEventListener('keyup', filterProcedures);
-  }
-  if (statusSelect) statusSelect.addEventListener('change', filterProcedures);
-  if (officerSelect) officerSelect.addEventListener('change', filterProcedures);
-
-  const closePeriodForm = document.getElementById('closePeriodForm');
-  if (closePeriodForm) {
-    closePeriodForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-
-      const selectedPeriod = document.getElementById('modalClosePeriod').value;
-      const closedCountCard = document.getElementById('closedPeriodsCount');
-
-      if (closedCountCard) {
-        closedCountCard.textContent = '8 Months';
-      }
-
-      alert('Fiscal Period (' + selectedPeriod + ') has been successfully closed and locked!');
-
-      const modalEl = document.getElementById('closePeriodModal');
-      const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-      if (modalInstance) modalInstance.hide();
-
-      closePeriodForm.reset();
-    });
-  }
-
-  filterProcedures();
-});
 </script>
 @endpush

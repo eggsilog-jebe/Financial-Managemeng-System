@@ -6,6 +6,27 @@
 
 @section('content')
 <div class="container-fluid p-4">
+  <!-- Alerts -->
+  @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-3 mb-4" role="alert">
+      <div class="d-flex align-items-center">
+        <i class="ph ph-check-circle fs-4 me-2"></i>
+        <span>{{ session('success') }}</span>
+      </div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
+
+  @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-3 mb-4" role="alert">
+      <div class="d-flex align-items-center">
+        <i class="ph ph-warning-circle fs-4 me-2"></i>
+        <span>{{ session('error') }}</span>
+      </div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
+
   <!-- Header -->
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
@@ -13,301 +34,242 @@
         <ol class="breadcrumb mb-1 fs-xs">
           <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
           <li class="breadcrumb-item">Disbursement Management</li>
-          <li class="breadcrumb-item active">Disbursement Approvals</li>
+          <li class="breadcrumb-item active">Approvals &amp; Release Workstation</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Treasury Disbursement Approvals</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Executive Disbursement Approvals &amp; Release</h1>
     </div>
-    <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="location.reload()"><i class="ph ph-arrow-clockwise me-1"></i> Refresh Queue</button>
+    <div class="d-flex align-items-center gap-2">
+      <x-integration-badge 
+          type="internal" 
+          :systems="['Bank Accounts', 'Vendor Invoices', 'GL 1020']" 
+          description="Authorizes final fund releases." 
+      />
+      <a href="{{ route('disbursement.payment-requests') }}" class="btn btn-outline-primary btn-sm"><i class="ph ph-receipt me-1"></i> Payment Requests Hub</a>
     </div>
   </div>
 
-  <!-- Approval Limit Summary -->
+  <!-- Summary Cards -->
   <div class="row g-3 mb-4">
-    <div class="col-md-4">
+    <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Pending Check Releases</span>
-          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-receipt fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format(($approvals ?? collect())->where('payment_method', 'check')->where('status', 'Pending')->sum('amount'), 2) }}</h4>
+        <span class="text-muted small fw-medium">Prepared (Pending Audit)</span>
+        <h4 class="fw-bold mb-0 text-secondary font-monospace">₱{{ number_format((float) ($totalPrepared ?? 0), 2) }}</h4>
       </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Pending EFT Batches</span>
-          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-bank fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format(($approvals ?? collect())->where('payment_method', 'eft')->where('status', 'Pending')->sum('amount'), 2) }}</h4>
+        <span class="text-muted small fw-medium">Audited (Pending Approval)</span>
+        <h4 class="fw-bold mb-0 text-warning font-monospace">₱{{ number_format((float) ($totalAudited ?? 0), 2) }}</h4>
       </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Released Today</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format(($approvals ?? collect())->where('status', 'Released')->sum('amount'), 2) }}</h4>
+        <span class="text-muted small fw-medium">Approved (Ready for Release)</span>
+        <h4 class="fw-bold mb-0 text-primary font-monospace">₱{{ number_format((float) ($totalApproved ?? 0), 2) }}</h4>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3">
+        <span class="text-muted small fw-medium">Total Released Payouts</span>
+        <h4 class="fw-bold mb-0 text-success font-monospace">₱{{ number_format((float) ($totalReleased ?? 0), 2) }}</h4>
       </div>
     </div>
   </div>
 
-  <!-- Approvals Queue Table -->
+  <!-- Approvals Table Card -->
   <div class="card border-0 shadow-sm rounded-3">
     <div class="card-header bg-transparent border-bottom p-3">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+      <form method="GET" action="{{ route('disbursement.disbursement-approval') }}" class="d-flex flex-wrap justify-content-between align-items-center gap-3">
         <div class="d-flex align-items-center gap-2">
-          <label for="disbLevelSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Level:</label>
-          <select id="disbLevelSelect" class="form-select form-select-sm bg-light" style="min-width: 220px;">
-            <option value="" selected>All Authorization Levels</option>
-            <option value="cfo">CFO Authorization Needed</option>
-            <option value="controller">Controller Sign-off</option>
+          <label class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Status:</label>
+          <select name="status" class="form-select form-select-sm bg-light" onchange="this.form.submit()">
+            <option value="" {{ request('status') === null || request('status') === '' ? 'selected' : '' }}>All Statuses</option>
+            <option value="AUDITED" {{ request('status') === 'AUDITED' ? 'selected' : '' }}>Audited (Pending Approval)</option>
+            <option value="APPROVED" {{ request('status') === 'APPROVED' ? 'selected' : '' }}>Approved (Ready for Release)</option>
+            <option value="PREPARED" {{ request('status') === 'PREPARED' ? 'selected' : '' }}>Prepared</option>
+            <option value="RELEASED" {{ request('status') === 'RELEASED' ? 'selected' : '' }}>Released</option>
           </select>
         </div>
-        <div class="search-box" style="width: 260px;">
-          <i class="ph ph-magnifying-glass"></i>
-          <input type="search" id="disbSearchInput" class="form-control form-control-sm" placeholder="Search payee name or ref...">
+        <div class="search-box" style="width: 280px;">
+          <input type="search" name="search" class="form-control form-control-sm" placeholder="Search voucher #, payee..." value="{{ request('search') }}">
         </div>
-      </div>
+      </form>
     </div>
+
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0" id="disbApprovalsTable">
+        <table class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
-              <th>Disbursement Ref</th>
-              <th>Payee Name</th>
-              <th>Payment Method</th>
-              <th>Source Bank Account</th>
+              <th>Voucher Ref #</th>
+              <th>Payee &amp; Description</th>
+              <th>Bank Account</th>
+              <th>Method</th>
+              <th>Voucher Date</th>
               <th class="text-end">Amount (₱)</th>
-              <th>Authorization Level</th>
               <th>Status</th>
-              <th class="text-end">Action</th>
+              <th class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
-            @forelse($approvals ?? [] as $app)
+            @forelse($vouchers as $v)
             @php
-              $id = is_array($app) ? $app['id'] : ($app->disbursement_code ?? 'DISB-'.$app->id);
-              $payee = is_array($app) ? $app['payee'] : ($app->payee_name ?? 'Payee');
-              $method = is_array($app) ? $app['method'] : ($app->payment_method ?? 'EFT Direct Deposit');
-              $bank = is_array($app) ? $app['bank'] : ($app->bank_account ?? 'Main Account');
-              $amt = is_array($app) ? $app['amount'] : ('₱' . number_format($app->amount ?? 0, 2));
-              $level = is_array($app) ? $app['level'] : ($app->level ?? 'controller');
-              $levelLabel = is_array($app) ? $app['level_label'] : ($app->level_label ?? 'Controller Sign-off');
-              $status = is_array($app) ? $app['status'] : ($app->status ?? 'Pending Release');
+              $amt = (float) $v->net_disbursed_amount;
+              $statusBadge = match($v->status) {
+                'RELEASED' => 'bg-success-subtle text-success',
+                'APPROVED' => 'bg-info-subtle text-info',
+                'AUDITED'  => 'bg-primary-subtle text-primary',
+                default    => 'bg-warning-subtle text-warning',
+              };
             @endphp
-            <tr id="row-{{ $id }}" class="disb-row" data-level="{{ strtolower($level) }}">
-              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">{{ $id }}</span></td>
-              <td class="fw-semibold text-dark">{{ $payee }}</td>
-              <td><span class="badge bg-info-subtle text-info">{{ $method }}</span></td>
-              <td>{{ $bank }}</td>
-              <td class="text-end fw-bold text-dark font-monospace">{{ $amt }}</td>
-              <td><span class="badge bg-warning-subtle text-warning"><i class="ph ph-shield-star me-1"></i> {{ $levelLabel }}</span></td>
-              <td class="status-cell"><span class="badge bg-warning-subtle text-warning"><i class="ph ph-clock me-1"></i> {{ $status }}</span></td>
-              <td class="text-end action-cell">
-                <div class="d-inline-flex align-items-center justify-content-end gap-2">
-                  <button class="btn btn-success" type="button" onclick="openDisbAuthorizeModal('{{ $id }}', '{{ $payee }}', '{{ $amt }}', '{{ $method }}')"><i class="ph ph-check me-1"></i> Authorize</button>
-                  <button class="btn btn-outline-danger" type="button" onclick="openDisbRejectModal('{{ $id }}', '{{ $payee }}', '{{ $amt }}')"><i class="ph ph-x me-1"></i> Reject</button>
+            <tr>
+              <td>
+                <span class="font-monospace fw-bold text-primary">{{ $v->voucher_number }}</span>
+                @if($v->check_or_eft_ref)
+                  <div class="fs-xs text-muted font-monospace">Ref: {{ $v->check_or_eft_ref }}</div>
+                @endif
+              </td>
+              <td>
+                <div class="fw-semibold text-dark">{{ $v->payee_name }}</div>
+                <div class="fs-xs text-muted">{{ $v->description ?? ($v->purchaseBill ? "Bill {$v->purchaseBill->bill_number}" : 'Disbursement Requisition') }}</div>
+              </td>
+              <td>
+                <div class="fs-xs fw-medium text-dark">{{ $v->bankAccount?->bank_name ?? 'Operating Bank' }}</div>
+                <div class="fs-xs text-muted font-monospace">{{ $v->bankAccount?->account_number ?? 'Acc' }}</div>
+              </td>
+              <td>
+                <span class="badge bg-light text-dark border font-monospace">{{ str_replace('_', ' ', $v->payment_method) }}</span>
+              </td>
+              <td>{{ $v->voucher_date ? $v->voucher_date->format('M d, Y') : '—' }}</td>
+              <td class="text-end font-monospace fw-bold text-dark fs-6">₱{{ number_format($amt, 2) }}</td>
+              <td>
+                <span class="badge {{ $statusBadge }}">{{ $v->status }}</span>
+              </td>
+              <td class="text-end">
+                <div class="d-flex justify-content-end gap-1">
+                  @if($v->status === 'AUDITED' || $v->status === 'PREPARED' || $v->status === 'DRAFT')
+                    <form method="POST" action="{{ route('disbursement.disbursement-approvals.approve', $v->id) }}" onsubmit="return confirm('Approve disbursement voucher {{ $v->voucher_number }}?');">
+                      @csrf
+                      <button type="submit" class="btn btn-sm btn-primary py-1 px-2 fs-xs" title="Finance Management Approval">
+                        <i class="ph ph-stamp me-1"></i> Approve
+                      </button>
+                    </form>
+                  @elseif($v->status === 'APPROVED')
+                    <button type="button" class="btn btn-sm btn-success py-1 px-2 fs-xs" onclick="openDisburseReleaseModal({{ $v->id }}, '{{ $v->voucher_number }}', '{{ addslashes($v->payee_name) }}', '{{ $v->payment_method }}', {{ $amt }})">
+                      <i class="ph ph-paper-plane-tilt me-1"></i> Release
+                    </button>
+                  @else
+                    <span class="badge bg-light text-muted border">
+                      <i class="ph ph-check-double text-success me-1"></i> Settled
+                    </span>
+                  @endif
                 </div>
               </td>
             </tr>
             @empty
             <tr>
-              <td colspan="8" class="text-center py-4 text-muted">No pending disbursement approvals.</td>
+              <td colspan="8" class="text-center py-4 text-muted">No disbursement vouchers found matching filter.</td>
             </tr>
             @endforelse
           </tbody>
         </table>
       </div>
     </div>
-  </div>
-</div>
-
-<!-- Modal: Authorize Disbursement -->
-<div class="modal fade" id="disbAuthorizeModal" tabindex="-1" aria-labelledby="disbAuthorizeModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title font-weight-bold text-success" id="disbAuthorizeModalLabel"><i class="ph ph-check-circle me-2"></i>Authorize Treasury Disbursement</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body p-4">
-        <div class="alert alert-success d-flex align-items-center py-2 mb-3 fs-xs">
-          <i class="ph ph-shield-check fs-5 me-2"></i>
-          <div>Authorizing will initiate bank transfer or unlock check printing.</div>
-        </div>
-        <div class="mb-3">
-          <label class="form-label small fw-semibold">Disbursement Reference</label>
-          <input type="text" class="form-control form-control-sm bg-light font-monospace" id="disbAuthRef" readonly>
-        </div>
-        <div class="mb-3">
-          <label class="form-label small fw-semibold">Payee &amp; Total Amount</label>
-          <input type="text" class="form-control form-control-sm bg-light font-monospace text-success fw-bold" id="disbAuthDetails" readonly>
-        </div>
-        <div class="mb-3">
-          <label class="form-label small fw-semibold">Treasury Release Key / Authorization PIN</label>
-          <input type="password" class="form-control form-control-sm" id="disbAuthPin" placeholder="Enter CFO release key..." value="8841">
-        </div>
-
-        <!-- Audit Trail & Transparency Logs -->
-        <div class="bg-light border rounded-3 p-3 mb-3">
-          <h6 class="fw-bold text-dark mb-2 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-success"></i> Audit Trail &amp; Transparency Log</h6>
-          <div class="d-flex flex-column gap-1 fs-xs text-muted">
-            <div><strong class="text-dark">Role Authorized:</strong> Treasury CFO / Controller</div>
-            <div><strong class="text-dark">Audit Log ID:</strong> LOG-DISB-AUTH-2026-901</div>
-            <div><strong class="text-dark">System Timestamp:</strong> {{ date('Y-m-d H:i:s') }} PST</div>
-          </div>
-        </div>
-
-        <div class="d-flex justify-content-end gap-2 mt-4">
-          <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-sm btn-success" onclick="confirmDisbAuthorization()"><i class="ph ph-check me-1"></i> Release Funds</button>
-        </div>
+    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
+      <span class="text-muted fs-xs">Showing {{ $vouchers->firstItem() ?? 0 }} - {{ $vouchers->lastItem() ?? 0 }} of {{ $vouchers->total() }} Vouchers</span>
+      <div>
+        {{ $vouchers->links() }}
       </div>
     </div>
   </div>
 </div>
 
-<!-- Modal: Reject Disbursement -->
-<div class="modal fade" id="disbRejectModal" tabindex="-1" aria-labelledby="disbRejectModalLabel" aria-hidden="true">
+<!-- Modal: Release Disbursement Payout -->
+<div class="modal fade" id="disburseReleaseModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title font-weight-bold text-danger" id="disbRejectModalLabel"><i class="ph ph-x-circle me-2"></i>Reject Disbursement Release</h5>
+      <div class="modal-header border-bottom bg-success-subtle">
+        <h5 class="modal-title font-weight-bold text-success"><i class="ph ph-check-circle me-2"></i>Executive Payout Release</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body p-4">
-        <div class="alert alert-danger d-flex align-items-center py-2 mb-3 fs-xs">
-          <i class="ph ph-warning-circle fs-5 me-2"></i>
-          <div>Rejecting this disbursement will prevent wire execution or check printing.</div>
-        </div>
-        <div class="mb-3">
-          <label class="form-label small fw-semibold">Disbursement Reference</label>
-          <input type="text" class="form-control form-control-sm bg-light font-monospace" id="disbRejectRef" readonly>
-        </div>
-        <div class="mb-3">
-          <label class="form-label small fw-semibold">Rejection Reason <span class="text-danger">*</span></label>
-          <select class="form-select form-select-sm" id="disbRejectReasonSelect" required>
-            <option value="Insufficient Liquidity in Bank Account">Insufficient Liquidity in Source Bank Account</option>
-            <option value="Bank Account Detail Mismatch">Bank Account Detail Mismatch</option>
-            <option value="Duplicate Wire Execution Risk">Duplicate Wire Execution Risk</option>
-            <option value="Unauthorized Payee Account">Unauthorized Payee Account</option>
-          </select>
-        </div>
-        <div class="mb-3">
-          <label class="form-label small fw-semibold">Audit Notes</label>
-          <textarea class="form-control form-control-sm" id="disbRejectNotes" rows="2" placeholder="State reason for withholding disbursement..."></textarea>
-        </div>
+      <form id="disburseReleaseForm" method="POST" action="">
+        @csrf
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label class="form-label small text-muted mb-0">Voucher Reference</label>
+            <div class="fw-bold font-monospace text-primary fs-6" id="drelVoucherRef">-</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small text-muted mb-0">Payee Legal Name</label>
+            <div class="fw-semibold text-dark" id="drelPayeeName">-</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small text-muted mb-0">Net Disbursed Amount</label>
+            <div class="fw-bold font-monospace text-dark fs-5" id="drelAmount">₱0.00</div>
+          </div>
 
-        <!-- Audit Trail & Transparency Logs -->
-        <div class="bg-light border rounded-3 p-3 mb-3">
-          <h6 class="fw-bold text-dark mb-2 fs-xs text-uppercase"><i class="ph ph-shield-warning me-1 text-danger"></i> Audit Trail &amp; Rejection Log</h6>
-          <div class="d-flex flex-column gap-1 fs-xs text-muted">
-            <div><strong class="text-dark">Audit Log ID:</strong> LOG-DISB-REJ-2026-902</div>
-            <div><strong class="text-dark">System Timestamp:</strong> {{ date('Y-m-d H:i:s') }} PST</div>
+          <div id="drelCheckSection" class="p-3 bg-light rounded-3 mb-3">
+            <label class="form-label small fw-semibold text-primary"><i class="ph ph-pencil-simple-line me-1"></i>Check Number (Check Register)</label>
+            <input type="text" name="check_number" id="drelCheckNumber" class="form-control form-control-sm font-monospace" placeholder="e.g. CHK-10299401">
+            <div class="mt-2">
+              <label class="form-label small fw-semibold">Check Issuance Date</label>
+              <input type="date" name="check_date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}">
+            </div>
+          </div>
+
+          <div id="drelEftSection" class="p-3 bg-light rounded-3 mb-3" style="display: none;">
+            <label class="form-label small fw-semibold text-primary"><i class="ph ph-bank me-1"></i>EFT Reference / Trace Number</label>
+            <input type="text" name="eft_reference" id="drelEftReference" class="form-control form-control-sm font-monospace" placeholder="e.g. EFT-PN-20260826-091">
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Treasury Settlement Notes</label>
+            <input type="text" name="notes" class="form-control form-control-sm" placeholder="e.g. Released across Treasury Counter / EFT Cleared">
           </div>
         </div>
-
-        <div class="d-flex justify-content-end gap-2 mt-4">
+        <div class="modal-footer border-top">
           <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-sm btn-danger" onclick="confirmDisbRejection()"><i class="ph ph-x me-1"></i> Confirm Rejection</button>
+          <button type="submit" class="btn btn-sm btn-success"><i class="ph ph-check me-1"></i> Confirm Executive Release</button>
         </div>
-      </div>
+      </form>
     </div>
   </div>
 </div>
+@endsection
 
 @push('scripts')
 <script>
-  let currentDisbTargetId = '';
+function openDisburseReleaseModal(voucherId, voucherRef, payee, paymentMethod, amount) {
+  const form = document.getElementById('disburseReleaseForm');
+  form.action = `/disbursement-management/disbursement-approvals/${voucherId}/release`;
 
-  function openDisbAuthorizeModal(id, payee, amount, method) {
-    currentDisbTargetId = id;
-    document.getElementById('disbAuthRef').value = id + ' (' + method + ')';
-    document.getElementById('disbAuthDetails').value = payee + ' - ' + amount;
-    const modal = new bootstrap.Modal(document.getElementById('disbAuthorizeModal'));
-    modal.show();
+  document.getElementById('drelVoucherRef').textContent = voucherRef;
+  document.getElementById('drelPayeeName').textContent = payee;
+  document.getElementById('drelAmount').textContent = '₱' + parseFloat(amount).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+  const checkSection = document.getElementById('drelCheckSection');
+  const eftSection = document.getElementById('drelEftSection');
+  const checkInput = document.getElementById('drelCheckNumber');
+  const eftInput = document.getElementById('drelEftReference');
+
+  if (paymentMethod === 'CHECK') {
+    checkSection.style.display = 'block';
+    eftSection.style.display = 'none';
+    checkInput.value = 'CHK-' + new Date().getFullYear() + '-' + Math.floor(100000 + Math.random() * 900000);
+    eftInput.value = '';
+  } else {
+    checkSection.style.display = 'none';
+    eftSection.style.display = 'block';
+    checkInput.value = '';
+    eftInput.value = 'EFT-' + new Date().getFullYear() + '-' + Math.floor(100000 + Math.random() * 900000);
   }
 
-  function confirmDisbAuthorization() {
-    if (!currentDisbTargetId) return;
-    const row = document.getElementById('row-' + currentDisbTargetId);
-    if (row) {
-      row.querySelector('.status-cell').innerHTML = '<span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> Funds Released</span>';
-      row.querySelector('.action-cell').innerHTML = '<div class="d-inline-flex align-items-center justify-content-end"><span class="badge bg-success-subtle text-success px-2 py-1"><i class="ph ph-check-circle me-1"></i> Released</span></div>';
-    }
-    const modalEl = document.getElementById('disbAuthorizeModal');
-    const modal = bootstrap.Modal.getInstance(modalEl);
-    if (modal) modal.hide();
-
-    if (window.HimsComponents && window.HimsComponents.notify) {
-      window.HimsComponents.notify({ tone: 'success', title: 'Disbursement Released', message: 'Disbursement ' + currentDisbTargetId + ' funds released successfully.' });
-    } else {
-      alert('Disbursement ' + currentDisbTargetId + ' funds released successfully!');
-    }
+  const modalEl = document.getElementById('disburseReleaseModal');
+  if (modalEl && window.bootstrap) {
+    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modalInstance.show();
   }
-
-  function openDisbRejectModal(id, payee, amount) {
-    currentDisbTargetId = id;
-    document.getElementById('disbRejectRef').value = id + ' - ' + payee;
-    const modal = new bootstrap.Modal(document.getElementById('disbRejectModal'));
-    modal.show();
-  }
-
-  function confirmDisbRejection() {
-    if (!currentDisbTargetId) return;
-    const reason = document.getElementById('disbRejectReasonSelect').value;
-    const row = document.getElementById('row-' + currentDisbTargetId);
-    if (row) {
-      row.querySelector('.status-cell').innerHTML = '<span class="badge bg-danger-subtle text-danger" title="' + reason + '"><i class="ph ph-x-circle me-1"></i> Release Rejected</span>';
-      row.querySelector('.action-cell').innerHTML = '<div class="d-inline-flex align-items-center justify-content-end"><span class="badge bg-danger-subtle text-danger px-2 py-1"><i class="ph ph-prohibited me-1"></i> Rejected</span></div>';
-    }
-    const modalEl = document.getElementById('disbRejectModal');
-    const modal = bootstrap.Modal.getInstance(modalEl);
-    if (modal) modal.hide();
-
-    if (window.HimsComponents && window.HimsComponents.notify) {
-      window.HimsComponents.notify({ tone: 'danger', title: 'Disbursement Rejected', message: 'Disbursement ' + currentDisbTargetId + ' rejected: ' + reason });
-    } else {
-      alert('Disbursement ' + currentDisbTargetId + ' rejected: ' + reason);
-    }
-  }
-
-  document.addEventListener('DOMContentLoaded', function() {
-    const levelSelect = document.getElementById('disbLevelSelect');
-    const searchInput = document.getElementById('disbSearchInput');
-
-    function filterDisbursements() {
-      const selectedLevel = levelSelect ? levelSelect.value.toLowerCase() : '';
-      const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
-      const rows = document.querySelectorAll('.disb-row');
-      let visibleCount = 0;
-
-      rows.forEach(function(row) {
-        const rowLevel = row.getAttribute('data-level') || '';
-        const rowText = row.textContent.toLowerCase();
-
-        const matchLevel = !selectedLevel || rowLevel.includes(selectedLevel);
-        const matchSearch = !searchQuery || rowText.includes(searchQuery);
-
-        if (matchLevel && matchSearch) {
-          row.style.display = '';
-          visibleCount++;
-        } else {
-          row.style.display = 'none';
-        }
-      });
-    }
-
-    if (levelSelect) levelSelect.addEventListener('change', filterDisbursements);
-    if (searchInput) {
-      searchInput.addEventListener('input', filterDisbursements);
-      searchInput.addEventListener('keyup', filterDisbursements);
-    }
-  });
+}
 </script>
 @endpush
-@endsection

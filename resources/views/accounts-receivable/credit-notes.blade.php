@@ -1,146 +1,161 @@
 @extends('layouts.app')
 
-@section('title', 'Credit Notes - Accounts Receivable | FMS')
+@section('title', 'Credit Notes & Discounts - Accounts Receivable | FMS')
 @section('module', 'ar')
 @section('page', 'credit-notes')
 
 @section('content')
 <div class="container-fluid p-4">
-  <!-- Page Header -->
+  <!-- Alerts -->
+  @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-3 mb-4" role="alert">
+      <div class="d-flex align-items-center">
+        <i class="ph ph-check-circle fs-4 me-2"></i>
+        <span>{{ session('success') }}</span>
+      </div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
+
+  @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-3 mb-4" role="alert">
+      <div class="d-flex align-items-center">
+        <i class="ph ph-warning-circle fs-4 me-2"></i>
+        <span>{{ session('error') }}</span>
+      </div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
+
+  <!-- Header -->
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb mb-1 fs-xs">
           <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
           <li class="breadcrumb-item">Accounts Receivable</li>
-          <li class="breadcrumb-item active">Credit Notes</li>
+          <li class="breadcrumb-item active">Credit Notes &amp; Statutory Discounts</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">AR Credit Notes &amp; Billing Adjustments</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Credit Notes &amp; Statutory Discounts</h1>
     </div>
-    <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Exporting Credit Notes Log PDF...');"><i class="ph ph-file-arrow-down me-1"></i> Credit Log PDF</button>
-      <button id="btnIssueCreditNote" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#issueCreditNoteModal"><i class="ph ph-plus-circle me-1"></i> Issue Credit Note</button>
+    <div class="d-flex align-items-center gap-2">
+      <x-integration-badge 
+          type="internal" 
+          :internalModules="['Invoicing & Billing', 'General Ledger']" 
+          :tables="['credit_notes', 'invoices', 'journal_entries']"
+          glImpact="DR 5010 Sales Discounts (Senior/PWD) / CR 1110/1120 AR Patient Copay"
+          description="Applies statutory 20% Senior/PWD discounts and charity subsidies to patient bills." 
+      />
+      <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#createCreditNoteModal">
+        <i class="ph ph-plus me-1"></i> Issue Credit Note Adjustment
+      </button>
     </div>
   </div>
 
-  <!-- Metric Summary Cards -->
+  <!-- Summary Cards -->
   <div class="row g-3 mb-4">
-    <div class="col-md-3">
+    <div class="col-md-6">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Credit Notes (Month)</span>
-          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-note-pencil fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ ($creditNotes ?? collect())->count() }} Credit Memos</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Credit Value</span>
-          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-arrow-down-left fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-danger">₱{{ number_format((float) ($totalCreditValue ?? 0), 2) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Approved Adjustments</span>
+          <span class="text-muted small fw-medium">Total Approved &amp; Posted Credit Adjustments</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ ($creditNotes ?? collect())->where('status', 'APPROVED')->count() }} Approved</h4>
+        <h4 class="fw-bold mb-0 text-success font-monospace">₱{{ number_format((float) $totalCreditValue, 2) }}</h4>
       </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-6">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Pending Manager Approvals</span>
-          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
+          <span class="text-muted small fw-medium">Pending Management Approval (Drafts)</span>
+          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-hourglass fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ ($creditNotes ?? collect())->where('status', 'PENDING')->count() }} Pending</h4>
+        <h4 class="fw-bold mb-0 text-warning font-monospace">₱{{ number_format((float) $totalPendingApproval, 2) }}</h4>
       </div>
     </div>
   </div>
 
-  <!-- Filter Toolbar -->
-  <div class="card border-0 shadow-sm rounded-3 mb-4">
-    <div class="card-body p-3">
-      <div class="row g-2 align-items-center">
-        <div class="col-md-5">
-          <div class="input-group input-group-sm">
-            <span class="input-group-text bg-light border-end-0"><i class="ph ph-magnifying-glass text-muted"></i></span>
-            <input type="text" id="cnSearchInput" class="form-control bg-light border-start-0" placeholder="Search CN Ref, Patient Name, or Invoice Ref...">
-          </div>
-        </div>
-        <div class="col-md-3">
-          <select id="cnReasonSelect" class="form-select form-select-sm bg-light">
-            <option value="" selected>All Reason Categories</option>
-            <option value="hmo">HMO Contractual Rate Adjustment</option>
-            <option value="courtesy">Senior / Courtesy Discount</option>
-            <option value="error">Billing Correction</option>
-          </select>
-        </div>
-        <div class="col-md-4">
-          <select id="cnStatusSelect" class="form-select form-select-sm bg-light">
-            <option value="" selected>All Statuses</option>
-            <option value="applied">Applied &amp; Settled</option>
-            <option value="pending approval">Pending Approval</option>
-          </select>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Data Table Card -->
+  <!-- Credit Notes Table Card -->
   <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-transparent border-bottom p-3">
+      <form method="GET" action="{{ route('ar.credit-notes') }}" class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div class="d-flex align-items-center gap-2">
+          <label class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Status:</label>
+          <select name="status" class="form-select form-select-sm bg-light" onchange="this.form.submit()">
+            <option value="" {{ request('status') === null || request('status') === '' ? 'selected' : '' }}>All Statuses</option>
+            <option value="DRAFT" {{ request('status') === 'DRAFT' ? 'selected' : '' }}>Draft (Pending Approval)</option>
+            <option value="POSTED" {{ request('status') === 'POSTED' ? 'selected' : '' }}>Posted / Applied</option>
+            <option value="APPROVED" {{ request('status') === 'APPROVED' ? 'selected' : '' }}>Approved</option>
+          </select>
+        </div>
+
+        <div class="search-box" style="width: 280px;">
+          <input type="search" name="search" class="form-control form-control-sm" placeholder="Search CN #, invoice, patient..." value="{{ request('search') }}">
+        </div>
+      </form>
+    </div>
+
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table id="creditNotesTable" class="table table-hover align-middle mb-0">
+        <table class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
-              <th>Credit Note Ref</th>
-              <th>Date</th>
-              <th>Patient / Payor Name</th>
-              <th>Target Invoice Ref</th>
-              <th class="text-end">Credit Amount (₱)</th>
-              <th>Reason</th>
+              <th>Credit Note #</th>
+              <th>Applied Invoice &amp; Patient</th>
+              <th>Issue Date</th>
+              <th>Adjustment Reason</th>
+              <th class="text-end">Credit Amount</th>
               <th>Status</th>
+              <th>Approved By</th>
               <th class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
-            @forelse($creditNotes ?? [] as $cn)
+            @forelse($creditNotes as $cn)
             @php
-              $cnArr = is_array($cn) ? $cn : [
-                'ref' => $cn->reference_number ?? 'CN-N/A', 'date' => $cn->issued_date ? $cn->issued_date->format('Y-m-d') : 'N/A',
-                'payor' => $cn->payor_name ?? 'N/A', 'sub' => $cn->description ?? 'N/A',
-                'inv_ref' => $cn->invoice_reference ?? 'N/A',
-                'amount' => '₱' . number_format($cn->amount ?? 0, 2),
-                'reason' => $cn->reason ?? 'N/A', 'reason_type' => strtolower($cn->reason_type ?? 'general'),
-                'status' => $cn->status ?? 'Pending', 'status_badge' => 'bg-warning-subtle text-warning',
-                'status_icon' => 'ph-clock', 'notes' => $cn->notes ?? 'N/A',
-              ];
+              $amt = (float) $cn->amount;
+              $statusBadge = match($cn->status) {
+                'POSTED', 'APPLIED', 'APPROVED' => 'bg-success-subtle text-success',
+                default                         => 'bg-warning-subtle text-warning',
+              };
             @endphp
-            <tr class="cn-row" style="cursor: pointer;" data-reason="{{ $cnArr['reason_type'] }}" data-status="{{ strtolower($cnArr['status']) }}" onclick="openCreditNoteDetailsModal({{ json_encode($cnArr) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $cnArr['ref'] }}</span></td>
-              <td class="font-monospace fs-xs">{{ $cnArr['date'] }}</td>
+            <tr>
               <td>
-                <div class="fw-semibold text-dark">{{ $cnArr['payor'] }}</div>
-                <span class="fs-xs text-muted">{{ $cnArr['sub'] }}</span>
+                <span class="font-monospace fw-bold text-primary">{{ $cn->credit_note_number }}</span>
               </td>
-              <td><span class="font-monospace text-muted">{{ $cnArr['inv_ref'] }}</span></td>
-              <td class="text-end text-danger fw-bold font-monospace">{{ $cnArr['amount'] }}</td>
-              <td>{{ $cnArr['reason'] }}</td>
-              <td><span class="badge {{ $cnArr['status_badge'] }}"><i class="ph {{ $cnArr['status_icon'] }} me-1"></i> {{ $cnArr['status'] }}</span></td>
-              <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Credit Note Details" onclick="openCreditNoteDetailsModal({{ json_encode($cnArr) }})"><i class="ph ph-eye"></i></button>
+              <td>
+                <div class="fw-semibold text-dark">{{ $cn->patientAccount?->full_name ?? ($cn->invoice?->patientAccount?->full_name ?? 'Patient') }}</div>
+                <div class="fs-xs text-muted font-monospace">Invoice: {{ $cn->invoice?->invoice_number ?? 'N/A' }}</div>
+              </td>
+              <td>{{ $cn->issue_date ? $cn->issue_date->format('M d, Y') : '—' }}</td>
+              <td>
+                <span class="badge bg-light text-dark border">{{ $cn->reason }}</span>
+              </td>
+              <td class="text-end font-monospace fw-bold text-danger fs-6">₱{{ number_format($amt, 2) }}</td>
+              <td>
+                <span class="badge {{ $statusBadge }}">{{ $cn->status }}</span>
+              </td>
+              <td>
+                <span class="fs-xs text-muted">{{ $cn->approver?->name ?? '—' }}</span>
+              </td>
+              <td class="text-end">
+                @if($cn->status === 'DRAFT')
+                  <form method="POST" action="{{ route('ar.credit-notes.approve', $cn->id) }}" onsubmit="return confirm('Authorize and post credit note {{ $cn->credit_note_number }} to General Ledger?');">
+                    @csrf
+                    <button type="submit" class="btn btn-sm btn-primary py-1 px-2 fs-xs" title="Finance Manager Approval">
+                      <i class="ph ph-stamp me-1"></i> Approve &amp; Post
+                    </button>
+                  </form>
+                @else
+                  <span class="badge bg-light text-muted border">
+                    <i class="ph ph-check-double text-success me-1"></i> Settled
+                  </span>
+                @endif
               </td>
             </tr>
             @empty
             <tr>
-              <td colspan="8" class="text-center py-4 text-muted">No credit notes recorded in database.</td>
+              <td colspan="8" class="text-center py-4 text-muted">No credit notes found matching filter.</td>
             </tr>
             @endforelse
           </tbody>
@@ -148,329 +163,63 @@
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="cnSummaryText">Showing {{ count($creditNotes ?? []) }} Credit Notes</span>
-      <nav aria-label="Credit Notes Pagination">
-        <ul class="pagination pagination-sm mb-0">
-          <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
-          <li class="page-item active"><a class="page-link" href="#">1</a></li>
-          <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
-        </ul>
-      </nav>
-    </div>
-  </div>
-</div>
-
-<!-- Modal: In-Depth Credit Note Details (Executive Design) -->
-<div class="modal fade" id="creditNoteDetailsModal" tabindex="-1" aria-labelledby="creditNoteDetailsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-      <div class="modal-header bg-white border-bottom p-4 pb-3">
-        <div>
-          <div class="d-flex align-items-center gap-2 mb-1">
-            <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1" id="detailCnRef">CN-2026-041</span>
-            <span class="badge bg-success-subtle text-success" id="detailCnStatus"><i class="ph ph-check-circle me-1"></i> Applied</span>
-          </div>
-          <h4 class="modal-title fw-bold text-dark mb-0" id="detailCnPayor">Maxicare Healthcare Corp</h4>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-
-      <div class="modal-body p-4 bg-light-subtle">
-        <!-- Key Amounts Grid -->
-        <div class="row g-3 mb-4">
-          <div class="col-md-6">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Credit Adjustment Amount</span>
-              <h4 class="fw-bold text-danger mb-0 font-monospace" id="detailCnAmount">₱12,500.00</h4>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Target Billing Invoice</span>
-              <h4 class="fw-bold text-primary mb-0 font-monospace" id="detailCnInvRef">INV-2026-0881</h4>
-            </div>
-          </div>
-        </div>
-
-        <!-- Particulars & Justification -->
-        <div class="bg-white border rounded-3 p-3 mb-4">
-          <h6 class="fw-bold text-dark mb-2 fs-xs text-uppercase"><i class="ph ph-info me-1 text-primary"></i> Adjustment Reason &amp; Audit Justification</h6>
-          <h6 class="fw-bold text-dark mb-2" id="detailCnReason">HMO Contractual Rate Reduction</h6>
-          <p class="small text-muted mb-0 lh-base" id="detailCnNotes">Contractual fee adjustment per Maxicare Tier-1 agreement clause 4.2.</p>
-        </div>
-
-        <!-- Master Info -->
-        <div class="bg-white border rounded-3 p-3 mb-3">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-receipt me-1 text-primary"></i> Master Registry Info</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Issue Date</span>
-              <span class="font-monospace fw-bold text-dark" id="detailCnDate">2026-08-07</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">Description Subtitle</span>
-              <span class="text-dark fw-medium" id="detailCnSub">HMO Agreed Tariff Discount</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Audit Trail & Transparency Verification -->
-        <div class="bg-white border rounded-3 p-3">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-success"></i> Audit Trail &amp; Transparency Verification</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Prepared &amp; Inputted By:</span>
-              <span class="fw-semibold text-dark"><i class="ph ph-user me-1 text-primary"></i> B. Santos (Billing Specialist ID #204)</span>
-            </div>
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Accounting Verification:</span>
-              <span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> Dual-Entry GL Ledger Verified</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">System Audit Timestamp:</span>
-              <span class="font-monospace text-muted" id="detailCnTimestamp">2026-08-07 14:32:05 PST (IP: 192.168.10.45)</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer bg-white border-top p-3">
-        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-sm btn-primary" onclick="alert('Printing Credit Note PDF...');"><i class="ph ph-printer me-1"></i> Print Credit Memo</button>
+      <span class="text-muted fs-xs">Showing {{ $creditNotes->firstItem() ?? 0 }} - {{ $creditNotes->lastItem() ?? 0 }} of {{ $creditNotes->total() }} Records</span>
+      <div>
+        {{ $creditNotes->links() }}
       </div>
     </div>
   </div>
 </div>
 
-<!-- Modal: Issue AR Credit Note -->
-<div class="modal fade" id="issueCreditNoteModal" tabindex="-1" aria-labelledby="issueCreditNoteModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
+<!-- Modal: Issue Credit Note -->
+<div class="modal fade" id="createCreditNoteModal" tabindex="-1" aria-labelledby="createCreditNoteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title font-weight-bold" id="issueCreditNoteModalLabel"><i class="ph ph-plus-circle me-2 text-primary"></i>Issue AR Credit Note</h5>
+      <div class="modal-header border-bottom">
+        <h5 class="modal-title font-weight-bold"><i class="ph ph-plus-circle me-2 text-primary"></i>Issue Credit Note Adjustment</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body p-4">
-        <form id="issueCreditNoteForm">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Credit Note Reference <span class="text-danger">*</span></label>
-              <input type="text" id="modalCnRef" class="form-control form-control-sm font-monospace" placeholder="e.g. CN-2026-045" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Patient / Payor Name <span class="text-danger">*</span></label>
-              <input type="text" id="modalCnPayor" class="form-control form-control-sm" placeholder="e.g. Maxicare or Juan Dela Cruz" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Target Invoice Reference <span class="text-danger">*</span></label>
-              <input type="text" id="modalCnInvRef" class="form-control form-control-sm font-monospace" placeholder="e.g. INV-2026-0881" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Adjustment Category <span class="text-danger">*</span></label>
-              <select id="modalCnReasonType" class="form-select form-select-sm" required>
-                <option value="hmo">HMO Contract Rate Disallowance</option>
-                <option value="courtesy">Senior / PWD Courtesy Discount</option>
-                <option value="error">Billing Charge Correction</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Credit Issue Date <span class="text-danger">*</span></label>
-              <input type="date" id="modalCnDate" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Credit Adjustment Amount (₱) <span class="text-danger">*</span></label>
-              <input type="number" id="modalCnAmount" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace text-danger fw-bold" placeholder="0.00" value="5000.00" required>
-            </div>
-            <div class="col-12">
-              <label class="form-label small fw-semibold">Audit Justification Notes <span class="text-danger">*</span></label>
-              <textarea id="modalCnNotes" class="form-control form-control-sm" rows="2" placeholder="State reason for credit memo..." required></textarea>
-            </div>
+      <form method="POST" action="{{ route('ar.credit-notes.store') }}">
+        @csrf
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Target Open Invoice <span class="text-danger">*</span></label>
+            <select name="invoice_id" class="form-select form-select-sm" required>
+              <option value="">-- Choose Open Patient Invoice --</option>
+              @foreach($openInvoices as $inv)
+                <option value="{{ $inv->id }}">{{ $inv->invoice_number }} — {{ $inv->patientAccount?->full_name }} (Open Copay: ₱{{ number_format((float) $inv->balance_due, 2) }})</option>
+              @endforeach
+            </select>
           </div>
-          <div class="d-flex justify-content-end gap-2 mt-4">
-            <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-check me-1"></i> Issue &amp; Apply Credit Note</button>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Adjustment Reason / Type <span class="text-danger">*</span></label>
+            <select name="reason" class="form-select form-select-sm" required>
+              <option value="SENIOR_CITIZEN_DISCOUNT">Statutory Senior Citizen Discount (20%)</option>
+              <option value="PWD_DISCOUNT">Person with Disability (PWD) Discount (20%)</option>
+              <option value="CHARITY_SUBSIDY">Medical Social Service Charity Subsidy</option>
+              <option value="EMPLOYEE_SUBSIDY">Hospital Employee &amp; Dependent Subsidy</option>
+              <option value="BILLING_ADJUSTMENT">Disputed Item / Procedure Cancellation</option>
+            </select>
           </div>
-        </form>
-      </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Credit Amount (₱) <span class="text-danger">*</span></label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text">₱</span>
+              <input type="number" step="0.01" name="amount" class="form-control font-monospace" placeholder="0.00" required>
+            </div>
+            <div class="form-text fs-xs">Amount cannot exceed the invoice's open patient copay balance.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Issue Date</label>
+            <input type="date" name="issue_date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}">
+          </div>
+        </div>
+        <div class="modal-footer border-top">
+          <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-check me-1"></i> Submit Credit Note</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
 @endsection
-
-@push('scripts')
-<script>
-function openCreditNoteDetailsModal(cn) {
-  if (!cn) return;
-
-  document.getElementById('detailCnRef').textContent = cn.ref || 'CN-000';
-  document.getElementById('detailCnPayor').textContent = cn.payor || 'Payor Name';
-  document.getElementById('detailCnAmount').textContent = cn.amount || '₱0.00';
-  document.getElementById('detailCnInvRef').textContent = cn.inv_ref || 'INV-000';
-  document.getElementById('detailCnReason').textContent = cn.reason || 'Reason';
-  document.getElementById('detailCnNotes').textContent = cn.notes || 'No notes provided.';
-  document.getElementById('detailCnDate').textContent = cn.date || '-';
-  document.getElementById('detailCnSub').textContent = cn.sub || '-';
-
-  const statusEl = document.getElementById('detailCnStatus');
-  if (statusEl) {
-    statusEl.textContent = cn.status;
-    statusEl.className = 'badge ' + (cn.status_badge || 'bg-success-subtle text-success');
-  }
-
-  const modalEl = document.getElementById('creditNoteDetailsModal');
-  if (modalEl && window.bootstrap) {
-    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-    modalInstance.show();
-  }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  const searchInput = document.getElementById('cnSearchInput');
-  const reasonSelect = document.getElementById('cnReasonSelect');
-  const statusSelect = document.getElementById('cnStatusSelect');
-  const summaryText = document.getElementById('cnSummaryText');
-  const btnIssueCreditNote = document.getElementById('btnIssueCreditNote');
-
-  if (btnIssueCreditNote) {
-    btnIssueCreditNote.addEventListener('click', function() {
-      const modalEl = document.getElementById('issueCreditNoteModal');
-      if (modalEl && window.bootstrap) {
-        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-        modalInstance.show();
-      }
-    });
-  }
-
-  function filterCreditNotes() {
-    const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
-    const selectedReason = reasonSelect ? reasonSelect.value.toLowerCase() : '';
-    const selectedStatus = statusSelect ? statusSelect.value.toLowerCase() : '';
-    const rows = document.querySelectorAll('.cn-row');
-    let visibleCount = 0;
-
-    rows.forEach(function(row) {
-      const rowReason = row.getAttribute('data-reason') || '';
-      const rowStatus = row.getAttribute('data-status') || '';
-      const rowText = row.textContent.toLowerCase();
-
-      const matchReason = !selectedReason || rowReason.includes(selectedReason);
-      const matchStatus = !selectedStatus || rowStatus.includes(selectedStatus);
-      const matchSearch = !searchQuery || rowText.includes(searchQuery);
-
-      if (matchReason && matchStatus && matchSearch) {
-        row.style.display = '';
-        visibleCount++;
-      } else {
-        row.style.display = 'none';
-      }
-    });
-
-    if (summaryText) {
-      summaryText.textContent = `Showing ${visibleCount} Credit Note${visibleCount !== 1 ? 's' : ''}`;
-    }
-
-    let emptyRow = document.getElementById('noCnRow');
-    const tbody = document.querySelector('#creditNotesTable tbody');
-    if (visibleCount === 0) {
-      if (!emptyRow && tbody) {
-        emptyRow = document.createElement('tr');
-        emptyRow.id = 'noCnRow';
-        emptyRow.innerHTML = `<td colspan="8" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No credit notes found matching the current filter.</td>`;
-        tbody.appendChild(emptyRow);
-      }
-      if (emptyRow) emptyRow.style.display = '';
-    } else if (emptyRow) {
-      emptyRow.style.display = 'none';
-    }
-  }
-
-  if (searchInput) {
-    searchInput.addEventListener('input', filterCreditNotes);
-    searchInput.addEventListener('keyup', filterCreditNotes);
-  }
-  if (reasonSelect) reasonSelect.addEventListener('change', filterCreditNotes);
-  if (statusSelect) statusSelect.addEventListener('change', filterCreditNotes);
-
-  const issueCreditNoteForm = document.getElementById('issueCreditNoteForm');
-  if (issueCreditNoteForm) {
-    issueCreditNoteForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-
-      const refVal = document.getElementById('modalCnRef').value;
-      const payorVal = document.getElementById('modalCnPayor').value;
-      const invRefVal = document.getElementById('modalCnInvRef').value;
-      const reasonTypeVal = document.getElementById('modalCnReasonType').value;
-      const dateVal = document.getElementById('modalCnDate').value;
-      const rawAmount = parseFloat(document.getElementById('modalCnAmount').value || 0);
-      const formattedAmount = '₱' + rawAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const notesVal = document.getElementById('modalCnNotes').value;
-
-      let reasonLabel = 'HMO Contractual Rate Reduction';
-      if (reasonTypeVal === 'courtesy') reasonLabel = 'Senior / PWD Courtesy Discount';
-      else if (reasonTypeVal === 'error') reasonLabel = 'Billing Correction';
-
-      const cnObj = {
-        ref: refVal,
-        date: dateVal,
-        payor: payorVal,
-        sub: 'Newly Issued Credit Memo',
-        inv_ref: invRefVal,
-        amount: formattedAmount,
-        reason: reasonLabel,
-        reason_type: reasonTypeVal,
-        status: 'Applied',
-        status_badge: 'bg-success-subtle text-success',
-        status_icon: 'ph-check-circle',
-        notes: notesVal
-      };
-
-      const tbody = document.querySelector('#creditNotesTable tbody');
-      if (tbody) {
-        const newRow = document.createElement('tr');
-        newRow.className = 'cn-row';
-        newRow.style.cursor = 'pointer';
-        newRow.setAttribute('data-reason', reasonTypeVal);
-        newRow.setAttribute('data-status', 'applied');
-
-        newRow.onclick = function() { openCreditNoteDetailsModal(cnObj); };
-
-        newRow.innerHTML = `
-          <td><span class="font-monospace text-primary fw-bold">${refVal}</span></td>
-          <td class="font-monospace fs-xs">${dateVal}</td>
-          <td>
-            <div class="fw-semibold text-dark">${payorVal}</div>
-            <span class="fs-xs text-muted">Newly Issued Credit Memo</span>
-          </td>
-          <td><span class="font-monospace text-muted">${invRefVal}</span></td>
-          <td class="text-end text-danger fw-bold font-monospace">${formattedAmount}</td>
-          <td>${reasonLabel}</td>
-          <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> Applied</span></td>
-          <td class="text-end" onclick="event.stopPropagation();">
-            <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Credit Note Details"><i class="ph ph-eye"></i></button>
-          </td>
-        `;
-
-        const eyeBtn = newRow.querySelector('button[title="View Credit Note Details"]');
-        if (eyeBtn) {
-          eyeBtn.onclick = function(e) {
-            e.stopPropagation();
-            openCreditNoteDetailsModal(cnObj);
-          };
-        }
-
-        tbody.insertBefore(newRow, tbody.firstChild);
-      }
-
-      const modalEl = document.getElementById('issueCreditNoteModal');
-      const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-      if (modalInstance) modalInstance.hide();
-
-      issueCreditNoteForm.reset();
-      filterCreditNotes();
-    });
-  }
-
-  filterCreditNotes();
-});
-</script>
-@endpush

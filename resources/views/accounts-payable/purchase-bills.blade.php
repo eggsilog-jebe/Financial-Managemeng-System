@@ -1,11 +1,32 @@
 @extends('layouts.app')
 
-@section('title', 'Purchase Bills - Accounts Payable | FMS')
+@section('title', 'Purchase Bills & 3-Way Matching - Accounts Payable | FMS')
 @section('module', 'ap')
 @section('page', 'purchase-bills')
 
 @section('content')
 <div class="container-fluid p-4">
+  <!-- Alerts -->
+  @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-3 mb-4" role="alert">
+      <div class="d-flex align-items-center">
+        <i class="ph ph-check-circle fs-4 me-2"></i>
+        <span>{{ session('success') }}</span>
+      </div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
+
+  @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-3 mb-4" role="alert">
+      <div class="d-flex align-items-center">
+        <i class="ph ph-warning-circle fs-4 me-2"></i>
+        <span>{{ session('error') }}</span>
+      </div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
+
   <!-- Header -->
   <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
@@ -13,70 +34,21 @@
         <ol class="breadcrumb mb-1 fs-xs">
           <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
           <li class="breadcrumb-item">Accounts Payable</li>
-          <li class="breadcrumb-item active">Purchase Bills</li>
+          <li class="breadcrumb-item active">Purchase Bills &amp; 3-Way Matching</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold text-dark">Purchase Bills</h1>
+      <h1 class="h3 mb-0 font-weight-bold text-dark">Purchase Bills &amp; 3-Way Match Reconciliation</h1>
     </div>
-    <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Exporting Purchase Bills statement...');"><i class="ph ph-download-simple me-1"></i> Export Bills</button>
-      <button id="btnLogBill" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#logBillModal"><i class="ph ph-plus me-1"></i> Log Bill</button>
-    </div>
-  </div>
-
-  <!-- Summary Row -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-4">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Medical Gases &amp; Consumables</span>
-          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-first-aid-kit fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Bio-Hazard &amp; Environmental Services</span>
-          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-trash fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Facility Power &amp; Water Utilities</span>
-          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-lightning fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
-      </div>
+    <div class="d-flex align-items-center gap-2">
+      <x-integration-badge 
+          type="external" 
+          :systems="['PSM (Purchase Orders)', 'SWS (Goods Receipt Notes)']" 
+          glImpact="DR 1200 (Inventory/Expense) / CR 2010 (AP Vendors) + CR 2110 (EWT 2307)" 
+          description="Performs 3-Way tolerance matching across PO, GRN, and vendor invoice." 
+      />
+      <button id="btnLogBill" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#createBillModal"><i class="ph ph-plus me-1"></i> Ingest Purchase Bill</button>
     </div>
   </div>
-
-  <!-- Table Card -->
-  <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-transparent border-bottom p-3">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <!-- Status Filter Dropdown -->
-        <div class="d-flex align-items-center gap-2">
-          <label for="billStatusSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Payment Status:</label>
-          <select id="billStatusSelect" class="form-select form-select-sm bg-light" style="min-width: 200px;">
-            <option value="" selected>All Statuses</option>
-            <option value="unpaid">Unpaid</option>
-            <option value="partially paid">Partially Paid</option>
-            <option value="paid">Paid</option>
-          </select>
-        </div>
-
-        <!-- Search Box -->
-        <div class="search-box" style="width: 280px;">
-          <i class="ph ph-magnifying-glass"></i>
-          <input type="search" id="billSearchInput" class="form-control form-control-sm" placeholder="Search bill ID, supplier, item...">
-        </div>
-      </div>
-    </div>
 
   <!-- Metric Summary Cards -->
   <div class="row g-3 mb-4">
@@ -86,110 +58,154 @@
           <span class="text-muted small fw-medium">Total Purchase Bills</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-receipt fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ count($bills ?? []) }} Bills</h4>
+        <h4 class="fw-bold mb-0 text-dark">{{ $bills->total() }} Bills</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Unpaid Supplier Bills</span>
-          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-clock-afternoon fs-5"></i></span>
+          <span class="text-muted small fw-medium">Total Unpaid Balance</span>
+          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-clock-afternoon fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-danger">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-danger">₱{{ number_format((float) $totalUnpaid, 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Paid Bills (This Period)</span>
+          <span class="text-muted small fw-medium">Paid (Settled)</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-success">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-success">₱{{ number_format((float) $totalPaid, 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Pending Manager Approvals</span>
-          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-stamp fs-5"></i></span>
+          <span class="text-muted small fw-medium">Pending 3-Way Approvals</span>
+          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-stamp fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-warning">{{ $pendingCount }} Bills</h4>
       </div>
     </div>
   </div>
 
-  <!-- Data Table Card -->
+  <!-- 3-Way Matching Table Card -->
   <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-transparent border-bottom p-3">
+      <form method="GET" action="{{ route('ap.purchase-bills') }}" class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="d-flex align-items-center gap-2">
+            <label for="matchStatusSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-git-merge me-1"></i> Match Status:</label>
+            <select id="matchStatusSelect" name="match_status" class="form-select form-select-sm bg-light" onchange="this.form.submit()">
+              <option value="" {{ request('match_status') === null || request('match_status') === '' ? 'selected' : '' }}>All Match Statuses</option>
+              <option value="MATCHED" {{ request('match_status') === 'MATCHED' ? 'selected' : '' }}>Matched (3-Way OK)</option>
+              <option value="PRICE_MISMATCH" {{ request('match_status') === 'PRICE_MISMATCH' ? 'selected' : '' }}>Price Variance</option>
+              <option value="QTY_MISMATCH" {{ request('match_status') === 'QTY_MISMATCH' ? 'selected' : '' }}>Quantity Variance</option>
+              <option value="OVER_BILLED" {{ request('match_status') === 'OVER_BILLED' ? 'selected' : '' }}>Over-Billed</option>
+            </select>
+          </div>
+
+          <div class="d-flex align-items-center gap-2">
+            <label for="billStatusSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap">Bill Status:</label>
+            <select id="billStatusSelect" name="status" class="form-select form-select-sm bg-light" onchange="this.form.submit()">
+              <option value="" {{ request('status') === null || request('status') === '' ? 'selected' : '' }}>All Statuses</option>
+              <option value="APPROVED" {{ request('status') === 'APPROVED' ? 'selected' : '' }}>Approved</option>
+              <option value="UNPAID" {{ request('status') === 'UNPAID' ? 'selected' : '' }}>Unpaid</option>
+              <option value="PARTIAL" {{ request('status') === 'PARTIAL' ? 'selected' : '' }}>Partial</option>
+              <option value="PAID" {{ request('status') === 'PAID' ? 'selected' : '' }}>Paid</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="search-box" style="width: 280px;">
+          <input type="search" name="search" class="form-control form-control-sm" placeholder="Search bill #, PO, GRN, supplier..." value="{{ request('search') }}">
+        </div>
+      </form>
+    </div>
+
     <div class="card-body p-0">
       <div class="table-responsive">
         <table id="purchaseBillTable" class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
-              <th>Bill Reference #</th>
-              <th>Supplier Name</th>
-              <th>Bill Item / Description</th>
-              <th>Bill Date</th>
-              <th>Due Date</th>
-              <th class="text-end">Total Amount</th>
-              <th>Status</th>
+              <th>Bill # &amp; Vendor Invoice</th>
+              <th>Supplier Legal Name</th>
+              <th>PO Amount</th>
+              <th>GRN Amount</th>
+              <th class="text-end">Invoice Total</th>
+              <th class="text-end">Variance</th>
+              <th>3-Way Status</th>
+              <th>Bill Status</th>
               <th class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
-            @forelse($bills ?? [] as $inv)
+            @forelse($bills as $inv)
             @php
-              $ref = $inv->bill_number ?? 'APV-N/A';
-              $vendorName = $inv->vendor->name ?? 'Supplier';
-              $billDate = $inv->bill_date ? $inv->bill_date->format('Y-m-d') : '-';
-              $dueDate = $inv->due_date ? $inv->due_date->format('Y-m-d') : '-';
-              $amount = '₱' . number_format((float) ($inv->total_amount ?? 0), 2);
-              $status = ucfirst(strtolower($inv->status ?? 'UNPAID'));
-              $statusBadge = match(strtoupper($inv->status ?? '')) {
-                'PAID' => 'bg-success-subtle text-success',
-                'PARTIAL' => 'bg-info-subtle text-info',
-                default => 'bg-warning-subtle text-warning',
+              $m = $inv->threeWayMatch;
+              $poAmt = $m ? (float) $m->po_amount : (float) $inv->total_amount;
+              $grnAmt = $m ? (float) $m->grn_amount : (float) $inv->total_amount;
+              $invAmt = (float) $inv->total_amount;
+              $variance = $m ? (float) $m->price_variance : 0.00;
+              $matchStatus = $m?->match_status ?? 'MATCHED';
+
+              $matchBadge = match($matchStatus) {
+                'MATCHED'        => 'bg-success-subtle text-success',
+                'PRICE_MISMATCH', 'OVER_BILLED' => 'bg-danger-subtle text-danger',
+                'QTY_MISMATCH'   => 'bg-warning-subtle text-warning',
+                default          => 'bg-secondary-subtle text-secondary',
               };
-              $statusIcon = match(strtoupper($inv->status ?? '')) {
-                'PAID' => 'ph-check-circle',
-                'PARTIAL' => 'ph-hourglass',
-                default => 'ph-clock',
+
+              $billBadge = match($inv->status) {
+                'PAID'     => 'bg-success-subtle text-success',
+                'APPROVED' => 'bg-info-subtle text-info',
+                'PARTIAL'  => 'bg-warning-subtle text-warning',
+                default    => 'bg-secondary-subtle text-secondary',
               };
-              $iArr = [
-                'ref' => $ref,
-                'vendor_inv' => $ref,
-                'vendor' => $vendorName,
-                'sub' => 'Medical Consumables & Supplies',
-                'date' => $billDate,
-                'due' => $dueDate,
-                'amount' => $amount,
-                'status' => $status,
-                'status_badge' => $statusBadge,
-                'status_icon' => $statusIcon,
-                'terms' => 'NET 30',
-                'category' => 'medical',
-              ];
             @endphp
-            <tr class="invoice-row" style="cursor: pointer;" data-category="{{ $iArr['category'] }}" data-status="{{ strtolower($iArr['status']) }}" onclick="openInvoiceDetailsModal({{ json_encode($iArr) }})">
+            <tr>
               <td>
-                <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">{{ $iArr['ref'] }}</span>
-                <div class="fs-xs text-muted font-monospace mt-1">{{ $iArr['vendor_inv'] }}</div>
+                <div class="font-monospace fw-bold text-primary">{{ $inv->bill_number }}</div>
+                <div class="fs-xs text-muted">Inv: {{ $inv->vendor_invoice_number }}</div>
               </td>
               <td>
-                <div class="fw-semibold text-dark">{{ $iArr['vendor'] }}</div>
-                <span class="fs-xs text-muted">{{ $iArr['sub'] }}</span>
+                <div class="fw-semibold text-dark">{{ $inv->vendor?->name ?? 'Unknown Vendor' }}</div>
+                <div class="fs-xs text-muted font-monospace">PO: {{ $m?->po_number ?? 'N/A' }} | GRN: {{ $m?->grn_number ?? 'N/A' }}</div>
               </td>
-              <td class="font-monospace fs-xs">{{ $iArr['date'] }}</td>
-              <td class="font-monospace fs-xs">{{ $iArr['due'] }}</td>
-              <td class="text-end fw-bold text-dark font-monospace">{{ $iArr['amount'] }}</td>
-              <td>{{ $iArr['terms'] }}</td>
-              <td><span class="badge {{ $iArr['status_badge'] }}"><i class="ph {{ $iArr['status_icon'] }} me-1"></i> {{ $iArr['status'] }}</span></td>
-              <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Bill Details" onclick="openInvoiceDetailsModal({{ json_encode($iArr) }})"><i class="ph ph-eye"></i></button>
+              <td class="font-monospace fs-xs">₱{{ number_format($poAmt, 2) }}</td>
+              <td class="font-monospace fs-xs">₱{{ number_format($grnAmt, 2) }}</td>
+              <td class="text-end font-monospace fw-bold text-dark">₱{{ number_format($invAmt, 2) }}</td>
+              <td class="text-end font-monospace {{ $variance != 0 ? 'text-danger fw-bold' : 'text-muted' }}">
+                ₱{{ number_format($variance, 2) }}
+              </td>
+              <td>
+                <span class="badge {{ $matchBadge }}">
+                  <i class="ph {{ $matchStatus === 'MATCHED' ? 'ph-check-circle' : 'ph-warning-circle' }} me-1"></i>
+                  {{ str_replace('_', ' ', $matchStatus) }}
+                </span>
+              </td>
+              <td><span class="badge {{ $billBadge }}">{{ $inv->status }}</span></td>
+              <td class="text-end">
+                <div class="d-flex justify-content-end gap-1">
+                  @if($inv->status !== 'APPROVED' && $inv->status !== 'PAID')
+                    <form method="POST" action="{{ route('ap.purchase-bills.approve', $inv->id) }}" onsubmit="return confirm('Authorize 3-Way matching approval for {{ $inv->bill_number }}?');">
+                      @csrf
+                      <button type="submit" class="btn btn-sm btn-success py-1 px-2 fs-xs" title="Approve 3-Way Match">
+                        <i class="ph ph-check-circle me-1"></i> Approve
+                      </button>
+                    </form>
+                  @else
+                    <a href="{{ route('ap.invoices') }}" class="btn btn-sm btn-outline-primary py-1 px-2 fs-xs" title="View Invoices Hub">
+                      <i class="ph ph-receipt me-1"></i> Voucher
+                    </a>
+                  @endif
+                </div>
               </td>
             </tr>
             @empty
             <tr>
-              <td colspan="8" class="text-center py-4 text-muted">No purchase bills recorded in database.</td>
+              <td colspan="9" class="text-center py-4 text-muted">No purchase bills found matching current filter.</td>
             </tr>
             @endforelse
           </tbody>
@@ -197,137 +213,138 @@
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="billSummaryText">Showing {{ count($bills ?? []) }} Purchase Bills</span>
-      <nav aria-label="Bills Pagination">
-        <ul class="pagination pagination-sm mb-0">
-          <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
-          <li class="page-item active"><a class="page-link" href="#">1</a></li>
-          <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
-        </ul>
-      </nav>
-    </div>
-  </div>
-</div>
-
-<!-- Modal: In-Depth Purchase Bill Details (Executive Design) -->
-<div class="modal fade" id="billDetailsModal" tabindex="-1" aria-labelledby="billDetailsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-      <div class="modal-header bg-white border-bottom p-4 pb-3">
-        <div>
-          <div class="d-flex align-items-center gap-2 mb-1">
-            <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1" id="detailBillId">BILL-2026-801</span>
-            <span class="badge bg-warning-subtle text-warning" id="detailBillStatus">Unpaid</span>
-          </div>
-          <h4 class="modal-title fw-bold text-dark mb-0" id="detailBillSupplier">Linde Medical Gases</h4>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-
-      <div class="modal-body p-4 bg-light-subtle">
-        <!-- Key Amounts Grid -->
-        <div class="row g-3 mb-4">
-          <div class="col-md-6">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Total Bill Amount</span>
-              <h4 class="fw-bold text-dark mb-0 font-monospace" id="detailBillAmount">₱54,000.00</h4>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Payment Due Date</span>
-              <h4 class="fw-bold text-danger mb-0 font-monospace" id="detailBillDue">2026-09-03</h4>
-            </div>
-          </div>
-        </div>
-
-        <!-- Particulars Description -->
-        <div class="bg-white border rounded-3 p-3 mb-4">
-          <h6 class="fw-bold text-dark mb-2 fs-xs text-uppercase"><i class="ph ph-info me-1 text-primary"></i> Supply Item &amp; Bill Breakdown</h6>
-          <h6 class="fw-bold text-primary mb-2" id="detailBillItem">Oxygen Cylinder Tank Refill Batch</h6>
-          <p class="small text-muted mb-0 lh-base" id="detailBillDesc">High-purity liquid oxygen refills for ICU ward manifolds &amp; operating room emergency tanks.</p>
-        </div>
-
-        <!-- Master Data -->
-        <div class="bg-white border rounded-3 p-3">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-receipt me-1 text-primary"></i> Bill Master Information</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Bill Issue Date</span>
-              <span class="font-monospace fw-bold text-dark" id="detailBillDate">2026-08-04</span>
-            </div>
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Associated PO / Contract</span>
-              <span class="font-monospace text-primary fw-bold">PO-88231</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">Payment Category</span>
-              <span class="badge bg-light text-dark border">Recurring Supply Order</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer bg-white border-top p-3">
-        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
-        <a href="{{ route('ap.invoices') }}" class="btn btn-sm btn-primary"><i class="ph ph-receipt me-1"></i> Convert to AP Voucher</a>
+      <span class="text-muted fs-xs">Showing {{ $bills->firstItem() ?? 0 }} - {{ $bills->lastItem() ?? 0 }} of {{ $bills->total() }} Bills</span>
+      <div>
+        {{ $bills->links() }}
       </div>
     </div>
   </div>
 </div>
 
-<!-- Modal: Log New Bill -->
-<div class="modal fade" id="logBillModal" tabindex="-1" aria-labelledby="logBillModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
+<!-- Modal: Ingest Purchase Bill with 3-Way Matching -->
+<div class="modal fade" id="createBillModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
     <div class="modal-content border-0 shadow">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title font-weight-bold" id="logBillModalLabel"><i class="ph ph-plus-circle me-2 text-primary"></i>Log New Purchase Bill</h5>
+      <div class="modal-header border-bottom">
+        <h5 class="modal-title font-weight-bold"><i class="ph ph-file-plus me-2 text-primary"></i>Ingest Purchase Bill &amp; 3-Way Match</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body p-4">
-        <form id="logBillForm">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Bill ID Reference <span class="text-danger">*</span></label>
-              <input type="text" id="modalBillId" class="form-control form-control-sm font-monospace" placeholder="e.g. BILL-2026-806" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Supplier Name <span class="text-danger">*</span></label>
-              <select id="modalBillSupplier" class="form-select form-select-sm" required>
-                <option value="Linde Medical Gases">Linde Medical Gases</option>
-                <option value="Meralco Power Distribution">Meralco Power Distribution</option>
-                <option value="BioClean Environmental Services">BioClean Environmental Services</option>
-                <option value="Manila Water Commercial">Manila Water Commercial</option>
-                <option value="Surgical Supplies & Implants Co.">Surgical Supplies &amp; Implants Co.</option>
+      <form method="POST" action="{{ route('ap.purchase-bills.store') }}">
+        @csrf
+        <div class="modal-body p-4">
+          <!-- Master Header Row -->
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Supplier / Vendor <span class="text-danger">*</span></label>
+              <select name="vendor_id" class="form-select form-select-sm" required>
+                <option value="">-- Select Vendor --</option>
+                @foreach($vendors as $v)
+                  <option value="{{ $v->id }}">{{ $v->name }} ({{ $v->code }})</option>
+                @endforeach
               </select>
             </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Bill Issue Date <span class="text-danger">*</span></label>
-              <input type="date" id="modalBillDate" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Bill Date <span class="text-danger">*</span></label>
+              <input type="date" name="bill_date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
               <label class="form-label small fw-semibold">Payment Due Date <span class="text-danger">*</span></label>
-              <input type="date" id="modalBillDue" class="form-control form-control-sm" value="{{ date('Y-m-d', strtotime('+30 days')) }}" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Supply Item / Particulars <span class="text-danger">*</span></label>
-              <input type="text" id="modalBillItem" class="form-control form-control-sm" placeholder="e.g. Oxygen Cylinder Refill" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Total Amount (₱) <span class="text-danger">*</span></label>
-              <input type="number" id="modalBillAmount" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace" placeholder="0.00" value="15000.00" required>
-            </div>
-            <div class="col-md-12">
-              <label class="form-label small fw-semibold">Detailed Description <span class="text-danger">*</span></label>
-              <input type="text" id="modalBillDesc" class="form-control form-control-sm" placeholder="e.g. Monthly ICU liquid oxygen refills" required>
+              <input type="date" name="due_date" class="form-control form-control-sm" value="{{ date('Y-m-d', strtotime('+30 days')) }}" required>
             </div>
           </div>
-          <div class="d-flex justify-content-end gap-2 mt-4">
-            <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-check me-1"></i> Log Purchase Bill</button>
+
+          <!-- 3-Way Reference Controls Row -->
+          <div class="row g-3 mb-4 p-3 bg-light rounded-3">
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Purchase Order (PO #)</label>
+              <input type="text" name="po_number" class="form-control form-control-sm font-monospace" placeholder="e.g. PO-2026-0044" value="PO-{{ date('Ymd') }}-{{ rand(100,999) }}">
+              <div class="mt-1">
+                <input type="number" step="0.01" min="0" name="po_amount" id="modalPoAmount" class="form-control form-control-sm font-monospace text-end" placeholder="PO Amount ₱">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Goods Receipt Note (GRN #)</label>
+              <input type="text" name="grn_number" class="form-control form-control-sm font-monospace" placeholder="e.g. GRN-2026-0092" value="GRN-{{ date('Ymd') }}-{{ rand(100,999) }}">
+              <div class="mt-1">
+                <input type="number" step="0.01" min="0" name="grn_amount" id="modalGrnAmount" class="form-control form-control-sm font-monospace text-end" placeholder="GRN Amount ₱">
+              </div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Vendor Sales Invoice # <span class="text-danger">*</span></label>
+              <input type="text" name="vendor_invoice_number" class="form-control form-control-sm font-monospace" placeholder="e.g. SI-88992211" required>
+            </div>
           </div>
-        </form>
-      </div>
+
+          <!-- Line Items Table -->
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="fw-bold mb-0 small text-uppercase"><i class="ph ph-list-dashes me-1 text-primary"></i>Bill Item Breakdown &amp; Tax Withholding</h6>
+            <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2" onclick="addBillLineItem()"><i class="ph ph-plus me-1"></i> Add Line</button>
+          </div>
+
+          <div class="table-responsive border rounded-3 mb-3">
+            <table class="table table-sm align-middle mb-0" id="billItemsTable">
+              <thead class="table-light fs-xs">
+                <tr>
+                  <th style="width: 25%;">Item Description</th>
+                  <th style="width: 20%;">Expense Classification</th>
+                  <th style="width: 15%;">BIR ATC Withholding</th>
+                  <th style="width: 12%;" class="text-end">Qty</th>
+                  <th style="width: 13%;" class="text-end">Unit Price (₱)</th>
+                  <th style="width: 15%;" class="text-end">Gross (₱)</th>
+                </tr>
+              </thead>
+              <tbody id="billItemsTbody">
+                <tr>
+                  <td><input type="text" name="items[0][description]" class="form-control form-control-sm" placeholder="Item description..." required></td>
+                  <td>
+                    <select name="items[0][expense_type]" class="form-select form-select-sm">
+                      <option value="GOODS_INVENTORY">Goods / Inventory</option>
+                      <option value="SERVICES_MAINTENANCE">Services & Maintenance</option>
+                      <option value="DOCTOR_PROFESSIONAL_FEE">Doctor PF</option>
+                      <option value="CAPEX_EQUIPMENT">Capex Equipment</option>
+                      <option value="UTILITIES">Utilities</option>
+                    </select>
+                  </td>
+                  <td>
+                    <select name="items[0][atc_code]" class="form-select form-select-sm item-atc" onchange="recalculateBillTotals()">
+                      <option value="WI158">WI158 (Goods 1%)</option>
+                      <option value="WI160">WI160 (Services 2%)</option>
+                      <option value="WI010">WI010 (Doctor PF 10%)</option>
+                    </select>
+                  </td>
+                  <td><input type="number" step="1" min="1" name="items[0][quantity]" class="form-control form-control-sm text-end item-qty" value="1" oninput="recalculateBillTotals()" required></td>
+                  <td><input type="number" step="0.01" min="0" name="items[0][unit_price]" class="form-control form-control-sm text-end item-price" value="0.00" oninput="recalculateBillTotals()" required></td>
+                  <td class="text-end font-monospace fw-bold item-line-gross">₱0.00</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Total Calculation Footer -->
+          <div class="row justify-content-end">
+            <div class="col-md-5">
+              <div class="bg-light p-3 rounded-3 fs-xs">
+                <div class="d-flex justify-content-between mb-1">
+                  <span>Total Gross Invoiced:</span>
+                  <span class="font-monospace fw-bold" id="lblTotalGross">₱0.00</span>
+                </div>
+                <div class="d-flex justify-content-between mb-1 text-muted">
+                  <span>Estimated BIR 2307 EWT:</span>
+                  <span class="font-monospace text-danger" id="lblTotalEwt">₱0.00</span>
+                </div>
+                <div class="d-flex justify-content-between border-top pt-2 mt-2">
+                  <span class="fw-bold fs-6">Net Accounts Payable:</span>
+                  <span class="font-monospace fw-bold fs-6 text-primary" id="lblTotalNet">₱0.00</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-top">
+          <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-check me-1"></i> Post Purchase Bill &amp; 3-Way Match</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
@@ -335,161 +352,70 @@
 
 @push('scripts')
 <script>
-function openBillDetailsModal(b) {
-  if (!b) return;
+let billLineIndex = 1;
 
-  document.getElementById('detailBillId').textContent = b.id || 'BILL-000';
-  document.getElementById('detailBillSupplier').textContent = b.supplier || 'Supplier Name';
-  document.getElementById('detailBillAmount').textContent = b.amount || '₱0.00';
-  document.getElementById('detailBillDue').textContent = b.due || '-';
-  document.getElementById('detailBillItem').textContent = b.item || 'Supply Item';
-  document.getElementById('detailBillDesc').textContent = b.desc || 'No description provided.';
-  document.getElementById('detailBillDate').textContent = b.date || '-';
-
-  const statusEl = document.getElementById('detailBillStatus');
-  if (statusEl) {
-    statusEl.textContent = b.status;
-    statusEl.className = 'badge ' + (b.badge || 'bg-warning-subtle text-warning');
-  }
-
-  const modalEl = document.getElementById('billDetailsModal');
-  if (modalEl && window.bootstrap) {
-    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-    modalInstance.show();
-  }
+function addBillLineItem() {
+  const tbody = document.getElementById('billItemsTbody');
+  const row = document.createElement('tr');
+  row.innerHTML = `
+    <td><input type="text" name="items[${billLineIndex}][description]" class="form-control form-control-sm" placeholder="Item description..." required></td>
+    <td>
+      <select name="items[${billLineIndex}][expense_type]" class="form-select form-select-sm">
+        <option value="GOODS_INVENTORY">Goods / Inventory</option>
+        <option value="SERVICES_MAINTENANCE">Services & Maintenance</option>
+        <option value="DOCTOR_PROFESSIONAL_FEE">Doctor PF</option>
+        <option value="CAPEX_EQUIPMENT">Capex Equipment</option>
+        <option value="UTILITIES">Utilities</option>
+      </select>
+    </td>
+    <td>
+      <select name="items[${billLineIndex}][atc_code]" class="form-select form-select-sm item-atc" onchange="recalculateBillTotals()">
+        <option value="WI158">WI158 (Goods 1%)</option>
+        <option value="WI160">WI160 (Services 2%)</option>
+        <option value="WI010">WI010 (Doctor PF 10%)</option>
+      </select>
+    </td>
+    <td><input type="number" step="1" min="1" name="items[${billLineIndex}][quantity]" class="form-control form-control-sm text-end item-qty" value="1" oninput="recalculateBillTotals()" required></td>
+    <td><input type="number" step="0.01" min="0" name="items[${billLineIndex}][unit_price]" class="form-control form-control-sm text-end item-price" value="0.00" oninput="recalculateBillTotals()" required></td>
+    <td class="text-end font-monospace fw-bold item-line-gross">₱0.00</td>
+  `;
+  tbody.appendChild(row);
+  billLineIndex++;
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-  const statusSelect = document.getElementById('billStatusSelect');
-  const searchInput = document.getElementById('billSearchInput');
-  const summaryText = document.getElementById('billSummaryText');
-  const btnLogBill = document.getElementById('btnLogBill');
+function recalculateBillTotals() {
+  const rows = document.querySelectorAll('#billItemsTbody tr');
+  let totalGross = 0;
+  let totalEwt = 0;
 
-  if (btnLogBill) {
-    btnLogBill.addEventListener('click', function() {
-      const modalEl = document.getElementById('logBillModal');
-      if (modalEl && window.bootstrap) {
-        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-        modalInstance.show();
-      }
-    });
-  }
+  rows.forEach(row => {
+    const qty = parseFloat(row.querySelector('.item-qty')?.value || 0);
+    const price = parseFloat(row.querySelector('.item-price')?.value || 0);
+    const atc = row.querySelector('.item-atc')?.value || 'WI158';
 
-  function filterBills() {
-    const selectedStatus = statusSelect ? statusSelect.value.toLowerCase() : '';
-    const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
-    const rows = document.querySelectorAll('.bill-row');
-    let visibleCount = 0;
+    const gross = qty * price;
+    row.querySelector('.item-line-gross').textContent = '₱' + gross.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
-    rows.forEach(function(row) {
-      const rowStatus = row.getAttribute('data-status') || '';
-      const rowText = row.textContent.toLowerCase();
+    let rate = 0.01;
+    if (atc === 'WI160') rate = 0.02;
+    if (atc === 'WI010') rate = 0.10;
 
-      const matchStatus = !selectedStatus || rowStatus === selectedStatus;
-      const matchSearch = !searchQuery || rowText.includes(searchQuery);
+    const ewt = gross * rate;
 
-      if (matchStatus && matchSearch) {
-        row.style.display = '';
-        visibleCount++;
-      } else {
-        row.style.display = 'none';
-      }
-    });
+    totalGross += gross;
+    totalEwt += ewt;
+  });
 
-    if (summaryText) {
-      summaryText.textContent = `Showing ${visibleCount} Purchase Bill${visibleCount !== 1 ? 's' : ''}`;
-    }
+  const totalNet = totalGross - totalEwt;
 
-    let emptyRow = document.getElementById('noBillsRow');
-    const tbody = document.querySelector('#purchaseBillsTable tbody');
-    if (visibleCount === 0) {
-      if (!emptyRow && tbody) {
-        emptyRow = document.createElement('tr');
-        emptyRow.id = 'noBillsRow';
-        emptyRow.innerHTML = `<td colspan="8" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No purchase bills found matching the current filter.</td>`;
-        tbody.appendChild(emptyRow);
-      }
-      if (emptyRow) emptyRow.style.display = '';
-    } else if (emptyRow) {
-      emptyRow.style.display = 'none';
-    }
-  }
+  document.getElementById('lblTotalGross').textContent = '₱' + totalGross.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  document.getElementById('lblTotalEwt').textContent = '₱' + totalEwt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  document.getElementById('lblTotalNet').textContent = '₱' + totalNet.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
-  if (statusSelect) statusSelect.addEventListener('change', filterBills);
-  if (searchInput) {
-    searchInput.addEventListener('input', filterBills);
-    searchInput.addEventListener('keyup', filterBills);
-  }
-
-  const logBillForm = document.getElementById('logBillForm');
-  if (logBillForm) {
-    logBillForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-
-      const idVal = document.getElementById('modalBillId').value;
-      const supplierVal = document.getElementById('modalBillSupplier').value;
-      const dateVal = document.getElementById('modalBillDate').value;
-      const dueVal = document.getElementById('modalBillDue').value;
-      const itemVal = document.getElementById('modalBillItem').value;
-      const rawAmount = parseFloat(document.getElementById('modalBillAmount').value || 0);
-      const formattedAmount = '₱' + rawAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const descVal = document.getElementById('modalBillDesc').value;
-
-      const billObj = {
-        id: idVal,
-        supplier: supplierVal,
-        item: itemVal,
-        date: dateVal,
-        due: dueVal,
-        amount: formattedAmount,
-        status: 'Unpaid',
-        badge: 'bg-warning-subtle text-warning',
-        desc: descVal
-      };
-
-      const tbody = document.querySelector('#purchaseBillsTable tbody');
-      if (tbody) {
-        const newRow = document.createElement('tr');
-        newRow.className = 'bill-row';
-        newRow.style.cursor = 'pointer';
-        newRow.setAttribute('data-status', 'unpaid');
-
-        newRow.onclick = function() { openBillDetailsModal(billObj); };
-
-        newRow.innerHTML = `
-          <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">${idVal}</span></td>
-          <td class="fw-semibold text-dark">${supplierVal}</td>
-          <td><span class="text-dark">${itemVal}</span></td>
-          <td class="font-monospace fs-xs">${dateVal}</td>
-          <td class="font-monospace fs-xs">${dueVal}</td>
-          <td class="text-end fw-bold text-dark font-monospace">${formattedAmount}</td>
-          <td><span class="badge bg-warning-subtle text-warning">Unpaid</span></td>
-          <td class="text-end" onclick="event.stopPropagation();">
-            <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Bill Details"><i class="ph ph-eye"></i></button>
-          </td>
-        `;
-
-        const eyeBtn = newRow.querySelector('button[title="View Bill Details"]');
-        if (eyeBtn) {
-          eyeBtn.onclick = function(e) {
-            e.stopPropagation();
-            openBillDetailsModal(billObj);
-          };
-        }
-
-        tbody.insertBefore(newRow, tbody.firstChild);
-      }
-
-      const modalEl = document.getElementById('logBillModal');
-      const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-      if (modalInstance) modalInstance.hide();
-
-      logBillForm.reset();
-      filterBills();
-    });
-  }
-
-  filterBills();
-});
+  const poInput = document.getElementById('modalPoAmount');
+  const grnInput = document.getElementById('modalGrnAmount');
+  if (poInput && (!poInput.value || poInput.value == '0.00')) poInput.value = totalGross.toFixed(2);
+  if (grnInput && (!grnInput.value || grnInput.value == '0.00')) grnInput.value = totalGross.toFixed(2);
+}
 </script>
 @endpush

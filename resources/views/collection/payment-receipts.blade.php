@@ -2,7 +2,7 @@
 
 @section('title', 'Payment Receipts - Collection Management | FMS')
 @section('module', 'collection')
-@section('page', 'receipts')
+@section('page', 'payment-receipts')
 
 @section('content')
 <div class="container-fluid p-4">
@@ -16,97 +16,178 @@
           <li class="breadcrumb-item active">Payment Receipts</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Payment Receipts &amp; Official Receipts</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Payment Receipts &amp; Official Receipts (OR) Hub</h1>
     </div>
     <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Exporting Official Receipts Log...');"><i class="ph ph-download-simple me-1"></i> Export Receipts Log</button>
-      <button id="btnIssueReceipt" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#issueReceiptModal"><i class="ph ph-plus-circle me-1"></i> Issue Official Receipt</button>
+      <a href="{{ route('collection.cashier-desk') }}" class="btn btn-outline-secondary btn-sm"><i class="ph ph-hand-coins me-1"></i> Cashier POS Desk</a>
     </div>
   </div>
 
-  <!-- Primary Summary Cards -->
+  @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show mb-4 d-flex align-items-center" role="alert">
+      <i class="ph ph-check-circle fs-4 me-2"></i>
+      <div>{{ session('success') }}</div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
+
+  @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show mb-4 d-flex align-items-center" role="alert">
+      <i class="ph ph-warning-circle fs-4 me-2"></i>
+      <div>{{ session('error') }}</div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
+
+  <!-- Metric Summary Cards -->
   <div class="row g-3 mb-4">
     <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Official Receipts Issued</span>
-          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-receipt fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ count($payments ?? []) }} Receipts</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
+      <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
           <span class="text-muted small fw-medium">Total Collections</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-hand-coins fs-5"></i></span>
+          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-receipt fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-success">₱{{ number_format((float) ($totalCollected ?? 0), 2) }}</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($totalCollected ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
+      <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Cash Collections (In Drawer)</span>
-          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-money fs-5"></i></span>
+          <span class="text-muted small fw-medium">Cash Collections</span>
+          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-money fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($cashCollected ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3 bg-white">
+      <div class="card border-0 shadow-sm rounded-3 p-3">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Card &amp; Digital Collections</span>
-          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-credit-card fs-5"></i></span>
+          <span class="text-muted small fw-medium">Digital / E-Wallet</span>
+          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-credit-card fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($digitalCollected ?? 0), 2) }}</h4>
       </div>
     </div>
+    <div class="col-md-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3">
+        <div class="d-flex align-items-center justify-content-between mb-1">
+          <span class="text-muted small fw-medium">Total Count</span>
+          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-files fs-5"></i></span>
+        </div>
+        <h4 class="fw-bold mb-0 text-dark">{{ $payments->total() ?? count($payments) }} Records</h4>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter & Search Card -->
+  <div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-body p-3">
+      <form method="GET" action="{{ route('collection.receipts') }}" class="row g-2 align-items-center">
+        <div class="col-md-3">
+          <input type="text" name="search" value="{{ request('search') }}" class="form-control form-control-sm" placeholder="Search OR #, patient, payor...">
+        </div>
+        <div class="col-md-2">
+          <select name="method" class="form-select form-select-sm">
+            <option value="">All Payment Methods</option>
+            <option value="CASH" {{ request('method') === 'CASH' ? 'selected' : '' }}>CASH</option>
+            <option value="GCASH" {{ request('method') === 'GCASH' ? 'selected' : '' }}>GCASH</option>
+            <option value="MAYA" {{ request('method') === 'MAYA' ? 'selected' : '' }}>MAYA</option>
+            <option value="CREDIT_CARD" {{ request('method') === 'CREDIT_CARD' ? 'selected' : '' }}>CREDIT CARD</option>
+            <option value="DEBIT_CARD" {{ request('method') === 'DEBIT_CARD' ? 'selected' : '' }}>DEBIT CARD</option>
+            <option value="CHECK" {{ request('method') === 'CHECK' ? 'selected' : '' }}>CHECK</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-control form-control-sm" placeholder="From Date">
+        </div>
+        <div class="col-md-2">
+          <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control form-control-sm" placeholder="To Date">
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+          <button type="submit" class="btn btn-primary btn-sm flex-grow-1"><i class="ph ph-magnifying-glass me-1"></i> Filter</button>
+          <a href="{{ route('collection.receipts') }}" class="btn btn-light border btn-sm"><i class="ph ph-x me-1"></i> Reset</a>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- Data Table Card -->
-  <div class="card border-0 shadow-sm rounded-3 bg-white">
+  <div class="card border-0 shadow-sm rounded-3">
     <div class="card-body p-0">
       <div class="table-responsive">
-        <table id="receiptTable" class="table table-hover align-middle mb-0">
+        <table class="table table-hover align-middle mb-0">
           <thead class="table-light">
-            <tr class="fs-xs text-muted text-uppercase">
-              <th>OR Serial #</th>
-              <th>Payment Date</th>
-              <th>Patient / Payor Name</th>
-              <th>Invoice Ref</th>
-              <th>Channel</th>
-              <th>Transaction Reference</th>
-              <th class="text-end">Amount Paid</th>
-              <th class="text-center">Action</th>
+            <tr>
+              <th>Official Receipt #</th>
+              <th>Date</th>
+              <th>Patient / Payor</th>
+              <th>Invoice Number</th>
+              <th>Payment Method</th>
+              <th>Shift / Terminal</th>
+              <th>General Ledger</th>
+              <th class="text-end">Amount Paid (₱)</th>
+              <th class="text-center">Status</th>
+              <th class="text-end">Actions</th>
             </tr>
           </thead>
           <tbody>
-            @forelse($payments ?? [] as $pay)
-            <tr>
+            @forelse($payments as $pay)
+            @php
+              $orNo = $pay->officialReceipt?->or_number ?? $pay->payment_reference;
+              $isCancelled = ($pay->officialReceipt?->status === 'CANCELLED');
+            @endphp
+            <tr class="{{ $isCancelled ? 'table-light text-muted' : '' }}">
               <td>
-                <span class="badge bg-success-subtle text-success font-monospace border border-success-subtle">
-                  {{ $pay->officialReceipt?->or_number ?? 'OR-' . date('Ymd') . '-000' . $pay->id }}
+                <span class="font-monospace fw-bold {{ $isCancelled ? 'text-decoration-line-through text-danger' : 'text-primary' }}">
+                  {{ $orNo }}
+                </span>
+                <div class="fs-xs text-muted font-monospace">{{ $pay->payment_reference }}</div>
+              </td>
+              <td class="font-monospace fs-xs">{{ $pay->payment_date ? $pay->payment_date->format('M d, Y') : '-' }}</td>
+              <td>
+                <strong class="d-block text-dark">{{ $pay->officialReceipt?->payor_name ?: ($pay->patientAccount?->full_name ?? 'Walk-In') }}</strong>
+                <span class="fs-xs text-muted font-monospace">{{ $pay->patientAccount?->patient_id_number }}</span>
+              </td>
+              <td>
+                <span class="badge bg-light text-dark font-monospace border">
+                  {{ $pay->invoice?->invoice_number ?? 'COP-SETTLED' }}
                 </span>
               </td>
-              <td class="font-monospace fs-xs">{{ $pay->payment_date->format('M d, Y') }}</td>
-              <td>
-                <strong class="d-block text-dark">{{ $pay->patientAccount->full_name }}</strong>
-                <span class="fs-xs text-muted font-monospace">{{ $pay->patientAccount->patient_id_number }}</span>
-              </td>
-              <td><span class="badge bg-light text-dark font-monospace border">{{ $pay->invoice?->invoice_number ?? 'COP-SETTLED' }}</span></td>
               <td><span class="badge bg-secondary-subtle text-secondary">{{ $pay->payment_method }}</span></td>
-              <td class="font-monospace fs-xs text-muted">{{ $pay->transaction_channel_ref ?? $pay->payment_reference }}</td>
-              <td class="text-end font-monospace fw-bold text-success">₱{{ number_format((float) $pay->amount, 2) }}</td>
-              <td class="text-center">
-                <a href="{{ route('accounting.print.or', $pay->id) }}" target="_blank" class="btn btn-sm btn-outline-primary p-1 px-2" title="Print Official Receipt">
-                  <i class="ph ph-printer"></i>
+              <td>
+                <span class="fs-xs font-monospace text-muted">{{ $pay->cashierShift?->shift_code ?? '-' }}</span>
+              </td>
+              <td>
+                <a href="{{ route('gl.journal-entries') }}?search={{ $pay->payment_reference }}" class="badge bg-primary-subtle text-primary border border-primary-subtle text-decoration-none">
+                  <i class="ph ph-link-simple me-1"></i> JE-COL-{{ $pay->payment_reference }}
                 </a>
+              </td>
+              <td class="text-end font-monospace fw-bold {{ $isCancelled ? 'text-muted' : 'text-success' }}">
+                ₱{{ number_format((float) $pay->amount, 2) }}
+              </td>
+              <td class="text-center">
+                @if($isCancelled)
+                  <span class="badge bg-danger-subtle text-danger"><i class="ph ph-x-circle me-1"></i> VOIDED</span>
+                @else
+                  <span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> VALID</span>
+                @endif
+              </td>
+              <td class="text-end">
+                <div class="d-flex justify-content-end gap-1">
+                  <a href="{{ route('collection.receipts.print', $pay->id) }}" target="_blank" class="btn btn-sm btn-outline-primary p-1 px-2" title="Print Official Receipt">
+                    <i class="ph ph-printer"></i>
+                  </a>
+                  @if(! $isCancelled)
+                    <button class="btn btn-sm btn-outline-danger p-1 px-2" type="button" title="Void Official Receipt" onclick="openVoidModal('{{ $pay->id }}', '{{ $orNo }}', '{{ number_format((float) $pay->amount, 2) }}')">
+                      <i class="ph ph-prohibit"></i>
+                    </button>
+                  @endif
+                </div>
               </td>
             </tr>
             @empty
             <tr>
-              <td colspan="8" class="text-center py-4 text-muted">No official payment receipts recorded in database.</td>
+              <td colspan="10" class="text-center py-4 text-muted">No official payment receipts found.</td>
             </tr>
             @endforelse
           </tbody>
@@ -114,319 +195,75 @@
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="receiptSummaryText">Showing {{ count($payments ?? []) }} Official Receipts</span>
+      <span class="text-muted fs-xs">Showing {{ $payments->count() }} of {{ $payments->total() }} Official Receipts</span>
+      {{ $payments->links() }}
     </div>
   </div>
 </div>
 
-<!-- Modal: In-Depth OR Details (Executive Design) -->
-<div class="modal fade" id="receiptDetailsModal" tabindex="-1" aria-labelledby="receiptDetailsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-      <div class="modal-header bg-white border-bottom p-4 pb-3">
-        <div>
-          <div class="d-flex align-items-center gap-2 mb-1">
-            <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1" id="detailOrNo">OR-2026-9901</span>
-            <span class="badge bg-success-subtle text-success" id="detailOrStatus">Valid</span>
-          </div>
-          <h4 class="modal-title fw-bold text-dark mb-0" id="detailOrPayor">David Miller</h4>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-
-      <div class="modal-body p-4 bg-light-subtle">
-        <div class="row g-3 mb-4">
-          <div class="col-md-6">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Total Amount Paid</span>
-              <h4 class="fw-bold text-success mb-0 font-monospace" id="detailOrAmount">₱6,400.00</h4>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Transaction Timestamp</span>
-              <h4 class="fw-bold text-primary mb-0 font-monospace" id="detailOrDate">2026-08-08 14:22</h4>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white border rounded-3 p-3 mb-4">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-receipt me-1 text-primary"></i> Payment Details &amp; Reference</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Payment Channel / Mode</span>
-              <span class="fw-semibold text-dark" id="detailOrMode">Credit Card (Visa)</span>
-            </div>
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Bank / Transaction Reference</span>
-              <span class="font-monospace fw-bold text-primary" id="detailOrRef">TXN-774102</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">Issuing Cashier &amp; POS Station</span>
-              <span class="text-dark" id="detailOrIssuer">Anna Reyes (Main POS)</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Audit Trail & Segregation of Duties -->
-        <div class="bg-white border rounded-3 p-3">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-success"></i> Audit Trail &amp; BIR Compliance Verification</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">BIR Official Receipt Registration:</span>
-              <span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> BIR Serial Compliant</span>
-            </div>
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">General Ledger Posting:</span>
-              <span class="font-monospace text-primary">GL-COL-2026-0889</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">System Log Stamp:</span>
-              <span class="font-monospace text-muted">LOG-OR-2026-9901 | {{ date('Y-m-d H:i:s') }} PST</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer bg-white border-top p-3">
-        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-sm btn-primary" onclick="alert('Printing Official Receipt Copy...');"><i class="ph ph-printer me-1"></i> Print Receipt Copy</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Modal: Issue Official Receipt -->
-<div class="modal fade" id="issueReceiptModal" tabindex="-1" aria-labelledby="issueReceiptModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
+<!-- Modal: Void Official Receipt -->
+<div class="modal fade" id="voidReceiptModal" tabindex="-1" aria-labelledby="voidReceiptModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title font-weight-bold" id="issueReceiptModalLabel"><i class="ph ph-plus-circle me-2 text-primary"></i>Issue Official Receipt (OR)</h5>
+      <div class="modal-header border-bottom bg-danger-subtle">
+        <h5 class="modal-title font-weight-bold text-danger"><i class="ph ph-warning me-2"></i>Void Official Receipt &amp; Reverse Ledger</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body p-4">
-        <form id="receiptForm">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Patient / Payor Name <span class="text-danger">*</span></label>
-              <input type="text" id="modalOrPayor" class="form-control form-control-sm" placeholder="e.g. Juan De La Cruz" required>
+      <form id="voidReceiptForm" method="POST" action="">
+        @csrf
+        <div class="modal-body p-4">
+          <p class="text-muted small mb-3">
+            Voiding an official receipt marks it as <strong>CANCELLED</strong> in compliance with BIR CAS rules, restores the outstanding copay balance on the patient invoice, and automatically posts a balancing reversing General Ledger entry.
+          </p>
+
+          <div class="p-3 bg-light rounded-3 mb-3">
+            <div class="d-flex justify-content-between mb-1">
+              <span class="text-muted fs-xs">Official Receipt:</span>
+              <span id="voidOrNumber" class="font-monospace fw-bold text-dark">-</span>
             </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Patient ID / Billing Reference</label>
-              <input type="text" id="modalOrSub" class="form-control form-control-sm" placeholder="e.g. Patient ID: PAT-99201">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Payment Mode <span class="text-danger">*</span></label>
-              <select id="modalOrMode" class="form-select form-select-sm" required>
-                <option value="cash">Cash</option>
-                <option value="credit card">Credit Card</option>
-                <option value="check">Bank Check</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Reference / Authorization / Check #</label>
-              <input type="text" id="modalOrRef" class="form-control form-control-sm" placeholder="e.g. TXN-88120">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Amount Paid (₱) <span class="text-danger">*</span></label>
-              <input type="number" id="modalOrAmount" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace" placeholder="0.00" value="2500.00" required>
+            <div class="d-flex justify-content-between">
+              <span class="text-muted fs-xs">Amount to Reverse:</span>
+              <span id="voidAmount" class="font-monospace fw-bold text-danger">-</span>
             </div>
           </div>
-          <div class="d-flex justify-content-end gap-2 mt-4">
-            <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-printer me-1"></i> Print &amp; Post OR</button>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Reason for Voiding <span class="text-danger">*</span></label>
+            <select name="reason" class="form-select form-select-sm mb-2" required>
+              <option value="Erroneous Amount Tendered">Erroneous Amount Tendered</option>
+              <option value="Duplicate Official Receipt">Duplicate Official Receipt</option>
+              <option value="Patient Transaction Cancelled / Reversed">Patient Transaction Cancelled / Reversed</option>
+              <option value="Payment Method Input Correction">Payment Method Input Correction</option>
+              <option value="Management Discretion / Refund">Management Discretion / Refund</option>
+            </select>
           </div>
-        </form>
-      </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Audit Justification Notes</label>
+            <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Additional audit details..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-top">
+          <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-sm btn-danger"><i class="ph ph-prohibit me-1"></i> Confirm Receipt Void</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
-@endsection
 
 @push('scripts')
 <script>
-function openReceiptDetailsModal(r) {
-  if (!r) return;
+function openVoidModal(paymentId, orNumber, amount) {
+  const form = document.getElementById('voidReceiptForm');
+  form.action = `/collection-management/payment-receipts/${paymentId}/void`;
 
-  document.getElementById('detailOrNo').textContent = r.or || 'OR-0000';
-  document.getElementById('detailOrPayor').textContent = r.payor || 'Payor';
-  document.getElementById('detailOrAmount').textContent = r.amount || '₱0.00';
-  document.getElementById('detailOrDate').textContent = r.date || '-';
-  document.getElementById('detailOrMode').textContent = r.mode || 'Payment Mode';
-  document.getElementById('detailOrRef').textContent = r.ref || '-';
-  document.getElementById('detailOrIssuer').textContent = r.issuer || 'Cashier';
+  document.getElementById('voidOrNumber').textContent = orNumber;
+  document.getElementById('voidAmount').textContent = '₱' + amount;
 
-  const statusEl = document.getElementById('detailOrStatus');
-  if (statusEl) {
-    statusEl.textContent = r.status;
-    statusEl.className = 'badge ' + (r.status_badge || 'bg-success-subtle text-success');
-  }
-
-  const modalEl = document.getElementById('receiptDetailsModal');
-  if (modalEl && window.bootstrap) {
-    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-    modalInstance.show();
-  }
+  const modal = new bootstrap.Modal(document.getElementById('voidReceiptModal'));
+  modal.show();
 }
-
-document.addEventListener('DOMContentLoaded', function() {
-  const searchInput = document.getElementById('receiptSearchInput');
-  const modeSelect = document.getElementById('modeSelect');
-  const orStatusSelect = document.getElementById('orStatusSelect');
-  const summaryText = document.getElementById('receiptSummaryText');
-  const btnIssueReceipt = document.getElementById('btnIssueReceipt');
-
-  if (btnIssueReceipt) {
-    btnIssueReceipt.addEventListener('click', function() {
-      const modalEl = document.getElementById('issueReceiptModal');
-      if (modalEl && window.bootstrap) {
-        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-        modalInstance.show();
-      }
-    });
-  }
-
-  function filterReceipts() {
-    const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
-    const selectedMode = modeSelect ? modeSelect.value.toLowerCase() : '';
-    const selectedStatus = orStatusSelect ? orStatusSelect.value.toLowerCase() : '';
-    const rows = document.querySelectorAll('.receipt-row');
-    let visibleCount = 0;
-
-    rows.forEach(function(row) {
-      const rowMode = row.getAttribute('data-mode') || '';
-      const rowStatus = row.getAttribute('data-status') || '';
-      const rowText = row.textContent.toLowerCase();
-
-      const matchMode = !selectedMode || rowMode.includes(selectedMode);
-      const matchStatus = !selectedStatus || rowStatus.includes(selectedStatus);
-      const matchSearch = !searchQuery || rowText.includes(searchQuery);
-
-      if (matchMode && matchStatus && matchSearch) {
-        row.style.display = '';
-        visibleCount++;
-      } else {
-        row.style.display = 'none';
-      }
-    });
-
-    if (summaryText) {
-      summaryText.textContent = `Showing ${visibleCount} Official Receipt${visibleCount !== 1 ? 's' : ''}`;
-    }
-
-    let emptyRow = document.getElementById('noReceiptRow');
-    const tbody = document.querySelector('#receiptTable tbody');
-    if (visibleCount === 0) {
-      if (!emptyRow && tbody) {
-        emptyRow = document.createElement('tr');
-        emptyRow.id = 'noReceiptRow';
-        emptyRow.innerHTML = `<td colspan="9" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No official receipts found matching the current filter.</td>`;
-        tbody.appendChild(emptyRow);
-      }
-      if (emptyRow) emptyRow.style.display = '';
-    } else if (emptyRow) {
-      emptyRow.style.display = 'none';
-    }
-  }
-
-  if (searchInput) {
-    searchInput.addEventListener('input', filterReceipts);
-    searchInput.addEventListener('keyup', filterReceipts);
-  }
-  if (modeSelect) modeSelect.addEventListener('change', filterReceipts);
-  if (orStatusSelect) orStatusSelect.addEventListener('change', filterReceipts);
-
-  const receiptForm = document.getElementById('receiptForm');
-  if (receiptForm) {
-    receiptForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-
-      const payorVal = document.getElementById('modalOrPayor').value;
-      const subVal = document.getElementById('modalOrSub').value || 'Walk-in Patient';
-      const modeVal = document.getElementById('modalOrMode').value;
-      const refVal = document.getElementById('modalOrRef').value || '-';
-      const rawAmount = parseFloat(document.getElementById('modalOrAmount').value || 0);
-      const formattedAmount = '₱' + rawAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const nextOrNum = 'OR-2026-' + Math.floor(9902 + Math.random() * 100);
-
-      let modeLabel = 'Cash';
-      let modeBadge = 'bg-success-subtle text-success';
-      let modeIcon = 'ph-money';
-
-      if (modeVal === 'credit card') {
-        modeLabel = 'Credit Card (Visa)';
-        modeBadge = 'bg-info-subtle text-info';
-        modeIcon = 'ph-credit-card';
-      } else if (modeVal === 'check') {
-        modeLabel = 'Bank Check';
-        modeBadge = 'bg-warning-subtle text-warning';
-        modeIcon = 'ph-bank';
-      }
-
-      const receiptObj = {
-        or: nextOrNum,
-        date: "{{ date('Y-m-d H:i') }}",
-        payor: payorVal,
-        sub: subVal,
-        mode: modeLabel,
-        mode_code: modeVal,
-        mode_badge: modeBadge,
-        mode_icon: modeIcon,
-        ref: refVal,
-        amount: formattedAmount,
-        issuer: 'Active POS Cashier',
-        status: 'Valid',
-        status_badge: 'bg-success-subtle text-success'
-      };
-
-      const tbody = document.querySelector('#receiptTable tbody');
-      if (tbody) {
-        const newRow = document.createElement('tr');
-        newRow.className = 'receipt-row';
-        newRow.style.cursor = 'pointer';
-        newRow.setAttribute('data-mode', modeVal);
-        newRow.setAttribute('data-status', 'valid');
-
-        newRow.onclick = function() { openReceiptDetailsModal(receiptObj); };
-
-        newRow.innerHTML = `
-          <td><span class="font-monospace text-primary fw-bold">${nextOrNum}</span></td>
-          <td><span class="text-nowrap font-monospace fs-xs">${receiptObj.date}</span></td>
-          <td>
-            <div class="fw-semibold text-dark">${payorVal}</div>
-            <span class="fs-xs text-muted">${subVal}</span>
-          </td>
-          <td><span class="badge ${modeBadge}"><i class="ph ${modeIcon} me-1"></i> ${modeLabel}</span></td>
-          <td><span class="font-monospace text-muted fs-xs">${refVal}</span></td>
-          <td class="text-end fw-bold text-dark font-monospace">${formattedAmount}</td>
-          <td class="fs-xs text-muted">Active POS Cashier</td>
-          <td><span class="badge bg-success-subtle text-success">Valid</span></td>
-          <td class="text-end" onclick="event.stopPropagation();">
-            <button class="btn btn-sm btn-icon btn-outline-secondary" title="View OR Details"><i class="ph ph-eye"></i></button>
-          </td>
-        `;
-
-        const eyeBtn = newRow.querySelector('button[title="View OR Details"]');
-        if (eyeBtn) {
-          eyeBtn.onclick = function(ex) {
-            ex.stopPropagation();
-            openReceiptDetailsModal(receiptObj);
-          };
-        }
-
-        tbody.insertBefore(newRow, tbody.firstChild);
-      }
-
-      const modalEl = document.getElementById('issueReceiptModal');
-      const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-      if (modalInstance) modalInstance.hide();
-
-      receiptForm.reset();
-      filterReceipts();
-    });
-  }
-
-  filterReceipts();
-});
 </script>
 @endpush
+@endsection

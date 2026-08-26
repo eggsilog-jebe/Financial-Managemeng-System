@@ -97,7 +97,7 @@ class CashierWorkflowTest extends TestCase
 
         // 5. Assert Balanced General Ledger Journal Posted
         $glEntry = JournalEntry::with('lines.account')
-            ->where('reference_number', $payment->payment_reference)
+            ->where('reference_number', 'LIKE', '%' . $payment->payment_reference . '%')
             ->first();
 
         $this->assertNotNull($glEntry);

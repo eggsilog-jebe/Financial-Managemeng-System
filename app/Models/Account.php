@@ -62,9 +62,25 @@ final class Account extends Model
         return $balance;
     }
 
+    public function getTypeAttribute(): ?string
+    {
+        return $this->attributes['category'] ?? null;
+    }
+
+    public function canBeDeactivated(): bool
+    {
+        return ! $this->journalEntryLines()->exists();
+    }
+
     /** @param Builder<Account> $query */
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
+    }
+
+    /** @param Builder<Account> $query */
+    public function scopeByCategory(Builder $query, string $category): Builder
+    {
+        return $query->where('category', strtoupper($category));
     }
 }

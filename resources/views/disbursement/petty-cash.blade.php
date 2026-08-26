@@ -1,425 +1,329 @@
 @extends('layouts.app')
 
-@section('title', 'Petty Cash - Disbursement | FMS')
+@section('title', 'Petty Cash Custody & Replenishment - Disbursement | FMS')
 @section('module', 'disbursement')
 @section('page', 'petty-cash')
 
 @section('content')
 <div class="container-fluid p-4">
+  <!-- Alerts -->
+  @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-3 mb-4" role="alert">
+      <div class="d-flex align-items-center">
+        <i class="ph ph-check-circle fs-4 me-2"></i>
+        <span>{{ session('success') }}</span>
+      </div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
+
+  @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-3 mb-4" role="alert">
+      <div class="d-flex align-items-center">
+        <i class="ph ph-warning-circle fs-4 me-2"></i>
+        <span>{{ session('error') }}</span>
+      </div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
+
   <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
     <div>
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb mb-1 fs-xs">
           <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
           <li class="breadcrumb-item">Disbursement Management</li>
-          <li class="breadcrumb-item active">Petty Cash</li>
+          <li class="breadcrumb-item active">Petty Cash Custody</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Hospital Petty Cash Fund</h1>
-    </div>
-    <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Auditing cash fund drawer count...');"><i class="ph ph-arrows-clockwise me-1"></i> Audit Cash Fund</button>
-      <button id="btnCreatePcv" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#createPcvModal"><i class="ph ph-plus me-1"></i> Issue PCV Voucher</button>
-    </div>
-  </div>
-
-  <!-- Fund Status Summary -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Petty Cash Vouchers</span>
-          <span class="badge bg-secondary-subtle text-secondary p-2 rounded-2"><i class="ph ph-wallet fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ ($pettyRequests ?? collect())->count() }} Vouchers</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Total Disbursed Petty Cash</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-success">₱{{ number_format((float) ($totalPetty ?? 0), 2) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Average Voucher Size</span>
-          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-receipt fs-5"></i></span>
-        </div>
-        @php
-          $pCount = ($pettyRequests ?? collect())->count();
-          $pAvg = $pCount > 0 ? ((float) ($totalPetty ?? 0)) / $pCount : 0;
-        @endphp
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($pAvg, 2) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Audit Reconciliation</span>
-          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-user-check fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">Balanced</h4>
-      </div>
-    </div>
-  </div>
-
-  <!-- Petty Cash Vouchers Table -->
-  <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-transparent border-bottom p-3">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <div class="d-flex align-items-center gap-2">
-          <label for="pcvStatusSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Audit Status:</label>
-          <select id="pcvStatusSelect" class="form-select form-select-sm bg-light" style="min-width: 200px;">
-            <option value="" selected>All Audit Statuses</option>
-            <option value="receipt attached">Receipt Attached</option>
-            <option value="pending receipt">Pending Receipt</option>
+      <h1 class="h3 mb-0 font-weight-bold">Petty Cash Custody &amp; Revolving Fund</h1>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <x-integration-badge 
+          type="internal" 
+          :systems="['Petty Cash Float', 'GL 5000 Expense Accounts']" 
+          description="Tracks revolving emergency cash drawer and replenishment slips." 
+      />
+      @if($funds->isNotEmpty())
+        <!-- Fund Selector Dropdown -->
+        <div class="d-flex align-items-center gap-2 me-2">
+          <label class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-vault me-1"></i> Active Fund:</label>
+          <select class="form-select form-select-sm bg-light fw-semibold" style="min-width: 240px;" onchange="window.location.href='{{ route('disbursement.petty-cash') }}?fund_id=' + this.value">
+            @foreach($funds as $f)
+              <option value="{{ $f->id }}" {{ $fund && $fund->id === $f->id ? 'selected' : '' }}>
+                {{ $f->fund_name }} ({{ $f->custodian_name }})
+              </option>
+            @endforeach
           </select>
         </div>
-        <div class="search-box" style="width: 260px;">
-          <i class="ph ph-magnifying-glass"></i>
-          <input type="search" id="pcvSearchInput" class="form-control form-control-sm" placeholder="Search voucher #, claimant, particulars...">
+      @endif
+
+      <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#createFundModal">
+        <i class="ph ph-plus-circle me-1"></i> New Fund
+      </button>
+
+      @if($fund)
+        <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#replenishFundModal">
+          <i class="ph ph-arrows-clockwise me-1"></i> Replenish Revolving Fund
+        </button>
+        <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#createExpenseModal">
+          <i class="ph ph-plus me-1"></i> Record Expense Slip
+        </button>
+      @endif
+    </div>
+  </div>
+
+  @if($fund)
+    <!-- Metric Summary Cards -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-3 p-3">
+          <span class="text-muted small fw-medium">Revolving Float Limit</span>
+          <h4 class="fw-bold mb-0 text-dark font-monospace">₱{{ number_format((float) $fund->float_limit, 2) }}</h4>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-3 p-3">
+          <span class="text-muted small fw-medium">Current Cash on Hand</span>
+          <h4 class="fw-bold mb-0 text-success font-monospace">₱{{ number_format((float) $fund->current_balance, 2) }}</h4>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-3 p-3">
+          <span class="text-muted small fw-medium">Unreplenished Expense Slips</span>
+          <h4 class="fw-bold mb-0 text-warning font-monospace">₱{{ number_format((float) $unreplenishedTotal, 2) }}</h4>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card border-0 shadow-sm rounded-3 p-3">
+          <span class="text-muted small fw-medium">Custodian in Charge</span>
+          <h5 class="fw-bold mb-0 text-dark">{{ $fund->custodian_name }}</h5>
         </div>
       </div>
     </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table id="pcvTable" class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Voucher #</th>
-              <th>Date</th>
-              <th>Claimant &amp; Department</th>
-              <th>Expense Particulars</th>
-              <th class="text-end">Amount (₱)</th>
-              <th>Audit Status</th>
-              <th class="text-end">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($pcvs ?? [] as $p)
-            @php
-              $pArr = is_array($p) ? $p : [
-                'ref' => $p->reference_number ?? 'PCV-N/A',
-                'date' => $p->voucher_date ? $p->voucher_date->format('Y-m-d') : 'N/A',
-                'claimant' => $p->claimant ?? 'N/A',
-                'dept' => $p->department ?? 'N/A',
-                'purpose' => $p->purpose ?? 'N/A',
-                'amount' => '₱' . number_format($p->amount ?? 0, 2),
-                'status' => $p->status ?? 'Pending',
-                'status_badge' => 'bg-warning-subtle text-warning',
-                'status_icon' => 'ph-clock',
-                'receipt_no' => $p->receipt_number ?? 'N/A',
-              ];
-            @endphp
-            <tr class="pcv-row" style="cursor: pointer;" data-status="{{ strtolower($pArr['status']) }}" onclick="openPcvDetailsModal({{ json_encode($pArr) }})">
-              <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">{{ $pArr['ref'] }}</span></td>
-              <td class="font-monospace fs-xs">{{ $pArr['date'] }}</td>
-              <td>
-                <div class="fw-semibold text-dark">{{ $pArr['claimant'] }}</div>
-                <div class="text-muted fs-xs">{{ $pArr['dept'] }}</div>
-              </td>
-              <td><span class="text-truncate d-inline-block" style="max-width: 250px;">{{ $pArr['purpose'] }}</span></td>
-              <td class="text-end fw-bold text-dark font-monospace">{{ $pArr['amount'] }}</td>
-              <td><span class="badge {{ $pArr['status_badge'] }}"><i class="ph {{ $pArr['status_icon'] }} me-1"></i> {{ $pArr['status'] }}</span></td>
-              <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Receipt Attachment" onclick="openPcvDetailsModal({{ json_encode($pArr) }})"><i class="ph ph-file-image"></i></button>
-              </td>
-            </tr>
-            @empty
-            <tr>
-              <td colspan="7" class="text-center py-4 text-muted">No petty cash vouchers recorded in database.</td>
-            </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="pcvSummaryText">Showing {{ count($pcvs ?? []) }} Petty Cash Vouchers</span>
-      <nav aria-label="PCV Pagination">
-        <ul class="pagination pagination-sm mb-0">
-          <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
-          <li class="page-item active"><a class="page-link" href="#">1</a></li>
-          <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
-        </ul>
-      </nav>
-    </div>
-  </div>
-</div>
 
-<!-- Modal: In-Depth PCV Details (Executive Design) -->
-<div class="modal fade" id="pcvDetailsModal" tabindex="-1" aria-labelledby="pcvDetailsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-      <div class="modal-header bg-white border-bottom p-4 pb-3">
+    <!-- Expense Slips Table Card -->
+    <div class="card border-0 shadow-sm rounded-3">
+      <div class="card-header bg-transparent border-bottom p-3 d-flex justify-content-between align-items-center">
+        <h6 class="fw-bold text-dark mb-0"><i class="ph ph-receipt me-1 text-primary"></i> Petty Cash Voucher Expense Log &mdash; {{ $fund->fund_name }}</h6>
+        <span class="badge bg-light text-dark border">{{ $expenses->total() }} Logged Vouchers</span>
+      </div>
+
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Voucher #</th>
+                <th>Payee &amp; Department</th>
+                <th>Date</th>
+                <th>Particulars</th>
+                <th>Receipt Ref</th>
+                <th class="text-end">Amount (₱)</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @forelse($expenses as $e)
+              @php
+                $statusBadge = match($e->status) {
+                  'REPLENISHED' => 'bg-success-subtle text-success',
+                  'VOIDED'      => 'bg-secondary-subtle text-secondary',
+                  default       => 'bg-warning-subtle text-warning',
+                };
+              @endphp
+              <tr>
+                <td>
+                  <span class="font-monospace fw-bold text-primary">{{ $e->voucher_number }}</span>
+                </td>
+                <td>
+                  <div class="fw-semibold text-dark">{{ $e->payee }}</div>
+                  <div class="fs-xs text-muted">{{ $e->department }}</div>
+                </td>
+                <td>{{ $e->expense_date ? $e->expense_date->format('M d, Y') : '—' }}</td>
+                <td>{{ $e->particulars }}</td>
+                <td>
+                  <span class="font-monospace fs-xs text-muted">{{ $e->receipt_ref ?? '—' }}</span>
+                </td>
+                <td class="text-end font-monospace fw-bold text-dark fs-6">₱{{ number_format((float) $e->amount, 2) }}</td>
+                <td>
+                  <span class="badge {{ $statusBadge }}">{{ $e->status }}</span>
+                </td>
+              </tr>
+              @empty
+              <tr>
+                <td colspan="7" class="text-center py-4 text-muted">No petty cash expense slips logged yet for this fund.</td>
+              </tr>
+              @endforelse
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
+        <span class="text-muted fs-xs">Showing {{ $expenses->firstItem() ?? 0 }} - {{ $expenses->lastItem() ?? 0 }} of {{ $expenses->total() }} Slips</span>
         <div>
-          <div class="d-flex align-items-center gap-2 mb-1">
-            <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1" id="detailPcvRef">PCV-2026-081</span>
-            <span class="badge bg-success-subtle text-success" id="detailPcvStatus"><i class="ph ph-check me-1"></i> Receipt Attached</span>
-          </div>
-          <h4 class="modal-title fw-bold text-dark mb-0" id="detailPcvClaimant">ER Desk Nurse</h4>
+          {{ $expenses->links() }}
         </div>
+      </div>
+    </div>
+  @else
+    <!-- Zero State -->
+    <div class="card border-0 shadow-sm rounded-3 p-5 text-center">
+      <div class="mb-3">
+        <i class="ph ph-vault text-muted" style="font-size: 3.5rem;"></i>
+      </div>
+      <h4 class="fw-bold text-dark mb-1">No Petty Cash Revolving Funds Registered</h4>
+      <p class="text-muted fs-sm mb-4">Set up a departmental or operational revolving fund with a designated custodian and float limit to start logging petty disbursements.</p>
+      <div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createFundModal">
+          <i class="ph ph-plus-circle me-1"></i> Register New Petty Cash Fund
+        </button>
+      </div>
+    </div>
+  @endif
+</div>
+
+<!-- Modal: Create Petty Cash Fund -->
+<div class="modal fade" id="createFundModal" tabindex="-1" aria-labelledby="createFundModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header border-bottom">
+        <h5 class="modal-title font-weight-bold"><i class="ph ph-vault me-2 text-primary"></i>Register Petty Cash Fund</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-
-      <div class="modal-body p-4 bg-light-subtle">
-        <!-- Key Amounts Grid -->
-        <div class="row g-3 mb-4">
-          <div class="col-md-6">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Petty Cash Amount</span>
-              <h4 class="fw-bold text-dark mb-0 font-monospace" id="detailPcvAmount">₱85.00</h4>
-            </div>
+      <form method="POST" action="{{ route('disbursement.petty-cash.funds.store') }}">
+        @csrf
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Fund Name <span class="text-danger">*</span></label>
+            <input type="text" name="fund_name" class="form-control form-control-sm" placeholder="e.g. Main Hospital Operating Petty Cash, ER Petty Cash" required>
           </div>
-          <div class="col-md-6">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Disbursement Date</span>
-              <h4 class="fw-bold text-primary mb-0 font-monospace" id="detailPcvDate">2026-08-06</h4>
-            </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Designated Custodian Legal Name <span class="text-danger">*</span></label>
+            <input type="text" name="custodian_name" class="form-control form-control-sm" placeholder="e.g. Maria Santos (Chief Cashier)" required>
           </div>
-        </div>
-
-        <!-- Expense Particulars & Department Card -->
-        <div class="bg-white border rounded-3 p-3 mb-4">
-          <h6 class="fw-bold text-dark mb-2 fs-xs text-uppercase"><i class="ph ph-info me-1 text-primary"></i> Department &amp; Expense Particulars</h6>
-          <h6 class="fw-bold text-dark mb-1" id="detailPcvDept">Emergency Room</h6>
-          <p class="small text-muted mb-0 lh-base" id="detailPcvPurpose">Urgent Courier Fee for Reference Lab Specimen Transport</p>
-        </div>
-
-        <!-- Audit Trail & Segregation of Duties -->
-        <div class="bg-white border rounded-3 p-3">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-success"></i> Audit Trail &amp; Transparency Verification</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Cash Drawer Custodian:</span>
-              <span class="fw-semibold text-dark"><i class="ph ph-user me-1 text-primary"></i> Anna Reyes (Main Custodian)</span>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Float Limit (₱) <span class="text-danger">*</span></label>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text">₱</span>
+                <input type="number" step="0.01" name="float_limit" class="form-control font-monospace" placeholder="50000.00" required>
+              </div>
             </div>
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Official Receipt Reference:</span>
-              <span class="font-monospace fw-bold text-success" id="detailPcvReceiptNo">OR-LAB-88120</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">System Audit Log:</span>
-              <span class="font-monospace text-muted">LOG-PCV-2026-081 | {{ date('Y-m-d H:i:s') }} PST</span>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">GL Account Code</label>
+              <input type="text" name="gl_code" class="form-control form-control-sm font-monospace" placeholder="1030" value="1030">
             </div>
           </div>
         </div>
-      </div>
-
-      <div class="modal-footer bg-white border-top p-3">
-        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-sm btn-primary" onclick="alert('Viewing attached physical receipt scan...');"><i class="ph ph-file-image me-1"></i> View Receipt Attachment</button>
-      </div>
+        <div class="modal-footer border-top">
+          <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-check me-1"></i> Create Fund</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
 
-<!-- Modal: Issue PCV Voucher -->
-<div class="modal fade" id="createPcvModal" tabindex="-1" aria-labelledby="createPcvModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
+@if($fund)
+<!-- Modal: Record Expense Slip -->
+<div class="modal fade" id="createExpenseModal" tabindex="-1" aria-labelledby="createExpenseModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0 shadow">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title font-weight-bold" id="createPcvModalLabel"><i class="ph ph-plus-circle me-2 text-primary"></i>Issue Petty Cash Voucher (PCV)</h5>
+      <div class="modal-header border-bottom">
+        <h5 class="modal-title font-weight-bold"><i class="ph ph-receipt me-2 text-primary"></i>Record Expense Slip &mdash; {{ $fund->fund_name }}</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body p-4">
-        <form id="createPcvForm">
-          <div class="row g-3">
+      <form method="POST" action="{{ route('disbursement.petty-cash.expense') }}">
+        @csrf
+        <input type="hidden" name="petty_cash_fund_id" value="{{ $fund->id }}">
+        <div class="modal-body p-4">
+          <div class="row g-3 mb-3">
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Voucher Reference <span class="text-danger">*</span></label>
-              <input type="text" id="modalPcvRef" class="form-control form-control-sm font-monospace" placeholder="e.g. PCV-2026-083" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Claimant Staff Name <span class="text-danger">*</span></label>
-              <input type="text" id="modalPcvClaimant" class="form-control form-control-sm" placeholder="e.g. Pharmacy Stock Clerk" required>
+              <label class="form-label small fw-semibold">Payee Name <span class="text-danger">*</span></label>
+              <input type="text" name="payee" class="form-control form-control-sm" placeholder="e.g. Courier Service / Medical Supplies" required>
             </div>
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Department <span class="text-danger">*</span></label>
-              <input type="text" id="modalPcvDept" class="form-control form-control-sm" placeholder="e.g. Central Pharmacy" required>
+              <input type="text" name="department" class="form-control form-control-sm" placeholder="e.g. Administration, ER, Pharmacy" required>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Expense Date <span class="text-danger">*</span></label>
+              <input type="date" name="expense_date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
             </div>
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Voucher Amount (₱) <span class="text-danger">*</span></label>
-              <input type="number" id="modalPcvAmount" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace" placeholder="0.00" value="150.00" required>
-            </div>
-            <div class="col-12">
-              <label class="form-label small fw-semibold">Expense Particulars <span class="text-danger">*</span></label>
-              <textarea id="modalPcvPurpose" class="form-control form-control-sm" rows="2" placeholder="State minor operational expense purpose..." required></textarea>
+              <label class="form-label small fw-semibold">Expense Amount (₱) <span class="text-danger">*</span></label>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text">₱</span>
+                <input type="number" step="0.01" name="amount" class="form-control font-monospace" placeholder="0.00" max="{{ $fund->current_balance }}" required>
+              </div>
+              <div class="form-text fs-xs text-muted">Max cash available: ₱{{ number_format((float) $fund->current_balance, 2) }}</div>
             </div>
           </div>
-          <div class="d-flex justify-content-end gap-2 mt-4">
-            <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-check me-1"></i> Issue Cash Voucher</button>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Particulars / Purpose <span class="text-danger">*</span></label>
+            <input type="text" name="particulars" class="form-control form-control-sm" placeholder="e.g. Urgent specimen dispatch / office hardware" required>
           </div>
-        </form>
-      </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Official Receipt / Invoice Ref #</label>
+            <input type="text" name="receipt_ref" class="form-control form-control-sm font-monospace" placeholder="e.g. OR-88190">
+          </div>
+        </div>
+        <div class="modal-footer border-top">
+          <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-check me-1"></i> Save Expense Slip</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
+
+<!-- Modal: Replenish Revolving Fund -->
+<div class="modal fade" id="replenishFundModal" tabindex="-1" aria-labelledby="replenishFundModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header border-bottom bg-light">
+        <h5 class="modal-title font-weight-bold text-primary"><i class="ph ph-arrows-clockwise me-2"></i>Replenish Petty Cash Revolving Fund</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="POST" action="{{ route('disbursement.petty-cash.replenish') }}">
+        @csrf
+        <input type="hidden" name="fund_id" value="{{ $fund->id }}">
+        <div class="modal-body p-4">
+          <div class="p-3 bg-light rounded-3 mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <span class="text-muted small">Total Unreplenished Expense Slips:</span>
+              <span class="font-monospace fw-bold text-danger fs-6">₱{{ number_format((float) $unreplenishedTotal, 2) }}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="text-muted small">Target Float Restoration:</span>
+              <span class="font-monospace fw-bold text-success fs-6">₱{{ number_format((float) $fund->float_limit, 2) }}</span>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Disbursing Bank Account <span class="text-danger">*</span></label>
+            <select name="bank_account_id" class="form-select form-select-sm" required>
+              <option value="">-- Select Bank Account --</option>
+              @foreach($bankAccounts as $b)
+                <option value="{{ $b->id }}">{{ $b->bank_name }} ({{ $b->account_number }}) - Bal: ₱{{ number_format((float) $b->balance, 2) }}</option>
+              @endforeach
+            </select>
+          </div>
+          <div class="form-text fs-xs text-muted">A reimbursement disbursement voucher and balanced General Ledger entry will be generated automatically.</div>
+        </div>
+        <div class="modal-footer border-top">
+          <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-check me-1"></i> Authorize Replenishment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+@endif
 @endsection
-
-@push('scripts')
-<script>
-function openPcvDetailsModal(p) {
-  if (!p) return;
-
-  document.getElementById('detailPcvRef').textContent = p.ref || 'PCV-000';
-  document.getElementById('detailPcvClaimant').textContent = p.claimant || 'Claimant';
-  document.getElementById('detailPcvAmount').textContent = p.amount || '₱0.00';
-  document.getElementById('detailPcvDate').textContent = p.date || '-';
-  document.getElementById('detailPcvDept').textContent = p.dept || 'Department';
-  document.getElementById('detailPcvPurpose').textContent = p.purpose || 'Purpose';
-  document.getElementById('detailPcvReceiptNo').textContent = p.receipt_no || 'OR-PENDING';
-
-  const statusEl = document.getElementById('detailPcvStatus');
-  if (statusEl) {
-    statusEl.textContent = p.status;
-    statusEl.className = 'badge ' + (p.status_badge || 'bg-success-subtle text-success');
-  }
-
-  const modalEl = document.getElementById('pcvDetailsModal');
-  if (modalEl && window.bootstrap) {
-    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-    modalInstance.show();
-  }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  const searchInput = document.getElementById('pcvSearchInput');
-  const statusSelect = document.getElementById('pcvStatusSelect');
-  const summaryText = document.getElementById('pcvSummaryText');
-  const btnCreatePcv = document.getElementById('btnCreatePcv');
-
-  if (btnCreatePcv) {
-    btnCreatePcv.addEventListener('click', function() {
-      const modalEl = document.getElementById('createPcvModal');
-      if (modalEl && window.bootstrap) {
-        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-        modalInstance.show();
-      }
-    });
-  }
-
-  function filterPcvs() {
-    const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
-    const selectedStatus = statusSelect ? statusSelect.value.toLowerCase() : '';
-    const rows = document.querySelectorAll('.pcv-row');
-    let visibleCount = 0;
-
-    rows.forEach(function(row) {
-      const rowStatus = row.getAttribute('data-status') || '';
-      const rowText = row.textContent.toLowerCase();
-
-      const matchStatus = !selectedStatus || rowStatus.includes(selectedStatus);
-      const matchSearch = !searchQuery || rowText.includes(searchQuery);
-
-      if (matchStatus && matchSearch) {
-        row.style.display = '';
-        visibleCount++;
-      } else {
-        row.style.display = 'none';
-      }
-    });
-
-    if (summaryText) {
-      summaryText.textContent = `Showing ${visibleCount} Petty Cash Voucher${visibleCount !== 1 ? 's' : ''}`;
-    }
-
-    let emptyRow = document.getElementById('noPcvRow');
-    const tbody = document.querySelector('#pcvTable tbody');
-    if (visibleCount === 0) {
-      if (!emptyRow && tbody) {
-        emptyRow = document.createElement('tr');
-        emptyRow.id = 'noPcvRow';
-        emptyRow.innerHTML = `<td colspan="7" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No petty cash vouchers found matching the current filter.</td>`;
-        tbody.appendChild(emptyRow);
-      }
-      if (emptyRow) emptyRow.style.display = '';
-    } else if (emptyRow) {
-      emptyRow.style.display = 'none';
-    }
-  }
-
-  if (searchInput) {
-    searchInput.addEventListener('input', filterPcvs);
-    searchInput.addEventListener('keyup', filterPcvs);
-  }
-  if (statusSelect) statusSelect.addEventListener('change', filterPcvs);
-
-  const createPcvForm = document.getElementById('createPcvForm');
-  if (createPcvForm) {
-    createPcvForm.addEventListener('submit', function(ev) {
-      ev.preventDefault();
-
-      const refVal = document.getElementById('modalPcvRef').value;
-      const claimantVal = document.getElementById('modalPcvClaimant').value;
-      const deptVal = document.getElementById('modalPcvDept').value;
-      const rawAmount = parseFloat(document.getElementById('modalPcvAmount').value || 0);
-      const formattedAmount = '₱' + rawAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const purposeVal = document.getElementById('modalPcvPurpose').value;
-
-      const pcvObj = {
-        ref: refVal,
-        date: "{{ date('Y-m-d') }}",
-        claimant: claimantVal,
-        dept: deptVal,
-        purpose: purposeVal,
-        amount: formattedAmount,
-        status: 'Receipt Attached',
-        status_badge: 'bg-success-subtle text-success',
-        status_icon: 'ph-check',
-        receipt_no: 'OR-GEN-99012'
-      };
-
-      const tbody = document.querySelector('#pcvTable tbody');
-      if (tbody) {
-        const newRow = document.createElement('tr');
-        newRow.className = 'pcv-row';
-        newRow.style.cursor = 'pointer';
-        newRow.setAttribute('data-status', 'receipt attached');
-
-        newRow.onclick = function() { openPcvDetailsModal(pcvObj); };
-
-        newRow.innerHTML = `
-          <td><span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1">${refVal}</span></td>
-          <td class="font-monospace fs-xs">{{ date('Y-m-d') }}</td>
-          <td>
-            <div class="fw-semibold text-dark">${claimantVal}</div>
-            <div class="text-muted fs-xs">${deptVal}</div>
-          </td>
-          <td><span class="text-truncate d-inline-block" style="max-width: 250px;">${purposeVal}</span></td>
-          <td class="text-end fw-bold text-dark font-monospace">${formattedAmount}</td>
-          <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> Receipt Attached</span></td>
-          <td class="text-end" onclick="event.stopPropagation();">
-            <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Receipt Attachment"><i class="ph ph-file-image"></i></button>
-          </td>
-        `;
-
-        const eyeBtn = newRow.querySelector('button[title="View Receipt Attachment"]');
-        if (eyeBtn) {
-          eyeBtn.onclick = function(ex) {
-            ex.stopPropagation();
-            openPcvDetailsModal(pcvObj);
-          };
-        }
-
-        tbody.insertBefore(newRow, tbody.firstChild);
-      }
-
-      const modalEl = document.getElementById('createPcvModal');
-      const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-      if (modalInstance) modalInstance.hide();
-
-      createPcvForm.reset();
-      filterPcvs();
-    });
-  }
-
-  filterPcvs();
-});
-</script>
-@endpush

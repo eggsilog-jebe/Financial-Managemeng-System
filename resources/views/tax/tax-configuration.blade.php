@@ -18,7 +18,11 @@
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Tax Rates &amp; Statutory Configuration</h1>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <x-integration-badge 
+          type="standalone" 
+          description="Master system accounting and statutory tax setup." 
+      />
       <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Syncing tax rates with BIR online portal...');"><i class="ph ph-arrow-counter-clockwise me-1"></i> Sync Tax Rates</button>
       <button id="btnAddTaxRule" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#addTaxRuleModal"><i class="ph ph-plus-circle me-1"></i> Add Tax Rate Rule</button>
     </div>

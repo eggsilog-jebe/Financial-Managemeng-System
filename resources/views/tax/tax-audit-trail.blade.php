@@ -18,7 +18,12 @@
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Tax Audit Trail &amp; Immutable Log</h1>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <x-integration-badge 
+          type="internal" 
+          :systems="['CAS Audit Logs', 'SHA-256 Hash Chain']" 
+          description="Immutable Philippine CAS compliance and digital tamper-evident audit logs." 
+      />
       <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Verifying cryptographic SHA-256 hash integrity across log chain...');"><i class="ph ph-shield-check me-1"></i> Verify Hash Integrity</button>
       <button id="btnExportAudit" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#exportAuditModal"><i class="ph ph-file-arrow-down me-1"></i> Export Tax Audit Log</button>
     </div>

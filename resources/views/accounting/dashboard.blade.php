@@ -13,7 +13,7 @@
       <p class="text-muted mb-0">Hospital Financial Management System &bull; Standalone Transaction Core Mode</p>
     </div>
     <div class="d-flex gap-2">
-      <a href="{{ route('accounting.cashier.index') }}" class="btn btn-outline-primary btn-sm">
+      <a href="{{ route('collection.cashier-desk') }}" class="btn btn-outline-primary btn-sm">
         <i class="ph ph-receipt me-1"></i> Cashier Counter
       </a>
       <a href="{{ route('accounting.general-ledger.index') }}" class="btn btn-outline-secondary btn-sm">
@@ -95,7 +95,7 @@
         <h5 class="fw-bold text-dark mb-3"><i class="ph ph-lightning text-primary me-2"></i>Quick Financial Operations</h5>
         <div class="row g-2">
           <div class="col-md-4">
-            <a href="{{ route('accounting.cashier.index') }}" class="btn btn-light border w-100 text-start p-3 rounded-3 d-flex align-items-center gap-3">
+            <a href="{{ route('collection.cashier-desk') }}" class="btn btn-light border w-100 text-start p-3 rounded-3 d-flex align-items-center gap-3">
               <span class="p-2 rounded-2 bg-primary-subtle text-primary"><i class="ph ph-hand-coins fs-4"></i></span>
               <div>
                 <strong class="d-block text-dark">Receive Payment</strong>

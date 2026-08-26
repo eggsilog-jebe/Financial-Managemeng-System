@@ -37,7 +37,7 @@
 
         @can('access-cashier-pos')
         <li>
-          <a class="nav-link{{ request()->routeIs('accounting.cashier.*') ? ' active' : '' }}" href="{{ route('accounting.cashier.index') }}" data-page="cashier" data-nav-tooltip="Cashier POS" aria-label="Cashier POS">
+          <a class="nav-link{{ request()->routeIs('collection.cashier-desk') || request()->routeIs('accounting.cashier.*') ? ' active' : '' }}" href="{{ route('collection.cashier-desk') }}" data-page="cashier" data-nav-tooltip="Cashier POS" aria-label="Cashier POS">
             <i class="ph-fill ph-hand-coins" aria-hidden="true"></i>
             <span class="nav-label">Cashier POS Desk</span>
             <span class="badge bg-warning-subtle text-warning ms-auto fs-xs">POS</span>

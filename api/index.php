@@ -10,12 +10,16 @@ chdir($root);
 
 // Ensure Vercel's read-only filesystem has writable tmp directories
 $tmpStorage = '/tmp/storage';
+$tmpBootstrap = '/tmp/bootstrap/cache';
+
 $tmpDirs = [
     $tmpStorage . '/app/public',
     $tmpStorage . '/framework/cache/data',
+    $tmpStorage . '/framework/cache',
     $tmpStorage . '/framework/sessions',
     $tmpStorage . '/framework/views',
     $tmpStorage . '/logs',
+    $tmpBootstrap,
 ];
 
 foreach ($tmpDirs as $dir) {
@@ -27,6 +31,26 @@ foreach ($tmpDirs as $dir) {
 // Point compiled views to writable /tmp storage
 putenv("VIEW_COMPILED_PATH={$tmpStorage}/framework/views");
 $_ENV['VIEW_COMPILED_PATH'] = "{$tmpStorage}/framework/views";
+
+// Point bootstrap cache files to /tmp/bootstrap/cache
+putenv("APP_PACKAGES_CACHE={$tmpBootstrap}/packages.php");
+$_ENV['APP_PACKAGES_CACHE'] = "{$tmpBootstrap}/packages.php";
+putenv("APP_SERVICES_CACHE={$tmpBootstrap}/services.php");
+$_ENV['APP_SERVICES_CACHE'] = "{$tmpBootstrap}/services.php";
+putenv("APP_CONFIG_CACHE={$tmpBootstrap}/config.php");
+$_ENV['APP_CONFIG_CACHE'] = "{$tmpBootstrap}/config.php";
+putenv("APP_ROUTES_CACHE={$tmpBootstrap}/routes.php");
+$_ENV['APP_ROUTES_CACHE'] = "{$tmpBootstrap}/routes.php";
+putenv("APP_EVENTS_CACHE={$tmpBootstrap}/events.php");
+$_ENV['APP_EVENTS_CACHE'] = "{$tmpBootstrap}/events.php";
+
+// Copy pre-existing package and service manifests if available
+if (file_exists($root . '/bootstrap/cache/packages.php') && !file_exists("{$tmpBootstrap}/packages.php")) {
+    copy($root . '/bootstrap/cache/packages.php', "{$tmpBootstrap}/packages.php");
+}
+if (file_exists($root . '/bootstrap/cache/services.php') && !file_exists("{$tmpBootstrap}/services.php")) {
+    copy($root . '/bootstrap/cache/services.php', "{$tmpBootstrap}/services.php");
+}
 
 // Fallback APP_KEY if not configured in Vercel environment variables
 if (empty(getenv('APP_KEY')) && empty($_ENV['APP_KEY'])) {
@@ -49,6 +73,7 @@ if ($dbConnection === 'sqlite') {
     if (file_exists($sqliteDst) && !getenv('DB_DATABASE')) {
         putenv("DB_DATABASE={$sqliteDst}");
         $_ENV['DB_DATABASE'] = $sqliteDst;
+        $_SERVER['DB_DATABASE'] = $sqliteDst;
     }
 }
 

@@ -16,7 +16,8 @@
           <li class="breadcrumb-item active">Withholding Tax</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Withholding Tax Certificates (BIR Form 2307 / 2306)</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Withholding Tax Certificates (BIR Form 2307 &amp; 2306)</h1>
+      <p class="text-muted fs-xs mb-0">Generate, print, and track BIR Form 2307 tax withheld certificates issued to medical suppliers, contracted doctors, and service providers.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 

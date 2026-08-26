@@ -17,10 +17,11 @@
         </ol>
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Budget vs. Actual Variance Analysis</h1>
+      <p class="text-muted fs-xs mb-0">Compare planned budget targets against actual expenses to identify cost savings (Favorable) and overspending (Unfavorable).</p>
     </div>
     <div class="d-flex gap-2">
       <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Re-calculating real-time budget variances...');"><i class="ph ph-arrows-counter-clockwise me-1"></i> Re-Calculate Variances</button>
-      <button class="btn btn-primary btn-sm" type="button" onclick="alert('Exporting Variance Audit PDF...');"><i class="ph ph-file-arrow-down me-1"></i> Export Audit Variance PDF</button>
+      <button class="btn btn-primary btn-sm" type="button" onclick="alert('Exporting Variance Audit PDF...');"><i class="ph ph-file-arrow-down me-1"></i> Export Variance PDF</button>
     </div>
   </div>
 

@@ -12,7 +12,14 @@
       <h1 class="h3 mb-1 font-weight-bold">Fiscal Period Closing &amp; Hard Locking</h1>
       <p class="text-muted mb-0">Executive Period-End Hard Lock &bull; Retroactive Postings Prevention &bull; CFO Authorization Only</p>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <x-integration-badge 
+          type="standalone" 
+          :internalModules="['General Ledger', 'Fiscal Period Closing', 'Audit Trail', 'Financial Reporting']"
+          :tables="['fiscal_periods', 'journal_entries', 'audit_trails']"
+          glImpact="Hard-locks transaction dates against backdated, edited, or deleted journal entries"
+          description="Executive CFO governance lock ensuring GAAP period cutoffs, BIR CAS compliance, and tamper-proof financial closing."
+      />
       <span class="badge bg-danger fs-6 py-2 px-3 align-self-center">
         <i class="ph ph-lock-key me-1"></i> CFO Exclusive Area
       </span>

@@ -16,7 +16,8 @@
           <li class="breadcrumb-item active">Fund Transfers</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Inter-Account Fund Transfers &amp; Liquidity Routing</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Bank Fund Transfers &amp; Sweeps</h1>
+      <p class="text-muted fs-xs mb-0">Move money between hospital accounts (e.g. Daily Collections $\rightarrow$ Main Operating Account $\rightarrow$ Payroll Fund) with automatic GL entries.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 

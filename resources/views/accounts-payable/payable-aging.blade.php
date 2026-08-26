@@ -16,7 +16,8 @@
           <li class="breadcrumb-item active">Payable Aging</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Accounts Payable (AP) Aging Schedule</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Accounts Payable Aging Schedule</h1>
+      <p class="text-muted fs-xs mb-0">Track all outstanding supplier bills and monitor upcoming payment deadlines grouped by age (Current, 1–30 Days, 31–60 Days, 61–90 Days, 90+ Days Overdue).</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 

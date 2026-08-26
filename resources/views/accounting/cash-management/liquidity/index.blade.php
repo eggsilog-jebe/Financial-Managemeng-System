@@ -16,7 +16,8 @@
           <li class="breadcrumb-item active">Liquidity Management</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Executive Treasury Liquidity &amp; Solvency Monitor</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Treasury Liquidity &amp; Cash Health</h1>
+      <p class="text-muted fs-xs mb-0">Evaluate hospital solvency, Days Cash on Hand (runway), quick ratio, and required minimum operating reserve thresholds.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 

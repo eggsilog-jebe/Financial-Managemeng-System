@@ -37,16 +37,17 @@
           <li class="breadcrumb-item active">Check Register</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Check Register &amp; Printing Hub</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Bank Check Register &amp; Printing</h1>
+      <p class="text-muted fs-xs mb-0">Record, print, and monitor bank check issuances, track check encashment/clearing status, and manage voided checks.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 
           type="internal" 
           :systems="['Disbursement Vouchers', 'Bank Accounts']" 
-          description="Manages physical check serials and bank clearing states." 
+          description="Manages check serial numbers, print layouts, and bank clearing status." 
       />
       <button id="btnIssueCheck" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#issueCheckModal">
-        <i class="ph ph-plus me-1"></i> Issue Bank Check
+        <i class="ph ph-plus me-1"></i> Issue New Check
       </button>
     </div>
   </div>

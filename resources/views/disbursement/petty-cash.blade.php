@@ -37,12 +37,14 @@
           <li class="breadcrumb-item active">Petty Cash Custody</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Petty Cash Custody &amp; Revolving Fund</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Petty Cash Custody &amp; Replenishment</h1>
+      <p class="text-muted fs-xs mb-0">Record small emergency cash expenses, track custodian cash balances, and request fund replenishments.</p>
+    </div>
     <div class="d-flex flex-wrap align-items-center gap-2">
       <x-integration-badge 
           type="internal" 
           :systems="['Petty Cash Float', 'GL 5000 Expense Accounts']" 
-          description="Tracks revolving emergency cash drawer and replenishment slips." 
+          description="Tracks revolving emergency cash drawer, expense receipts, and replenishment checks." 
       />
       @if($funds->isNotEmpty())
         <!-- Fund Selector Dropdown -->

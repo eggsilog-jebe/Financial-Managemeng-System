@@ -117,13 +117,14 @@ final class BirTaxScheduleService
         }
 
         return [
-            'period_from'       => $fromDate,
-            'period_to'         => $toDate,
-            'vatable_sales'     => $vatableSales,
-            'vat_exempt_sales'  => $vatExemptSales,
-            'output_vat_12'     => $outputVat,
-            'total_collections' => $totalCollected,
-            'receipts_count'    => $receipts->count(),
+            'period_from'          => $fromDate,
+            'period_to'            => $toDate,
+            'vatable_sales'        => $vatableSales,
+            'vat_exempt_sales'     => $vatExemptSales,
+            'output_vat_12'        => $outputVat,
+            'total_collections'    => $totalCollected,
+            'receipts_count'       => $receipts->count(),
+            'total_receipts_count' => $receipts->count(),
         ];
     }
 

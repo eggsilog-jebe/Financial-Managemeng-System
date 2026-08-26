@@ -17,6 +17,7 @@
         </ol>
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Statement of Financial Position (Balance Sheet)</h1>
+      <p class="text-muted fs-xs mb-0">Summary of hospital financial standing asserting the fundamental accounting equality: Total Assets = Total Liabilities + Total Equity.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 

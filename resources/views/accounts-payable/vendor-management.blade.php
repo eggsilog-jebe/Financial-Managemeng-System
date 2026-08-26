@@ -38,53 +38,60 @@
         </ol>
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Vendor Directory &amp; Supplier Master</h1>
+      <p class="text-muted fs-xs mb-0">Register and manage accredited hospital suppliers, pharmaceutical vendors, BIR Tax Identification Numbers (TIN), and credit terms.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 
           type="external" 
           :systems="['Supplier/Vendor Management', 'PSM (Procurement)']" 
-          description="Syncs accredited suppliers, TINs, and payment credit terms." 
+          description="Syncs accredited suppliers, TINs, and payment credit terms with Hospital Procurement." 
       />
-      <button id="btnAddVendor" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#addVendorModal"><i class="ph ph-plus me-1"></i> Add New Vendor</button>
+      <button id="btnAddVendor" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#addVendorModal">
+        <i class="ph ph-plus me-1"></i> Register New Vendor
+      </button>
     </div>
   </div>
 
   <!-- Summary Cards Row -->
   <div class="row g-3 mb-4">
     <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3" title="Active suppliers accredited to deliver supplies and services">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Total Active Vendors</span>
+          <span class="text-muted small">Active Accredited Suppliers</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-buildings fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">{{ $totalActiveVendors }} Vendor{{ $totalActiveVendors !== 1 ? 's' : '' }}</h4>
+        <span class="fs-xs text-muted">Ready for Purchase Orders</span>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3" title="Total unpaid balance owed to all suppliers">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Total AP Liabilities</span>
+          <span class="text-muted small">Total Unpaid AP Balance</span>
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-trend-down fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) $totalApLiability, 2) }}</h4>
+        <span class="fs-xs text-muted">Total amount owed to suppliers</span>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3" title="Standard payment credit window allowed by vendors">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Avg Payment Terms</span>
+          <span class="text-muted small">Standard Credit Terms</span>
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">Net 30 Days</h4>
+        <span class="fs-xs text-muted">Average due date after delivery</span>
       </div>
     </div>
     <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3" title="Expanded Withholding Tax withheld from supplier payouts for BIR">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Tracked EWT Withheld</span>
+          <span class="text-muted small">Total Tax Withheld (EWT)</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-percent fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) $totalEwt, 2) }}</h4>
+        <span class="fs-xs text-muted">Tracked for BIR Form 1601-EQ</span>
       </div>
     </div>
   </div>

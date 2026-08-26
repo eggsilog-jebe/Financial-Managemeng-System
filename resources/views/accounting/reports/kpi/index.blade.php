@@ -16,7 +16,8 @@
           <li class="breadcrumb-item active">Financial KPI Dashboard</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Hospital Executive Financial KPI &amp; Analytics Deck</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Financial Performance &amp; KPI Dashboard</h1>
+      <p class="text-muted fs-xs mb-0">Executive scorecard tracking vital financial health metrics: Operating Margin, Days in Accounts Receivable, Collection Speed, and Net Profitability.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 

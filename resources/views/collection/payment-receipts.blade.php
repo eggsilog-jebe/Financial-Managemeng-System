@@ -16,7 +16,8 @@
           <li class="breadcrumb-item active">Payment Receipts</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Payment Receipts &amp; Official Receipts (OR) Hub</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Payment Receipts &amp; Official Receipts (OR)</h1>
+      <p class="text-muted fs-xs mb-0">Master register of all issued official receipts, payment methods (Cash, Card, GCash, Maya), and patient bill settlements.</p>
     </div>
     <div class="d-flex gap-2">
       <a href="{{ route('collection.cashier-desk') }}" class="btn btn-outline-secondary btn-sm"><i class="ph ph-hand-coins me-1"></i> Cashier POS Desk</a>

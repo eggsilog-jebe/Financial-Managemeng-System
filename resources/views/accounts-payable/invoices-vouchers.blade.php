@@ -37,7 +37,8 @@
           <li class="breadcrumb-item active">Invoices &amp; Vouchers Hub</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Vendor Invoices &amp; Disbursement Vouchers Hub</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Vendor Invoices &amp; Payment Vouchers</h1>
+      <p class="text-muted fs-xs mb-0">Review verified supplier bills, track tax deductions (BIR 2307), and prepare payment vouchers ready for management release.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 
@@ -46,7 +47,9 @@
           :tables="['vendor_invoices', 'disbursement_vouchers', 'bir2307_certificates']"
           description="Holds approved vendor liabilities and generates disbursement payment vouchers." 
       />
-      <a href="{{ route('ap.purchase-bills') }}" class="btn btn-outline-primary btn-sm"><i class="ph ph-file-text me-1"></i> Ingest Purchase Bill</a>
+      <a href="{{ route('ap.purchase-bills') }}" class="btn btn-outline-primary btn-sm">
+        <i class="ph ph-plus-circle me-1"></i> Record New Supplier Bill
+      </a>
     </div>
   </div>
 

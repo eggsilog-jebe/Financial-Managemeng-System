@@ -16,7 +16,8 @@
           <li class="breadcrumb-item active">Payment Gateway Logs</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Payment Gateway &amp; E-Wallet Logs</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Payment Gateway &amp; E-Wallet Transaction Logs</h1>
+      <p class="text-muted fs-xs mb-0">Monitor online patient copay transactions, digital receipts (GCash, Maya, Credit/Debit cards), and webhook synchronization status.</p>
     </div>
     <div class="d-flex gap-2">
       <a href="{{ route('collection.cashier-desk') }}" class="btn btn-outline-secondary btn-sm"><i class="ph ph-hand-coins me-1"></i> Cashier POS Desk</a>

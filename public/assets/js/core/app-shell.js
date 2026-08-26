@@ -91,12 +91,87 @@
 
     window.HimsComponents = Object.freeze({ openModal, closeModal, notify });
 
+    const animateAccordion = (toggle, submenu, expand) => {
+      if (!submenu) return;
+
+      if (expand) {
+        submenu.hidden = false;
+        submenu.style.overflow = "hidden";
+        toggle.setAttribute("aria-expanded", "true");
+        toggle.closest(".nav-accordion")?.classList.add("is-expanded");
+
+        const targetHeight = submenu.scrollHeight;
+
+        if (typeof submenu.animate === "function") {
+          const openAnim = submenu.animate([
+            { maxHeight: "0px", opacity: 0, transform: "translateY(-4px)" },
+            { maxHeight: `${targetHeight}px`, opacity: 1, transform: "translateY(0)" }
+          ], {
+            duration: 260,
+            easing: "cubic-bezier(0.25, 1, 0.5, 1)",
+            fill: "forwards"
+          });
+
+          // Stagger item reveal
+          const items = submenu.querySelectorAll("li");
+          items.forEach((item, index) => {
+            item.animate([
+              { opacity: 0, transform: "translateX(-8px)" },
+              { opacity: 1, transform: "translateX(0)" }
+            ], {
+              duration: 220,
+              delay: Math.min(index * 25, 120),
+              easing: "cubic-bezier(0.25, 1, 0.5, 1)",
+              fill: "both"
+            });
+          });
+
+          openAnim.finished.then(() => {
+            openAnim.cancel();
+            submenu.style.removeProperty("max-height");
+            submenu.style.removeProperty("overflow");
+            submenu.style.removeProperty("opacity");
+            submenu.style.removeProperty("transform");
+          }).catch(() => {});
+        }
+      } else {
+        toggle.setAttribute("aria-expanded", "false");
+        toggle.closest(".nav-accordion")?.classList.remove("is-expanded");
+
+        const currentHeight = submenu.scrollHeight;
+        submenu.style.overflow = "hidden";
+
+        if (typeof submenu.animate === "function") {
+          const closeAnim = submenu.animate([
+            { maxHeight: `${currentHeight}px`, opacity: 1, transform: "translateY(0)" },
+            { maxHeight: "0px", opacity: 0, transform: "translateY(-4px)" }
+          ], {
+            duration: 200,
+            easing: "cubic-bezier(0.4, 0, 1, 1)",
+            fill: "forwards"
+          });
+
+          closeAnim.finished.then(() => {
+            closeAnim.cancel();
+            submenu.hidden = true;
+            submenu.style.removeProperty("max-height");
+            submenu.style.removeProperty("overflow");
+            submenu.style.removeProperty("opacity");
+            submenu.style.removeProperty("transform");
+          }).catch(() => {
+            submenu.hidden = true;
+          });
+        } else {
+          submenu.hidden = true;
+        }
+      }
+    };
+
     const setAccordion = (toggle, expanded) => {
       const submenu = document.getElementById(toggle.getAttribute("aria-controls"));
-      toggle.setAttribute("aria-expanded", String(expanded));
-      toggle.closest(".nav-accordion")?.classList.toggle("is-expanded", expanded);
-      if (submenu) submenu.hidden = !expanded;
+      animateAccordion(toggle, submenu, expanded);
     };
+
     const closeOtherAccordions = (current) => {
       accordionToggles.forEach((toggle) => {
         if (toggle !== current) setAccordion(toggle, false);
@@ -198,6 +273,10 @@
     });
 
     const usesDrawer = () => window.innerWidth <= 991;
+    const sidebar = document.querySelector(".sidebar");
+    const mainContent = document.querySelector(".main-content");
+    const sidebarNav = document.querySelector(".sidebar-nav");
+
     const syncSidebarToggle = () => {
       if (!sidebarToggle) return;
       const expanded = usesDrawer()
@@ -211,25 +290,146 @@
           : (expanded ? "Collapse sidebar" : "Expand sidebar"),
       );
     };
-    const closeMobileNav = () => {
-      body.classList.remove("sidebar-open");
+
+    let isSidebarAnimating = false;
+
+    // JavaScript Web Animations API for 60fps buttery smooth desktop transition
+    const animateDesktopSidebar = (willCollapse) => {
+      if (isSidebarAnimating) return;
+      isSidebarAnimating = true;
+      body.classList.add("sidebar-animating");
+
+      const startWidth = willCollapse ? 315 : 88;
+      const endWidth = willCollapse ? 88 : 315;
+      const animDuration = 300;
+      const animEasing = "cubic-bezier(0.25, 1, 0.5, 1)";
+
+      if (willCollapse) {
+        body.classList.add("sidebar-collapsing");
+      } else {
+        body.classList.remove("sidebar-collapsed");
+        body.classList.add("sidebar-expanding");
+      }
+
+      if (sidebar && mainContent && typeof sidebar.animate === "function") {
+        const sidebarAnim = sidebar.animate([
+          { width: `${startWidth}px` },
+          { width: `${endWidth}px` }
+        ], { duration: animDuration, easing: animEasing, fill: "forwards" });
+
+        const mainAnim = mainContent.animate([
+          { marginLeft: `${startWidth}px` },
+          { marginLeft: `${endWidth}px` }
+        ], { duration: animDuration, easing: animEasing, fill: "forwards" });
+
+        Promise.all([sidebarAnim.finished, mainAnim.finished]).then(() => {
+          if (willCollapse) {
+            body.classList.add("sidebar-collapsed");
+            body.classList.remove("sidebar-collapsing");
+          } else {
+            body.classList.remove("sidebar-expanding");
+          }
+          sidebarAnim.cancel();
+          mainAnim.cancel();
+          body.classList.remove("sidebar-animating");
+          isSidebarAnimating = false;
+          try { localStorage.setItem("fms_sidebar_collapsed", String(willCollapse)); } catch (_) {}
+          syncSidebarToggle();
+        }).catch(() => {
+          if (willCollapse) {
+            body.classList.add("sidebar-collapsed");
+            body.classList.remove("sidebar-collapsing");
+          } else {
+            body.classList.remove("sidebar-expanding");
+          }
+          body.classList.remove("sidebar-animating");
+          isSidebarAnimating = false;
+        });
+      } else {
+        setTimeout(() => {
+          if (willCollapse) {
+            body.classList.add("sidebar-collapsed");
+            body.classList.remove("sidebar-collapsing");
+          } else {
+            body.classList.remove("sidebar-expanding");
+          }
+          body.classList.remove("sidebar-animating");
+          isSidebarAnimating = false;
+        }, animDuration);
+        try { localStorage.setItem("fms_sidebar_collapsed", String(willCollapse)); } catch (_) {}
+        syncSidebarToggle();
+      }
+    };
+
+    // JavaScript Web Animations API for mobile drawer slide-in / slide-out
+    const openMobileDrawer = () => {
+      if (isSidebarAnimating) return;
+      isSidebarAnimating = true;
+      body.classList.add("sidebar-open");
       syncSidebarToggle();
-      hideNavTooltip();
+
+      if (sidebar && typeof sidebar.animate === "function") {
+        const drawerAnim = sidebar.animate([
+          { transform: "translateX(-100%)" },
+          { transform: "translateX(0)" }
+        ], { duration: 260, easing: "cubic-bezier(0.25, 1, 0.5, 1)", fill: "both" });
+
+        drawerAnim.finished.then(() => {
+          drawerAnim.cancel();
+          isSidebarAnimating = false;
+        }).catch(() => { isSidebarAnimating = false; });
+      } else {
+        setTimeout(() => { isSidebarAnimating = false; }, 260);
+      }
+    };
+
+    const closeMobileNav = () => {
+      if (!body.classList.contains("sidebar-open") || isSidebarAnimating) return;
+      isSidebarAnimating = true;
+
+      if (sidebar && typeof sidebar.animate === "function") {
+        const closeAnim = sidebar.animate([
+          { transform: "translateX(0)" },
+          { transform: "translateX(-100%)" }
+        ], { duration: 220, easing: "cubic-bezier(0.4, 0, 1, 1)", fill: "both" });
+
+        closeAnim.finished.then(() => {
+          closeAnim.cancel();
+          body.classList.remove("sidebar-open");
+          syncSidebarToggle();
+          hideNavTooltip();
+          isSidebarAnimating = false;
+        }).catch(() => {
+          body.classList.remove("sidebar-open");
+          syncSidebarToggle();
+          hideNavTooltip();
+          isSidebarAnimating = false;
+        });
+      } else {
+        body.classList.remove("sidebar-open");
+        syncSidebarToggle();
+        hideNavTooltip();
+        setTimeout(() => { isSidebarAnimating = false; }, 220);
+      }
     };
 
     sidebarToggle?.addEventListener("click", () => {
       if (usesDrawer()) {
-        body.classList.toggle("sidebar-open");
+        if (body.classList.contains("sidebar-open")) {
+          closeMobileNav();
+        } else {
+          openMobileDrawer();
+        }
       } else {
-        body.classList.toggle("sidebar-collapsed");
+        const willCollapse = !body.classList.contains("sidebar-collapsed");
+        animateDesktopSidebar(willCollapse);
       }
-      syncSidebarToggle();
       hideNavTooltip();
     });
+
     backdrop?.addEventListener("click", closeMobileNav);
     
     // Sidebar Scroll Position Persistence & Auto-Scroll Active Link into View
-    const sidebarNav = document.querySelector(".sidebar-nav");
     if (sidebarNav) {
       const savedScroll = sessionStorage.getItem("fms_sidebar_scroll");
       if (savedScroll !== null) {
@@ -259,10 +459,17 @@
       });
     }
 
+    // Responsive resize handler with debounced class synchronization
+    let resizeTimer;
     window.addEventListener("resize", () => {
-      if (!usesDrawer()) body.classList.remove("sidebar-open");
-      syncSidebarToggle();
-      hideNavTooltip();
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (!usesDrawer()) {
+          body.classList.remove("sidebar-open");
+        }
+        syncSidebarToggle();
+        hideNavTooltip();
+      }, 100);
     });
     syncSidebarToggle();
 

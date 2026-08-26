@@ -16,19 +16,19 @@
           <li class="breadcrumb-item active" aria-current="page">Chart of Accounts</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold text-dark">Chart of Accounts</h1>
-      <p class="text-muted fs-xs mb-0">Master register of active and archived General Ledger balance sheet &amp; nominal accounts.</p>
+      <h1 class="h3 mb-0 font-weight-bold text-dark">Chart of Accounts (COA)</h1>
+      <p class="text-muted fs-xs mb-0">Master list of all hospital financial accounts — tracking what the hospital owns (Assets), owes (Liabilities), its net worth (Equity), revenues, and operating expenses.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 
           type="standalone" 
-          description="Master system accounting and statutory tax setup." 
+          description="Master accounting framework for all hospital financial transactions and statutory reporting." 
       />
-      <a href="{{ route('gl.trial-balance.export') }}" class="btn btn-outline-secondary btn-sm">
-        <i class="ph ph-download-simple me-1"></i> Export COA Schedule
+      <a href="{{ route('gl.trial-balance.export') }}" class="btn btn-outline-secondary btn-sm" title="Download current accounts schedule">
+        <i class="ph ph-download-simple me-1"></i> Export Accounts (CSV)
       </a>
       <button id="btnAddAccount" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#addAccountModal">
-        <i class="ph ph-plus me-1"></i> Add Account
+        <i class="ph ph-plus me-1"></i> Add New Account
       </button>
     </div>
   </div>
@@ -61,45 +61,60 @@
   <!-- Summary Cards Row (Clean 5-Column Grid) -->
   <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-5 g-3 mb-4">
     <div class="col">
-      <div class="card border-0 shadow-sm rounded-3 p-3 h-100">
+      <div class="card border-0 shadow-sm rounded-3 p-3 h-100" title="What the hospital owns (Cash, Receivables, Inventory, Equipment)">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Assets (1000s)</span>
+          <div>
+            <span class="text-muted small fw-medium d-block">Assets (1000s)</span>
+            <span class="fs-xs text-muted">What the hospital owns</span>
+          </div>
           <span class="p-2 rounded-3 bg-success-subtle text-success fs-xs"><i class="ph ph-trend-up fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($assetTotal ?? 0, 2) }}</h4>
       </div>
     </div>
     <div class="col">
-      <div class="card border-0 shadow-sm rounded-3 p-3 h-100">
+      <div class="card border-0 shadow-sm rounded-3 p-3 h-100" title="What the hospital owes to suppliers, banks, and staff">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Liabilities (2000s)</span>
+          <div>
+            <span class="text-muted small fw-medium d-block">Liabilities (2000s)</span>
+            <span class="fs-xs text-muted">What the hospital owes</span>
+          </div>
           <span class="p-2 rounded-3 bg-danger-subtle text-danger fs-xs"><i class="ph ph-warning-circle fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($liabilityTotal ?? 0, 2) }}</h4>
       </div>
     </div>
     <div class="col">
-      <div class="card border-0 shadow-sm rounded-3 p-3 h-100">
+      <div class="card border-0 shadow-sm rounded-3 p-3 h-100" title="Hospital net worth and retained earnings">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Equity (3000s)</span>
+          <div>
+            <span class="text-muted small fw-medium d-block">Equity (3000s)</span>
+            <span class="fs-xs text-muted">Hospital net worth</span>
+          </div>
           <span class="p-2 rounded-3 bg-primary-subtle text-primary fs-xs"><i class="ph ph-scales fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($equityTotal ?? 0, 2) }}</h4>
       </div>
     </div>
     <div class="col">
-      <div class="card border-0 shadow-sm rounded-3 p-3 h-100">
+      <div class="card border-0 shadow-sm rounded-3 p-3 h-100" title="Income earned from patient care, pharmacy, and diagnostic services">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Operating Revenue (4000s)</span>
+          <div>
+            <span class="text-muted small fw-medium d-block">Revenue (4000s)</span>
+            <span class="fs-xs text-muted">Income earned</span>
+          </div>
           <span class="p-2 rounded-3 bg-info-subtle text-info fs-xs"><i class="ph ph-receipt fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($revenueTotal ?? 0, 2) }}</h4>
       </div>
     </div>
     <div class="col">
-      <div class="card border-0 shadow-sm rounded-3 p-3 h-100">
+      <div class="card border-0 shadow-sm rounded-3 p-3 h-100" title="Hospital operating costs, salaries, supplies, utilities">
         <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Operating Expenses (5000s)</span>
+          <div>
+            <span class="text-muted small fw-medium d-block">Expenses (5000s)</span>
+            <span class="fs-xs text-muted">Operating costs</span>
+          </div>
           <span class="p-2 rounded-3 bg-warning-subtle text-warning fs-xs"><i class="ph ph-chart-line-down fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($expenseTotal ?? 0, 2) }}</h4>
@@ -330,25 +345,28 @@
               <input type="text" name="name" class="form-control form-control-sm" placeholder="e.g. Allowance for Doubtful Accounts" required>
             </div>
             <div class="col-md-4">
-              <label class="form-label small fw-semibold">Category <span class="text-danger">*</span></label>
+              <label class="form-label small fw-semibold">Account Category <span class="text-danger">*</span></label>
               <select name="category" id="addAccCategory" class="form-select form-select-sm" required onchange="autoSetNormalBalance(this.value, 'addAccNormalBalance')">
-                <option value="ASSET">ASSET (1000s)</option>
-                <option value="LIABILITY">LIABILITY (2000s)</option>
-                <option value="EQUITY">EQUITY (3000s)</option>
-                <option value="REVENUE">REVENUE (4000s)</option>
-                <option value="EXPENSE">EXPENSE (5000s)</option>
+                <option value="ASSET">ASSET (1000s - Cash, Inventory, Equipment)</option>
+                <option value="LIABILITY">LIABILITY (2000s - Bills, Loans, Payables)</option>
+                <option value="EQUITY">EQUITY (3000s - Retained Earnings, Capital)</option>
+                <option value="REVENUE">REVENUE (4000s - Patient Care, Pharmacy Income)</option>
+                <option value="EXPENSE">EXPENSE (5000s - Salaries, Supplies, Utilities)</option>
               </select>
+              <div class="form-text fs-xs">Determines where this account appears in financial statements.</div>
             </div>
             <div class="col-md-4">
-              <label class="form-label small fw-semibold">Normal Balance <span class="text-danger">*</span></label>
+              <label class="form-label small fw-semibold">Normal Accounting Balance <span class="text-danger">*</span></label>
               <select name="normal_balance" id="addAccNormalBalance" class="form-select form-select-sm" required>
-                <option value="DEBIT">DEBIT</option>
-                <option value="CREDIT">CREDIT</option>
+                <option value="DEBIT">DEBIT (Increases with debits)</option>
+                <option value="CREDIT">CREDIT (Increases with credits)</option>
               </select>
+              <div class="form-text fs-xs">Automatically set based on category.</div>
             </div>
             <div class="col-md-4">
-              <label class="form-label small fw-semibold">Department / Cost Center</label>
-              <input type="text" name="department" class="form-control form-control-sm" placeholder="e.g. Finance, Nursing, Pharmacy">
+              <label class="form-label small fw-semibold">Hospital Department / Cost Center</label>
+              <input type="text" name="department" class="form-control form-control-sm" placeholder="e.g. Inpatient, Pharmacy, Laboratory, General">
+              <div class="form-text fs-xs">Optional departmental assignment.</div>
             </div>
           </div>
         </div>
@@ -385,11 +403,11 @@
             <div class="col-md-4">
               <label class="form-label small fw-semibold">Category <span class="text-danger">*</span></label>
               <select name="category" id="editAccCategory" class="form-select form-select-sm" required>
-                <option value="ASSET">ASSET</option>
-                <option value="LIABILITY">LIABILITY</option>
-                <option value="EQUITY">EQUITY</option>
-                <option value="REVENUE">REVENUE</option>
-                <option value="EXPENSE">EXPENSE</option>
+                <option value="ASSET">ASSET (1000s)</option>
+                <option value="LIABILITY">LIABILITY (2000s)</option>
+                <option value="EQUITY">EQUITY (3000s)</option>
+                <option value="REVENUE">REVENUE (4000s)</option>
+                <option value="EXPENSE">EXPENSE (5000s)</option>
               </select>
             </div>
             <div class="col-md-4">
@@ -401,7 +419,7 @@
             </div>
             <div class="col-md-4">
               <label class="form-label small fw-semibold">Department / Cost Center</label>
-              <input type="text" name="department" id="editAccDept" class="form-control form-control-sm">
+              <input type="text" name="department" id="editAccDept" class="form-control form-control-sm" placeholder="e.g. Nursing, Pharmacy, Administration">
             </div>
           </div>
         </div>

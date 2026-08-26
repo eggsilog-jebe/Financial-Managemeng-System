@@ -16,7 +16,8 @@
           <li class="breadcrumb-item active">Tax Audit Trail</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Tax Audit Trail &amp; Immutable Log</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Tax Audit Trail &amp; Compliance Logs</h1>
+      <p class="text-muted fs-xs mb-0">Tamper-evident log tracking every tax rate modification, 2307 certificate generation, and BIR audit compliance action.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 

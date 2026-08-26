@@ -16,7 +16,8 @@
           <li class="breadcrumb-item active">Executive Dossier</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Executive Financial &amp; Operational Dossier</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Executive Board Report &amp; Financial Dossier</h1>
+      <p class="text-muted fs-xs mb-0">Consolidated board-ready report package combining Balance Sheet, P&amp;L, Cash Flows, Key Metrics, and CFO Attestation Sign-offs.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 

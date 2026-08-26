@@ -16,7 +16,8 @@
           <li class="breadcrumb-item active">Receivable Aging</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Accounts Receivable (AR) Aging Schedule</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Patient &amp; HMO Receivable Aging</h1>
+      <p class="text-muted fs-xs mb-0">Track all unpaid patient balances and pending HMO insurance claims categorized by aging brackets (Current, 31–60 Days, 61–90 Days, 90+ Days).</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 

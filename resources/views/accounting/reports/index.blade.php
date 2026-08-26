@@ -12,7 +12,14 @@
       <h1 class="h3 mb-1 font-weight-bold">Financial Reports &amp; Statements Hub</h1>
       <p class="text-muted mb-0">Real-Time Trial Balance &bull; Profit &amp; Loss &bull; Balance Sheet &bull; BIR Schedules</p>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <x-integration-badge 
+          type="internal" 
+          :internalModules="['Financial Reporting', 'General Ledger', 'Tax Management', 'Cash Management']"
+          :tables="['journal_entries', 'journal_entry_lines', 'accounts', 'tax_transactions', 'fiscal_periods']"
+          glImpact="Calculates Trial Balance, Income Statement (Revenues - Expenses), and Balance Sheet"
+          description="Generates real-time financial statements, BIR 2307/tax compliance schedules, and board-ready reports from posted GL records."
+      />
       <a href="{{ route('accounting.export.trial-balance-csv') }}" class="btn btn-outline-success btn-sm">
         <i class="ph ph-file-csv me-1"></i> Export Trial Balance CSV
       </a>
@@ -320,11 +327,11 @@
           <div class="p-3 bg-light rounded-3 mb-3">
             <div class="d-flex justify-content-between mb-1">
               <span>Total Official Receipts Count:</span>
-              <strong class="font-monospace">{{ $birVat['total_receipts_count'] }} Receipts</strong>
+              <strong class="font-monospace">{{ $birVat['total_receipts_count'] ?? $birVat['receipts_count'] ?? 0 }} Receipts</strong>
             </div>
             <div class="d-flex justify-content-between mb-1">
               <span>Total Gross Cashier Collections:</span>
-              <strong class="font-monospace">₱{{ number_format((float) $birVat['total_collections'], 2) }}</strong>
+              <strong class="font-monospace">₱{{ number_format((float) ($birVat['total_collections'] ?? 0), 2) }}</strong>
             </div>
             <hr class="my-2">
             <div class="d-flex justify-content-between fs-6 fw-bold">

@@ -37,16 +37,19 @@
           <li class="breadcrumb-item active">Purchase Bills &amp; 3-Way Matching</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold text-dark">Purchase Bills &amp; 3-Way Match Reconciliation</h1>
+      <h1 class="h3 mb-0 font-weight-bold text-dark">Supplier Bills &amp; 3-Way Verification</h1>
+      <p class="text-muted fs-xs mb-0">Cross-check incoming supplier invoices against approved Purchase Orders (PSM) and actual delivered items (SWS Goods Receipts) before approving payment.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 
           type="external" 
           :systems="['PSM (Purchase Orders)', 'SWS (Goods Receipt Notes)']" 
           glImpact="DR 1200 (Inventory/Expense) / CR 2010 (AP Vendors) + CR 2110 (EWT 2307)" 
-          description="Performs 3-Way tolerance matching across PO, GRN, and vendor invoice." 
+          description="Performs 3-Way matching across Purchase Orders, Goods Delivery Notes, and Supplier Invoices." 
       />
-      <button id="btnLogBill" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#createBillModal"><i class="ph ph-plus me-1"></i> Ingest Purchase Bill</button>
+      <button id="btnLogBill" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#createBillModal">
+        <i class="ph ph-plus me-1"></i> Record New Supplier Bill
+      </button>
     </div>
   </div>
 

@@ -17,6 +17,7 @@
         </ol>
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Tax Returns &amp; Statutory Filings</h1>
+      <p class="text-muted fs-xs mb-0">Prepare and track statutory BIR tax filings: Monthly Withholding (1601-C, 0619-E), Quarterly VAT (2550Q), and Corporate Income Tax (1702Q).</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 

@@ -16,11 +16,12 @@
           <li class="breadcrumb-item active">Bank Deposits</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Bank Deposits Log &amp; Verification</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Bank Deposits Log &amp; GL Posting</h1>
+      <p class="text-muted fs-xs mb-0">Record confirmed bank deposits, attach validated deposit slips, and post fund transfers from cashier float into hospital bank accounts.</p>
     </div>
     <div class="d-flex gap-2">
       <a href="{{ route('collection.deposit-slips') }}" class="btn btn-outline-secondary btn-sm"><i class="ph ph-path me-1"></i> Batch Deposit Slips</a>
-      <button id="btnCreateDeposit" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#createDepositModal"><i class="ph ph-plus-circle me-1"></i> New Bank Deposit</button>
+      <button id="btnCreateDeposit" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#createDepositModal"><i class="ph ph-plus-circle me-1"></i> Record Bank Deposit</button>
     </div>
   </div>
 

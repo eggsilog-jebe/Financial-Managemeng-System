@@ -16,7 +16,8 @@
           <li class="breadcrumb-item active">Tax Exemptions</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Tax Exemptions &amp; Statutory Exemption Register</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Tax Exemptions &amp; Special Relief Register</h1>
+      <p class="text-muted fs-xs mb-0">Manage VAT and withholding tax exemptions for Senior Citizens, PWDs, government entities, and VAT-exempt prescription medications.</p>
     </div>
     <div class="d-flex gap-2">
       <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Exporting Exemption Audit Log...');"><i class="ph ph-file-arrow-down me-1"></i> Exemption Audit PDF</button>

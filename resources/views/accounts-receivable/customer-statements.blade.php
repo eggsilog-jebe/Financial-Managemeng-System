@@ -16,7 +16,8 @@
           <li class="breadcrumb-item active">Statements of Account</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Patient &amp; Customer Statements (SOA)</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Patient &amp; HMO Statements of Account (SOA)</h1>
+      <p class="text-muted fs-xs mb-0">Generate official, itemized Statements of Account (SOA) showing all clinical charges, cashier payments, discounts, and final balance due.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 

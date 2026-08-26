@@ -16,11 +16,12 @@
           <li class="breadcrumb-item active">Budget Reallocations</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Budget Reallocations &amp; Inter-Departmental Transfers</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Budget Reallocations &amp; Fund Transfers</h1>
+      <p class="text-muted fs-xs mb-0">Reallocate surplus funds between department budget lines to cover unexpected clinical or operational expenditures.</p>
     </div>
     <div class="d-flex gap-2">
       <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Downloading Transfer Log PDF...');"><i class="ph ph-file-text me-1"></i> Transfer Log PDF</button>
-      <button id="btnRequestTransfer" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#requestTransferModal"><i class="ph ph-arrows-left-right me-1"></i> Request Transfer</button>
+      <button id="btnRequestTransfer" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#requestTransferModal"><i class="ph ph-arrows-left-right me-1"></i> Request Budget Transfer</button>
     </div>
   </div>
 

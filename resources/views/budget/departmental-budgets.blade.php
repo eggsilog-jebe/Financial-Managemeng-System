@@ -17,10 +17,11 @@
         </ol>
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Departmental Operating Budgets</h1>
+      <p class="text-muted fs-xs mb-0">Track allocated spending caps versus actual expenditures for each hospital department (Pharmacy, ICU, Inpatient, Emergency Room, Admin).</p>
     </div>
     <div class="d-flex gap-2">
       <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Viewing Department Summary Chart...');"><i class="ph ph-chart-pie-slice me-1"></i> Department Summary</button>
-      <button id="btnEditDept" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#editDepartmentModal"><i class="ph ph-pencil-line me-1"></i> Edit Department Cap</button>
+      <button id="btnEditDept" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#editDepartmentModal"><i class="ph ph-pencil-line me-1"></i> Set Department Cap</button>
     </div>
   </div>
 

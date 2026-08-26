@@ -208,7 +208,11 @@ body,
 body.sidebar-collapsed .logo-text,
 body.sidebar-collapsed .nav-label,
 body.sidebar-collapsed .profile-info,
-body.sidebar-collapsed .profile-chevron {
+body.sidebar-collapsed .profile-chevron,
+body.sidebar-collapsed .nav-link .badge,
+body.sidebar-collapsed .sidebar-nav .badge,
+body.sidebar-collapsed .nav-status,
+body.sidebar-collapsed .nav-chevron {
   display: flex;
   max-width: 0;
   opacity: 0;

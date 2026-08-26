@@ -16,7 +16,8 @@
           <li class="breadcrumb-item active">Statement of Cash Flows</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">PAS 7 Statement of Cash Flows</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Statement of Cash Flows</h1>
+      <p class="text-muted fs-xs mb-0">Detailed breakdown of hospital cash inflows and outflows across Operating Activities, Medical Equipment Investments (CapEx), and Financing.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 

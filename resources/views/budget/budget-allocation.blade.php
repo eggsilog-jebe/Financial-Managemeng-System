@@ -17,6 +17,7 @@
         </ol>
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Budget Category Allocation</h1>
+      <p class="text-muted fs-xs mb-0">Distribute approved annual funds across hospital operating categories (Medical Supplies, Equipment, Personnel Salaries, Utilities).</p>
     </div>
     <div class="d-flex gap-2">
       <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Viewing Allocation Matrix...');"><i class="ph ph-sliders me-1"></i> Allocation Matrix</button>

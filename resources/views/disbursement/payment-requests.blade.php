@@ -37,16 +37,17 @@
           <li class="breadcrumb-item active">Payment Requests</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Departmental Payment Requisitions &amp; Vouchers</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Payment Requests &amp; Requisitions</h1>
+      <p class="text-muted fs-xs mb-0">Create and monitor payment requests for departmental operating expenses, physician honorariums, supplier bills, and employee reimbursements.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 
           type="external" 
           :systems="['HRMS (Payroll Runs)', 'Vendor Invoices']" 
-          description="Ingests payroll obligations and operational voucher requests." 
+          description="Ingests payroll obligations and operational payment requests." 
       />
       <button id="btnCreateRequest" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#createRequestModal">
-        <i class="ph ph-plus me-1"></i> Submit Payment Request
+        <i class="ph ph-plus me-1"></i> New Payment Request
       </button>
     </div>
   </div>

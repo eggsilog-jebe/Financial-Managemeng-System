@@ -37,7 +37,8 @@
           <li class="breadcrumb-item active">Patient Accounts</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Patient &amp; HMO Payor Accounts</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Patient &amp; HMO Payor Directory</h1>
+      <p class="text-muted fs-xs mb-0">Master directory of patient billing profiles, HMO health insurances, contact details, and open balances.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 

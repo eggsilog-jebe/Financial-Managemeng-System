@@ -34,18 +34,21 @@
         <ol class="breadcrumb mb-1 fs-xs">
           <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
           <li class="breadcrumb-item">Disbursement Management</li>
-          <li class="breadcrumb-item active">Approvals &amp; Release Workstation</li>
+          <li class="breadcrumb-item active">Disbursement Approvals</li>
         </ol>
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Executive Disbursement Approvals &amp; Release</h1>
+      <p class="text-muted fs-xs mb-0">Management authorization workstation to review payment vouchers, verify supporting invoices, and approve fund releases.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 
           type="internal" 
           :systems="['Bank Accounts', 'Vendor Invoices', 'GL 1020']" 
-          description="Authorizes final fund releases." 
+          description="Authorizes final fund releases and triggers general ledger disbursement entries." 
       />
-      <a href="{{ route('disbursement.payment-requests') }}" class="btn btn-outline-primary btn-sm"><i class="ph ph-receipt me-1"></i> Payment Requests Hub</a>
+      <a href="{{ route('disbursement.payment-requests') }}" class="btn btn-outline-primary btn-sm">
+        <i class="ph ph-receipt me-1"></i> Payment Requests Hub
+      </a>
     </div>
   </div>
 

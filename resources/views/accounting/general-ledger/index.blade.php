@@ -12,7 +12,14 @@
       <h1 class="h3 mb-1 font-weight-bold">General Ledger &amp; Journal Browser</h1>
       <p class="text-muted mb-0">Double-Entry Transaction Ledger &bull; Immutable Audit Trail &bull; GAAP/IFRS Standards</p>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <x-integration-badge 
+          type="internal" 
+          :internalModules="['Accounts Payable (AP)', 'Accounts Receivable (AR)', 'Disbursement Manager', 'Collection Management', 'Cash Management', 'Tax Management']"
+          :tables="['journal_entries', 'journal_entry_lines', 'accounts', 'fiscal_periods']"
+          glImpact="DR / CR Balanced Double-Entry Postings (Assets = Liabilities + Equity)"
+          description="Central transaction ledger recording all verified internal financial postings with immutable audit history."
+      />
       <a href="{{ route('accounting.reports.index') }}" class="btn btn-outline-primary btn-sm">
         <i class="ph ph-chart-line-up me-1"></i> Trial Balance
       </a>

@@ -32,6 +32,84 @@ input:focus {
 }
 
 /* ==========================================================================
+   MODULE HERO / PAGE HEADER CARD ARCHITECTURE (ALL MODULES)
+   ========================================================================== */
+
+.page-header-card,
+.container-fluid > .d-flex.justify-content-between.align-items-center:first-child,
+.container-fluid > .d-flex.justify-content-between:first-child,
+.container-fluid > .d-flex.flex-wrap.justify-content-between.align-items-center:first-child {
+  background: var(--color-surface, #ffffff) !important;
+  border: 1px solid var(--color-border, #e2e8f0) !important;
+  border-radius: 12px !important;
+  padding: 1.15rem 1.35rem !important;
+  margin-bottom: 1.25rem !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.035) !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 1rem !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.page-header-card:hover,
+.container-fluid > .d-flex.justify-content-between.align-items-center:first-child:hover,
+.container-fluid > .d-flex.justify-content-between:first-child:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Page Header Title */
+.page-header-card h1,
+.container-fluid > .d-flex.justify-content-between.align-items-center:first-child h1,
+.container-fluid > .d-flex.justify-content-between:first-child h1 {
+  font-size: 1.35rem !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  color: #0f172a !important;
+  margin-bottom: 0.15rem !important;
+  line-height: 1.25 !important;
+}
+
+/* Page Header Subtitle */
+.page-header-card p.text-muted,
+.container-fluid > .d-flex.justify-content-between.align-items-center:first-child p.text-muted,
+.container-fluid > .d-flex.justify-content-between:first-child p.text-muted {
+  font-size: 0.8125rem !important;
+  color: #64748b !important;
+  margin-bottom: 0 !important;
+  line-height: 1.4 !important;
+}
+
+/* Page Header Breadcrumbs */
+.page-header-card .breadcrumb,
+.container-fluid > .d-flex.justify-content-between.align-items-center:first-child .breadcrumb {
+  margin-bottom: 0.25rem !important;
+  font-size: 0.775rem !important;
+}
+
+/* Dark mode for page header cards */
+html[data-theme="dark"] .page-header-card,
+html[data-theme="dark"] .container-fluid > .d-flex.justify-content-between.align-items-center:first-child,
+html[data-theme="dark"] .container-fluid > .d-flex.justify-content-between:first-child {
+  background: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+}
+
+html[data-theme="dark"] .page-header-card h1,
+html[data-theme="dark"] .container-fluid > .d-flex.justify-content-between.align-items-center:first-child h1,
+html[data-theme="dark"] .container-fluid > .d-flex.justify-content-between:first-child h1 {
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .page-header-card p.text-muted,
+html[data-theme="dark"] .container-fluid > .d-flex.justify-content-between.align-items-center:first-child p.text-muted,
+html[data-theme="dark"] .container-fluid > .d-flex.justify-content-between:first-child p.text-muted {
+  color: #94a3b8 !important;
+}
+
+/* ==========================================================================
    STANDARDIZED SYSTEM-WIDE KPI METRIC SUMMARY CARDS
    ========================================================================== */
 
@@ -201,11 +279,248 @@ html[data-theme="dark"] .kpi-card-value {
   gap: 5px !important;
   font-weight: 600 !important;
   font-size: 0.785rem !important;
-  padding: 0.38rem 0.85rem !important;
+  padding: 0.35rem 0.82rem !important;
   border-radius: 8px !important;
   transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
   white-space: nowrap !important;
   line-height: 1.2 !important;
+}
+
+/* ==========================================================================
+   MODERN MINIMALIST BUTTON & BORDER DESIGN SYSTEM (ENTERPRISE FINTECH)
+   ========================================================================== */
+
+/* Universal Button Architecture */
+.btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.45rem !important;
+  font-weight: 550 !important;
+  font-size: 0.8125rem !important;
+  letter-spacing: -0.01em !important;
+  border-radius: 9px !important;
+  padding: 0.42rem 0.95rem !important;
+  line-height: 1.35 !important;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+}
+
+.btn:active {
+  transform: scale(0.985) !important;
+}
+
+.btn-sm {
+  font-size: 0.785rem !important;
+  padding: 0.35rem 0.82rem !important;
+  border-radius: 8px !important;
+}
+
+.btn-lg {
+  font-size: 0.925rem !important;
+  padding: 0.65rem 1.35rem !important;
+  border-radius: 10px !important;
+}
+
+/* 1. Minimalist Neutral Outline Button (.btn-outline-secondary, .btn-outline, .btn-light) */
+.btn-outline-secondary,
+.btn-outline,
+.btn-light {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #334155 !important;
+}
+
+.btn-outline-secondary:hover,
+.btn-outline:hover,
+.btn-light:hover {
+  background: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06) !important;
+}
+
+.btn-outline-secondary:active,
+.btn-outline:active,
+.btn-light:active {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+}
+
+/* 2. Minimalist Primary Outline Button (.btn-outline-primary) */
+.btn-outline-primary {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 168, 107, 0.32) !important;
+  color: #008756 !important;
+}
+
+.btn-outline-primary:hover {
+  background: #ecfdf5 !important;
+  border-color: #00a86b !important;
+  color: #006642 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 168, 107, 0.12) !important;
+}
+
+.btn-outline-primary:active {
+  background: #d1fae5 !important;
+  border-color: #008756 !important;
+}
+
+/* 3. Minimalist Solid Primary Button (.btn-primary) */
+.btn-primary {
+  background: #00a86b !important;
+  border: 1px solid #00965f !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(0, 168, 107, 0.22), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+.btn-primary:hover {
+  background: #00965f !important;
+  border-color: #008453 !important;
+  color: #ffffff !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 6px 16px rgba(0, 168, 107, 0.32) !important;
+}
+
+.btn-primary:active {
+  background: #008453 !important;
+  border-color: #007348 !important;
+  box-shadow: 0 1px 3px rgba(0, 168, 107, 0.25) !important;
+}
+
+/* Minimalist Solid Danger Button (.btn-danger) */
+.btn-danger {
+  background: #dc2626 !important;
+  border: 1px solid #b91c1c !important;
+  color: #ffffff !important;
+  box-shadow: 0 1px 3px rgba(220, 38, 38, 0.25), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+.btn-danger:hover {
+  background: #b91c1c !important;
+  border-color: #991b1b !important;
+  color: #ffffff !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35) !important;
+}
+
+.btn-danger:active {
+  background: #991b1b !important;
+  border-color: #7f1d1d !important;
+  box-shadow: 0 1px 3px rgba(220, 38, 38, 0.25) !important;
+}
+
+/* 4. Minimalist Success / Warning / Danger / Info Outline Buttons */
+.btn-outline-success {
+  background: #ffffff !important;
+  border: 1px solid rgba(22, 163, 74, 0.32) !important;
+  color: #15803d !important;
+}
+
+.btn-outline-success:hover {
+  background: #f0fdf4 !important;
+  border-color: #16a34a !important;
+  color: #14532d !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.12) !important;
+}
+
+.btn-outline-danger {
+  background: #ffffff !important;
+  border: 1px solid rgba(220, 38, 38, 0.28) !important;
+  color: #dc2626 !important;
+}
+
+.btn-outline-danger:hover {
+  background: #fef2f2 !important;
+  border-color: #dc2626 !important;
+  color: #991b1b !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.12) !important;
+}
+
+.btn-outline-info {
+  background: #ffffff !important;
+  border: 1px solid rgba(2, 132, 199, 0.28) !important;
+  color: #0284c7 !important;
+}
+
+.btn-outline-info:hover {
+  background: #f0f9ff !important;
+  border-color: #0284c7 !important;
+  color: #075985 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.12) !important;
+}
+
+.btn-outline-warning {
+  background: #ffffff !important;
+  border: 1px solid rgba(217, 119, 6, 0.32) !important;
+  color: #d97706 !important;
+}
+
+.btn-outline-warning:hover {
+  background: #fffbeb !important;
+  border-color: #d97706 !important;
+  color: #92400e !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.12) !important;
+}
+
+/* 5. Minimalist Quick Actions & Feature Tiles */
+.quick-action,
+.btn.border,
+.btn-light.border {
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.quick-action:hover,
+.btn.border:hover,
+.btn-light.border:hover {
+  border-color: #cbd5e1 !important;
+  background: #f8fafc !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06) !important;
+}
+
+/* Dark Mode Minimalist Buttons */
+html[data-theme="dark"] .btn-outline-secondary,
+html[data-theme="dark"] .btn-outline,
+html[data-theme="dark"] .btn-light,
+html[data-theme="dark"] .quick-action,
+html[data-theme="dark"] .btn.border {
+  background: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  color: #f1f5f9 !important;
+}
+
+html[data-theme="dark"] .btn-outline-secondary:hover,
+html[data-theme="dark"] .btn-outline:hover,
+html[data-theme="dark"] .btn-light:hover,
+html[data-theme="dark"] .quick-action:hover,
+html[data-theme="dark"] .btn.border:hover {
+  background: #334155 !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="dark"] .btn-outline-primary {
+  background: rgba(0, 168, 107, 0.1) !important;
+  border-color: rgba(0, 168, 107, 0.45) !important;
+  color: #34d399 !important;
+}
+
+html[data-theme="dark"] .btn-outline-primary:hover {
+  background: rgba(0, 168, 107, 0.22) !important;
+  border-color: #34d399 !important;
+  color: #ffffff !important;
 }
 
 /* Executive Modal Styling */
@@ -238,3 +553,377 @@ html[data-theme="dark"] .kpi-card-value {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* ==========================================================================
+   SIDEBAR DIMENSIONS, SILKY SMOOTH ANIMATION & CLEAN SCROLLBAR HIDING
+   ========================================================================== */
+
+:root {
+  --sidebar-width: 315px;
+  --sidebar-collapsed-width: 88px;
+  --sidebar-transition-timing: 300ms cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.sidebar {
+  width: var(--sidebar-width);
+  overflow: hidden;
+  transition: width var(--sidebar-transition-timing), transform var(--sidebar-transition-timing);
+  will-change: width, transform;
+}
+
+.sidebar-panel {
+  overflow: hidden;
+  transition: background-color var(--sidebar-transition-timing), border-color var(--sidebar-transition-timing);
+}
+
+.main-content {
+  margin-left: var(--sidebar-width);
+  transition: margin-left var(--sidebar-transition-timing);
+  will-change: margin-left;
+}
+
+/* Ensure JavaScript Web Animations API has priority during active JS animation */
+body.sidebar-animating .sidebar,
+body.sidebar-animating .main-content {
+  transition: none !important;
+}
+
+/* Header and navigation smoothness */
+.navbar-custom {
+  transition: padding var(--sidebar-transition-timing);
+}
+
+.sidebar-header {
+  height: 84px !important;
+  min-height: 84px !important;
+  max-height: 84px !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 0 18px !important;
+  border-bottom: 1px solid var(--sidebar-border) !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  flex-shrink: 0 !important;
+}
+
+.sidebar-logo {
+  gap: 12px;
+  width: 100%;
+  overflow: hidden;
+  display: flex !important;
+  align-items: center !important;
+  transition: gap var(--sidebar-transition-timing);
+}
+
+.brand-tagline {
+  font-size: 11.5px;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+}
+
+/* Smooth transitions for all text, labels, chevrons, and badges */
+.logo-text,
+.brand-tagline,
+.brand-suite,
+.nav-label,
+.nav-title,
+.profile-info,
+.profile-chevron,
+.profile-role,
+.nav-chevron,
+.nav-status,
+.sidebar-nav .badge {
+  white-space: nowrap;
+  overflow: hidden;
+  max-width: 250px;
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition:
+    opacity 200ms ease,
+    max-width var(--sidebar-transition-timing),
+    transform 200ms ease,
+    margin var(--sidebar-transition-timing);
+}
+
+.nav-link {
+  transition:
+    padding var(--sidebar-transition-timing),
+    background var(--transition),
+    color var(--transition),
+    box-shadow var(--transition);
+}
+
+.nav-link > i:first-child {
+  flex-shrink: 0;
+  transition: margin var(--sidebar-transition-timing);
+}
+
+/* Sidebar Nav Spacing & Fixed Section Title Positioning */
+.sidebar-nav {
+  padding: 10px 14px 20px !important;
+}
+
+.sidebar-nav li {
+  margin-bottom: 6px !important;
+}
+
+.nav-link {
+  height: 46px !important;
+  min-height: 46px !important;
+  max-height: 46px !important;
+  box-sizing: border-box !important;
+}
+
+.nav-title {
+  height: 18px !important;
+  line-height: 18px !important;
+  margin: 18px 12px 8px !important;
+  overflow: hidden !important;
+  white-space: nowrap !important;
+  transition: opacity 180ms ease !important;
+}
+
+.sidebar-nav > .nav-title:first-child,
+.sidebar-nav > .nav-title:first-of-type {
+  margin-top: 4px !important;
+  margin-bottom: 8px !important;
+  height: 18px !important;
+}
+
+/* In collapsed / collapsing mode, keep nav-title invisible but occupying exact same vertical space */
+:is(body.sidebar-collapsed, body.sidebar-collapsing) .nav-title {
+  display: block !important;
+  height: 18px !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  overflow: hidden !important;
+}
+
+:is(body.sidebar-collapsed, body.sidebar-collapsing) .sidebar-nav > .nav-title:first-of-type {
+  margin-top: 4px !important;
+  margin-bottom: 8px !important;
+}
+
+:is(body.sidebar-collapsed, body.sidebar-collapsing) .sidebar-nav > .nav-title:not(:first-of-type) {
+  margin-top: 18px !important;
+  margin-bottom: 8px !important;
+}
+
+/* Completely hide scrollbars in sidebar across all modern browsers while keeping smooth scroll */
+.sidebar,
+.sidebar-panel,
+.sidebar-nav {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE and Edge */
+}
+
+.sidebar::-webkit-scrollbar,
+.sidebar-panel::-webkit-scrollbar,
+.sidebar-nav::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari, Opera, Webkit */
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* ==========================================================================
+   DESKTOP COLLAPSED STATE (>= 992px)
+   ========================================================================== */
+@media (min-width: 992px) {
+  .main-content {
+    min-width: 0;
+    width: auto;
+    flex: 1;
+  }
+
+  body.sidebar-collapsed .sidebar {
+    width: var(--sidebar-collapsed-width) !important;
+  }
+
+  body.sidebar-collapsed .main-content {
+    margin-left: var(--sidebar-collapsed-width) !important;
+  }
+
+  :is(body.sidebar-collapsed, body.sidebar-collapsing) .sidebar-header {
+    height: 84px !important;
+    min-height: 84px !important;
+    max-height: 84px !important;
+    padding-inline: 18px !important;
+    justify-content: center !important;
+  }
+
+  :is(body.sidebar-collapsed, body.sidebar-collapsing) .sidebar-logo {
+    gap: 0 !important;
+    justify-content: center !important;
+  }
+
+  body.sidebar-collapsed .sidebar-nav {
+    padding-inline: 12px !important;
+  }
+
+  body.sidebar-collapsed .nav-link {
+    padding-inline: 12px !important;
+    justify-content: center !important;
+    gap: 0 !important;
+  }
+
+  :is(body.sidebar-collapsed, body.sidebar-collapsing) .nav-link > i:first-child {
+    margin: 0 auto !important;
+  }
+
+  :is(body.sidebar-collapsed, body.sidebar-collapsing) .sidebar-profile-wrap {
+    display: flex !important;
+    justify-content: center !important;
+  }
+
+  :is(body.sidebar-collapsed, body.sidebar-collapsing) .sidebar-profile {
+    justify-content: center !important;
+    padding: 8px !important;
+    gap: 0 !important;
+  }
+
+  :is(body.sidebar-collapsed, body.sidebar-collapsing) .profile-avatar {
+    margin: 0 auto !important;
+  }
+
+  /* Gracefully animate out and collapse text, badges (POS, CFO), and chevrons */
+  :is(body.sidebar-collapsed, body.sidebar-collapsing) :is(
+    .logo-text,
+    .brand-tagline,
+    .brand-suite,
+    .nav-label,
+    .profile-info,
+    .profile-chevron,
+    .profile-role,
+    .nav-chevron,
+    .nav-status,
+    .sidebar-nav .badge
+  ) {
+    opacity: 0 !important;
+    max-width: 0 !important;
+    transform: translate3d(-6px, 0, 0) !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden;
+    transition:
+      opacity 180ms ease,
+      max-width var(--sidebar-transition-timing),
+      transform 180ms ease,
+      margin var(--sidebar-transition-timing),
+      visibility 0s var(--sidebar-transition-timing);
+  }
+
+  :is(body.sidebar-collapsed, body.sidebar-collapsing) .nav-submenu {
+    display: none !important;
+  }
+}
+
+
+/* ==========================================================================
+   MOBILE & TABLET RESPONSIVE LAYOUT (<= 991px)
+   ========================================================================== */
+@media (max-width: 991px) {
+  .main-content,
+  body.sidebar-collapsed .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+
+  .sidebar {
+    position: fixed;
+    z-index: 700;
+    inset: 0 auto 0 0;
+    width: min(var(--sidebar-width), calc(100vw - 48px)) !important;
+    transform: translateX(-105%);
+    transition: transform var(--sidebar-transition-timing);
+  }
+
+  body.sidebar-open .sidebar {
+    transform: translateX(0) !important;
+  }
+
+  /* Keep all labels, badges, and titles visible inside the mobile drawer */
+  .logo-text,
+  .brand-tagline,
+  .brand-suite,
+  .nav-label,
+  .nav-title,
+  .profile-info,
+  .profile-chevron,
+  .profile-role,
+  .nav-chevron,
+  .nav-status,
+  .sidebar-nav .badge {
+    opacity: 1 !important;
+    max-width: 250px !important;
+    transform: none !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+}
+
+/* ==========================================================================
+   DROPDOWN ACCORDION SUBMENU ANIMATIONS & MICRO-INTERACTIONS
+   ========================================================================== */
+
+.nav-accordion__toggle .nav-chevron {
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease !important;
+  will-change: transform;
+}
+
+.nav-accordion.is-expanded > .nav-accordion__toggle .nav-chevron {
+  transform: rotate(180deg) !important;
+  color: var(--color-primary) !important;
+}
+
+.nav-submenu {
+  position: relative !important;
+  padding: 4px 0 8px 38px !important;
+  overflow: hidden;
+  will-change: max-height, opacity, transform;
+}
+
+/* Vertical guide line on the left side of open dropdown submenus */
+.nav-submenu::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 4px !important;
+  bottom: 8px !important;
+  left: 23px !important;
+  width: 1.5px !important;
+  background: var(--sidebar-border, #cbd5e1) !important;
+  border-radius: 2px !important;
+  opacity: 0.85 !important;
+}
+
+html[data-theme="dark"] .nav-submenu::before {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+.nav-submenu li {
+  position: relative;
+  will-change: opacity, transform;
+}
+
+.nav-submenu :is(a, button) {
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+    padding-left 0.18s ease !important;
+}
+
+.nav-submenu :is(a, button):hover {
+  transform: translateX(4px) !important;
+  color: var(--color-primary-dark) !important;
+}
+
+
+
+
+
+
+

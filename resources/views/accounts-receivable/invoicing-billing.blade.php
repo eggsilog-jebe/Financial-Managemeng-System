@@ -37,14 +37,15 @@
           <li class="breadcrumb-item active">Invoicing &amp; Billing</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Patient Invoicing &amp; Clinical Billing Hub</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Patient Billing &amp; Invoicing Hub</h1>
+      <p class="text-muted fs-xs mb-0">Manage hospital bills, room charges, pharmacy fees, laboratory orders, and PhilHealth / HMO insurance deductions.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 
           type="external" 
           :systems="['BDMS', 'LIS (Lab)', 'RIS (Imaging)', 'PMS (Pharmacy)', 'IBMS', 'HICS (HMO Claims)']" 
           glImpact="DR 1110/1130 (AR) / CR 4000-series (Revenue)" 
-          description="Central billing aggregator converting clinical orders into accounting receivables." 
+          description="Central billing engine converting clinical orders into accounting receivables." 
       />
       <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#createInvoiceModal">
         <i class="ph ph-plus me-1"></i> Create Patient Invoice

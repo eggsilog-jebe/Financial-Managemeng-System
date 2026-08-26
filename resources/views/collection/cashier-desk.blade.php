@@ -16,8 +16,9 @@
           <li class="breadcrumb-item active">Cashier Desk</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-1 font-weight-bold">Cashier Desk &amp; POS Collection Counter</h1>
-      <p class="text-muted mb-0 fs-xs">Patient Copay Settlements &bull; Multi-Terminal Shifts &bull; BIR Official Receipts &bull; Drawer Balancing</p>
+      <h1 class="h3 mb-1 font-weight-bold">Cashier POS Desk &amp; Payment Counter</h1>
+      <p class="text-muted mb-0 fs-xs">Accept patient payments, calculate change, issue BIR Official Receipts (OR), and balance daily shift cash drawers.</p>
+    </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 
           type="external" 
@@ -25,7 +26,7 @@
           :internalModules="['Collection Management', 'General Ledger']"
           :tables="['cashier_shifts', 'payments', 'official_receipts', 'journal_entries']"
           glImpact="DR 1011 (Cashier Float) / CR 1110/1120 (AR Patient Copay)"
-          description="Ingests finalized copay invoices from BDMS and settles patient balances."
+          description="Ingests finalized copay invoices from billing and settles patient balances."
       />
       <button class="btn btn-outline-secondary btn-sm" type="button" onclick="location.reload()"><i class="ph ph-arrow-counter-clockwise me-1"></i> Refresh</button>
       @if($activeShift)

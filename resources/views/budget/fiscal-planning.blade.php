@@ -17,6 +17,7 @@
         </ol>
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Fiscal Year Planning &amp; Target Setting</h1>
+      <p class="text-muted fs-xs mb-0">Plan hospital-wide annual financial budgets, establish department spending limits, and track total fund pool allocations.</p>
     </div>
     <div class="d-flex gap-2">
       <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Exporting Master Fiscal Plan...');"><i class="ph ph-download-simple me-1"></i> Export Master Plan</button>

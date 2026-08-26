@@ -17,6 +17,7 @@
         </ol>
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Hospital Cash Flow Forecasting Engine</h1>
+      <p class="text-muted fs-xs mb-0">Project 30, 60, and 90-day cash positions by combining expected patient collections, HMO reimbursements, supplier payables, and payroll.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 

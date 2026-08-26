@@ -12,7 +12,14 @@
       <h1 class="h3 mb-1 font-weight-bold">Executive Financial Overview</h1>
       <p class="text-muted mb-0">Hospital Financial Management System &bull; Standalone Transaction Core Mode</p>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <x-integration-badge 
+          type="internal" 
+          :internalModules="['Executive KPIs', 'General Ledger', 'Cash Management', 'Collection Management', 'Accounts Payable', 'Accounts Receivable']"
+          :tables="['journal_entries', 'payments', 'accounts', 'vendor_invoices', 'patient_accounts']"
+          glImpact="Aggregates live hospital revenues, cash runway, and pending payable liabilities"
+          description="Consolidated executive command overview visualizing cross-department financial performance across all internal FMS domains."
+      />
       <a href="{{ route('collection.cashier-desk') }}" class="btn btn-outline-primary btn-sm">
         <i class="ph ph-receipt me-1"></i> Cashier Counter
       </a>

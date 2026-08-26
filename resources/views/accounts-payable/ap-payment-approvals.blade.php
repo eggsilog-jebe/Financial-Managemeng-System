@@ -34,10 +34,11 @@
         <ol class="breadcrumb mb-1 fs-xs">
           <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
           <li class="breadcrumb-item">Accounts Payable</li>
-          <li class="breadcrumb-item active">Payment Approvals &amp; Disbursement</li>
+          <li class="breadcrumb-item active">Payment Approvals</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">AP Payment Approvals &amp; Disbursement Release</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Supplier Payment Approvals &amp; Release</h1>
+      <p class="text-muted fs-xs mb-0">Review verified disbursement vouchers, authorize supplier payments, and release checks or electronic bank transfers (EFT).</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 
@@ -45,9 +46,11 @@
           :internalModules="['Invoices & Vouchers', 'Bank Accounts', 'General Ledger']" 
           :tables="['disbursement_vouchers', 'vendor_invoices', 'bank_accounts', 'journal_entries']"
           glImpact="DR 2010 AP Vendors / CR 1020 Cash in Bank + CR 2110 EWT Payable"
-          description="Executive authorization workstation to approve vendor vouchers and execute disbursements." 
+          description="Executive workstation to authorize supplier vouchers and execute bank check/EFT payouts." 
       />
-      <a href="{{ route('ap.invoices') }}" class="btn btn-outline-primary btn-sm"><i class="ph ph-receipt me-1"></i> Invoices &amp; Vouchers Hub</a>
+      <a href="{{ route('ap.invoices') }}" class="btn btn-outline-primary btn-sm">
+        <i class="ph ph-receipt me-1"></i> Invoices &amp; Vouchers Hub
+      </a>
     </div>
   </div>
 

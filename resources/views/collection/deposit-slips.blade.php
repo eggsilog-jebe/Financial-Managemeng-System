@@ -16,7 +16,8 @@
           <li class="breadcrumb-item active">Deposit Slips</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Batch Deposit Slips &amp; Custody Handover</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Bank Deposit Slips &amp; Cash Handover</h1>
+      <p class="text-muted fs-xs mb-0">Consolidate daily cashier cash and check collections into bank deposit slips and custody turnover manifests.</p>
     </div>
     <div class="d-flex gap-2">
       <button class="btn btn-outline-secondary btn-sm" type="button" onclick="window.print()"><i class="ph ph-printer me-1"></i> Print Turnover Manifest</button>

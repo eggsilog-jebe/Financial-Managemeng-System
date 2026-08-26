@@ -16,7 +16,8 @@
           <li class="breadcrumb-item active">Profit &amp; Loss Statement</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Statement of Comprehensive Income (Profit &amp; Loss)</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Statement of Profit &amp; Loss (Income Statement)</h1>
+      <p class="text-muted fs-xs mb-0">Track total healthcare operating revenues minus cost of care and department expenses to calculate net hospital operating surplus or deficit.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 

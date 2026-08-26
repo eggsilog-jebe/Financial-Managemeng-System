@@ -17,6 +17,7 @@
         </ol>
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Tax Rates &amp; Statutory Configuration</h1>
+      <p class="text-muted fs-xs mb-0">Configure BIR tax categories: Expanded Withholding Tax (EWT) on doctor fees and supplier goods, 12% Value Added Tax (VAT), and Zero-rated medical items.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 

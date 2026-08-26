@@ -17,7 +17,7 @@
         </ol>
       </nav>
       <h1 class="h3 mb-0 font-weight-bold text-dark">Period-End Financial Closing &amp; GL Locking</h1>
-      <p class="text-muted fs-xs mb-0">Manage 12-month fiscal periods, enforce soft GL transaction freezes, and execute CFO nominal account rollovers.</p>
+      <p class="text-muted fs-xs mb-0">Manage monthly and annual accounting cutoffs, lock transactions to prevent backdating, and close fiscal periods with full audit integrity.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 
@@ -26,9 +26,9 @@
           description="Fiscal period cutoff lock and hard-close compliance control." 
       />
       <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#initYearModal">
-        <i class="ph ph-calendar-plus me-1"></i> Initialize Fiscal Year
+        <i class="ph ph-calendar-plus me-1"></i> Start New Fiscal Year
       </button>
-      <a href="{{ route('gl.trial-balance') }}" class="btn btn-outline-secondary btn-sm">
+      <a href="{{ route('gl.trial-balance') }}" class="btn btn-outline-secondary btn-sm" title="Verify all debits equal credits before closing">
         <i class="ph ph-shield-check me-1"></i> Pre-Closing Trial Balance
       </a>
     </div>
@@ -58,6 +58,35 @@
       <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   @endif
+
+  <!-- 3-Step Closing Workflow Guide -->
+  <div class="card border-0 shadow-sm rounded-3 bg-white mb-4">
+    <div class="card-body p-3">
+      <div class="row g-3 align-items-center">
+        <div class="col-md-4 d-flex align-items-start gap-2 border-end-md">
+          <span class="badge bg-primary rounded-circle p-2 fs-xs"><i class="ph ph-check"></i></span>
+          <div>
+            <strong class="d-block text-dark fs-xs">Step 1: Check Pre-Closing Balance</strong>
+            <span class="fs-xs text-muted">Verify all bills, receipts, and entries are posted and balanced.</span>
+          </div>
+        </div>
+        <div class="col-md-4 d-flex align-items-start gap-2 border-end-md">
+          <span class="badge bg-warning rounded-circle p-2 fs-xs"><i class="ph ph-lock-key"></i></span>
+          <div>
+            <strong class="d-block text-dark fs-xs">Step 2: Lock Period (Soft Freeze)</strong>
+            <span class="fs-xs text-muted">Blocks staff from posting new entries into this month.</span>
+          </div>
+        </div>
+        <div class="col-md-4 d-flex align-items-start gap-2">
+          <span class="badge bg-danger rounded-circle p-2 fs-xs"><i class="ph ph-scales"></i></span>
+          <div>
+            <strong class="d-block text-dark fs-xs">Step 3: CFO Final Close (Hard Close)</strong>
+            <span class="fs-xs text-muted">Transfers net surplus into Retained Earnings and finalizes reports.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Metric Summary Cards -->
   <div class="row g-3 mb-4">
@@ -134,7 +163,7 @@
               <th>Closed By</th>
               <th>Closed At</th>
               <th>Closing Journal Entry Ref</th>
-              <th class="text-end" style="width: 220px;">Actions</th>
+              <th class="text-end text-nowrap" style="width: 240px;">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -166,10 +195,22 @@
                 </span>
               </td>
               <td>
-                <span class="badge {{ $statusBadge }} font-monospace fs-xs px-2 py-1">
-                  <i class="ph {{ $isClosed ? 'ph-lock-simple' : ($isLocked ? 'ph-warning' : 'ph-check') }} me-1"></i>
-                  {{ $period->status }}
-                </span>
+                @if($isOpen)
+                  <span class="d-inline-flex align-items-center gap-1.5 font-monospace text-nowrap" style="font-size: 11.5px; padding: 4px 10px; border-radius: 7px; font-weight: 600; background: #ecfdf5; border: 1px solid rgba(16, 185, 129, 0.35); color: #047857;">
+                    <i class="ph ph-check fs-6"></i>
+                    <span>OPEN</span>
+                  </span>
+                @elseif($isLocked)
+                  <span class="d-inline-flex align-items-center gap-1.5 font-monospace text-nowrap" style="font-size: 11.5px; padding: 4px 10px; border-radius: 7px; font-weight: 600; background: #fffbeb; border: 1px solid rgba(217, 119, 6, 0.35); color: #b45309;">
+                    <i class="ph ph-lock fs-6"></i>
+                    <span>LOCKED</span>
+                  </span>
+                @else
+                  <span class="d-inline-flex align-items-center gap-1.5 font-monospace text-nowrap" style="font-size: 11.5px; padding: 4px 10px; border-radius: 7px; font-weight: 600; background: #0f172a; border: 1px solid #0f172a; color: #ffffff;">
+                    <i class="ph ph-shield-check fs-6 text-success"></i>
+                    <span>AUDITED</span>
+                  </span>
+                @endif
               </td>
               <td><span class="fs-xs text-muted">{{ $period->closedByUser?->name ?? '-' }}</span></td>
               <td><span class="fs-xs text-muted">{{ $period->closed_at ? $period->closed_at->format('Y-m-d H:i') : '-' }}</span></td>
@@ -182,26 +223,29 @@
                   <span class="fs-xs text-muted">-</span>
                 @endif
               </td>
-              <td class="text-end">
-                <div class="d-flex justify-content-end gap-1">
+              <td class="text-end text-nowrap">
+                <div class="d-inline-flex align-items-center gap-2">
                   @if($isOpen)
                     <!-- Soft Lock Action -->
                     <form action="{{ route('gl.period-end-closing.lock', $period->id) }}" method="POST" class="d-inline">
                       @csrf
-                      <button type="submit" class="btn btn-sm btn-outline-warning py-1 px-2" title="Lock Period (Freeze regular entries)">
-                        <i class="ph ph-lock me-1"></i> Soft Lock
+                      <button type="submit" class="btn btn-sm btn-outline-warning text-nowrap d-inline-flex align-items-center gap-1.5" style="font-size: 11.5px; padding: 4px 10px; border-radius: 7px; font-weight: 550;" title="Lock Period (Freeze regular entries)">
+                        <i class="ph ph-lock fs-6"></i>
+                        <span>Soft Lock</span>
                       </button>
                     </form>
                   @endif
 
                   @if(!$isClosed)
                     <!-- Hard Close & Rollover Action (CFO only) -->
-                    <button type="button" class="btn btn-sm btn-danger py-1 px-2" title="Hard Close Period & Rollover Nominal Balances to Retained Earnings" onclick="openHardCloseModal({{ $period->id }}, '{{ $period->period_code }}', '{{ $monthName }} {{ $period->fiscal_year }}')">
-                      <i class="ph ph-lock-key me-1"></i> Hard Close (CFO)
+                    <button type="button" class="btn btn-sm btn-danger text-nowrap d-inline-flex align-items-center gap-1.5" style="font-size: 11.5px; padding: 4px 10px; border-radius: 7px; font-weight: 550; background-color: #dc2626 !important; border-color: #dc2626 !important; color: #ffffff !important;" title="Hard Close Period & Rollover Nominal Balances to Retained Earnings" onclick="openHardCloseModal({{ $period->id }}, '{{ $period->period_code }}', '{{ $monthName }} {{ $period->fiscal_year }}')">
+                      <i class="ph ph-lock-key fs-6"></i>
+                      <span>Hard Close (CFO)</span>
                     </button>
                   @else
-                    <span class="badge bg-secondary-subtle text-muted fs-xs py-1 px-2">
-                      <i class="ph ph-check-circle me-1"></i> AUDITED &amp; CLOSED
+                    <span class="d-inline-flex align-items-center gap-1.5 text-nowrap" style="font-size: 11.5px; padding: 4px 10px; border-radius: 7px; font-weight: 550; background: #0f172a; border: 1px solid #0f172a; color: #ffffff;">
+                      <i class="ph ph-shield-check fs-6 text-success"></i>
+                      <span>Audited &amp; Closed</span>
                     </span>
                   @endif
                 </div>

@@ -17,6 +17,7 @@
         </ol>
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Hospital Bank Accounts Master Register</h1>
+      <p class="text-muted fs-xs mb-0">Manage hospital operating accounts, payroll accounts, daily collection depositories, and real-time bank balances.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 

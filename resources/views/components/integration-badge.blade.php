@@ -44,6 +44,7 @@
         type="button" 
         class="btn btn-sm d-inline-flex align-items-center gap-2 rounded-pill px-3 py-1 border shadow-sm fs-xs fw-semibold"
         style="{{ $cfg['bg'] }}; cursor: help;"
+        title="Click or hover to see how this page connects to other hospital systems"
     >
         <span class="rounded-circle d-inline-block" style="width: 7px; height: 7px; {{ $cfg['dot'] }}"></span>
         <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -64,23 +65,27 @@
         @mouseenter="open = true"
         @mouseleave="open = false"
         class="position-absolute end-0 z-3 mt-2 p-3 bg-white rounded-3 shadow-lg border text-start"
-        style="width: 340px; font-size: 12px; line-height: 1.5; color: #475569; display: none;"
+        style="width: 350px; font-size: 12px; line-height: 1.5; color: #475569; display: none;"
     >
         <!-- Header -->
         <div class="d-flex align-items-center justify-content-between mb-2 pb-1 border-bottom">
-            <span class="fw-bold text-dark"><i class="ph ph-cpu me-1 text-primary"></i>System Architecture Linkage</span>
+            <span class="fw-bold text-dark"><i class="ph ph-cpu me-1 text-primary"></i>System &amp; Data Connections</span>
             <span class="badge px-2 py-0.5 rounded text-uppercase font-monospace" style="{{ $cfg['bg'] }}">{{ $type }}</span>
         </div>
         
         <!-- Summary Memo -->
         @if(!empty($description))
-            <p class="text-secondary mb-2" style="font-size: 11px;">{{ $description }}</p>
+            <div class="bg-light p-2 rounded mb-2 text-dark" style="font-size: 11px; line-height: 1.4;">
+                <i class="ph ph-info me-1 text-primary"></i> {{ $description }}
+            </div>
         @endif
 
         <!-- External IHIMS Integrations -->
         @if(!empty($systems))
             <div class="mb-2">
-                <span class="fw-semibold text-dark d-block mb-1" style="font-size: 11px;">External IHIMS Systems:</span>
+                <span class="fw-semibold text-dark d-block mb-1" style="font-size: 11px;">
+                    {{ $type === 'external' ? 'External Hospital Systems Connected:' : 'Connected Data Sources:' }}
+                </span>
                 <div class="d-flex flex-wrap gap-1">
                     @foreach($systems as $sys)
                         <span class="px-2 py-0.5 rounded font-monospace fw-medium" style="font-size: 10px; background-color: #f3e8ff; color: #6b21a8; border: 1px solid #d8b4fe;">{{ $sys }}</span>
@@ -92,7 +97,7 @@
         <!-- Internal FMS Connected Submodules -->
         @if(!empty($internalModules))
             <div class="mb-2">
-                <span class="fw-semibold text-dark d-block mb-1" style="font-size: 11px;">Connected FMS Submodules:</span>
+                <span class="fw-semibold text-dark d-block mb-1" style="font-size: 11px;">Internal Finance Modules Connected:</span>
                 <div class="d-flex flex-wrap gap-1">
                     @foreach($internalModules as $mod)
                         <span class="px-2 py-0.5 rounded fw-medium" style="font-size: 10px; background-color: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0;">{{ $mod }}</span>
@@ -104,7 +109,7 @@
         <!-- Database Tables Involved -->
         @if(!empty($tables))
             <div class="mb-2">
-                <span class="fw-semibold text-dark d-block mb-1" style="font-size: 11px;">Database Tables:</span>
+                <span class="fw-semibold text-dark d-block mb-1" style="font-size: 11px;">Active Database Tables:</span>
                 <div class="d-flex flex-wrap gap-1">
                     @foreach($tables as $tbl)
                         <span class="px-1.5 py-0.5 rounded font-monospace" style="font-size: 10px; background-color: #f1f5f9; color: #334155; border: 1px solid #cbd5e1;">{{ $tbl }}</span>
@@ -116,7 +121,7 @@
         <!-- General Ledger Impact -->
         @if(!empty($glImpact))
             <div class="pt-2 border-top" style="font-size: 11px;">
-                <span class="fw-semibold text-dark d-block mb-1">GL Double-Entry Posting:</span>
+                <span class="fw-semibold text-dark d-block mb-1"><i class="ph ph-scales me-1 text-success"></i> Automatic General Ledger (GL) Impact:</span>
                 <div class="p-2 rounded font-monospace text-dark" style="font-size: 10.5px; background-color: #f8fafc; border: 1px solid #e2e8f0; word-break: break-word;">
                     {{ $glImpact }}
                 </div>

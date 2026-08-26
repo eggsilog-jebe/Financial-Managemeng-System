@@ -16,19 +16,19 @@
           <li class="breadcrumb-item active">Trial Balance</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold text-dark">Statement of General Ledger Trial Balance</h1>
-      <p class="text-muted fs-xs mb-0">Real-time audit verification hub asserting strict double-entry equality ($\sum \text{Debits} = \sum \text{Credits}$).</p>
+      <h1 class="h3 mb-0 font-weight-bold text-dark">General Ledger Trial Balance</h1>
+      <p class="text-muted fs-xs mb-0">Summary of all debit and credit balances across hospital accounts to confirm that Total Debits equal Total Credits before generating financial statements.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 
           type="internal" 
           :systems="['General Ledger']" 
-          description="Real-time double-entry trial balance invariance verifier." 
+          description="Real-time double-entry trial balance verifier ensuring total debits equal total credits." 
       />
-      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="window.print()">
+      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="window.print()" title="Print this trial balance report">
         <i class="ph ph-printer me-1"></i> Print Statement
       </button>
-      <a href="{{ route('gl.trial-balance.export', ['as_of_date' => $asOfDate, 'hide_zero_balances' => $hideZeroBalances ? '1' : '0', 'category' => $selectedCategory]) }}" class="btn btn-primary btn-sm">
+      <a href="{{ route('gl.trial-balance.export', ['as_of_date' => $asOfDate, 'hide_zero_balances' => $hideZeroBalances ? '1' : '0', 'category' => $selectedCategory]) }}" class="btn btn-primary btn-sm" title="Download trial balance spreadsheet">
         <i class="ph ph-file-arrow-down me-1"></i> Export Trial Balance (CSV)
       </a>
     </div>
@@ -40,15 +40,15 @@
       <i class="ph {{ $isBalanced ? 'ph-shield-check' : 'ph-warning-octagon' }} fs-2"></i>
       <div>
         <h5 class="fw-bold mb-0 {{ $isBalanced ? 'text-success' : 'text-danger' }}">
-          {{ $isBalanced ? 'TRIAL BALANCE IS BALANCED & AUDIT VERIFIED' : 'OUT OF BALANCE - VARIANCE DETECTED' }}
+          {{ $isBalanced ? 'TRIAL BALANCE IS BALANCED (Total Debits = Total Credits)' : 'OUT OF BALANCE - VARIANCE DETECTED' }}
         </h5>
         <span class="fs-xs">
-          {{ $isBalanced ? 'Total debits exactly equal total credits across all active balance sheet and nominal accounts.' : 'A double-entry variance has been detected. Check unposted drafts or unbalanced journal lines.' }}
+          {{ $isBalanced ? 'All accounts are in perfect double-entry balance. Ready for financial statement generation.' : 'A difference between total debits and credits was detected. Please review recent journal entries or unposted drafts.' }}
         </span>
       </div>
     </div>
     <div class="text-end font-monospace">
-      <span class="fs-xs text-uppercase d-block">Variance Discrepancy</span>
+      <span class="fs-xs text-uppercase d-block">Variance Difference</span>
       <span class="fs-4 fw-bold {{ $isBalanced ? 'text-success' : 'text-danger' }}">
         ₱{{ number_format(abs($discrepancy ?? 0), 2) }}
       </span>

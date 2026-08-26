@@ -16,7 +16,8 @@
           <li class="breadcrumb-item active">Bank Reconciliation</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Bank Reconciliation Terminal &amp; Matching Workstation</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Bank Statement Reconciliation Workstation</h1>
+      <p class="text-muted fs-xs mb-0">Match internal general ledger records against official bank statement balances, clear outstanding checks, and resolve in-transit variances.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 

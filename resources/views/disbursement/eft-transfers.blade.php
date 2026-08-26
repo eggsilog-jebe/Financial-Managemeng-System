@@ -13,10 +13,11 @@
         <ol class="breadcrumb mb-1 fs-xs">
           <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
           <li class="breadcrumb-item">Disbursement Management</li>
-          <li class="breadcrumb-item active">EFT &amp; Electronic Transfers</li>
+          <li class="breadcrumb-item active">EFT Transfers</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Electronic Funds Transfer (EFT) Hub</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Electronic Funds Transfers (EFT &amp; Bank Payouts)</h1>
+      <p class="text-muted fs-xs mb-0">Process direct online bank payments, PESONet bulk supplier batches, and instant InstaPay disbursements.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 

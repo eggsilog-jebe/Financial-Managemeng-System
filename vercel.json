@@ -24,6 +24,7 @@
     "APP_KEY": "base64:94hD0B9520SllpUQqbmizcIlFw0xahZVzvYBKMQXyeo=",
     "APP_ENV": "production",
     "APP_DEBUG": "true",
+    "APP_MAINTENANCE_DRIVER": "file",
     "DB_CONNECTION": "sqlite",
     "APP_CONFIG_CACHE": "/tmp/bootstrap/cache/config.php",
     "APP_EVENTS_CACHE": "/tmp/bootstrap/cache/events.php",

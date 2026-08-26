@@ -32,6 +32,10 @@ foreach ($tmpDirs as $dir) {
 putenv("VIEW_COMPILED_PATH={$tmpStorage}/framework/views");
 $_ENV['VIEW_COMPILED_PATH'] = "{$tmpStorage}/framework/views";
 
+putenv('APP_MAINTENANCE_DRIVER=file');
+$_ENV['APP_MAINTENANCE_DRIVER'] = 'file';
+$_SERVER['APP_MAINTENANCE_DRIVER'] = 'file';
+
 // Point bootstrap cache files to /tmp/bootstrap/cache
 putenv("APP_PACKAGES_CACHE={$tmpBootstrap}/packages.php");
 $_ENV['APP_PACKAGES_CACHE'] = "{$tmpBootstrap}/packages.php";

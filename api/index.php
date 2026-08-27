@@ -10,12 +10,16 @@ chdir($root);
 
 // Ensure Vercel's read-only filesystem has writable tmp directories
 $tmpStorage = '/tmp/storage';
+$tmpBootstrap = '/tmp/bootstrap/cache';
+
 $tmpDirs = [
     $tmpStorage . '/app/public',
     $tmpStorage . '/framework/cache/data',
+    $tmpStorage . '/framework/cache',
     $tmpStorage . '/framework/sessions',
     $tmpStorage . '/framework/views',
     $tmpStorage . '/logs',
+    $tmpBootstrap,
 ];
 
 foreach ($tmpDirs as $dir) {
@@ -27,14 +31,6 @@ foreach ($tmpDirs as $dir) {
 // Point compiled views to writable /tmp storage
 putenv("VIEW_COMPILED_PATH={$tmpStorage}/framework/views");
 $_ENV['VIEW_COMPILED_PATH'] = "{$tmpStorage}/framework/views";
-
-// Fallback APP_KEY if not configured in Vercel environment variables
-if (empty(getenv('APP_KEY')) && empty($_ENV['APP_KEY'])) {
-    $fallbackAppKey = 'base64:94hD0B9520SllpUQqbmizcIlFw0xahZVzvYBKMQXyeo=';
-    putenv("APP_KEY={$fallbackAppKey}");
-    $_ENV['APP_KEY'] = $fallbackAppKey;
-    $_SERVER['APP_KEY'] = $fallbackAppKey;
-}
 
 // If using SQLite, copy bundled SQLite database to /tmp if needed so it's writable
 $dbConnection = getenv('DB_CONNECTION') ?: ($_ENV['DB_CONNECTION'] ?? 'sqlite');
@@ -49,6 +45,7 @@ if ($dbConnection === 'sqlite') {
     if (file_exists($sqliteDst) && !getenv('DB_DATABASE')) {
         putenv("DB_DATABASE={$sqliteDst}");
         $_ENV['DB_DATABASE'] = $sqliteDst;
+        $_SERVER['DB_DATABASE'] = $sqliteDst;
     }
 }
 

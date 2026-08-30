@@ -88,9 +88,55 @@ final class Invoice extends Model
         return (string) $this->total_amount;
     }
 
+    public function getGrossTotalAttribute(): string
+    {
+        return (string) $this->total_amount;
+    }
+
     public function getNetTotalAttribute(): string
     {
         return (string) $this->patient_payable;
+    }
+
+    public function getPatientCopayBalanceAttribute(): string
+    {
+        $payable = (string) $this->patient_payable;
+        $paid = (string) ($this->paid_amount ?? '0.0000');
+        return bcsub($payable, $paid, 4);
+    }
+
+    public function getPatientNameAttribute(): string
+    {
+        return $this->patientAccount?->full_name ?? 'Hospital Patient';
+    }
+
+    public function getEffectiveDiscountCategoryAttribute(): string
+    {
+        $profileDiscount = strtoupper((string) ($this->patientAccount?->discount_category ?? 'NONE'));
+        if (in_array($profileDiscount, ['SENIOR_CITIZEN', 'SENIOR', 'SENIOR_CITIZEN_DISCOUNT'], true)) {
+            return 'SENIOR_CITIZEN';
+        }
+        if (in_array($profileDiscount, ['PWD', 'PWD_DISCOUNT'], true)) {
+            return 'PWD';
+        }
+        if (in_array($profileDiscount, ['EMPLOYEE', 'EMPLOYEE_SUBSIDY'], true)) {
+            return 'EMPLOYEE';
+        }
+        if (in_array($profileDiscount, ['CHARITY', 'CHARITY_SUBSIDY'], true)) {
+            return 'CHARITY';
+        }
+
+        // Check active credit notes on this invoice
+        $activeCNs = $this->creditNotes->whereIn('status', ['POSTED', 'APPLIED']);
+        if ($activeCNs->whereIn('reason', ['PWD_DISCOUNT', 'PWD'])->isNotEmpty()) {
+            return 'PWD';
+        }
+        if ($activeCNs->whereIn('reason', ['SENIOR_CITIZEN_DISCOUNT', 'SENIOR_CITIZEN', 'SENIOR'])->isNotEmpty()
+            || $this->statutoryDiscounts->isNotEmpty()) {
+            return 'SENIOR_CITIZEN';
+        }
+
+        return $profileDiscount;
     }
 
     public function getBalanceDueAttribute(): string

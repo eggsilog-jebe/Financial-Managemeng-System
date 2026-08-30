@@ -4,17 +4,18 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Seeder;
 
-class DatabaseSeeder extends Seeder
+final class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // Minimal Foundation Only (0 Bank Accounts, 0 Fiscal Periods, 0 Transactions)
         $this->call([
-            PhilippineHealthcareChartOfAccountsSeeder::class,
-            FinancialRolesUserSeeder::class,
-            HospitalFinancialMockSeeder::class,
+            UserAndRoleSeeder::class,
+            ChartOfAccountsSeeder::class,
+            TaxConfigurationSeeder::class,
         ]);
     }
 }
+

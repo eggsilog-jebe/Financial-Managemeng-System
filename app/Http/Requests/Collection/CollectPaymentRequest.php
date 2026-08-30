@@ -26,6 +26,10 @@ final class CollectPaymentRequest extends FormRequest
             'payor_tin'               => ['nullable', 'string', 'max:30'],
             'notes'                   => ['nullable', 'string'],
             'cashier_shift_id'        => ['nullable', 'exists:cashier_shifts,id'],
+            'split_cash_amount'       => ['nullable', 'numeric', 'min:0'],
+            'split_digital_amount'    => ['nullable', 'numeric', 'min:0'],
+            'split_digital_channel'   => ['nullable', 'string', 'max:50'],
+            'split_digital_ref'       => ['nullable', 'string', 'max:100'],
         ];
     }
 }

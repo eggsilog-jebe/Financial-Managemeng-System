@@ -21,6 +21,8 @@ final class StorePatientAccountRequest extends FormRequest
             'patient_id_number' => ['nullable', 'string', 'max:30', Rule::unique('patient_accounts', 'patient_id_number')],
             'full_name'         => ['required', 'string', 'max:255'],
             'admission_type'    => ['required', 'string', 'in:Inpatient,Outpatient,Emergency'],
+            'discount_category' => ['nullable', 'string', 'in:NONE,SENIOR_CITIZEN,PWD,EMPLOYEE_SUBSIDY,EMPLOYEE,CHARITY'],
+            'id_card_number'    => ['nullable', 'string', 'max:50'],
             'hmo_provider'      => ['nullable', 'string', 'max:100'],
             'phone'             => ['nullable', 'string', 'max:50'],
             'email'             => ['nullable', 'email', 'max:100'],

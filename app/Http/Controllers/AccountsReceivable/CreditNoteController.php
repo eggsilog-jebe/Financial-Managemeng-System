@@ -21,12 +21,15 @@ final class CreditNoteController extends Controller
         private readonly CreditNoteService $creditNoteService,
     ) {}
 
+    /**
+     * Display a listing of Credit Notes and summary KPIs.
+     */
     public function index(Request $request): View
     {
         $status = $request->query('status');
         $search = $request->query('search');
 
-        $query = CreditNote::with(['invoice.patientAccount', 'patientAccount', 'approver'])
+        $query = CreditNote::with(['invoice.patientAccount', 'patientAccount', 'approvedBy'])
             ->latest('issue_date');
 
         if ($status) {
@@ -43,44 +46,88 @@ final class CreditNoteController extends Controller
         }
 
         $creditNotes = $query->paginate(15)->withQueryString();
+
+        // Aggregation totals
         $totalCreditValue = CreditNote::whereIn('status', ['APPROVED', 'POSTED', 'APPLIED'])->sum('amount');
         $totalPendingApproval = CreditNote::where('status', 'DRAFT')->sum('amount');
 
-        $openInvoices = Invoice::with('patientAccount')
+        // Fetch open invoices with remaining copay balance for the modal
+        $openInvoices = Invoice::with(['patientAccount', 'statutoryDiscounts', 'creditNotes'])
             ->whereIn('status', ['UNPAID', 'PARTIAL'])
             ->where('patient_payable', '>', 0)
             ->latest('invoice_date')
             ->get();
 
-        return view('accounts-receivable.credit-notes', compact(
-            'creditNotes',
-            'totalCreditValue',
-            'totalPendingApproval',
-            'openInvoices',
-            'status',
-            'search',
-        ));
+        return view('accounts-receivable.credit-notes', [
+            'creditNotes'          => $creditNotes,
+            'totalCreditValue'     => $totalCreditValue,
+            'totalPendingApproval' => $totalPendingApproval,
+            'openInvoices'         => $openInvoices,
+            'status'               => $status,
+            'search'               => $search,
+        ]);
     }
 
+    /**
+     * Store a newly created Credit Note.
+     */
     public function store(StoreCreditNoteRequest $request): RedirectResponse
     {
         try {
-            $dto = CreditNoteData::fromArray($request->validated());
-            $cn = $this->creditNoteService->createCreditNote($dto);
+            $dto = CreditNoteData::fromRequest($request);
+            $creditNote = $this->creditNoteService->createCreditNote($dto, auth()->id());
 
-            return redirect()->back()->with('success', "Credit Note adjustment [{$cn->credit_note_number}] submitted for management approval.");
+            $message = $creditNote->status === 'POSTED'
+                ? "Credit Note adjustment [{$creditNote->credit_note_number}] approved and posted to General Ledger."
+                : "Credit Note adjustment [{$creditNote->credit_note_number}] submitted for management approval.";
+
+            return redirect()->back()->with('success', $message);
         } catch (DomainException $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }
     }
 
+    /**
+     * Authorize and post a draft Credit Note to the General Ledger.
+     */
     public function approve(int|string $id): RedirectResponse
     {
         try {
             $userId = auth()->id() ?? 1;
-            $cn = $this->creditNoteService->approveCreditNote((int) $id, $userId);
+            $creditNote = $this->creditNoteService->approveCreditNote((int) $id, $userId);
 
-            return redirect()->back()->with('success', "Credit Note [{$cn->credit_note_number}] approved and posted to General Ledger ($" . number_format((float) $cn->amount, 2) . ").");
+            return redirect()->back()->with(
+                'success',
+                "Credit Note [{$creditNote->credit_note_number}] approved and posted to General Ledger (₱" . number_format((float) $creditNote->amount, 2) . ")."
+            );
+        } catch (DomainException $e) {
+            return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Dedicated action to post a draft Credit Note to General Ledger.
+     */
+    public function postCreditNote(int|string $id): RedirectResponse
+    {
+        return $this->approve($id);
+    }
+
+    /**
+     * Void a Credit Note adjustment and reverse ledger postings.
+     */
+    public function void(Request $request, int|string $id): RedirectResponse
+    {
+        $request->validate([
+            'void_reason' => ['required', 'string', 'max:255'],
+        ]);
+
+        try {
+            $userId = auth()->id() ?? 1;
+            $reason = (string) $request->input('void_reason');
+            $creditNote = $this->creditNoteService->voidCreditNote((int) $id, $reason, $userId);
+
+            return redirect()->back()->with('success', "Credit Note [{$creditNote->credit_note_number}] has been voided.");
         } catch (DomainException $e) {
             return redirect()->back()->with('error', $e->getMessage());
         }

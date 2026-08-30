@@ -39,12 +39,35 @@ final class CreditNoteService
                 throw new DomainException("Credit Note amount (₱{$amount}) exceeds open patient copay balance (₱{$openBalance}).");
             }
 
-            $creditNoteNum = $dto->creditNoteNumber ?? ('CN-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(3))));
+            // Prevent Duplicate Statutory Discounts on same invoice (RA 9994 / RA 10754)
+            $statutoryTypes = ['SENIOR_CITIZEN_DISCOUNT', 'PWD_DISCOUNT', 'SENIOR_CITIZEN', 'PWD'];
+            if (in_array($dto->reason, $statutoryTypes, true)) {
+                $hasInitialStatutory = $invoice->statutoryDiscounts()->exists();
+                $hasExistingStatutoryCN = $invoice->creditNotes()
+                    ->whereIn('reason', $statutoryTypes)
+                    ->whereIn('status', ['POSTED', 'APPLIED', 'DRAFT'])
+                    ->exists();
+
+                if ($hasInitialStatutory || $hasExistingStatutoryCN) {
+                    throw new DomainException(
+                        "Only one statutory discount (Senior Citizen or PWD) is allowed per invoice under RA 9994 / RA 10754. Please void the existing statutory credit note first."
+                    );
+                }
+            }
+
+            if ($dto->creditNoteNumber) {
+                $creditNoteNum = $dto->creditNoteNumber;
+            } else {
+                $countToday = CreditNote::whereDate('created_at', today())->count() + 1;
+                $creditNoteNum = 'CN-' . date('Ymd') . '-' . str_pad((string) $countToday, 4, '0', STR_PAD_LEFT);
+            }
+
+            $patientAccountId = $dto->patientAccountId ?: $invoice->patient_account_id;
 
             $creditNote = CreditNote::create([
                 'credit_note_number' => $creditNoteNum,
                 'invoice_id'         => $invoice->id,
-                'patient_account_id' => $invoice->patient_account_id,
+                'patient_account_id' => $patientAccountId,
                 'issue_date'         => $dto->issueDate,
                 'amount'             => $amount,
                 'reason'             => $dto->reason,
@@ -57,10 +80,14 @@ final class CreditNoteService
                 action: 'INSERT',
                 oldValues: null,
                 newValues: $creditNote->toArray(),
-                userId: $userId ?? auth()->id(),
-                userName: auth()->user()?->name ?? 'Billing Clerk',
+                userId: $userId ?? auth()->id() ?? 1,
+                userName: auth()->user()?->name ?? 'Billing Officer',
                 ipAddress: request()?->ip() ?? '127.0.0.1',
             );
+
+            if (! $dto->saveAsDraft) {
+                return $this->approveCreditNote($creditNote->id, $userId ?? auth()->id() ?? 1);
+            }
 
             return $creditNote->loadMissing(['invoice', 'patientAccount']);
         });
@@ -78,12 +105,16 @@ final class CreditNoteService
                 throw new DomainException("Credit Note [{$creditNote->credit_note_number}] has already been posted.");
             }
 
+            if ($creditNote->status === 'VOID') {
+                throw new DomainException("Cannot approve a voided Credit Note [{$creditNote->credit_note_number}].");
+            }
+
             $oldValues = $creditNote->toArray();
             $invoice = $creditNote->invoice;
             $patient = $creditNote->patientAccount;
             $amount = (string) $creditNote->amount;
 
-            // 1. Update Credit Note
+            // 1. Update Credit Note status
             $creditNote->update([
                 'status'      => 'POSTED',
                 'approved_by' => $userId,
@@ -95,7 +126,7 @@ final class CreditNoteService
                 $newPayable = '0.0000';
             }
             $newDiscount = bcadd((string) $invoice->discount_amount, $amount, 4);
-            $newStatus = bccomp($newPayable, (string) $invoice->paid_amount, 4) <= 0 ? 'SETTLED' : $invoice->status;
+            $newStatus = bccomp($newPayable, (string) $invoice->paid_amount, 4) <= 0 ? 'SETTLED' : 'PARTIAL';
 
             $invoice->update([
                 'patient_payable' => $newPayable,
@@ -112,10 +143,22 @@ final class CreditNoteService
                 $patient->update(['current_balance' => $newBalance]);
             }
 
-            // 4. Post Double-Entry Journal: DR 5010 Discounts & Allowances, CR 1010 AR Patients
-            $discountAcc = Account::firstOrCreate(['code' => '5010'], ['name' => 'Senior Citizen, PWD & Special Allowances', 'category' => 'EXPENSE', 'normal_balance' => 'DEBIT']);
-            $arPatientAcc = Account::firstOrCreate(['code' => '1010'], ['name' => 'Accounts Receivable - Patients', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']);
+            // 4. Determine Expense / Contra-Revenue Account
+            $isCharity = stripos($creditNote->reason, 'CHARITY') !== false || stripos($creditNote->reason, 'INDIGENT') !== false;
+            $expenseCode = $isCharity ? '4930' : '4910';
+            $expenseName = $isCharity ? 'Charity / Indigent Care Allowances' : 'Statutory Discounts Allowed (Senior/PWD)';
 
+            $discountAcc = Account::firstOrCreate(
+                ['code' => $expenseCode],
+                ['name' => $expenseName, 'category' => 'EXPENSE', 'normal_balance' => 'DEBIT']
+            );
+
+            $arPatientAcc = Account::firstOrCreate(
+                ['code' => '1110'],
+                ['name' => 'Accounts Receivable - Patient Copay', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']
+            );
+
+            // 5. Post Balanced Double-Entry Journal (DR 4910/4930, CR 1110)
             $journalLines = [
                 new JournalLineData(
                     accountId: $discountAcc->id,
@@ -142,7 +185,7 @@ final class CreditNoteService
 
             $this->journalEntryService->createAndPostEntry($entryData);
 
-            // 5. CAS Audit Trail
+            // 6. CAS Audit Trail
             $this->auditTrailService->logFinancialEvent(
                 auditable: $creditNote,
                 action: 'POST',
@@ -153,7 +196,109 @@ final class CreditNoteService
                 ipAddress: request()?->ip() ?? '127.0.0.1',
             );
 
-            return $creditNote->loadMissing(['invoice', 'patientAccount', 'approver']);
+            return $creditNote->loadMissing(['invoice', 'patientAccount', 'approvedBy']);
+        });
+    }
+
+    /**
+     * Void a credit note, restore invoice/patient balances, and post reversing journal entry.
+     */
+    public function voidCreditNote(int $creditNoteId, string $reason, int $userId): CreditNote
+    {
+        return DB::transaction(function () use ($creditNoteId, $reason, $userId): CreditNote {
+            $creditNote = CreditNote::with(['invoice', 'patientAccount'])->findOrFail($creditNoteId);
+
+            if ($creditNote->status === 'VOID') {
+                throw new DomainException("Credit Note [{$creditNote->credit_note_number}] is already voided.");
+            }
+
+            $oldValues = $creditNote->toArray();
+            $invoice = $creditNote->invoice;
+            $patient = $creditNote->patientAccount;
+            $amount = (string) $creditNote->amount;
+
+            // If the credit note was previously posted, reverse the ledger balance impacts
+            if ($creditNote->status === 'POSTED' || $creditNote->status === 'APPLIED') {
+                // 1. Restore Invoice Patient Payable & Discount Amount
+                if ($invoice) {
+                    $restoredPayable = bcadd((string) $invoice->patient_payable, $amount, 4);
+                    $restoredDiscount = bcsub((string) $invoice->discount_amount, $amount, 4);
+                    if (bccomp($restoredDiscount, '0.0000', 4) < 0) {
+                        $restoredDiscount = '0.0000';
+                    }
+
+                    $invoice->update([
+                        'patient_payable' => $restoredPayable,
+                        'discount_amount' => $restoredDiscount,
+                        'status'          => 'PARTIAL',
+                    ]);
+                }
+
+                // 2. Restore Patient Account Current Balance
+                if ($patient) {
+                    $restoredBalance = bcadd((string) $patient->current_balance, $amount, 4);
+                    $patient->update(['current_balance' => $restoredBalance]);
+                }
+
+                // 3. Post Reversing Journal Entry (DR 1110, CR 4910/4930)
+                $isCharity = stripos($creditNote->reason, 'CHARITY') !== false || stripos($creditNote->reason, 'INDIGENT') !== false;
+                $expenseCode = $isCharity ? '4930' : '4910';
+                $expenseName = $isCharity ? 'Charity / Indigent Care Allowances' : 'Statutory Discounts Allowed (Senior/PWD)';
+
+                $discountAcc = Account::firstOrCreate(
+                    ['code' => $expenseCode],
+                    ['name' => $expenseName, 'category' => 'EXPENSE', 'normal_balance' => 'DEBIT']
+                );
+
+                $arPatientAcc = Account::firstOrCreate(
+                    ['code' => '1110'],
+                    ['name' => 'Accounts Receivable - Patient Copay', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']
+                );
+
+                $journalLines = [
+                    new JournalLineData(
+                        accountId: $arPatientAcc->id,
+                        debit: $amount,
+                        credit: '0.0000',
+                        memo: "Reversal of AR credit note for {$creditNote->credit_note_number}"
+                    ),
+                    new JournalLineData(
+                        accountId: $discountAcc->id,
+                        debit: '0.0000',
+                        credit: $amount,
+                        memo: "Reversal of discount allowance on {$invoice?->invoice_number} ({$reason})"
+                    ),
+                ];
+
+                $entryData = new JournalEntryData(
+                    referenceNumber: 'JE-REV-CN-' . $creditNote->credit_note_number,
+                    entryDate: date('Y-m-d'),
+                    description: "Void Credit Note Reversal for {$creditNote->credit_note_number}. Reason: {$reason}",
+                    type: 'ADJUSTING',
+                    postedBy: $userId,
+                    lines: $journalLines
+                );
+
+                $this->journalEntryService->createAndPostEntry($entryData);
+            }
+
+            // 4. Mark status as VOID
+            $creditNote->update([
+                'status' => 'VOID',
+            ]);
+
+            // 5. CAS Audit Trail
+            $this->auditTrailService->logFinancialEvent(
+                auditable: $creditNote,
+                action: 'UPDATE',
+                oldValues: $oldValues,
+                newValues: array_merge($creditNote->toArray(), ['void_reason' => $reason]),
+                userId: $userId,
+                userName: auth()->user()?->name ?? 'Finance Approver',
+                ipAddress: request()?->ip() ?? '127.0.0.1',
+            );
+
+            return $creditNote->loadMissing(['invoice', 'patientAccount']);
         });
     }
 }

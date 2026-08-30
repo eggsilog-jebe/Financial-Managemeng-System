@@ -279,13 +279,14 @@
 
     const syncSidebarToggle = () => {
       if (!sidebarToggle) return;
-      const expanded = usesDrawer()
-        ? body.classList.contains("sidebar-open")
-        : !body.classList.contains("sidebar-collapsed");
+      const isDrawer = usesDrawer();
+      const expanded = isDrawer
+        ? (body.classList.contains("sidebar-open") || sidebar?.classList.contains("is-open"))
+        : (!body.classList.contains("sidebar-collapsed") && !sidebar?.classList.contains("is-collapsed"));
       sidebarToggle.setAttribute("aria-expanded", String(expanded));
       sidebarToggle.setAttribute(
         "aria-label",
-        usesDrawer()
+        isDrawer
           ? (expanded ? "Close navigation menu" : "Open navigation menu")
           : (expanded ? "Collapse sidebar" : "Expand sidebar"),
       );
@@ -306,9 +307,15 @@
 
       if (willCollapse) {
         body.classList.add("sidebar-collapsing");
+        sidebar?.classList.add("is-collapsing");
+        // Close open accordion submenus when collapsing into icon-only mode
+        accordionToggles.forEach((toggle) => setAccordion(toggle, false));
       } else {
         body.classList.remove("sidebar-collapsed");
+        sidebar?.classList.remove("is-collapsed");
+        sidebar?.removeAttribute("data-collapsed");
         body.classList.add("sidebar-expanding");
+        sidebar?.classList.add("is-expanding");
       }
 
       if (sidebar && mainContent && typeof sidebar.animate === "function") {
@@ -326,8 +333,12 @@
           if (willCollapse) {
             body.classList.add("sidebar-collapsed");
             body.classList.remove("sidebar-collapsing");
+            sidebar?.classList.add("is-collapsed");
+            sidebar?.classList.remove("is-collapsing");
+            sidebar?.setAttribute("data-collapsed", "true");
           } else {
             body.classList.remove("sidebar-expanding");
+            sidebar?.classList.remove("is-expanding");
           }
           sidebarAnim.cancel();
           mainAnim.cancel();
@@ -335,37 +346,63 @@
           isSidebarAnimating = false;
           try { localStorage.setItem("fms_sidebar_collapsed", String(willCollapse)); } catch (_) {}
           syncSidebarToggle();
+          hideNavTooltip();
         }).catch(() => {
           if (willCollapse) {
             body.classList.add("sidebar-collapsed");
             body.classList.remove("sidebar-collapsing");
+            sidebar?.classList.add("is-collapsed");
+            sidebar?.classList.remove("is-collapsing");
+            sidebar?.setAttribute("data-collapsed", "true");
           } else {
             body.classList.remove("sidebar-expanding");
+            sidebar?.classList.remove("is-expanding");
           }
           body.classList.remove("sidebar-animating");
           isSidebarAnimating = false;
+          syncSidebarToggle();
+          hideNavTooltip();
         });
       } else {
         setTimeout(() => {
           if (willCollapse) {
             body.classList.add("sidebar-collapsed");
             body.classList.remove("sidebar-collapsing");
+            sidebar?.classList.add("is-collapsed");
+            sidebar?.classList.remove("is-collapsing");
+            sidebar?.setAttribute("data-collapsed", "true");
           } else {
             body.classList.remove("sidebar-expanding");
+            sidebar?.classList.remove("is-expanding");
           }
           body.classList.remove("sidebar-animating");
           isSidebarAnimating = false;
+          try { localStorage.setItem("fms_sidebar_collapsed", String(willCollapse)); } catch (_) {}
+          syncSidebarToggle();
+          hideNavTooltip();
         }, animDuration);
-        try { localStorage.setItem("fms_sidebar_collapsed", String(willCollapse)); } catch (_) {}
-        syncSidebarToggle();
       }
     };
+
+    // Restore desktop sidebar collapsed preference on boot
+    const isSavedCollapsed = localStorage.getItem("fms_sidebar_collapsed") === "true";
+    if (!usesDrawer() && isSavedCollapsed) {
+      body.classList.add("sidebar-collapsed");
+      sidebar?.classList.add("is-collapsed");
+      sidebar?.setAttribute("data-collapsed", "true");
+      accordionToggles.forEach((toggle) => setAccordion(toggle, false));
+      syncSidebarToggle();
+    } else {
+      syncSidebarToggle();
+    }
 
     // JavaScript Web Animations API for mobile drawer slide-in / slide-out
     const openMobileDrawer = () => {
       if (isSidebarAnimating) return;
       isSidebarAnimating = true;
       body.classList.add("sidebar-open");
+      sidebar?.classList.add("is-open");
+      sidebar?.classList.remove("is-collapsed");
       syncSidebarToggle();
 
       if (sidebar && typeof sidebar.animate === "function") {
@@ -396,17 +433,20 @@
         closeAnim.finished.then(() => {
           closeAnim.cancel();
           body.classList.remove("sidebar-open");
+          sidebar?.classList.remove("is-open");
           syncSidebarToggle();
           hideNavTooltip();
           isSidebarAnimating = false;
         }).catch(() => {
           body.classList.remove("sidebar-open");
+          sidebar?.classList.remove("is-open");
           syncSidebarToggle();
           hideNavTooltip();
           isSidebarAnimating = false;
         });
       } else {
         body.classList.remove("sidebar-open");
+        sidebar?.classList.remove("is-open");
         syncSidebarToggle();
         hideNavTooltip();
         setTimeout(() => { isSidebarAnimating = false; }, 220);
@@ -415,16 +455,15 @@
 
     sidebarToggle?.addEventListener("click", () => {
       if (usesDrawer()) {
-        if (body.classList.contains("sidebar-open")) {
+        if (body.classList.contains("sidebar-open") || sidebar?.classList.contains("is-open")) {
           closeMobileNav();
         } else {
           openMobileDrawer();
         }
       } else {
-        const willCollapse = !body.classList.contains("sidebar-collapsed");
+        const willCollapse = !body.classList.contains("sidebar-collapsed") && !sidebar?.classList.contains("is-collapsed");
         animateDesktopSidebar(willCollapse);
       }
-      hideNavTooltip();
     });
 
     backdrop?.addEventListener("click", closeMobileNav);

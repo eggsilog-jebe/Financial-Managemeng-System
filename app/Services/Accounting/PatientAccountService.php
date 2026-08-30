@@ -57,7 +57,14 @@ final class PatientAccountService
 
     public function getPatientAccountsList(?string $search = null, bool $outstandingOnly = false, int $perPage = 15): LengthAwarePaginator
     {
-        $query = PatientAccount::with('invoices')->latest('id');
+        $query = PatientAccount::with([
+            'invoices.philhealthClaim',
+            'invoices.hmoClaims',
+            'invoices.payments.officialReceipt',
+            'invoices.statutoryDiscounts',
+            'invoices.creditNotes',
+            'creditNotes',
+        ])->latest('id');
 
         if ($search) {
             $query->where(function ($q) use ($search): void {

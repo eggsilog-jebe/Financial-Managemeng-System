@@ -7,7 +7,7 @@ namespace Database\Seeders;
 use App\Models\Account;
 use Illuminate\Database\Seeder;
 
-final class PhilippineHealthcareChartOfAccountsSeeder extends Seeder
+final class ChartOfAccountsSeeder extends Seeder
 {
     public function run(): void
     {
@@ -48,8 +48,16 @@ final class PhilippineHealthcareChartOfAccountsSeeder extends Seeder
                 'is_active'      => true,
             ],
             [
+                'code'           => '1030',
+                'name'           => 'Digital Payment Gateway Clearing',
+                'category'       => 'ASSET',
+                'normal_balance' => 'DEBIT',
+                'department'     => 'CASHIER',
+                'is_active'      => true,
+            ],
+            [
                 'code'           => '1110',
-                'name'           => 'Accounts Receivable - Inpatient',
+                'name'           => 'Accounts Receivable - Patient Copay',
                 'category'       => 'ASSET',
                 'normal_balance' => 'DEBIT',
                 'department'     => 'BILLING',
@@ -57,7 +65,7 @@ final class PhilippineHealthcareChartOfAccountsSeeder extends Seeder
             ],
             [
                 'code'           => '1120',
-                'name'           => 'Accounts Receivable - Outpatient',
+                'name'           => 'Accounts Receivable - PhilHealth Claims',
                 'category'       => 'ASSET',
                 'normal_balance' => 'DEBIT',
                 'department'     => 'BILLING',
@@ -65,18 +73,10 @@ final class PhilippineHealthcareChartOfAccountsSeeder extends Seeder
             ],
             [
                 'code'           => '1130',
-                'name'           => 'Accounts Receivable - PhilHealth Claims',
+                'name'           => 'Accounts Receivable - HMO Claims',
                 'category'       => 'ASSET',
                 'normal_balance' => 'DEBIT',
-                'department'     => 'CREDIT_COLLECTION',
-                'is_active'      => true,
-            ],
-            [
-                'code'           => '1140',
-                'name'           => 'Accounts Receivable - HMO / Private Insurance',
-                'category'       => 'ASSET',
-                'normal_balance' => 'DEBIT',
-                'department'     => 'CREDIT_COLLECTION',
+                'department'     => 'BILLING',
                 'is_active'      => true,
             ],
             [
@@ -96,7 +96,7 @@ final class PhilippineHealthcareChartOfAccountsSeeder extends Seeder
                 'name'           => 'Accounts Payable - Trade / Vendors',
                 'category'       => 'LIABILITY',
                 'normal_balance' => 'CREDIT',
-                'department'     => 'DISBURSEMENT',
+                'department'     => 'ACCOUNTING',
                 'is_active'      => true,
             ],
             [
@@ -104,15 +104,23 @@ final class PhilippineHealthcareChartOfAccountsSeeder extends Seeder
                 'name'           => 'Accrued Doctor Professional Fees',
                 'category'       => 'LIABILITY',
                 'normal_balance' => 'CREDIT',
-                'department'     => 'MEDICAL_AFFAIRS',
+                'department'     => 'ACCOUNTING',
+                'is_active'      => true,
+            ],
+            [
+                'code'           => '2030',
+                'name'           => 'Withholding Tax Payable - Expanded (BIR 2307 / 1601-EQ)',
+                'category'       => 'LIABILITY',
+                'normal_balance' => 'CREDIT',
+                'department'     => 'TAX',
                 'is_active'      => true,
             ],
             [
                 'code'           => '2110',
-                'name'           => 'Withholding Tax Payable - Expanded / EWT (BIR 2307 / 1601-EQ)',
+                'name'           => 'Withholding Tax Payable - Expanded (Alternative Ref)',
                 'category'       => 'LIABILITY',
                 'normal_balance' => 'CREDIT',
-                'department'     => 'TAX_COMPLIANCE',
+                'department'     => 'TAX',
                 'is_active'      => true,
             ],
             [
@@ -120,7 +128,7 @@ final class PhilippineHealthcareChartOfAccountsSeeder extends Seeder
                 'name'           => 'Withholding Tax Payable - Compensation (BIR 1601-C)',
                 'category'       => 'LIABILITY',
                 'normal_balance' => 'CREDIT',
-                'department'     => 'TAX_COMPLIANCE',
+                'department'     => 'TAX',
                 'is_active'      => true,
             ],
             [
@@ -128,7 +136,7 @@ final class PhilippineHealthcareChartOfAccountsSeeder extends Seeder
                 'name'           => 'SSS Premiums Payable',
                 'category'       => 'LIABILITY',
                 'normal_balance' => 'CREDIT',
-                'department'     => 'HR_COMPLIANCE',
+                'department'     => 'PAYROLL',
                 'is_active'      => true,
             ],
             [
@@ -136,7 +144,7 @@ final class PhilippineHealthcareChartOfAccountsSeeder extends Seeder
                 'name'           => 'PhilHealth Premiums Payable',
                 'category'       => 'LIABILITY',
                 'normal_balance' => 'CREDIT',
-                'department'     => 'HR_COMPLIANCE',
+                'department'     => 'PAYROLL',
                 'is_active'      => true,
             ],
             [
@@ -144,7 +152,7 @@ final class PhilippineHealthcareChartOfAccountsSeeder extends Seeder
                 'name'           => 'HDMF (Pag-IBIG) Premiums Payable',
                 'category'       => 'LIABILITY',
                 'normal_balance' => 'CREDIT',
-                'department'     => 'HR_COMPLIANCE',
+                'department'     => 'PAYROLL',
                 'is_active'      => true,
             ],
             [
@@ -152,7 +160,7 @@ final class PhilippineHealthcareChartOfAccountsSeeder extends Seeder
                 'name'           => 'Patient Deposit Advances',
                 'category'       => 'LIABILITY',
                 'normal_balance' => 'CREDIT',
-                'department'     => 'ADMISSION',
+                'department'     => 'CASHIER',
                 'is_active'      => true,
             ],
 
@@ -164,7 +172,7 @@ final class PhilippineHealthcareChartOfAccountsSeeder extends Seeder
                 'name'           => 'Hospital Retained Earnings',
                 'category'       => 'EQUITY',
                 'normal_balance' => 'CREDIT',
-                'department'     => 'CORPORATE',
+                'department'     => 'EXECUTIVE',
                 'is_active'      => true,
             ],
             [
@@ -172,19 +180,19 @@ final class PhilippineHealthcareChartOfAccountsSeeder extends Seeder
                 'name'           => "Owner's Capital / Shareholder Equity",
                 'category'       => 'EQUITY',
                 'normal_balance' => 'CREDIT',
-                'department'     => 'CORPORATE',
+                'department'     => 'EXECUTIVE',
                 'is_active'      => true,
             ],
 
             // ==========================================
-            // REVENUES (4000s)
+            // REVENUE (4000s)
             // ==========================================
             [
                 'code'           => '4010',
                 'name'           => 'Inpatient Hospital Care Revenue',
                 'category'       => 'REVENUE',
                 'normal_balance' => 'CREDIT',
-                'department'     => 'NURSING_WARDS',
+                'department'     => 'CLINICAL',
                 'is_active'      => true,
             ],
             [
@@ -200,7 +208,7 @@ final class PhilippineHealthcareChartOfAccountsSeeder extends Seeder
                 'name'           => 'Laboratory & Diagnostic Services Revenue',
                 'category'       => 'REVENUE',
                 'normal_balance' => 'CREDIT',
-                'department'     => 'LIS',
+                'department'     => 'LABORATORY',
                 'is_active'      => true,
             ],
             [
@@ -208,7 +216,7 @@ final class PhilippineHealthcareChartOfAccountsSeeder extends Seeder
                 'name'           => 'Radiology & Imaging Revenue',
                 'category'       => 'REVENUE',
                 'normal_balance' => 'CREDIT',
-                'department'     => 'RIS',
+                'department'     => 'RADIOLOGY',
                 'is_active'      => true,
             ],
             [
@@ -221,7 +229,7 @@ final class PhilippineHealthcareChartOfAccountsSeeder extends Seeder
             ],
             [
                 'code'           => '4060',
-                'name'           => 'Operating Room & Surgical Suite Fees',
+                'name'           => 'Operating Room Fees',
                 'category'       => 'REVENUE',
                 'normal_balance' => 'CREDIT',
                 'department'     => 'SURGERY',
@@ -229,11 +237,11 @@ final class PhilippineHealthcareChartOfAccountsSeeder extends Seeder
             ],
 
             // ==========================================
-            // CONTRA-REVENUES & DEDUCTIONS (4900s)
+            // CONTRA-REVENUE / EXPENSES (4900s - 6000s)
             // ==========================================
             [
                 'code'           => '4910',
-                'name'           => 'Senior Citizen RA 9994 Discounts Allowed',
+                'name'           => 'Statutory Discounts Allowed (Senior/PWD)',
                 'category'       => 'EXPENSE',
                 'normal_balance' => 'DEBIT',
                 'department'     => 'BILLING',
@@ -252,13 +260,9 @@ final class PhilippineHealthcareChartOfAccountsSeeder extends Seeder
                 'name'           => 'Charity / Indigent Care Allowances',
                 'category'       => 'EXPENSE',
                 'normal_balance' => 'DEBIT',
-                'department'     => 'MEDICAL_SOCIAL_SERVICES',
+                'department'     => 'SOCIAL_SERVICES',
                 'is_active'      => true,
             ],
-
-            // ==========================================
-            // DIRECT COSTS & OPERATING EXPENSES (5000s & 6000s)
-            // ==========================================
             [
                 'code'           => '5010',
                 'name'           => 'Cost of Medicines & Medical Supplies Sold',
@@ -268,19 +272,27 @@ final class PhilippineHealthcareChartOfAccountsSeeder extends Seeder
                 'is_active'      => true,
             ],
             [
+                'code'           => '5020',
+                'name'           => 'Medical & Hospital Operating Supplies Expense',
+                'category'       => 'EXPENSE',
+                'normal_balance' => 'DEBIT',
+                'department'     => 'PROCUREMENT',
+                'is_active'      => true,
+            ],
+            [
                 'code'           => '6010',
                 'name'           => 'Salaries, Wages & Employee Benefits',
                 'category'       => 'EXPENSE',
                 'normal_balance' => 'DEBIT',
-                'department'     => 'ADMINISTRATION',
+                'department'     => 'HR',
                 'is_active'      => true,
             ],
             [
                 'code'           => '6020',
-                'name'           => 'SSS / PhilHealth / HDMF Employer Contribution Expense',
+                'name'           => 'Employer Statutory Contribution Expense (SSS/PhilHealth/HDMF)',
                 'category'       => 'EXPENSE',
                 'normal_balance' => 'DEBIT',
-                'department'     => 'ADMINISTRATION',
+                'department'     => 'HR',
                 'is_active'      => true,
             ],
             [
@@ -291,29 +303,10 @@ final class PhilippineHealthcareChartOfAccountsSeeder extends Seeder
                 'department'     => 'FACILITIES',
                 'is_active'      => true,
             ],
-            [
-                'code'           => '6040',
-                'name'           => 'Facility Maintenance & Fleet Fuel',
-                'category'       => 'EXPENSE',
-                'normal_balance' => 'DEBIT',
-                'department'     => 'FACILITIES',
-                'is_active'      => true,
-            ],
-            [
-                'code'           => '6050',
-                'name'           => 'Bank Charges & Transaction Fees',
-                'category'       => 'EXPENSE',
-                'normal_balance' => 'DEBIT',
-                'department'     => 'TREASURY',
-                'is_active'      => true,
-            ],
         ];
 
-        foreach ($accounts as $account) {
-            Account::updateOrCreate(
-                ['code' => $account['code']],
-                $account
-            );
+        foreach ($accounts as $a) {
+            Account::updateOrCreate(['code' => $a['code']], $a);
         }
     }
 }

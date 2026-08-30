@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Models\TaxRule;
+use App\Models\Bir2307Certificate;
 use App\Models\TaxCertificate;
 use App\Models\TaxReturn;
+use App\Models\TaxRule;
 use Illuminate\Contracts\View\View;
 
 final class TaxManagementController extends Controller
@@ -17,9 +18,17 @@ final class TaxManagementController extends Controller
         return view('tax.tax-configuration', compact('taxRules'));
     }
 
+    /**
+     * BIR Form 2307 — Certificates of Creditable Tax Withheld at Source.
+     * Loads from `bir_2307_certificates` (procurement EWT withholdings),
+     * NOT from `tax_certificates` (doctor/payee one-off certificates).
+     */
     public function withholdingTax(): View
     {
-        $certificates = TaxCertificate::latest()->get();
+        $certificates = Bir2307Certificate::with(['vendor', 'purchaseBill'])
+            ->latest()
+            ->get();
+
         return view('tax.withholding-tax', compact('certificates'));
     }
 
@@ -29,6 +38,9 @@ final class TaxManagementController extends Controller
         return view('tax.tax-returns', compact('returns'));
     }
 
+    /**
+     * Senior / PWD Tax Exemptions — uses TaxCertificate (doctor/payee one-off 2307s).
+     */
     public function taxExemptions(): View
     {
         $certificates = TaxCertificate::latest()->get();
@@ -42,3 +54,4 @@ final class TaxManagementController extends Controller
         return view('tax.tax-audit-trail', compact('taxRules', 'certificates'));
     }
 }
+

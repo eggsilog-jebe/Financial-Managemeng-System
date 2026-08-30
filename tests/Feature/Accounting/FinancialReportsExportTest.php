@@ -8,7 +8,7 @@ use App\Models\Bir2307Certificate;
 use App\Models\PurchaseBill;
 use App\Models\User;
 use App\Models\Vendor;
-use Database\Seeders\PhilippineHealthcareChartOfAccountsSeeder;
+use Database\Seeders\ChartOfAccountsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -22,7 +22,7 @@ class FinancialReportsExportTest extends TestCase
     {
         parent::setUp();
 
-        $this->seed(PhilippineHealthcareChartOfAccountsSeeder::class);
+        $this->seed(ChartOfAccountsSeeder::class);
 
         $this->accountant = User::factory()->create([
             'name'  => 'Eduardo Mendoza (Accountant)',

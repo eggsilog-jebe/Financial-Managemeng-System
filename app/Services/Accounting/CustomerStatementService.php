@@ -24,36 +24,49 @@ final class CustomerStatementService
         $end = $endDate ? Carbon::parse($endDate)->endOfDay() : now()->endOfDay();
 
         // 1. Calculate Beginning Balance (prior to startDate)
-        $priorInvoices = Invoice::where('patient_account_id', $patient->id)
+        $priorInvoicesList = Invoice::with('creditNotes')
+            ->where('patient_account_id', $patient->id)
             ->where('invoice_date', '<', $start->toDateString())
-            ->sum('patient_payable');
+            ->whereNotIn('status', ['VOID', 'CANCELLED'])
+            ->get();
 
-        $priorPayments = Payment::whereHas('invoice', fn ($q) => $q->where('patient_account_id', $patient->id))
+        $priorBilledCopay = '0.0000';
+        foreach ($priorInvoicesList as $pInv) {
+            $postedCreditsOnInv = (string) $pInv->creditNotes->whereIn('status', ['POSTED', 'APPLIED'])->sum('amount');
+            $invInitialCopay = bcadd((string) $pInv->patient_payable, bcadd((string) ($pInv->paid_amount ?? '0.0000'), $postedCreditsOnInv, 4), 4);
+            $priorBilledCopay = bcadd($priorBilledCopay, $invInitialCopay, 4);
+        }
+
+        $priorPayments = (string) Payment::whereHas('invoice', fn ($q) => $q->where('patient_account_id', $patient->id))
+            ->whereDoesntHave('officialReceipt', fn ($q) => $q->where('status', 'CANCELLED'))
             ->where('payment_date', '<', $start->toDateString())
             ->sum('amount');
 
-        $priorCredits = CreditNote::where('patient_account_id', $patient->id)
-            ->where('status', 'POSTED')
+        $priorCredits = (string) CreditNote::where('patient_account_id', $patient->id)
+            ->whereIn('status', ['POSTED', 'APPLIED'])
             ->where('issue_date', '<', $start->toDateString())
             ->sum('amount');
 
-        $beginningBalance = bcsub(bcsub((string) $priorInvoices, (string) $priorPayments, 4), (string) $priorCredits, 4);
+        $beginningBalance = bcsub(bcsub($priorBilledCopay, $priorPayments, 4), $priorCredits, 4);
         if (bccomp($beginningBalance, '0.0000', 4) < 0) {
             $beginningBalance = '0.0000';
         }
 
-        // 2. Fetch Period Transactions
-        $periodInvoices = Invoice::where('patient_account_id', $patient->id)
+        // 2. Fetch Period Transactions (Excluding voided, cancelled, or reversed movements)
+        $periodInvoices = Invoice::with('creditNotes')
+            ->where('patient_account_id', $patient->id)
             ->whereBetween('invoice_date', [$start->toDateString(), $end->toDateString()])
+            ->whereNotIn('status', ['VOID', 'CANCELLED'])
             ->get();
 
-        $periodPayments = Payment::with('invoice')
+        $periodPayments = Payment::with(['invoice', 'officialReceipt'])
             ->whereHas('invoice', fn ($q) => $q->where('patient_account_id', $patient->id))
+            ->whereDoesntHave('officialReceipt', fn ($q) => $q->where('status', 'CANCELLED'))
             ->whereBetween('payment_date', [$start->toDateString(), $end->toDateString()])
             ->get();
 
         $periodCredits = CreditNote::where('patient_account_id', $patient->id)
-            ->where('status', 'POSTED')
+            ->whereIn('status', ['POSTED', 'APPLIED'])
             ->whereBetween('issue_date', [$start->toDateString(), $end->toDateString()])
             ->get();
 
@@ -61,12 +74,15 @@ final class CustomerStatementService
         $movements = [];
 
         foreach ($periodInvoices as $inv) {
+            $postedCreditsOnInv = (string) $inv->creditNotes->whereIn('status', ['POSTED', 'APPLIED'])->sum('amount');
+            $initialBilledCopay = bcadd((string) $inv->patient_payable, bcadd((string) ($inv->paid_amount ?? '0.0000'), $postedCreditsOnInv, 4), 4);
+
             $movements[] = [
                 'date'        => $inv->invoice_date->format('Y-m-d'),
                 'type'        => 'INVOICE',
                 'reference'   => $inv->invoice_number,
                 'description' => "Hospital Encounter Billing [{$inv->status}]",
-                'debit'       => (string) $inv->patient_payable,
+                'debit'       => $initialBilledCopay,
                 'credit'      => '0.0000',
             ];
         }
@@ -75,7 +91,7 @@ final class CustomerStatementService
             $movements[] = [
                 'date'        => $pay->payment_date ? $pay->payment_date->format('Y-m-d') : date('Y-m-d'),
                 'type'        => 'PAYMENT',
-                'reference'   => $pay->payment_reference ?? 'OR-COL',
+                'reference'   => $pay->officialReceipt?->or_number ?? $pay->payment_reference ?? 'OR-COL',
                 'description' => "Cashier Collection ({$pay->payment_method})",
                 'debit'       => '0.0000',
                 'credit'      => (string) $pay->amount,

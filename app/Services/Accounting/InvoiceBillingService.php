@@ -60,6 +60,9 @@ final class InvoiceBillingService
                         $discount = bcmul($itemGross, '0.2000', 4);
                     }
                     $discountTotal = bcadd($discountTotal, $discount, 4);
+                } elseif (in_array($data->discountType, ['EMPLOYEE', 'EMPLOYEE_SUBSIDY', 'CHARITY'], true) && $isEligible) {
+                    $discount = bcmul($itemGross, '0.2000', 4);
+                    $discountTotal = bcadd($discountTotal, $discount, 4);
                 }
 
                 $calculatedItems[] = [
@@ -110,7 +113,7 @@ final class InvoiceBillingService
                 'vat_amount'         => $vatReliefTotal,
                 'patient_payable'    => $patientPayable,
                 'paid_amount'        => '0.0000',
-                'status'             => 'UNPAID',
+                'status'             => bccomp($patientPayable, '0.0000', 4) === 0 ? 'SETTLED' : 'UNPAID',
             ]);
 
             // 5. Persist Invoice Line Items
@@ -179,11 +182,14 @@ final class InvoiceBillingService
                 ]);
             }
 
-            // 9. Update Patient Account Balances
-            $patient->increment('total_billed', (float) $grossTotal);
-            $patient->increment('current_balance', (float) $patientPayable);
+            // 9. Update Patient Account Balances using BCMath (no float arithmetic)
+            $patient->update([
+                'total_billed'    => bcadd((string) $patient->total_billed, $grossTotal, 4),
+                'current_balance' => bcadd((string) $patient->current_balance, $patientPayable, 4),
+            ]);
 
             // 10. Post Double-Entry Journal to General Ledger
+            $invoice->load('items');
             $this->postRevenueDoubleEntry($invoice, $data->invoiceDate, $data->hmoProvider, $grossTotal, $patientPayable, $philhealthDeduction, $hmoDeduction, $totalSeniorPwdDeduction);
 
             // CAS Audit Trail
@@ -211,11 +217,11 @@ final class InvoiceBillingService
         string $hmoAmount,
         string $discountAmount
     ): void {
-        $arPatientAccount    = Account::firstOrCreate(['code' => '1010'], ['name' => 'Accounts Receivable - Patients', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']);
-        $arPhilhealthAccount = Account::firstOrCreate(['code' => '1020'], ['name' => 'Accounts Receivable - PhilHealth', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']);
-        $arHmoAccount        = Account::firstOrCreate(['code' => '1030'], ['name' => 'Accounts Receivable - Private HMOs', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']);
-        $discountExpenseAcc  = Account::firstOrCreate(['code' => '5010'], ['name' => 'Senior Citizen & PWD Discounts', 'category' => 'EXPENSE', 'normal_balance' => 'DEBIT']);
-        $hospitalRevenueAcc  = Account::firstOrCreate(['code' => '4010'], ['name' => 'Hospital Inpatient & Clinical Revenue', 'category' => 'REVENUE', 'normal_balance' => 'CREDIT']);
+        $arPatientAccount    = Account::firstOrCreate(['code' => '1110'], ['name' => 'Accounts Receivable - Patient Copay', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']);
+        $arPhilhealthAccount = Account::firstOrCreate(['code' => '1120'], ['name' => 'Accounts Receivable - PhilHealth Claims', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']);
+        $arHmoAccount        = Account::firstOrCreate(['code' => '1130'], ['name' => 'Accounts Receivable - HMO Claims', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']);
+        $discountExpenseAcc  = Account::firstOrCreate(['code' => '4910'], ['name' => 'Statutory Discounts Allowed (Senior/PWD)', 'category' => 'EXPENSE', 'normal_balance' => 'DEBIT']);
+        $hospitalRevenueAcc  = Account::firstOrCreate(['code' => '4010'], ['name' => 'Inpatient Hospital Care Revenue', 'category' => 'REVENUE', 'normal_balance' => 'CREDIT']);
 
         $journalLines = [];
 
@@ -259,13 +265,65 @@ final class InvoiceBillingService
             );
         }
 
-        // Credit: Total Hospital Clinical Revenue
-        $journalLines[] = new JournalLineData(
-            accountId: $hospitalRevenueAcc->id,
-            debit: '0.0000',
-            credit: $grossTotal,
-            memo: 'Clinical gross revenue recognition on ' . $invoice->invoice_number
-        );
+        // Credit: Departmental Hospital Revenue Accounts (4010, 4020, 4030, 4040, 4050, 4060)
+        $deptMap = [
+            'ROOM_AND_BOARD' => ['code' => '4010', 'name' => 'Inpatient Hospital Care Revenue'],
+            'INPATIENT'      => ['code' => '4010', 'name' => 'Inpatient Hospital Care Revenue'],
+            'CONSULTATION'   => ['code' => '4020', 'name' => 'Outpatient & Consultation Revenue'],
+            'OUTPATIENT'     => ['code' => '4020', 'name' => 'Outpatient & Consultation Revenue'],
+            'EMERGENCY'      => ['code' => '4020', 'name' => 'Outpatient & Consultation Revenue'],
+            'EERTS'          => ['code' => '4020', 'name' => 'Outpatient & Consultation Revenue'],
+            'TOCS'           => ['code' => '4020', 'name' => 'Outpatient & Consultation Revenue'],
+            'LABORATORY'     => ['code' => '4030', 'name' => 'Laboratory Services Revenue'],
+            'LIS'            => ['code' => '4030', 'name' => 'Laboratory Services Revenue'],
+            'RADIOLOGY'      => ['code' => '4040', 'name' => 'Radiology & Imaging Revenue'],
+            'RIS'            => ['code' => '4040', 'name' => 'Radiology & Imaging Revenue'],
+            'PHARMACY'       => ['code' => '4050', 'name' => 'Pharmacy & Medical Supplies Revenue'],
+            'PMS'            => ['code' => '4050', 'name' => 'Pharmacy & Medical Supplies Revenue'],
+            'SURGERY'        => ['code' => '4060', 'name' => 'Operating Room & Surgical Revenue'],
+            'MISCELLANEOUS'  => ['code' => '4010', 'name' => 'Inpatient Hospital Care Revenue'],
+        ];
+
+        $items = $invoice->relationLoaded('items') ? $invoice->items : $invoice->items()->get();
+        if ($items->isNotEmpty()) {
+            $deptTotals = [];
+            foreach ($items as $item) {
+                $deptKey = strtoupper((string) ($item->department ?: 'ROOM_AND_BOARD'));
+                $mapping = $deptMap[$deptKey] ?? ['code' => '4010', 'name' => 'Hospital Inpatient & Clinical Revenue'];
+                $code = $mapping['code'];
+                $name = $mapping['name'];
+
+                $itemSubtotal = (string) ($item->subtotal ?: bcmul((string) ($item->quantity ?? 1), (string) ($item->unit_price ?? 0), 4));
+
+                if (! isset($deptTotals[$code])) {
+                    $deptTotals[$code] = ['name' => $name, 'total' => '0.0000'];
+                }
+                $deptTotals[$code]['total'] = bcadd($deptTotals[$code]['total'], $itemSubtotal, 4);
+            }
+
+            foreach ($deptTotals as $code => $info) {
+                if (bccomp($info['total'], '0.0000', 4) > 0) {
+                    $deptRevenueAcc = Account::firstOrCreate(
+                        ['code' => $code],
+                        ['name' => $info['name'], 'category' => 'REVENUE', 'normal_balance' => 'CREDIT']
+                    );
+
+                    $journalLines[] = new JournalLineData(
+                        accountId: $deptRevenueAcc->id,
+                        debit: '0.0000',
+                        credit: $info['total'],
+                        memo: "{$info['name']} recognition on {$invoice->invoice_number}"
+                    );
+                }
+            }
+        } else {
+            $journalLines[] = new JournalLineData(
+                accountId: $hospitalRevenueAcc->id,
+                debit: '0.0000',
+                credit: $grossTotal,
+                memo: 'Clinical gross revenue recognition on ' . $invoice->invoice_number
+            );
+        }
 
         $entryData = new JournalEntryData(
             referenceNumber: 'JE-REV-' . $invoice->invoice_number,
@@ -277,5 +335,39 @@ final class InvoiceBillingService
         );
 
         $this->journalEntryService->createAndPostEntry($entryData);
+    }
+
+    /**
+     * Helper method for CLI/encounter ingestion to create invoice, post GL journal entries, and return summary metrics array.
+     */
+    public function createAndPostEncounterInvoice(array $data): array
+    {
+        $dto = PatientInvoiceCreateData::fromArray([
+            'patient_account_id'                  => $data['patient_account_id'],
+            'invoice_date'                        => $data['invoice_date'] ?? date('Y-m-d'),
+            'discount_type'                       => $data['statutory_discount'] ?? $data['discount_type'] ?? null,
+            'id_card_number'                      => $data['osca_pwd_id'] ?? $data['id_card_number'] ?? null,
+            'philhealth_primary_case_rate_amount' => $data['philhealth_amount'] ?? $data['philhealth_primary_case_rate_amount'] ?? '0.0000',
+            'hmo_provider'                        => $data['hmo_provider'] ?? null,
+            'hmo_approved_limit'                  => $data['hmo_amount'] ?? $data['hmo_approved_limit'] ?? '0.0000',
+            'items'                               => $data['items'] ?? [],
+        ]);
+
+        $invoice = $this->createPatientInvoice($dto);
+
+        $philhealthClaim = $invoice->philhealthClaim;
+        $hmoClaim = $invoice->hmoClaims->first();
+
+        return [
+            'patient_mrn'             => $invoice->patientAccount->patient_id_number,
+            'invoice_number'          => $invoice->invoice_number,
+            'gross_total'             => (float) $invoice->total_amount,
+            'discount_total'          => (float) $invoice->discount_amount,
+            'philhealth_total'        => (float) ($philhealthClaim?->total_case_rate_amount ?? 0),
+            'hmo_total'               => (float) ($hmoClaim?->claimed_amount ?? 0),
+            'patient_copay'           => (float) $invoice->patient_payable,
+            'journal_entry_reference' => 'JE-REV-' . $invoice->invoice_number,
+            'invoice'                 => $invoice,
+        ];
     }
 }

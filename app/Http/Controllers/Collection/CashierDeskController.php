@@ -114,6 +114,10 @@ final class CashierDeskController extends Controller
             payorName: $validated['payor_name'] ?? null,
             payorTin: $validated['payor_tin'] ?? null,
             notes: $validated['notes'] ?? null,
+            splitCashAmount: ! empty($validated['split_cash_amount']) ? (string) $validated['split_cash_amount'] : null,
+            splitDigitalAmount: ! empty($validated['split_digital_amount']) ? (string) $validated['split_digital_amount'] : null,
+            splitDigitalChannel: $validated['split_digital_channel'] ?? null,
+            splitDigitalRef: $validated['split_digital_ref'] ?? null,
         );
 
         $payment = $this->cashierPaymentService->collectPayment($dto);

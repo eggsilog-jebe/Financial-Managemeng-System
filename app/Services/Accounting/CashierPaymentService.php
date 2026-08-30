@@ -105,6 +105,17 @@ final class CashierPaymentService
             }
 
             // 2. Create Payment Record
+            $isSplit = ($dto->paymentMethod === 'SPLIT_PAYMENT');
+            $splitCash = $isSplit ? (string) ($dto->splitCashAmount ?? '0.0000') : ($dto->paymentMethod === 'CASH' ? (string) $amount : '0.0000');
+            $splitDigital = $isSplit ? (string) ($dto->splitDigitalAmount ?? '0.0000') : ($dto->paymentMethod !== 'CASH' ? (string) $amount : '0.0000');
+            $splitDigitalChannel = $dto->splitDigitalChannel ?? 'DIGITAL';
+            $splitDigitalRef = $dto->splitDigitalRef ?? $dto->gatewayTransactionId;
+
+            $chanRef = $dto->gatewayTransactionId ?: ($dto->gatewayProvider ?: $paymentRef);
+            if ($isSplit) {
+                $chanRef = "Split: Cash ₱" . number_format((float) $splitCash, 2) . " + " . $splitDigitalChannel . " ₱" . number_format((float) $splitDigital, 2) . ($splitDigitalRef ? " (Ref: {$splitDigitalRef})" : "");
+            }
+
             $payment = Payment::create([
                 'payment_reference'       => $paymentRef,
                 'invoice_id'              => $invoice->id,
@@ -113,7 +124,7 @@ final class CashierPaymentService
                 'payment_date'            => $paymentDate,
                 'amount'                  => $amount,
                 'payment_method'          => $dto->paymentMethod,
-                'transaction_channel_ref' => $dto->gatewayTransactionId ?: ($dto->gatewayProvider ?: $paymentRef),
+                'transaction_channel_ref' => $chanRef,
                 'payment_type'            => 'PATIENT_COPAY',
             ]);
 
@@ -138,10 +149,15 @@ final class CashierPaymentService
             // 4. Update Invoice & Patient Balance
             $currentPayable = (string) $invoice->patient_payable;
             $newPayable = bcsub($currentPayable, (string) $amount, 4);
+            if (bccomp($newPayable, '0.0000', 4) < 0) {
+                $newPayable = '0.0000';
+            }
+            $newPaid = bcadd((string) $invoice->paid_amount, (string) $amount, 4);
             $isFullyPaid = bccomp($newPayable, '0.0000', 4) <= 0;
             
             $invoice->update([
-                'patient_payable' => $isFullyPaid ? '0.0000' : $newPayable,
+                'patient_payable' => $newPayable,
+                'paid_amount'     => $newPaid,
                 'status'          => $isFullyPaid ? 'SETTLED' : 'PARTIAL',
             ]);
 
@@ -157,10 +173,11 @@ final class CashierPaymentService
             if ($shiftId) {
                 $shift = CashierShift::find($shiftId);
                 if ($shift && $shift->status === 'OPEN') {
-                    if ($dto->paymentMethod === 'CASH') {
-                        $shift->expected_cash = bcadd((string) $shift->expected_cash, (string) $amount, 4);
-                    } else {
-                        $shift->total_digital_collections = bcadd((string) $shift->total_digital_collections, (string) $amount, 4);
+                    if (bccomp($splitCash, '0.0000', 4) > 0) {
+                        $shift->expected_cash = bcadd((string) $shift->expected_cash, $splitCash, 4);
+                    }
+                    if (bccomp($splitDigital, '0.0000', 4) > 0) {
+                        $shift->total_digital_collections = bcadd((string) $shift->total_digital_collections, $splitDigital, 4);
                     }
                     $shift->total_collections = bcadd((string) $shift->total_collections, (string) $amount, 4);
                     $shift->save();
@@ -168,32 +185,50 @@ final class CashierPaymentService
             }
 
             // 6. Balanced GL Journal Entry:
-            // DR 1011 (Cashier Undeposited Collections)
+            // DR 1011 (Cashier Undeposited Cash)
+            // DR 1002 (Digital Collections & POS Clearing)
             // CR 1120 (Accounts Receivable - Patients)
             $undepositedCashAcc = Account::firstOrCreate(
                 ['code' => '1011'],
                 ['name' => 'Cashier Undeposited Collections', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']
             );
 
-            $patientArAcc = Account::firstOrCreate(
-                ['code' => '1120'],
-                ['name' => 'Accounts Receivable - Patients', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']
+            $digitalClearingAcc = Account::firstOrCreate(
+                ['code' => '1002'],
+                ['name' => 'Digital Collections & POS Clearing', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']
             );
 
-            $lines = [
-                new JournalLineData(
+            $patientArAcc = Account::firstOrCreate(
+                ['code' => '1110'],
+                ['name' => 'Accounts Receivable - Patient Copay', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']
+            );
+
+            $lines = [];
+
+            if (bccomp($splitCash, '0.0000', 4) > 0) {
+                $lines[] = new JournalLineData(
                     accountId: $undepositedCashAcc->id,
-                    debit: (string) $amount,
+                    debit: $splitCash,
                     credit: '0.0000',
-                    memo: "Undeposited collection via {$dto->paymentMethod} [{$orNumber}]"
-                ),
-                new JournalLineData(
-                    accountId: $patientArAcc->id,
-                    debit: '0.0000',
-                    credit: (string) $amount,
-                    memo: "Patient AR settlement for Invoice #{$invoice->invoice_number}"
-                ),
-            ];
+                    memo: "Cash collection portion [{$orNumber}]"
+                );
+            }
+
+            if (bccomp($splitDigital, '0.0000', 4) > 0) {
+                $lines[] = new JournalLineData(
+                    accountId: $digitalClearingAcc->id,
+                    debit: $splitDigital,
+                    credit: '0.0000',
+                    memo: "{$splitDigitalChannel} collection portion" . ($splitDigitalRef ? " (Ref: {$splitDigitalRef})" : "") . " [{$orNumber}]"
+                );
+            }
+
+            $lines[] = new JournalLineData(
+                accountId: $patientArAcc->id,
+                debit: '0.0000',
+                credit: (string) $amount,
+                memo: "Patient AR settlement for Invoice #{$invoice->invoice_number}"
+            );
 
             $this->journalEntryService->createAndPostEntry(new JournalEntryData(
                 referenceNumber: 'JE-COL-' . $paymentRef,
@@ -315,12 +350,19 @@ final class CashierPaymentService
                 ]);
             }
 
-            // 2. Restore Invoice Payable
+            // 2. Restore Invoice Paid Amount & Patient Payable Status
             if ($payment->invoice) {
-                $cur = (string) $payment->invoice->patient_payable;
-                $restored = bcadd($cur, $amount, 4);
+                $curPayable = (string) $payment->invoice->patient_payable;
+                $restoredPayable = bcadd($curPayable, $amount, 4);
+
+                $curPaid = (string) $payment->invoice->paid_amount;
+                $restoredPaid = bcsub($curPaid, $amount, 4);
+                if (bccomp($restoredPaid, '0.0000', 4) < 0) {
+                    $restoredPaid = '0.0000';
+                }
                 $payment->invoice->update([
-                    'patient_payable' => $restored,
+                    'patient_payable' => $restoredPayable,
+                    'paid_amount'     => $restoredPaid,
                     'status'          => 'PARTIAL',
                 ]);
             }
@@ -341,8 +383,8 @@ final class CashierPaymentService
             );
 
             $patientArAcc = Account::firstOrCreate(
-                ['code' => '1120'],
-                ['name' => 'Accounts Receivable - Patients', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']
+                ['code' => '1110'],
+                ['name' => 'Accounts Receivable - Patient Copay', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']
             );
 
             $orNumber = $payment->officialReceipt?->or_number ?? $payment->payment_reference;

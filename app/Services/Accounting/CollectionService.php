@@ -83,16 +83,22 @@ final class CollectionService
                 'current_balance' => bccomp($newBal, '0.0000', 4) < 0 ? '0.0000' : $newBal,
             ]);
 
-            // 4. Update Cashier Shift Collections
+            // 4. Update Cashier Shift Collections using BCMath (no float arithmetic)
             if ($data->cashierShiftId) {
                 $shift = CashierShift::find($data->cashierShiftId);
                 if ($shift && $shift->status === 'OPEN') {
                     if ($data->paymentMethod === 'CASH') {
-                        $shift->increment('expected_cash', (float) $data->amount);
+                        $shift->update([
+                            'expected_cash' => bcadd((string) $shift->expected_cash, $data->amount, 4),
+                        ]);
                     } else {
-                        $shift->increment('total_digital_collections', (float) $data->amount);
+                        $shift->update([
+                            'total_digital_collections' => bcadd((string) $shift->total_digital_collections, $data->amount, 4),
+                        ]);
                     }
-                    $shift->increment('total_collections', (float) $data->amount);
+                    $shift->update([
+                        'total_collections' => bcadd((string) $shift->total_collections, $data->amount, 4),
+                    ]);
                 }
             }
 

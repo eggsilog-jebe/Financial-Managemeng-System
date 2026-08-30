@@ -26,7 +26,7 @@ final class PatientInvoiceController extends Controller
         $search = $request->query('search');
 
         $query = Invoice::with(['patientAccount', 'items', 'hmoClaims', 'philhealthClaim', 'statutoryDiscounts', 'creditNotes'])
-            ->latest('invoice_date');
+            ->latest('id');
 
         if ($status) {
             $query->where('status', $status);

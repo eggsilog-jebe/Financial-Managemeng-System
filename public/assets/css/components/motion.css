@@ -205,20 +205,22 @@ body,
 .profile-info { max-width: 180px; }
 .profile-chevron { max-width: 22px; }
 
-body.sidebar-collapsed .logo-text,
-body.sidebar-collapsed .nav-label,
-body.sidebar-collapsed .profile-info,
-body.sidebar-collapsed .profile-chevron,
-body.sidebar-collapsed .nav-link .badge,
-body.sidebar-collapsed .sidebar-nav .badge,
-body.sidebar-collapsed .nav-status,
-body.sidebar-collapsed .nav-chevron {
-  display: flex;
-  max-width: 0;
-  opacity: 0;
-  visibility: hidden;
+:is(body.sidebar-collapsed, html.sidebar-collapsed, .sidebar.is-collapsed) :is(
+  .logo-text,
+  .nav-label,
+  .profile-info,
+  .profile-chevron,
+  .nav-link .badge,
+  .sidebar-nav .badge,
+  .nav-status,
+  .nav-chevron
+) {
+  max-width: 0 !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
   transform: translate3d(-4px, 0, 0);
-  overflow: hidden;
+  overflow: hidden !important;
 }
 
 /* Navbar, dropdown, and button feedback */

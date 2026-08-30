@@ -86,7 +86,7 @@ final class BillingIngestionService
                 'total_amount'       => $grossTotal,
                 'insurance_covered'  => $insuranceCovered,
                 'patient_payable'    => $patientPayable,
-                'status'             => 'UNPAID',
+                'status'             => bccomp($patientPayable, '0.0000', 4) === 0 ? 'SETTLED' : 'UNPAID',
             ]);
 
             // 5. Persist Invoice Items
@@ -176,11 +176,11 @@ final class BillingIngestionService
         string $discountAmount
     ): void {
         // Resolve Accounts
-        $arPatientAccount    = Account::firstOrCreate(['code' => '1010'], ['name' => 'Accounts Receivable - Patients', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']);
-        $arPhilhealthAccount = Account::firstOrCreate(['code' => '1020'], ['name' => 'Accounts Receivable - PhilHealth', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']);
-        $arHmoAccount        = Account::firstOrCreate(['code' => '1030'], ['name' => 'Accounts Receivable - Private HMOs', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']);
-        $discountExpenseAcc  = Account::firstOrCreate(['code' => '5010'], ['name' => 'Senior Citizen & PWD Discounts', 'category' => 'EXPENSE', 'normal_balance' => 'DEBIT']);
-        $hospitalRevenueAcc  = Account::firstOrCreate(['code' => '4010'], ['name' => 'Hospital Inpatient & Clinical Revenue', 'category' => 'REVENUE', 'normal_balance' => 'CREDIT']);
+        $arPatientAccount    = Account::firstOrCreate(['code' => '1110'], ['name' => 'Accounts Receivable - Patient Copay', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']);
+        $arPhilhealthAccount = Account::firstOrCreate(['code' => '1120'], ['name' => 'Accounts Receivable - PhilHealth Claims', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']);
+        $arHmoAccount        = Account::firstOrCreate(['code' => '1130'], ['name' => 'Accounts Receivable - HMO Claims', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']);
+        $discountExpenseAcc  = Account::firstOrCreate(['code' => '4910'], ['name' => 'Statutory Discounts Allowed (Senior/PWD)', 'category' => 'EXPENSE', 'normal_balance' => 'DEBIT']);
+        $hospitalRevenueAcc  = Account::firstOrCreate(['code' => '4010'], ['name' => 'Inpatient Hospital Care Revenue', 'category' => 'REVENUE', 'normal_balance' => 'CREDIT']);
 
         $journalLines = [];
 

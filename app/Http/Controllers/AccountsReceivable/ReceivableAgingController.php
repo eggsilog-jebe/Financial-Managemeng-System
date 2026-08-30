@@ -19,9 +19,11 @@ final class ReceivableAgingController extends Controller
     public function index(Request $request): View
     {
         $asOfDate = $request->query('as_of_date', date('Y-m-d'));
-        $debtorType = $request->query('debtor_type');
+        $payorType = $request->query('payor_type', 'ALL');
+        $search = $request->query('search');
+        $admissionType = $request->query('admission_type', 'ALL');
 
-        $report = $this->agingService->getReceivableAgingReport($asOfDate, $debtorType);
+        $report = $this->agingService->getReceivableAgingReport($asOfDate, $payorType, $search, $admissionType);
 
         return view('accounts-receivable.receivable-aging', [
             'asOfDate'      => $report['as_of_date'],
@@ -33,7 +35,9 @@ final class ReceivableAgingController extends Controller
             'total120Plus'  => $report['total_120_plus'],
             'grandTotalAR'  => $report['grand_total'],
             'totalDebtors'  => $report['total_debtors'],
-            'debtorType'    => $debtorType,
+            'payorType'     => $payorType,
+            'search'        => $search,
+            'admissionType' => $admissionType,
         ]);
     }
 

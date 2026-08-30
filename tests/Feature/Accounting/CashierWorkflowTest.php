@@ -12,7 +12,7 @@ use App\Models\OfficialReceipt;
 use App\Models\PatientAccount;
 use App\Models\Payment;
 use App\Models\User;
-use Database\Seeders\PhilippineHealthcareChartOfAccountsSeeder;
+use Database\Seeders\ChartOfAccountsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -28,7 +28,7 @@ class CashierWorkflowTest extends TestCase
         parent::setUp();
 
         // 1. Seed Chart of Accounts
-        $this->seed(PhilippineHealthcareChartOfAccountsSeeder::class);
+        $this->seed(ChartOfAccountsSeeder::class);
 
         // 2. Setup Cashier User and Open Shift
         $this->cashier = User::factory()->create([

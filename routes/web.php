@@ -4,15 +4,8 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\GeneralLedgerController;
-use App\Http\Controllers\CashManagementController;
 use App\Http\Controllers\TaxManagementController;
-use App\Http\Controllers\AccountsPayableController;
-use App\Http\Controllers\AccountsReceivableController;
-use App\Http\Controllers\DisbursementController;
-use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\BudgetController;
-use App\Http\Controllers\FinancialReportingController;
 use App\Http\Controllers\GeneralLedger\ChartOfAccountsController;
 use App\Http\Controllers\GeneralLedger\JournalEntryController;
 use App\Http\Controllers\GeneralLedger\LedgerBookController;
@@ -60,6 +53,10 @@ use App\Http\Controllers\FinancialReporting\ProfitAndLossController;
 use App\Http\Controllers\FinancialReporting\CashFlowStatementController;
 use App\Http\Controllers\FinancialReporting\FinancialKpiDashboardController;
 use App\Http\Controllers\FinancialReporting\ExecutiveReportPackageController;
+
+// ─── External Subsystem Integration API Endpoints ──────────────────────────────
+Route::post('/ingest-encounter-billing', \App\Http\Controllers\Api\V1\Ingestion\SimulateEncounterBillingApiController::class)->name('ingest-encounter-billing');
+Route::post('/api/v1/ingest/encounter-billing', \App\Http\Controllers\Api\V1\Ingestion\SimulateEncounterBillingApiController::class)->name('api.v1.ingest.encounter-billing');
 
 // ─── Public: Authentication Routes (no auth required) ────────────────────────
 Route::middleware('guest')->group(function () {
@@ -203,6 +200,8 @@ Route::middleware(['auth'])->group(function () {
         });
         Route::middleware(['role:FinanceManager,CFO,FinanceDirector'])->group(function () {
             Route::post('/credit-notes/{id}/approve', [CreditNoteController::class, 'approve'])->name('credit-notes.approve');
+            Route::post('/credit-notes/{id}/post', [CreditNoteController::class, 'postCreditNote'])->name('credit-notes.post');
+            Route::post('/credit-notes/{id}/void', [CreditNoteController::class, 'void'])->name('credit-notes.void');
         });
 
         // Customer Statements of Account (SOA)
@@ -237,7 +236,11 @@ Route::middleware(['auth'])->group(function () {
         // EFT & Electronic Payouts
         Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector'])->group(function () {
             Route::get('/eft-transfers', [EftTransferController::class, 'index'])->name('eft-transfers');
+            Route::post('/eft-transfers', [EftTransferController::class, 'store'])->name('eft-transfers.store');
             Route::get('/eft-transfers/export', [EftTransferController::class, 'export'])->name('eft-transfers.export');
+        });
+        Route::middleware(['role:FinanceManager,CFO,FinanceDirector'])->group(function () {
+            Route::post('/eft-transfers/{id}/approve', [EftTransferController::class, 'approve'])->name('eft-transfers.approve');
         });
 
         // Disbursement Approvals & Release Workstation
@@ -407,7 +410,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard', FinancialDashboardController::class)->name('dashboard');
 
         // Cashier POS & Official Receipts
-        Route::middleware(['role:Cashier,CFO,FinanceDirector'])->group(function () {
+        Route::middleware(['role:Cashier,StaffAccountant,FinanceManager,CFO,FinanceDirector'])->group(function () {
             Route::get('/cashier', [CashierDeskController::class, 'index'])->name('cashier');
             Route::post('/cashier/pay', [CashierDeskController::class, 'collect'])->name('cashier.pay');
             Route::get('/print/or/{id}', [ExportAndPrintController::class, 'printOfficialReceipt'])->name('print.or');

@@ -27,8 +27,8 @@
     </div>
   @endif
 
-  <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <!-- Header & Toolbar -->
+  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
     <div>
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb mb-1 fs-xs">
@@ -38,22 +38,28 @@
         </ol>
       </nav>
       <h1 class="h3 mb-0 font-weight-bold">Patient Billing &amp; Invoicing Hub</h1>
-      <p class="text-muted fs-xs mb-0">Manage hospital bills, room charges, pharmacy fees, laboratory orders, and PhilHealth / HMO insurance deductions.</p>
+      <p class="text-muted fs-xs mb-0">Automated ingestion dashboard for BDMS/SPRS clinical encounters, PhilHealth case rates, and HMO guarantees.</p>
     </div>
-    <div class="d-flex align-items-center gap-2">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
       <x-integration-badge 
           type="external" 
           :systems="['BDMS', 'LIS (Lab)', 'RIS (Imaging)', 'PMS (Pharmacy)', 'IBMS', 'HICS (HMO Claims)']" 
-          glImpact="DR 1110/1130 (AR) / CR 4000-series (Revenue)" 
+          glImpact="DR 1110 (AR Copay) / DR 1120 (PhilHealth) / DR 1130 (HMO) / DR 4910 (Discounts) / CR 4010-4060 (Revenue)" 
           description="Central billing engine converting clinical orders into accounting receivables." 
       />
-      <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#createInvoiceModal">
-        <i class="ph ph-plus me-1"></i> Create Patient Invoice
-      </button>
+      <span class="badge bg-success-subtle text-success border border-success-subtle px-2.5 py-1.5 fs-xs fw-semibold">
+        <i class="ph ph-plugs-connected me-1"></i> BDMS / SPRS Ingestion Active
+      </span>
+      <a href="{{ route('ar.invoices.index') }}" class="btn btn-outline-primary btn-sm" title="Refresh Ingested Encounters">
+        <i class="ph ph-arrows-clockwise me-1"></i> Sync Ingestion Queue
+      </a>
+      <a href="#" class="btn btn-outline-secondary btn-sm" onclick="alert('Exporting Billing Register CSV...'); return false;">
+        <i class="ph ph-download-simple me-1"></i> Export Billing Register CSV
+      </a>
     </div>
   </div>
 
-  <!-- Summary Cards -->
+  <!-- Executive Summary Cards -->
   <div class="row g-3 mb-4">
     <div class="col-md-4">
       <div class="card border-0 shadow-sm rounded-3 p-3">
@@ -84,7 +90,7 @@
     </div>
   </div>
 
-  <!-- Invoices Table Card -->
+  <!-- Invoices Monitoring Table Card -->
   <div class="card border-0 shadow-sm rounded-3">
     <div class="card-header bg-transparent border-bottom p-3">
       <form method="GET" action="{{ route('ar.invoices.index') }}" class="d-flex flex-wrap justify-content-between align-items-center gap-3">
@@ -133,13 +139,61 @@
                 'PARTIAL'         => 'bg-warning-subtle text-warning',
                 default           => 'bg-danger-subtle text-danger',
               };
+
+              $drawerPayload = [
+                'invoice_number' => $inv->invoice_number,
+                'patient_name'   => $inv->patientAccount?->full_name ?? 'Unknown Patient',
+                'patient_mrn'    => $inv->patientAccount?->patient_id_number ?? 'MRN-UNSET',
+                'admission_type' => strtoupper($inv->patientAccount?->admission_type ?? 'INPATIENT'),
+                'invoice_date'   => $inv->invoice_date ? $inv->invoice_date->format('M d, Y') : '—',
+                'status'         => $inv->status,
+                'gross_total'        => $gross,
+                'insurance'          => $insurance,
+                'discount'           => $disc,
+                'copay'              => $copay,
+                'statutory_category' => $inv->effective_discount_category,
+                'gl_reference'       => 'JE-REV-' . $inv->invoice_number,
+                'gl_url'             => url('/general-ledger/journal-entries') . '?search=JE-REV-' . $inv->invoice_number,
+                'items'          => $inv->items->map(fn($i) => [
+                  'department'   => $i->department ?? $i->revenue_category ?? 'CLINICAL',
+                  'description'  => $i->description,
+                  'quantity'     => (float) $i->quantity,
+                  'unit_price'   => (float) $i->unit_price,
+                  'gross_amount' => (float) $i->gross_amount,
+                ])->values()->toArray(),
+                'philhealth'     => $inv->philhealthClaim ? [
+                  'series_no'    => $inv->philhealthClaim->claim_series_number,
+                  'member_pin'   => $inv->philhealthClaim->member_pin ?? 'N/A',
+                  'icd_code'     => $inv->philhealthClaim->primary_icd_code ?? 'N/A',
+                  'case_code'    => $inv->philhealthClaim->primary_case_code ?? 'N/A',
+                  'amount'       => (float) $inv->philhealthClaim->total_case_rate_amount,
+                ] : null,
+                'hmo'            => $inv->hmoClaims->first() ? [
+                  'provider'     => $inv->hmoClaims->first()->hmo_provider,
+                  'limit'        => (float) $inv->hmoClaims->first()->approved_limit,
+                  'claimed'      => (float) $inv->hmoClaims->first()->claimed_amount,
+                  'loa_number'   => $inv->hmoClaims->first()->loa_number ?? 'N/A',
+                ] : null,
+                'statutory'      => $inv->statutoryDiscounts->first() ? [
+                  'type'         => $inv->statutoryDiscounts->first()->discount_type,
+                  'id_number'    => $inv->statutoryDiscounts->first()->id_card_number ?? 'N/A',
+                  'amount'       => (float) $inv->statutoryDiscounts->first()->discount_amount,
+                ] : null,
+              ];
             @endphp
             <tr>
               <td>
                 <span class="font-monospace fw-bold text-primary">{{ $inv->invoice_number }}</span>
               </td>
               <td>
-                <div class="fw-semibold text-dark">{{ $inv->patientAccount?->full_name ?? 'Unknown Patient' }}</div>
+                <div class="fw-semibold text-dark d-flex align-items-center gap-1">
+                  {{ $inv->patientAccount?->full_name ?? 'Unknown Patient' }}
+                  @if($inv->effective_discount_category === 'SENIOR_CITIZEN')
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle ms-1" style="font-size: 10px;"><i class="ph ph-heart me-1"></i>Senior 20%</span>
+                  @elseif($inv->effective_discount_category === 'PWD')
+                    <span class="badge bg-teal-subtle text-teal border border-teal-subtle ms-1" style="background-color: #e6fffa; color: #0d9488; border-color: #99f6e4 !important; font-size: 10px;"><i class="ph ph-wheelchair me-1"></i>PWD 20%</span>
+                  @endif
+                </div>
                 <div class="fs-xs text-muted font-monospace">{{ $inv->patientAccount?->patient_id_number ?? 'MRN' }}</div>
               </td>
               <td>{{ $inv->invoice_date ? $inv->invoice_date->format('M d, Y') : '—' }}</td>
@@ -152,15 +206,18 @@
               </td>
               <td class="text-end">
                 <div class="d-flex justify-content-end gap-1">
+                  <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2 fs-xs" title="View Inspection Drawer" onclick="openInvoiceDetailsDrawer(this)" data-invoice="{{ json_encode($drawerPayload) }}">
+                    <i class="ph ph-eye me-1"></i> View Details
+                  </button>
                   <a href="{{ route('ar.invoices.print', $inv->id) }}" target="_blank" class="btn btn-sm btn-outline-secondary py-1 px-2 fs-xs" title="Print Billing Statement">
-                    <i class="ph ph-printer me-1"></i> Print
+                    <i class="ph ph-printer me-1"></i> Statement
                   </a>
                 </div>
               </td>
             </tr>
             @empty
             <tr>
-              <td colspan="9" class="text-center py-4 text-muted">No patient invoices found matching filter.</td>
+              <td colspan="9" class="text-center py-4 text-muted">No ingested patient encounter invoices found matching filter.</td>
             </tr>
             @endforelse
           </tbody>
@@ -168,7 +225,7 @@
       </div>
     </div>
     <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs">Showing {{ $invoices->firstItem() ?? 0 }} - {{ $invoices->lastItem() ?? 0 }} of {{ $invoices->total() }} Invoices</span>
+      <span class="text-muted fs-xs">Showing {{ $invoices->firstItem() ?? 0 }} - {{ $invoices->lastItem() ?? 0 }} of {{ $invoices->total() }} Ingested Invoices</span>
       <div>
         {{ $invoices->links() }}
       </div>
@@ -176,121 +233,119 @@
   </div>
 </div>
 
-<!-- Modal: Create Patient Invoice -->
-<div class="modal fade" id="createInvoiceModal" tabindex="-1" aria-labelledby="createInvoiceModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered">
-    <div class="modal-content border-0 shadow">
-      <div class="modal-header border-bottom">
-        <h5 class="modal-title font-weight-bold"><i class="ph ph-receipt me-2 text-primary"></i>Generate Patient Discharge &amp; Encounter Invoice</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Offcanvas Inspection Drawer: Encounter Details -->
+<div class="offcanvas offcanvas-end shadow-lg border-0" tabindex="-1" id="invoiceDetailsDrawer" style="width: 850px; max-width: 92vw;" aria-labelledby="invoiceDetailsDrawerLabel">
+  <div class="offcanvas-header border-bottom bg-light">
+    <div>
+      <h5 class="offcanvas-title font-weight-bold text-dark" id="invoiceDetailsDrawerLabel">
+        <i class="ph ph-file-text me-2 text-primary"></i>Encounter Inspection Drawer
+      </h5>
+      <span class="font-monospace text-primary fw-bold fs-6" id="drawerInvoiceNumber"></span>
+    </div>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+  </div>
+  <div class="offcanvas-body p-4">
+    <!-- Patient Profile Header -->
+    <div class="p-3 bg-light rounded-3 border mb-4">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <div>
+          <h6 class="fw-bold mb-0 text-dark" id="drawerPatientName"></h6>
+          <span class="fs-xs font-monospace text-muted" id="drawerPatientMrn"></span>
+        </div>
+        <div class="text-end">
+          <div class="d-flex align-items-center justify-content-end gap-1 mb-1">
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle" id="drawerAdmissionType"></span>
+            <span id="drawerStatutoryBadge"></span>
+          </div>
+          <div>
+            <span class="badge bg-secondary-subtle text-dark" id="drawerStatus"></span>
+          </div>
+        </div>
       </div>
-      <form method="POST" action="{{ route('ar.invoices.store') }}" id="createInvoiceForm">
-        @csrf
-        <div class="modal-body p-4">
-          <!-- Patient & Master Details -->
-          <div class="row g-3 mb-4">
-            <div class="col-md-5">
-              <label class="form-label small fw-semibold">Select Patient <span class="text-danger">*</span></label>
-              <select name="patient_account_id" class="form-select form-select-sm" required>
-                <option value="">-- Choose Patient Account --</option>
-                @foreach($patients as $p)
-                  <option value="{{ $p->id }}">{{ $p->full_name }} ({{ $p->patient_id_number }}) - {{ $p->admission_type }}</option>
-                @endforeach
-              </select>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label small fw-semibold">Invoice Date <span class="text-danger">*</span></label>
-              <input type="date" name="invoice_date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label small fw-semibold">Statutory Discount (RA 9994 / RA 10754)</label>
-              <select name="discount_type" class="form-select form-select-sm">
-                <option value="">None (Standard Rate)</option>
-                <option value="SENIOR_CITIZEN">Senior Citizen (20% + 12% VAT Relief)</option>
-                <option value="PWD">Person with Disability (20% + 12% VAT Relief)</option>
-                <option value="EMPLOYEE">Hospital Employee Subsidy</option>
-                <option value="CHARITY">Social Service / Charity Subsidy</option>
-              </select>
-            </div>
-          </div>
+    </div>
 
-          <!-- Insurance & Claims Section -->
-          <div class="p-3 bg-light rounded-3 mb-4">
-            <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-primary"></i> Third-Party Coverage (PhilHealth &amp; HMO Guarantees)</h6>
-            <div class="row g-3">
-              <div class="col-md-4">
-                <label class="form-label small text-muted">PhilHealth Primary Case Rate Amount</label>
-                <div class="input-group input-group-sm">
-                  <span class="input-group-text">₱</span>
-                  <input type="number" step="0.01" name="philhealth_primary_case_rate_amount" class="form-control" placeholder="0.00">
-                </div>
-              </div>
-              <div class="col-md-4">
-                <label class="form-label small text-muted">HMO Provider Name</label>
-                <input type="text" name="hmo_provider" class="form-control form-control-sm" placeholder="e.g. Maxicare / Intellicare">
-              </div>
-              <div class="col-md-4">
-                <label class="form-label small text-muted">HMO Approved Limit</label>
-                <div class="input-group input-group-sm">
-                  <span class="input-group-text">₱</span>
-                  <input type="number" step="0.01" name="hmo_approved_limit" class="form-control" placeholder="0.00">
-                </div>
-              </div>
+    <!-- Section A: Clinical Line Items Table -->
+    <div class="mb-4">
+      <h6 class="fw-bold text-dark mb-2"><i class="ph ph-list-numbers me-1 text-primary"></i> Ingested Clinical Charge Sheet</h6>
+      <div class="table-responsive border rounded-3">
+        <table class="table table-sm table-striped align-middle mb-0 fs-xs">
+          <thead class="table-light">
+            <tr>
+              <th class="text-nowrap">Dept</th>
+              <th class="text-nowrap">Description / Particulars</th>
+              <th class="text-center text-nowrap">Qty</th>
+              <th class="text-end text-nowrap">Unit Price</th>
+              <th class="text-end text-nowrap">Gross (₱)</th>
+            </tr>
+          </thead>
+          <tbody id="drawerItemsBody">
+            <!-- Dynamic Rows populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Section B: Third-Party & Statutory Coverage Breakdown -->
+    <div class="mb-4">
+      <h6 class="fw-bold text-dark mb-2"><i class="ph ph-shield-check me-1 text-primary"></i> Insurance &amp; Statutory Coverage Breakdown</h6>
+      <div class="row g-2">
+        <!-- PhilHealth Card -->
+        <div class="col-md-6">
+          <div class="p-3 border rounded-3 bg-white h-100">
+            <span class="badge bg-info-subtle text-info fw-semibold mb-2"><i class="ph ph-hospital me-1"></i> PhilHealth Case Rate</span>
+            <div id="drawerPhilhealthInfo" class="fs-xs text-muted">
+              <span class="text-muted">No PhilHealth deduction applied.</span>
             </div>
-          </div>
-
-          <!-- Itemized Departmental Charges -->
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h6 class="fw-bold text-dark mb-0 fs-xs text-uppercase"><i class="ph ph-list-numbers me-1 text-primary"></i> Departmental Billable Items</h6>
-            <button type="button" class="btn btn-xs btn-outline-primary" onclick="addInvoiceLineItem()">
-              <i class="ph ph-plus me-1"></i> Add Line Item
-            </button>
-          </div>
-
-          <div class="table-responsive mb-3 border rounded">
-            <table class="table table-sm align-middle mb-0" id="invoiceItemsTable">
-              <thead class="table-light">
-                <tr>
-                  <th style="width: 15%;">Department</th>
-                  <th style="width: 40%;">Description / Procedure</th>
-                  <th style="width: 15%;">Quantity</th>
-                  <th style="width: 15%;">Unit Price (₱)</th>
-                  <th style="width: 15%;" class="text-end">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="invoiceItemsBody">
-                <tr>
-                  <td>
-                    <select name="items[0][department]" class="form-select form-select-sm">
-                      <option value="CLINICAL">Clinical / Ward</option>
-                      <option value="PHARMACY">Pharmacy</option>
-                      <option value="LIS">Laboratory (LIS)</option>
-                      <option value="RIS">Radiology (RIS)</option>
-                      <option value="SURGERY">Operating Room</option>
-                    </select>
-                  </td>
-                  <td>
-                    <input type="text" name="items[0][description]" class="form-control form-control-sm" placeholder="e.g. Inpatient Room Board 3 Days" required>
-                  </td>
-                  <td>
-                    <input type="number" name="items[0][quantity]" class="form-control form-control-sm" value="1" min="1" step="1" required>
-                  </td>
-                  <td>
-                    <input type="number" name="items[0][unit_price]" class="form-control form-control-sm" placeholder="0.00" step="0.01" required>
-                  </td>
-                  <td class="text-end">
-                    <button type="button" class="btn btn-sm btn-outline-danger btn-icon" onclick="this.closest('tr').remove()"><i class="ph ph-trash"></i></button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
           </div>
         </div>
-        <div class="modal-footer border-top">
-          <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-check me-1"></i> Post Invoice to General Ledger</button>
+
+        <!-- HMO Guarantee Card -->
+        <div class="col-md-6">
+          <div class="p-3 border rounded-3 bg-white h-100">
+            <span class="badge bg-primary-subtle text-primary fw-semibold mb-2"><i class="ph ph-shield me-1"></i> HMO Guarantee Letter</span>
+            <div id="drawerHmoInfo" class="fs-xs text-muted">
+              <span class="text-muted">No HMO guarantee applied.</span>
+            </div>
+          </div>
         </div>
-      </form>
+      </div>
+
+      <!-- Statutory Discount Banner -->
+      <div id="drawerStatutoryBanner" class="mt-2 p-2.5 bg-warning-subtle border border-warning-subtle rounded-3 text-warning-emphasis fs-xs" style="display: none;">
+        <i class="ph ph-heart-break me-1"></i> <span id="drawerStatutoryText"></span>
+      </div>
+    </div>
+
+    <!-- Section C: Financial Summary Card -->
+    <div class="card border-0 bg-light p-3 rounded-3 mb-4">
+      <div class="d-flex justify-content-between mb-1 fs-xs text-muted">
+        <span>Gross Billable Charges:</span>
+        <span class="font-monospace text-dark fw-semibold" id="drawerGross"></span>
+      </div>
+      <div class="d-flex justify-content-between mb-1 fs-xs text-muted">
+        <span>Statutory Discount (20% + VAT Relief):</span>
+        <span class="font-monospace text-muted" id="drawerDiscount"></span>
+      </div>
+      <div class="d-flex justify-content-between mb-1 fs-xs text-muted">
+        <span>Insurance Coverage (PhilHealth + HMO):</span>
+        <span class="font-monospace text-info" id="drawerInsurance"></span>
+      </div>
+      <hr class="my-2 border-secondary-subtle">
+      <div class="d-flex justify-content-between align-items-center">
+        <span class="fw-bold text-dark fs-sm">NET PATIENT COPAY:</span>
+        <span class="font-monospace fw-bold text-danger fs-5" id="drawerCopay"></span>
+      </div>
+    </div>
+
+    <!-- Section D: Linked General Ledger Journal Entry -->
+    <div class="p-3 border rounded-3 bg-white d-flex align-items-center justify-content-between">
+      <div>
+        <div class="fs-xs text-muted">Linked GL Journal Entry Reference:</div>
+        <div class="font-monospace fw-bold text-primary" id="drawerGlReference"></div>
+      </div>
+      <a id="drawerGlLink" href="#" target="_blank" class="btn btn-sm btn-outline-primary fs-xs">
+        <i class="ph ph-arrow-square-out me-1"></i> View Journal Entry in GL
+      </a>
     </div>
   </div>
 </div>
@@ -298,35 +353,106 @@
 
 @push('scripts')
 <script>
-let lineIndex = 1;
-function addInvoiceLineItem() {
-  const tbody = document.getElementById('invoiceItemsBody');
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td>
-      <select name="items[${lineIndex}][department]" class="form-select form-select-sm">
-        <option value="CLINICAL">Clinical / Ward</option>
-        <option value="PHARMACY">Pharmacy</option>
-        <option value="LIS">Laboratory (LIS)</option>
-        <option value="RIS">Radiology (RIS)</option>
-        <option value="SURGERY">Operating Room</option>
-      </select>
-    </td>
-    <td>
-      <input type="text" name="items[${lineIndex}][description]" class="form-control form-control-sm" placeholder="e.g. CBC / Chest X-Ray / Meds" required>
-    </td>
-    <td>
-      <input type="number" name="items[${lineIndex}][quantity]" class="form-control form-control-sm" value="1" min="1" step="1" required>
-    </td>
-    <td>
-      <input type="number" name="items[${lineIndex}][unit_price]" class="form-control form-control-sm" placeholder="0.00" step="0.01" required>
-    </td>
-    <td class="text-end">
-      <button type="button" class="btn btn-sm btn-outline-danger btn-icon" onclick="this.closest('tr').remove()"><i class="ph ph-trash"></i></button>
-    </td>
-  `;
-  tbody.appendChild(tr);
-  lineIndex++;
+function formatCurrency(val) {
+  return '₱ ' + (parseFloat(val) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function openInvoiceDetailsDrawer(btn) {
+  const payloadRaw = btn.getAttribute('data-invoice');
+  if (!payloadRaw) return;
+
+  try {
+    const data = JSON.parse(payloadRaw);
+
+    // Master Info
+    document.getElementById('drawerInvoiceNumber').textContent = data.invoice_number;
+    document.getElementById('drawerPatientName').textContent = data.patient_name;
+    document.getElementById('drawerPatientMrn').textContent = 'MRN: ' + data.patient_mrn + ' | Date: ' + data.invoice_date;
+    document.getElementById('drawerAdmissionType').textContent = data.admission_type;
+    document.getElementById('drawerStatus').textContent = data.status;
+
+    // Statutory Badge in Header
+    const statBadgeEl = document.getElementById('drawerStatutoryBadge');
+    if (statBadgeEl) {
+      if (data.statutory_category === 'PWD') {
+        statBadgeEl.innerHTML = `<span class="badge bg-teal-subtle text-teal border border-teal-subtle ms-1" style="background-color: #e6fffa; color: #0d9488; border-color: #99f6e4 !important;"><i class="ph ph-wheelchair me-1"></i>♿ PWD 20%</span>`;
+      } else if (data.statutory_category === 'SENIOR_CITIZEN') {
+        statBadgeEl.innerHTML = `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle ms-1"><i class="ph ph-heart me-1"></i>👴 Senior 20%</span>`;
+      } else {
+        statBadgeEl.innerHTML = '';
+      }
+    }
+
+    // Line Items Table
+    const tbody = document.getElementById('drawerItemsBody');
+    tbody.innerHTML = '';
+    if (data.items && data.items.length > 0) {
+      data.items.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="text-nowrap"><span class="badge bg-light text-dark border">${item.department}</span></td>
+          <td class="fw-semibold text-dark text-nowrap">${item.description}</td>
+          <td class="text-center font-monospace text-nowrap">${item.quantity}</td>
+          <td class="text-end font-monospace text-nowrap">${formatCurrency(item.unit_price)}</td>
+          <td class="text-end font-monospace fw-bold text-dark text-nowrap">${formatCurrency(item.gross_amount)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } else {
+      tbody.innerHTML = `<tr><td colspan="5" class="text-center py-2 text-muted text-nowrap">No line items recorded.</td></tr>`;
+    }
+
+    // PhilHealth Info
+    const phicEl = document.getElementById('drawerPhilhealthInfo');
+    if (data.philhealth && data.philhealth.amount > 0) {
+      phicEl.innerHTML = `
+        <div class="fw-bold text-dark text-nowrap">Deduction: ${formatCurrency(data.philhealth.amount)}</div>
+        <div class="text-nowrap">Series #: <span class="font-monospace">${data.philhealth.series_no}</span></div>
+        <div class="text-nowrap">Member PIN: <span class="font-monospace">${data.philhealth.member_pin}</span></div>
+      `;
+    } else {
+      phicEl.innerHTML = `<span class="text-muted text-nowrap">No PhilHealth deduction applied.</span>`;
+    }
+
+    // HMO Info
+    const hmoEl = document.getElementById('drawerHmoInfo');
+    if (data.hmo && data.hmo.claimed > 0) {
+      hmoEl.innerHTML = `
+        <div class="fw-bold text-dark text-nowrap">${data.hmo.provider}</div>
+        <div class="text-nowrap">Coverage: ${formatCurrency(data.hmo.claimed)} / ${formatCurrency(data.hmo.limit)}</div>
+        <div class="text-nowrap">LOA #: <span class="font-monospace">${data.hmo.loa_number}</span></div>
+      `;
+    } else {
+      hmoEl.innerHTML = `<span class="text-muted text-nowrap">No HMO guarantee applied.</span>`;
+    }
+
+    // Statutory Discount Banner
+    const statBanner = document.getElementById('drawerStatutoryBanner');
+    const statText = document.getElementById('drawerStatutoryText');
+    if (data.statutory && data.statutory.amount > 0) {
+      statBanner.style.display = 'block';
+      statText.textContent = `Applied ${data.statutory.type} statutory discount of ${formatCurrency(data.statutory.amount)} (ID #: ${data.statutory.id_number})`;
+    } else {
+      statBanner.style.display = 'none';
+    }
+
+    // Financial Totals
+    document.getElementById('drawerGross').textContent = formatCurrency(data.gross_total);
+    document.getElementById('drawerDiscount').textContent = (data.discount > 0 ? '- ' : '') + formatCurrency(data.discount);
+    document.getElementById('drawerInsurance').textContent = (data.insurance > 0 ? '- ' : '') + formatCurrency(data.insurance);
+    document.getElementById('drawerCopay').textContent = formatCurrency(data.copay);
+
+    // GL Link
+    document.getElementById('drawerGlReference').textContent = data.gl_reference;
+    document.getElementById('drawerGlLink').href = data.gl_url;
+
+    // Show Offcanvas Drawer
+    const drawerEl = document.getElementById('invoiceDetailsDrawer');
+    const bsOffcanvas = bootstrap.Offcanvas.getOrCreateInstance(drawerEl);
+    bsOffcanvas.show();
+  } catch (err) {
+    console.error('Failed to parse invoice drawer data:', err);
+  }
 }
 </script>
 @endpush

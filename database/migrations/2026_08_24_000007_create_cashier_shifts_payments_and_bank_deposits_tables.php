@@ -36,7 +36,7 @@ return new class extends Migration
             $table->foreignId('cashier_shift_id')->nullable()->constrained('cashier_shifts')->nullOnDelete();
             $table->date('payment_date')->index();
             $table->decimal('amount', 15, 4);
-            $table->enum('payment_method', ['CASH', 'CREDIT_CARD', 'DEBIT_CARD', 'QR_PH', 'GCASH', 'MAYA', 'CHECK', 'ONLINE_BANK'])->default('CASH')->index();
+            $table->enum('payment_method', ['CASH', 'CREDIT_CARD', 'DEBIT_CARD', 'QR_PH', 'GCASH', 'MAYA', 'CHECK', 'ONLINE_BANK', 'BANK_TRANSFER', 'SPLIT_PAYMENT'])->default('CASH')->index();
             $table->string('transaction_channel_ref', 100)->nullable(); // POS Auth Code / GCash Reference
             $table->enum('payment_type', ['PATIENT_COPAY', 'ADMISSION_DEPOSIT', 'HMO_SETTLEMENT', 'PHILHEALTH_SETTLEMENT'])->default('PATIENT_COPAY')->index();
             $table->timestamps();

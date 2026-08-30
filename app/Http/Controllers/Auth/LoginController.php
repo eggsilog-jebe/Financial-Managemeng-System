@@ -53,15 +53,20 @@ final class LoginController extends Controller
      */
     public function quickLogin(string $role): RedirectResponse
     {
-        $email = match (strtolower($role)) {
-            'cfo'        => 'cfo@hospital.local',
-            'cashier'    => 'cashier@hospital.local',
-            'accountant' => 'accountant@hospital.local',
-            'auditor'    => 'auditor@hospital.local',
-            default      => 'cfo@hospital.local',
+        $roleKey = strtolower($role);
+        $email = match ($roleKey) {
+            'cfo'                  => 'cfo@hospital.test',
+            'manager', 'financemanager' => 'manager@hospital.test',
+            'accountant', 'staffaccountant' => 'accountant@hospital.test',
+            'billing', 'billingclerk' => 'billing@hospital.test',
+            'cashier'              => 'cashier@hospital.test',
+            'auditor'              => 'auditor@hospital.test',
+            default                => 'cfo@hospital.test',
         };
 
-        $user = \App\Models\User::where('email', $email)->first();
+        $user = \App\Models\User::where('email', $email)
+            ->orWhere('email', str_replace('.test', '.local', $email))
+            ->first();
 
         if ($user) {
             Auth::login($user, true);

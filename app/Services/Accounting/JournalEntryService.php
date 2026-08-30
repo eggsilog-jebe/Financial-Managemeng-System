@@ -174,6 +174,43 @@ final class JournalEntryService
                 'reversed_by_entry_id' => $reversal->id,
             ]);
 
+            // Sync with linked CreditNote if this was a credit note journal entry
+            if (str_starts_with($originalEntry->reference_number, 'JE-CN-')) {
+                $cnNum = substr($originalEntry->reference_number, 6);
+                $creditNote = \App\Models\CreditNote::with(['invoice', 'patientAccount'])
+                    ->where('credit_note_number', $cnNum)
+                    ->first();
+
+                if ($creditNote && $creditNote->status !== 'VOID') {
+                    $amount = (string) $creditNote->amount;
+                    $invoice = $creditNote->invoice;
+                    $patient = $creditNote->patientAccount;
+
+                    if ($invoice) {
+                        $restoredPayable = bcadd((string) $invoice->patient_payable, $amount, 4);
+                        $restoredDiscount = bcsub((string) $invoice->discount_amount, $amount, 4);
+                        if (bccomp($restoredDiscount, '0.0000', 4) < 0) {
+                            $restoredDiscount = '0.0000';
+                        }
+
+                        $invoice->update([
+                            'patient_payable' => $restoredPayable,
+                            'discount_amount' => $restoredDiscount,
+                            'status'          => 'PARTIAL',
+                        ]);
+                    }
+
+                    if ($patient) {
+                        $restoredBalance = bcadd((string) $patient->current_balance, $amount, 4);
+                        $patient->update(['current_balance' => $restoredBalance]);
+                    }
+
+                    $creditNote->update([
+                        'status' => 'VOID',
+                    ]);
+                }
+            }
+
             // Audit log for reversal
             $this->auditTrailService->logFinancialEvent(
                 auditable: $originalEntry,

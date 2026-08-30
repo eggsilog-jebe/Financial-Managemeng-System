@@ -157,8 +157,9 @@
             <tbody>
               @forelse($pendingInvoices as $inv)
                 @php
-                  $copay = (float) $inv->patient_payable;
-                  $isZeroCopay = ($copay <= 0.0001);
+                  $copayFormatted = number_format((float) $inv->patient_payable, 2, '.', '');
+                  $copayVal = (float) $copayFormatted;
+                  $isZeroCopay = ($copayVal <= 0.00);
                 @endphp
                 <tr class="{{ $isZeroCopay ? 'table-light text-muted' : '' }}">
                   <td>
@@ -173,7 +174,7 @@
                     <span class="badge bg-secondary-subtle text-secondary">{{ $inv->patientAccount?->admission_type ?? 'Outpatient' }}</span>
                   </td>
                   <td class="text-end font-monospace fw-bold {{ $isZeroCopay ? 'text-success' : 'text-primary' }}">
-                    ₱{{ number_format($copay, 2) }}
+                    ₱{{ number_format($copayVal, 2) }}
                   </td>
                   <td class="text-center">
                     @if($isZeroCopay)
@@ -190,10 +191,65 @@
                 </tr>
 
                 @if(! $isZeroCopay)
-                  <!-- Settle Payment Modal -->
-                  <div class="modal fade" id="payModal{{ $inv->id }}" tabindex="-1" aria-hidden="true">
+                  <!-- Settle Payment Modal (Minimalist Fintech Design) -->
+                  <div class="modal fade" id="payModal{{ $inv->id }}" tabindex="-1" aria-hidden="true"
+                       x-data="{
+                           settlementAmount: '{{ $copayFormatted }}',
+                           paymentMethod: 'CASH',
+                           amountTendered: '{{ $copayFormatted }}',
+                           splitCashAmount: '0.00',
+                           splitCashTendered: '0.00',
+                           splitDigitalAmount: '0.00',
+                           splitDigitalChannel: 'CREDIT_CARD',
+                           get changeAmount() {
+                               if (this.paymentMethod === 'SPLIT_PAYMENT') {
+                                   const c = parseFloat(this.splitCashAmount) || 0;
+                                   const t = parseFloat(this.splitCashTendered) || 0;
+                                   return (t >= c ? (t - c) : 0).toFixed(2);
+                               }
+                               if (this.paymentMethod !== 'CASH') return '0.00';
+                               const s = parseFloat(this.settlementAmount) || 0;
+                               const t = parseFloat(this.amountTendered) || 0;
+                               return (t >= s ? (t - s) : 0).toFixed(2);
+                           },
+                           get splitTotalSum() {
+                               const c = parseFloat(this.splitCashAmount) || 0;
+                               const d = parseFloat(this.splitDigitalAmount) || 0;
+                               return c + d;
+                           },
+                           get isSplitValid() {
+                               if (this.paymentMethod !== 'SPLIT_PAYMENT') return true;
+                               const s = parseFloat(this.settlementAmount) || 0;
+                               const sum = this.splitTotalSum;
+                               return Math.abs(sum - s) < 0.01 && sum > 0;
+                           },
+                           get isUnderTendered() {
+                               if (this.paymentMethod === 'SPLIT_PAYMENT') {
+                                   return ! this.isSplitValid;
+                               }
+                               if (this.paymentMethod !== 'CASH') return false;
+                               const s = parseFloat(this.settlementAmount) || 0;
+                               const t = parseFloat(this.amountTendered) || 0;
+                               return t < s;
+                           },
+                           get formattedChange() {
+                               const c = parseFloat(this.changeAmount) || 0;
+                               return '₱ ' + c.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                           },
+                           onChannelChange() {
+                               if (this.paymentMethod === 'SPLIT_PAYMENT') {
+                                   const s = parseFloat(this.settlementAmount) || 0;
+                                   const half = (s / 2).toFixed(2);
+                                   this.splitCashAmount = half;
+                                   this.splitDigitalAmount = (s - parseFloat(half)).toFixed(2);
+                                   this.splitCashTendered = half;
+                               } else if (this.paymentMethod !== 'CASH') {
+                                   this.amountTendered = this.settlementAmount;
+                               }
+                           }
+                       }">
                     <div class="modal-dialog modal-dialog-centered">
-                      <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                      <div class="modal-content border-0 shadow-sm rounded-4 overflow-hidden bg-white">
                         <form method="POST" action="{{ route('collection.cashier-desk.collect') }}">
                           @csrf
                           <input type="hidden" name="invoice_id" value="{{ $inv->id }}">
@@ -201,84 +257,154 @@
                             <input type="hidden" name="cashier_shift_id" value="{{ $activeShift->id }}">
                           @endif
                           
-                          <div class="modal-header bg-primary text-white border-0 py-3 px-4">
-                            <h5 class="modal-title fw-bold mb-0">
-                              <i class="ph ph-receipt me-2"></i>Cashier Counter Settlement
-                            </h5>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                          <!-- Minimal Header -->
+                          <div class="modal-header bg-white border-bottom border-light-subtle py-3 px-4 align-items-center">
+                            <h6 class="modal-title fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                              <i class="ph ph-receipt text-primary fs-5"></i> Counter Settlement
+                            </h6>
+                            <button type="button" class="btn-close fs-xs" data-bs-dismiss="modal" aria-label="Close"></button>
                           </div>
 
                           <div class="modal-body p-4">
-                            <div class="p-3 bg-light rounded-3 mb-3">
+                            <!-- Patient Summary Card -->
+                            <div class="p-3 bg-light border border-light-subtle rounded-3 mb-3">
                               <div class="d-flex justify-content-between text-muted fs-xs mb-1">
-                                <span>Patient Name:</span>
+                                <span>Patient:</span>
                                 <strong class="text-dark">{{ $inv->patientAccount?->full_name ?? 'Patient' }}</strong>
                               </div>
-                              <div class="d-flex justify-content-between text-muted fs-xs mb-1">
-                                <span>Invoice Number:</span>
-                                <strong class="text-dark font-monospace">{{ $inv->invoice_number }}</strong>
+                              <div class="d-flex justify-content-between text-muted fs-xs mb-2">
+                                <span>Invoice Reference:</span>
+                                <span class="font-monospace text-secondary fw-semibold">{{ $inv->invoice_number }}</span>
                               </div>
-                              <div class="d-flex justify-content-between text-muted fs-xs">
-                                <span>Total Gross Amount:</span>
-                                <span>₱{{ number_format((float) $inv->total_amount, 2) }}</span>
-                              </div>
-                              <hr class="my-2">
-                              <div class="d-flex justify-content-between fs-sm fw-bold text-dark">
-                                <span>Net Patient Copay Due:</span>
-                                <span class="text-primary fs-5">₱{{ number_format($copay, 2) }}</span>
+                              <div class="d-flex justify-content-between align-items-baseline pt-2 border-top border-light-subtle">
+                                <span class="fs-xs fw-semibold text-muted text-uppercase">Net Copay Due</span>
+                                <span class="fs-4 font-monospace fw-bold text-dark">₱ {{ number_format($copayVal, 2) }}</span>
                               </div>
                             </div>
 
                             <div class="mb-3">
-                              <label class="form-label small fw-semibold">Settlement Amount (₱) <span class="text-danger">*</span></label>
-                              <input type="number" step="0.01" min="0.01" max="{{ $copay }}" name="amount" id="payAmount{{ $inv->id }}" class="form-control font-monospace fw-bold" 
-                                     value="{{ $copay }}" required oninput="calcChange('{{ $inv->id }}')">
+                              <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label fs-xs fw-semibold text-muted text-uppercase mb-0">Settlement Amount (₱) <span class="text-danger">*</span></label>
+                                <span class="badge bg-light text-secondary border font-monospace fs-xs fw-normal">Partial Allowed</span>
+                              </div>
+                              <input type="number" step="0.01" min="0.01" max="{{ $copayFormatted }}" name="amount" id="payAmount{{ $inv->id }}" class="form-control form-control-sm font-monospace fw-bold" 
+                                     x-model="settlementAmount" required>
+                              <small class="text-primary fs-xs mt-1 d-block" x-show="parseFloat(settlementAmount || 0) < {{ $copayFormatted }} && parseFloat(settlementAmount || 0) > 0">
+                                <i class="ph ph-info me-1"></i>Partial payment of ₱<span x-text="parseFloat(settlementAmount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"></span>. Remaining balance will be ₱<span x-text="({{ $copayFormatted }} - parseFloat(settlementAmount || 0)).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"></span>.
+                              </small>
                             </div>
 
                             <div class="mb-3">
-                              <label class="form-label small fw-semibold">Payment Channel <span class="text-danger">*</span></label>
-                              <select name="payment_method" id="payMethod{{ $inv->id }}" class="form-select fw-medium" required onchange="toggleChannelFields('{{ $inv->id }}')">
-                                <option value="CASH">💵 Cash (Cash Drawer)</option>
-                                <option value="GCASH">📱 GCash E-Wallet</option>
-                                <option value="MAYA">📱 Maya Digital Wallet</option>
-                                <option value="QR_PH">💳 QR Ph Interoperable</option>
-                                <option value="CREDIT_CARD">💳 Credit Card (POS Terminal)</option>
-                                <option value="DEBIT_CARD">💳 Debit Card (POS Terminal)</option>
-                                <option value="CHECK">📜 Bank Manager's Check</option>
+                              <label class="form-label fs-xs fw-semibold text-muted text-uppercase mb-1">Payment Channel <span class="text-danger">*</span></label>
+                              <select name="payment_method" id="payMethod{{ $inv->id }}" class="form-select form-select-sm fw-medium" required x-model="paymentMethod" @change="onChannelChange()">
+                                <option value="CASH">Cash (Cash Drawer)</option>
+                                <option value="GCASH">GCash E-Wallet</option>
+                                <option value="MAYA">Maya Digital Wallet</option>
+                                <option value="QR_PH">QR Ph Interoperable</option>
+                                <option value="CREDIT_CARD">Credit Card (POS Terminal)</option>
+                                <option value="DEBIT_CARD">Debit Card (POS Terminal)</option>
+                                <option value="BANK_TRANSFER">Bank Transfer / EFT</option>
+                                <option value="CHECK">Bank Manager's Check</option>
+                                <option value="SPLIT_PAYMENT">Split / Multiple Tender (Cash + Card/Digital)</option>
                               </select>
                             </div>
 
-                            <div class="row g-2 mb-3" id="cashInputs{{ $inv->id }}">
+                            <!-- Single Cash Channel Row -->
+                            <div class="row g-2 mb-3" x-show="paymentMethod === 'CASH'">
                               <div class="col-md-6">
-                                <label class="form-label small fw-semibold">Amount Tendered (₱)</label>
-                                <input type="number" step="0.01" min="0" name="tendered_amount" id="tendered{{ $inv->id }}" class="form-control font-monospace" placeholder="0.00" oninput="calcChange('{{ $inv->id }}')">
+                                <label class="form-label fs-xs fw-semibold text-muted text-uppercase mb-1">Amount Tendered (₱) <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" min="0" name="tendered_amount" id="tendered{{ $inv->id }}" class="form-control form-control-sm font-monospace" placeholder="0.00" x-model="amountTendered">
+                                <template x-if="isUnderTendered && paymentMethod === 'CASH'">
+                                  <div class="mt-2">
+                                    <small class="text-danger fw-semibold d-block mb-1 fs-xs">
+                                      <i class="ph ph-warning-circle me-1"></i>Tendered (₱<span x-text="parseFloat(amountTendered || 0).toLocaleString('en-US', {minimumFractionDigits: 2})"></span>) is less than settlement (₱<span x-text="parseFloat(settlementAmount || 0).toLocaleString('en-US', {minimumFractionDigits: 2})"></span>).
+                                    </small>
+                                    <button type="button" @click="settlementAmount = amountTendered" class="btn btn-outline-danger btn-xs py-1 px-2 fs-xs">
+                                      <i class="ph ph-check me-1"></i>Set Settlement to ₱<span x-text="parseFloat(amountTendered || 0).toLocaleString('en-US', {minimumFractionDigits: 2})"></span>
+                                    </button>
+                                  </div>
+                                </template>
                               </div>
                               <div class="col-md-6">
-                                <label class="form-label small fw-semibold">Change to Customer (₱)</label>
-                                <input type="text" id="change{{ $inv->id }}" class="form-control bg-light font-monospace text-success fw-bold" value="₱0.00" readonly>
+                                <label class="form-label fs-xs fw-semibold text-muted text-uppercase mb-1">Change (₱)</label>
+                                <input type="text" id="change{{ $inv->id }}" class="form-control form-control-sm bg-light font-monospace text-success fw-bold" :value="formattedChange" readonly>
                               </div>
                             </div>
 
-                            <div class="mb-3" id="transRefGroup{{ $inv->id }}" style="display: none;">
-                              <label class="form-label small fw-semibold">Transaction / Auth Code (Digital / Card)</label>
-                              <input type="text" name="gateway_transaction_id" class="form-control font-monospace" placeholder="e.g. GCash Ref # or POS Terminal Auth Code">
+                            <!-- Multi-Tender / Split Payment Breakdown Card -->
+                            <div class="border border-light-subtle bg-light-subtle rounded-3 p-3 mb-3" x-show="paymentMethod === 'SPLIT_PAYMENT'">
+                              <div class="fw-semibold text-secondary fs-xs text-uppercase mb-2 d-flex align-items-center gap-1">
+                                <i class="ph ph-arrows-split"></i> Multi-Tender Breakdown
+                              </div>
+                              
+                              <!-- Tender 1: Cash Portion -->
+                              <div class="row g-2 mb-2 pb-2 border-bottom border-light-subtle">
+                                <div class="col-md-5">
+                                  <label class="form-label fs-xs text-muted mb-1">Tender 1 (Cash)</label>
+                                  <input type="text" class="form-control form-control-sm bg-white" value="Cash (Cash Drawer)" readonly>
+                                </div>
+                                <div class="col-md-3">
+                                  <label class="form-label fs-xs text-muted mb-1">Amount (₱)</label>
+                                  <input type="number" step="0.01" min="0" name="split_cash_amount" class="form-control form-control-sm font-monospace" placeholder="0.00" x-model="splitCashAmount">
+                                </div>
+                                <div class="col-md-4">
+                                  <label class="form-label fs-xs text-muted mb-1">Tendered (₱)</label>
+                                  <input type="number" step="0.01" min="0" class="form-control form-control-sm font-monospace" placeholder="0.00" x-model="splitCashTendered">
+                                </div>
+                              </div>
+
+                              <!-- Tender 2: Digital / Card Portion -->
+                              <div class="row g-2 mb-2">
+                                <div class="col-md-5">
+                                  <label class="form-label fs-xs text-muted mb-1">Tender 2 (Digital/Card)</label>
+                                  <select name="split_digital_channel" class="form-select form-select-sm fw-medium" x-model="splitDigitalChannel">
+                                    <option value="CREDIT_CARD">Credit Card POS</option>
+                                    <option value="DEBIT_CARD">Debit Card POS</option>
+                                    <option value="GCASH">GCash E-Wallet</option>
+                                    <option value="MAYA">Maya Digital Wallet</option>
+                                    <option value="BANK_TRANSFER">Bank Transfer / EFT</option>
+                                  </select>
+                                </div>
+                                <div class="col-md-3">
+                                  <label class="form-label fs-xs text-muted mb-1">Amount (₱)</label>
+                                  <input type="number" step="0.01" min="0" name="split_digital_amount" class="form-control form-control-sm font-monospace" placeholder="0.00" x-model="splitDigitalAmount">
+                                </div>
+                                <div class="col-md-4">
+                                  <label class="form-label fs-xs text-muted mb-1">Auth / Ref #</label>
+                                  <input type="text" name="split_digital_ref" class="form-control form-control-sm font-monospace" placeholder="Ref #">
+                                </div>
+                              </div>
+
+                              <!-- Cash Change display for Split Cash portion -->
+                              <div class="d-flex justify-content-between align-items-center pt-2 border-top border-light-subtle fs-xs">
+                                <span class="text-muted">Cash Change: <strong class="text-success font-monospace" x-text="formattedChange"></strong></span>
+                                <span :class="isSplitValid ? 'text-success fw-semibold' : 'text-danger fw-semibold'">
+                                  <i :class="isSplitValid ? 'ph ph-check-circle me-1' : 'ph ph-warning-circle me-1'"></i>
+                                  <span x-text="isSplitValid ? 'Split Sum Matches' : 'Sum (₱' + splitTotalSum.toFixed(2) + ') ≠ Settlement (₱' + (parseFloat(settlementAmount)||0).toFixed(2) + ')'"></span>
+                                </span>
+                              </div>
+                            </div>
+
+                            <div class="mb-3" x-show="paymentMethod !== 'CASH' && paymentMethod !== 'SPLIT_PAYMENT'">
+                              <label class="form-label fs-xs fw-semibold text-muted text-uppercase mb-1">Transaction / Auth Code</label>
+                              <input type="text" name="gateway_transaction_id" class="form-control form-control-sm font-monospace" placeholder="e.g. GCash Ref # or POS Auth Code">
                             </div>
 
                             <div class="mb-3">
-                              <label class="form-label small fw-semibold">Payor Name (for BIR OR)</label>
-                              <input type="text" name="payor_name" class="form-control form-control-sm" value="{{ $inv->patientAccount?->full_name }}" placeholder="e.g. Maria Santos / Self">
+                              <label class="form-label fs-xs fw-semibold text-muted text-uppercase mb-1">Payor Name (for BIR Receipt)</label>
+                              <input type="text" name="payor_name" class="form-control form-control-sm" value="{{ $inv->patientAccount?->full_name }}" placeholder="e.g. Payor Full Name">
                             </div>
 
                             <div class="mb-0">
-                              <label class="form-label small fw-semibold">Official Receipt Memo</label>
-                              <input type="text" name="notes" class="form-control form-control-sm" placeholder="Counter settlement memo...">
+                              <label class="form-label fs-xs fw-semibold text-muted text-uppercase mb-1">Receipt Remarks</label>
+                              <input type="text" name="notes" class="form-control form-control-sm" placeholder="Settlement memo...">
                             </div>
                           </div>
 
-                          <div class="modal-footer bg-light border-0 py-3 px-4">
-                            <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary px-4 fw-semibold">
-                              <i class="ph ph-printer me-1"></i> Post &amp; Issue BIR Receipt
+                          <div class="modal-footer bg-white border-top border-light-subtle py-3 px-4 d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-sm btn-primary px-3 fw-medium shadow-sm" :disabled="isUnderTendered">
+                              <i class="ph ph-check-circle me-1"></i> Post &amp; Issue BIR Receipt
                             </button>
                           </div>
                         </form>

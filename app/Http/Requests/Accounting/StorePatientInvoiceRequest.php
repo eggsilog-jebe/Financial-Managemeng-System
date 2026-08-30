@@ -19,7 +19,7 @@ final class StorePatientInvoiceRequest extends FormRequest
             'patient_account_id'                    => ['required', 'exists:patient_accounts,id'],
             'invoice_date'                          => ['required', 'date'],
             'due_date'                              => ['nullable', 'date', 'after_or_equal:invoice_date'],
-            'discount_type'                         => ['nullable', 'string', 'in:SENIOR_CITIZEN,PWD,EMPLOYEE,CHARITY'],
+            'discount_type'                         => ['nullable', 'string', 'in:NONE,SENIOR_CITIZEN,PWD,EMPLOYEE,EMPLOYEE_SUBSIDY,CHARITY'],
             'id_card_number'                        => ['nullable', 'string', 'max:50'],
             'philhealth_member_pin'                 => ['nullable', 'string', 'max:30'],
             'philhealth_primary_icd'                => ['nullable', 'string', 'max:20'],

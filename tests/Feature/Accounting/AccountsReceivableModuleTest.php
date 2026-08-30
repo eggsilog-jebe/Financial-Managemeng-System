@@ -259,9 +259,16 @@ final class AccountsReceivableModuleTest extends TestCase
         $this->assertEquals('DRAFT', $creditNote->status);
         $this->assertEquals('2000.0000', $creditNote->amount);
 
-        // 2. Approve Credit Note (Finance Manager)
+        // Assert NO GL Journal Entry and NO balance reduction while in DRAFT status
+        $this->assertFalse(JournalEntry::where('reference_number', 'JE-CN-' . $creditNote->credit_note_number)->exists());
+        $invoice->refresh();
+        $this->assertEquals('10000.0000', $invoice->patient_payable);
+        $patient->refresh();
+        $this->assertEquals('10000.0000', $patient->current_balance);
+
+        // 2. Approve & Post Credit Note (Finance Manager)
         $this->actingAs($this->manager);
-        $approveResponse = $this->post("/accounts-receivable/credit-notes/{$creditNote->id}/approve");
+        $approveResponse = $this->post("/accounts-receivable/credit-notes/{$creditNote->id}/post");
         $approveResponse->assertRedirect();
 
         $creditNote->refresh();
@@ -286,6 +293,119 @@ final class AccountsReceivableModuleTest extends TestCase
         $totalCredit = (string) $je->lines->sum('credit');
         $this->assertEquals(0, bccomp($totalDebit, $totalCredit, 4));
         $this->assertEquals(0, bccomp($totalDebit, '2000.0000', 4));
+    }
+
+    /** @test */
+    public function test_credit_note_direct_immediate_posting(): void
+    {
+        $this->actingAs($this->manager);
+
+        $patient = PatientAccount::create([
+            'patient_id_number' => 'MRN-CN-DIRECT',
+            'full_name'         => 'Direct Post Patient',
+            'current_balance'   => '5000.0000',
+            'status'            => 'Active',
+        ]);
+
+        $invoice = Invoice::create([
+            'invoice_number'     => 'INV-CN-DIRECT',
+            'patient_account_id' => $patient->id,
+            'invoice_date'       => '2026-01-10',
+            'total_amount'       => '5000.0000',
+            'patient_payable'    => '5000.0000',
+            'paid_amount'        => '0.0000',
+            'discount_amount'    => '0.0000',
+            'status'             => 'UNPAID',
+        ]);
+
+        // Direct Post (save_as_draft = false)
+        $response = $this->post('/accounts-receivable/credit-notes', [
+            'invoice_id'    => $invoice->id,
+            'amount'        => 1500.00,
+            'reason'        => 'BILLING_ADJUSTMENT',
+            'issue_date'    => '2026-01-15',
+            'save_as_draft' => 0,
+        ]);
+        $response->assertRedirect();
+
+        $creditNote = CreditNote::where('invoice_id', $invoice->id)->first();
+        $this->assertNotNull($creditNote);
+        $this->assertEquals('POSTED', $creditNote->status);
+
+        $invoice->refresh();
+        $this->assertEquals('3500.0000', $invoice->patient_payable);
+
+        $patient->refresh();
+        $this->assertEquals('3500.0000', $patient->current_balance);
+
+        $je = JournalEntry::where('reference_number', 'JE-CN-' . $creditNote->credit_note_number)->first();
+        $this->assertNotNull($je);
+        $this->assertEquals('POSTED', $je->status);
+    }
+
+    /** @test */
+    public function test_statutory_discount_duplicate_prevention_and_reversal_allowance(): void
+    {
+        $this->actingAs($this->manager);
+
+        $patient = PatientAccount::create([
+            'patient_id_number' => 'MRN-STAT-01',
+            'full_name'         => 'Statutory Patient',
+            'current_balance'   => '10000.0000',
+            'status'            => 'Active',
+        ]);
+
+        $invoice = Invoice::create([
+            'invoice_number'     => 'INV-STAT-01',
+            'patient_account_id' => $patient->id,
+            'invoice_date'       => '2026-01-10',
+            'total_amount'       => '10000.0000',
+            'patient_payable'    => '10000.0000',
+            'paid_amount'        => '0.0000',
+            'discount_amount'    => '0.0000',
+            'status'             => 'UNPAID',
+        ]);
+
+        // 1. Issue 1st Statutory Discount (Senior Citizen)
+        $res1 = $this->post('/accounts-receivable/credit-notes', [
+            'invoice_id' => $invoice->id,
+            'amount'     => 2000.00,
+            'reason'     => 'SENIOR_CITIZEN_DISCOUNT',
+            'issue_date' => '2026-01-15',
+        ]);
+        $res1->assertRedirect();
+        $cn1 = CreditNote::where('invoice_id', $invoice->id)->first();
+        $this->assertNotNull($cn1);
+
+        // 2. Attempt 2nd Statutory Discount (PWD) on same invoice -> MUST FAIL VALIDATION
+        $res2 = $this->post('/accounts-receivable/credit-notes', [
+            'invoice_id' => $invoice->id,
+            'amount'     => 1000.00,
+            'reason'     => 'PWD_DISCOUNT',
+            'issue_date' => '2026-01-16',
+        ]);
+        $res2->assertSessionHasErrors('reason');
+
+        // 3. Issue valid non-statutory discount (Charity Subsidy) on same invoice -> MUST SUCCEED
+        $res3 = $this->post('/accounts-receivable/credit-notes', [
+            'invoice_id' => $invoice->id,
+            'amount'     => 1000.00,
+            'reason'     => 'CHARITY_SUBSIDY',
+            'issue_date' => '2026-01-17',
+        ]);
+        $res3->assertRedirect();
+        $this->assertEquals(2, CreditNote::where('invoice_id', $invoice->id)->count());
+
+        // 4. Void 1st statutory credit note -> allows new statutory credit note
+        $cn1->update(['status' => 'VOID']);
+        $res4 = $this->post('/accounts-receivable/credit-notes', [
+            'invoice_id' => $invoice->id,
+            'amount'     => 2000.00,
+            'reason'     => 'PWD_DISCOUNT',
+            'issue_date' => '2026-01-18',
+        ]);
+        $res4->assertRedirect();
+        $this->assertEquals(3, CreditNote::where('invoice_id', $invoice->id)->count());
     }
 
     /** @test */
@@ -320,12 +440,36 @@ final class AccountsReceivableModuleTest extends TestCase
             'status'            => 'COMPLETED',
         ]);
 
+        // Add a posted credit note for ₱3,000.00
+        CreditNote::create([
+            'credit_note_number' => 'CN-SOA-POSTED',
+            'invoice_id'         => $invoice->id,
+            'patient_account_id' => $patient->id,
+            'issue_date'         => '2026-01-14',
+            'amount'             => '3000.0000',
+            'reason'             => 'SENIOR_CITIZEN_DISCOUNT',
+            'status'             => 'POSTED',
+        ]);
+
+        // Add a VOID credit note for ₱2,000.00 (should be excluded from SOA movements)
+        CreditNote::create([
+            'credit_note_number' => 'CN-SOA-VOIDED',
+            'invoice_id'         => $invoice->id,
+            'patient_account_id' => $patient->id,
+            'issue_date'         => '2026-01-14',
+            'amount'             => '2000.0000',
+            'reason'             => 'ERRONEOUS_ADJUSTMENT',
+            'status'             => 'VOID',
+        ]);
+
         // 1. View SOA in App
         $response = $this->get("/accounts-receivable/customer-statements?patient_id={$patient->id}&start_date=2026-01-01&end_date=2026-01-31");
         $response->assertStatus(200);
         $response->assertSee('Manuel L. Quezon');
         $response->assertSee('INV-SOA-01');
         $response->assertSee('OR-2026-0019');
+        $response->assertSee('CN-SOA-POSTED');
+        $response->assertDontSee('CN-SOA-VOIDED');
 
         // 2. Printable SOA
         $printResponse = $this->get("/accounts-receivable/customer-statements/print?patient_id={$patient->id}&start_date=2026-01-01&end_date=2026-01-31");
@@ -384,5 +528,192 @@ final class AccountsReceivableModuleTest extends TestCase
         $this->actingAs($this->manager);
         $res5 = $this->post("/accounts-receivable/credit-notes/{$cn->id}/approve");
         $res5->assertRedirect();
+    }
+
+    /** @test */
+    public function test_credit_note_validation_rejects_amount_exceeding_invoice_balance(): void
+    {
+        $this->actingAs($this->billingClerk);
+
+        $patient = PatientAccount::create([
+            'patient_id_number' => 'MRN-CN-EXCEED-01',
+            'full_name'         => 'Validation Test Patient',
+            'current_balance'   => '3000.0000',
+            'status'            => 'Active',
+        ]);
+
+        $invoice = Invoice::create([
+            'invoice_number'     => 'INV-CN-EXCEED-01',
+            'patient_account_id' => $patient->id,
+            'invoice_date'       => '2026-01-10',
+            'total_amount'       => '3000.0000',
+            'patient_payable'    => '3000.0000',
+            'paid_amount'        => '0.0000',
+            'discount_amount'    => '0.0000',
+            'status'             => 'UNPAID',
+        ]);
+
+        // Attempt to create credit note with amount > patient_payable
+        $response = $this->from('/accounts-receivable/credit-notes')->post('/accounts-receivable/credit-notes', [
+            'invoice_id' => $invoice->id,
+            'amount'     => 5000.00,
+            'reason'     => 'SENIOR_CITIZEN_DISCOUNT',
+            'issue_date' => '2026-01-15',
+        ]);
+
+        $response->assertRedirect('/accounts-receivable/credit-notes');
+        $response->assertSessionHasErrors('amount');
+        $this->assertDatabaseMissing('credit_notes', ['invoice_id' => $invoice->id]);
+    }
+
+    /** @test */
+    public function test_credit_note_voiding_and_reversal_gl_posting(): void
+    {
+        $this->actingAs($this->manager);
+
+        $patient = PatientAccount::create([
+            'patient_id_number' => 'MRN-CN-VOID-01',
+            'full_name'         => 'Void Test Patient',
+            'current_balance'   => '10000.0000',
+            'status'            => 'Active',
+        ]);
+
+        $invoice = Invoice::create([
+            'invoice_number'     => 'INV-CN-VOID-01',
+            'patient_account_id' => $patient->id,
+            'invoice_date'       => '2026-01-10',
+            'total_amount'       => '10000.0000',
+            'patient_payable'    => '10000.0000',
+            'paid_amount'        => '0.0000',
+            'discount_amount'    => '0.0000',
+            'status'             => 'UNPAID',
+        ]);
+
+        // 1. Create and Approve Credit Note for ₱4,000.00
+        $cn = CreditNote::create([
+            'credit_note_number' => 'CN-VOID-001',
+            'invoice_id'         => $invoice->id,
+            'patient_account_id' => $patient->id,
+            'issue_date'         => '2026-01-12',
+            'amount'             => '4000.0000',
+            'reason'             => 'SENIOR_CITIZEN_DISCOUNT',
+            'status'             => 'DRAFT',
+        ]);
+
+        $this->post("/accounts-receivable/credit-notes/{$cn->id}/approve");
+
+        $invoice->refresh();
+        $patient->refresh();
+        $this->assertEquals('6000.0000', $invoice->patient_payable);
+        $this->assertEquals('6000.0000', $patient->current_balance);
+
+        // 2. Void the Credit Note
+        $voidResponse = $this->post("/accounts-receivable/credit-notes/{$cn->id}/void", [
+            'void_reason' => 'Erroneous Senior Citizen Discount applied',
+        ]);
+        $voidResponse->assertRedirect();
+
+        $cn->refresh();
+        $invoice->refresh();
+        $patient->refresh();
+
+        $this->assertEquals('VOID', $cn->status);
+        $this->assertEquals('10000.0000', $invoice->patient_payable);
+        $this->assertEquals('0.0000', $invoice->discount_amount);
+        $this->assertEquals('10000.0000', $patient->current_balance);
+
+        // 3. Verify Reversing Journal Entry
+        $revJe = JournalEntry::with('lines')->where('reference_number', 'JE-REV-CN-' . $cn->credit_note_number)->first();
+        $this->assertNotNull($revJe);
+        $this->assertEquals('POSTED', $revJe->status);
+        $this->assertEquals(0, bccomp((string) $revJe->lines->sum('debit'), (string) $revJe->lines->sum('credit'), 4));
+        $this->assertEquals(0, bccomp((string) $revJe->lines->sum('debit'), '4000.0000', 4));
+    }
+
+    /** @test */
+    public function test_credit_note_model_scopes(): void
+    {
+        $patient = PatientAccount::create(['patient_id_number' => 'MRN-SCOPE-01', 'full_name' => 'Scope Patient']);
+        $inv = Invoice::create([
+            'invoice_number'     => 'INV-SCOPE-01',
+            'patient_account_id' => $patient->id,
+            'invoice_date'       => '2026-01-10',
+            'total_amount'       => '5000.0000',
+            'patient_payable'    => '5000.0000',
+            'status'             => 'UNPAID',
+        ]);
+
+        CreditNote::create([
+            'credit_note_number' => 'CN-SCOPE-DRAFT',
+            'invoice_id'         => $inv->id,
+            'patient_account_id' => $patient->id,
+            'issue_date'         => '2026-01-10',
+            'amount'             => '1000.0000',
+            'reason'             => 'DISCOUNT',
+            'status'             => 'DRAFT',
+        ]);
+
+        CreditNote::create([
+            'credit_note_number' => 'CN-SCOPE-POSTED',
+            'invoice_id'         => $inv->id,
+            'patient_account_id' => $patient->id,
+            'issue_date'         => '2026-01-11',
+            'amount'             => '2000.0000',
+            'reason'             => 'DISCOUNT',
+            'status'             => 'POSTED',
+        ]);
+
+        $this->assertCount(1, CreditNote::draft()->get());
+        $this->assertCount(1, CreditNote::posted()->get());
+        $this->assertCount(2, CreditNote::forInvoice($inv->id)->get());
+    }
+
+    /** @test */
+    public function test_patient_accounts_directory_renders_effective_statutory_badge_from_active_credit_note(): void
+    {
+        $this->actingAs($this->accountant);
+
+        $patient = PatientAccount::create([
+            'patient_id_number' => 'MRN-BADGE-01',
+            'full_name'         => 'Badge Test Patient',
+            'discount_category' => 'NONE',
+            'current_balance'   => '8000.0000',
+            'status'            => 'Active',
+        ]);
+
+        $invoice = Invoice::create([
+            'invoice_number'     => 'INV-BADGE-01',
+            'patient_account_id' => $patient->id,
+            'invoice_date'       => '2026-01-10',
+            'total_amount'       => '10000.0000',
+            'patient_payable'    => '8000.0000',
+            'status'             => 'PARTIAL',
+        ]);
+
+        CreditNote::create([
+            'credit_note_number' => 'CN-BADGE-01',
+            'invoice_id'         => $invoice->id,
+            'patient_account_id' => $patient->id,
+            'issue_date'         => '2026-01-10',
+            'amount'             => '2000.0000',
+            'reason'             => 'PWD_DISCOUNT',
+            'status'             => 'POSTED',
+        ]);
+
+        $response = $this->get('/accounts-receivable/patient-accounts?search=Badge+Test+Patient');
+        $response->assertStatus(200);
+        $response->assertSee('PWD 20%');
+        $response->assertSee('PWD (RA 10754)');
+
+        // Assert Invoicing & Billing view displays PWD badge and payload
+        $invResponse = $this->get('/accounts-receivable/invoices?search=INV-BADGE-01');
+        $invResponse->assertStatus(200);
+        $invResponse->assertSee('PWD 20%');
+        $invResponse->assertSee('&quot;statutory_category&quot;:&quot;PWD&quot;', false);
+
+        // Assert Receivable Aging displays PWD badge beside admission type
+        $agingResponse = $this->get('/accounts-receivable/receivable-aging?search=Badge+Test+Patient');
+        $agingResponse->assertStatus(200);
+        $agingResponse->assertSee('PWD 20%');
     }
 }

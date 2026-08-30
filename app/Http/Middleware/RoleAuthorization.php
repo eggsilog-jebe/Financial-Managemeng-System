@@ -20,15 +20,20 @@ final class RoleAuthorization
     {
         $user = $request->user();
 
-        // In local demo mode if not authenticated via session, allow request with default CFO role
+        // Unauthenticated passthrough is ONLY permitted in local/testing environments (demo mode).
+        // In staging and production, unauthenticated requests must be rejected with 401.
         if (! $user) {
+            if (! app()->environment('local', 'testing')) {
+                abort(401, 'Unauthenticated: A valid authenticated session is required to access this financial module.');
+            }
+
             return $next($request);
         }
 
         $userRole = $user->role ?? 'StaffAccountant';
 
-        // CFO always has full administrative superuser override
-        if ($userRole === 'CFO' || in_array($userRole, $roles, true)) {
+        // CFO and FinanceDirector always have full superuser override
+        if (in_array($userRole, ['CFO', 'FinanceDirector'], true) || in_array($userRole, $roles, true)) {
             return $next($request);
         }
 

@@ -22,7 +22,7 @@ final class TaxRule extends Model
     protected function casts(): array
     {
         return [
-            'rate' => 'decimal:2',
+            'rate' => 'decimal:4',
         ];
     }
 }

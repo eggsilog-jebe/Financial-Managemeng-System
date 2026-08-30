@@ -25,8 +25,8 @@ final class PatientAccountController extends Controller
         $outstandingOnly = $request->boolean('outstanding_only');
 
         $accounts = $this->patientService->getPatientAccountsList($search, $outstandingOnly);
-        $totalReceivable = PatientAccount::sum('current_balance');
-        $hmoGuarantees = PatientAccount::whereNotNull('hmo_provider')->where('hmo_provider', '!=', '')->sum('current_balance');
+        $totalReceivable = (float) \App\Models\Invoice::whereNotIn('status', ['PAID', 'SETTLED', 'CANCELLED'])->sum('patient_payable');
+        $hmoGuarantees = (float) \App\Models\HmoClaim::whereNotIn('status', ['PAID', 'SETTLED', 'CANCELLED', 'REJECTED'])->sum('claimed_amount');
         $totalActive = PatientAccount::where('status', 'Active')->count();
 
         return view('accounts-receivable.patient-accounts', compact(
@@ -42,8 +42,12 @@ final class PatientAccountController extends Controller
     public function store(StorePatientAccountRequest $request): RedirectResponse
     {
         $validated = $request->validated();
-        $mrn = $validated['patient_mrn'] ?? $validated['patient_id_number'] ?? ('MRN-' . date('Ymd') . '-' . rand(1000, 9999));
+        $mrn = ! empty($validated['patient_mrn']) ? $validated['patient_mrn'] : (! empty($validated['patient_id_number']) ? $validated['patient_id_number'] : null);
+        if (empty($mrn)) {
+            $mrn = 'MRN-' . date('Y') . '-' . str_pad((string) rand(10000, 99999), 5, '0', STR_PAD_LEFT);
+        }
         $validated['patient_mrn'] = $mrn;
+        $validated['patient_id_number'] = $mrn;
 
         $dto = PatientAccountData::fromArray($validated);
         $account = $this->patientService->createPatientAccount($dto);

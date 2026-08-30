@@ -18,9 +18,16 @@ final class Vendor extends Model
         'vendor_code',
         'name',
         'tin',
+        'tax_type',
+        'default_ewt_rate',
+        'default_atc_code',
         'contact_person',
         'email',
         'phone',
+        'registered_address',
+        'bank_name',
+        'bank_account_number',
+        'bank_account_name',
         'payment_terms_days',
         'status',
         'is_active',
@@ -30,6 +37,7 @@ final class Vendor extends Model
     {
         return [
             'payment_terms_days' => 'integer',
+            'default_ewt_rate'   => 'decimal:4',
         ];
     }
 

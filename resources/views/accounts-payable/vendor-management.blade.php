@@ -122,7 +122,8 @@
             <tr>
               <th>Vendor Code</th>
               <th>Supplier Legal Name</th>
-              <th>TIN</th>
+              <th>TIN &amp; Tax Type</th>
+              <th>Default EWT (2307)</th>
               <th>Contact Person</th>
               <th>Phone / Email</th>
               <th>Payment Terms</th>
@@ -135,26 +136,48 @@
             @forelse($vendors ?? [] as $v)
             @php
               $balance = $v->purchaseBills->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE', 'APPROVED'])->sum(fn ($b) => $b->balance_due);
+              $ewtRateFormatted = number_format((float) ($v->default_ewt_rate ?? 1.00), 2) . '%';
+              $atcDisplay = $v->default_atc_code ? " ({$v->default_atc_code})" : '';
               $vData = [
-                'id'       => $v->id,
-                'code'     => $v->code,
-                'name'     => $v->name,
-                'tin'      => $v->tin ?? 'N/A',
-                'contact'  => $v->contact_person ?? 'N/A',
-                'phone'    => $v->phone ?? 'N/A',
-                'email'    => $v->email ?? 'N/A',
-                'terms'    => "Net {$v->payment_terms_days} Days",
-                'balance'  => '₱' . number_format((float) $balance, 2),
-                'status'   => $v->status,
-                'is_active'=> $v->is_active,
+                'id'                  => $v->id,
+                'code'                => $v->code,
+                'name'                => $v->name,
+                'tin'                 => $v->tin ?? 'N/A',
+                'tax_type'            => $v->tax_type === 'NON_VAT' ? 'Non-VAT' : 'VAT-Registered (12%)',
+                'ewt_rate'            => $ewtRateFormatted,
+                'atc_code'            => $v->default_atc_code ?? 'WC158',
+                'contact'             => $v->contact_person ?? 'N/A',
+                'phone'               => $v->phone ?? 'N/A',
+                'email'               => $v->email ?? 'N/A',
+                'registered_address'  => $v->registered_address ?? '—',
+                'bank_name'           => $v->bank_name ?? '—',
+                'bank_account_number' => $v->bank_account_number ?? '—',
+                'bank_account_name'   => $v->bank_account_name ?? '—',
+                'terms'               => "Net {$v->payment_terms_days} Days",
+                'balance'             => '₱' . number_format((float) $balance, 2),
+                'status'              => $v->status,
+                'is_active'           => $v->is_active,
               ];
             @endphp
             <tr class="vendor-row">
               <td><span class="font-monospace fw-bold text-primary">{{ $v->code }}</span></td>
               <td>
                 <div class="fw-bold text-dark">{{ $v->name }}</div>
+                @if($v->bank_name)
+                  <div class="fs-xs text-muted"><i class="ph ph-bank me-1"></i>{{ $v->bank_name }}</div>
+                @endif
               </td>
-              <td><span class="font-monospace text-muted">{{ $v->tin ?? 'N/A' }}</span></td>
+              <td>
+                <div class="font-monospace text-dark fw-semibold">{{ $v->tin ?? 'N/A' }}</div>
+                <span class="badge {{ ($v->tax_type ?? 'VAT_REGISTERED') === 'VAT_REGISTERED' ? 'bg-primary-subtle text-primary border border-primary-subtle' : 'bg-secondary-subtle text-secondary border' }}" style="font-size: 10px;">
+                  {{ ($v->tax_type ?? 'VAT_REGISTERED') === 'VAT_REGISTERED' ? 'VAT 12%' : 'Non-VAT' }}
+                </span>
+              </td>
+              <td>
+                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle font-monospace">
+                  <i class="ph ph-receipt me-1"></i>EWT {{ $ewtRateFormatted }}{{ $atcDisplay }}
+                </span>
+              </td>
               <td>{{ $v->contact_person ?? '—' }}</td>
               <td>
                 <div class="fs-xs text-dark">{{ $v->phone ?? '—' }}</div>
@@ -183,7 +206,7 @@
             </tr>
             @empty
             <tr>
-              <td colspan="9" class="text-center py-4 text-muted">No vendors found in masterfile.</td>
+              <td colspan="10" class="text-center py-4 text-muted">No vendors found in masterfile.</td>
             </tr>
             @endforelse
           </tbody>
@@ -227,24 +250,70 @@
           </div>
         </div>
 
-        <div class="bg-white border rounded-3 p-3 mb-4">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-user-address me-1 text-primary"></i> Master Data &amp; Contact Info</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">BIR TIN Number</span>
-              <span class="font-monospace fw-bold text-dark" id="detailVendorTin">-</span>
+        <div class="row g-3 mb-3">
+          <!-- Section 1: Tax & BIR 2307 Profile -->
+          <div class="col-md-6">
+            <div class="bg-white border rounded-3 p-3 h-100">
+              <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase d-flex align-items-center gap-1">
+                <i class="ph ph-receipt fs-5 text-primary"></i> BIR 2307 &amp; Tax Compliance
+              </h6>
+              <div class="d-flex flex-column gap-2 fs-xs">
+                <div class="d-flex justify-content-between border-bottom pb-2">
+                  <span class="text-muted">BIR TIN Number</span>
+                  <span class="font-monospace fw-bold text-dark" id="detailVendorTin">-</span>
+                </div>
+                <div class="d-flex justify-content-between border-bottom pb-2">
+                  <span class="text-muted">VAT Registration</span>
+                  <span class="badge bg-primary-subtle text-primary border" id="detailVendorTaxType">VAT-Registered</span>
+                </div>
+                <div class="d-flex justify-content-between border-bottom pb-2">
+                  <span class="text-muted">Default EWT Rate</span>
+                  <span class="badge bg-warning-subtle text-warning-emphasis font-monospace fw-bold" id="detailVendorEwtRate">1.00%</span>
+                </div>
+                <div class="d-flex justify-content-between border-bottom pb-2">
+                  <span class="text-muted">Default ATC Code</span>
+                  <span class="font-monospace text-dark fw-semibold" id="detailVendorAtcCode">WC158</span>
+                </div>
+                <div class="d-flex flex-column pt-1">
+                  <span class="text-muted mb-1">Registered Business Address</span>
+                  <span class="text-dark fw-medium" id="detailVendorAddress">-</span>
+                </div>
+              </div>
             </div>
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Contact Representative</span>
-              <span class="fw-semibold text-dark" id="detailVendorContact">-</span>
-            </div>
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Phone Number</span>
-              <span class="font-monospace text-dark" id="detailVendorPhone">-</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">Email Address</span>
-              <span class="text-primary font-monospace" id="detailVendorEmail">-</span>
+          </div>
+
+          <!-- Section 2: Bank & Settlement Info -->
+          <div class="col-md-6">
+            <div class="bg-white border rounded-3 p-3 h-100">
+              <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase d-flex align-items-center gap-1">
+                <i class="ph ph-bank fs-5 text-success"></i> Settlement &amp; Bank Details
+              </h6>
+              <div class="d-flex flex-column gap-2 fs-xs">
+                <div class="d-flex justify-content-between border-bottom pb-2">
+                  <span class="text-muted">Bank Name</span>
+                  <span class="fw-bold text-dark" id="detailVendorBankName">-</span>
+                </div>
+                <div class="d-flex justify-content-between border-bottom pb-2">
+                  <span class="text-muted">Bank Account Number</span>
+                  <span class="font-monospace fw-bold text-primary" id="detailVendorBankAccountNo">-</span>
+                </div>
+                <div class="d-flex justify-content-between border-bottom pb-2">
+                  <span class="text-muted">Bank Account Name</span>
+                  <span class="text-dark fw-medium" id="detailVendorBankAccountName">-</span>
+                </div>
+                <div class="d-flex justify-content-between border-bottom pb-2">
+                  <span class="text-muted">Contact Representative</span>
+                  <span class="fw-semibold text-dark" id="detailVendorContact">-</span>
+                </div>
+                <div class="d-flex justify-content-between border-bottom pb-2">
+                  <span class="text-muted">Phone Number</span>
+                  <span class="font-monospace text-dark" id="detailVendorPhone">-</span>
+                </div>
+                <div class="d-flex justify-content-between pt-1">
+                  <span class="text-muted">Email Address</span>
+                  <span class="text-primary font-monospace" id="detailVendorEmail">-</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -261,50 +330,137 @@
 <!-- Modal: Add New Vendor -->
 <div class="modal fade" id="addVendorModal" tabindex="-1" aria-labelledby="addVendorModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title font-weight-bold" id="addVendorModalLabel"><i class="ph ph-plus-circle me-2 text-primary"></i>Register New Supplier Profile</h5>
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header bg-light-subtle border-bottom py-3 px-4">
+        <div class="d-flex align-items-center gap-2">
+          <span class="p-2 rounded-3 bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center">
+            <i class="ph ph-buildings fs-4"></i>
+          </span>
+          <div>
+            <h5 class="modal-title font-weight-bold mb-0" id="addVendorModalLabel">Register New Supplier Profile</h5>
+            <span class="fs-xs text-muted">Accredit supplier with BIR 2307 withholding tax defaults and bank disbursement details</span>
+          </div>
+        </div>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body p-4">
-        <form method="POST" action="{{ route('ap.vendors.store') }}">
-          @csrf
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Vendor Code (Auto-generated if blank)</label>
-              <input type="text" name="vendor_code" class="form-control form-control-sm font-monospace" placeholder="e.g. VND-0025">
+
+      <form method="POST" action="{{ route('ap.vendors.store') }}" id="createVendorForm">
+        @csrf
+        <div class="modal-body p-4">
+          <!-- General Master Data Section -->
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Vendor Code</label>
+              <input type="text" name="vendor_code" class="form-control form-control-sm font-monospace" placeholder="Auto-generated if blank (e.g. VND-0025)">
             </div>
-            <div class="col-md-6">
+            <div class="col-md-5">
               <label class="form-label small fw-semibold">Supplier Legal Name <span class="text-danger">*</span></label>
-              <input type="text" name="name" class="form-control form-control-sm" placeholder="e.g. B. Braun Medical Supplies Inc" required>
+              <input type="text" name="name" class="form-control form-control-sm" placeholder="e.g. MedTech Pharma Inc." required>
             </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">TIN Number <span class="text-danger">*</span></label>
-              <input type="text" name="tin" class="form-control form-control-sm font-monospace" placeholder="e.g. 402-192-881-000" required>
-            </div>
-            <div class="col-md-6">
+            <div class="col-md-3">
               <label class="form-label small fw-semibold">Payment Terms (Days) <span class="text-danger">*</span></label>
               <input type="number" name="payment_terms_days" class="form-control form-control-sm" value="30" min="0" max="365" required>
             </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Contact Person</label>
+          </div>
+
+          <!-- Section 1: Tax & BIR Compliance Grid -->
+          <div class="card border border-primary-subtle bg-light-subtle rounded-3 p-3 mb-3">
+            <div class="d-flex align-items-center justify-content-between mb-2 pb-1 border-bottom border-primary-subtle">
+              <span class="fs-xs text-uppercase fw-bold text-primary d-flex align-items-center gap-1">
+                <i class="ph ph-receipt fs-5"></i> Tax &amp; BIR Form 2307 Compliance Defaults
+              </span>
+              <span class="badge bg-primary-subtle text-primary border border-primary-subtle fs-xs">BIR Standard</span>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">TIN Number <span class="text-danger">*</span></label>
+                <input type="text" name="tin" class="form-control form-control-sm font-monospace" placeholder="e.g. 402-192-881-000" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">VAT Registration <span class="text-danger">*</span></label>
+                <select name="tax_type" id="tax_type_select" class="form-select form-select-sm" required>
+                  <option value="VAT_REGISTERED" selected>VAT-Registered (12% VAT Applied)</option>
+                  <option value="NON_VAT">Non-VAT / VAT-Exempt Entity</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">Default EWT Rate (BIR 2307) <span class="text-danger">*</span></label>
+                <select name="default_ewt_rate" id="default_ewt_select" class="form-select form-select-sm" required>
+                  <option value="1.00" data-atc="WC158" selected>1% — Purchase of Goods (WC 158)</option>
+                  <option value="2.00" data-atc="WC160">2% — Purchase of Services (WC 160)</option>
+                  <option value="5.00" data-atc="WC100">5% — Space Rental (WC 100)</option>
+                  <option value="10.00" data-atc="WI010">10% — Professional / Doctor Retainers (WI 010)</option>
+                  <option value="0.00" data-atc="EXEMPT">0% — Non-Taxable / Exempt</option>
+                </select>
+                <input type="hidden" name="default_atc_code" id="default_atc_code_input" value="WC158">
+              </div>
+              <div class="col-md-12">
+                <label class="form-label small fw-semibold">Official Registered Business Address</label>
+                <input type="text" name="registered_address" class="form-control form-control-sm" placeholder="e.g. Unit 1205 Medical Plaza, Ortigas Ave, Pasig City (For BIR Form 2307 printing)">
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Settlement & Bank Details -->
+          <div class="card border rounded-3 p-3 mb-3 bg-white">
+            <div class="d-flex align-items-center justify-content-between mb-2 pb-1 border-bottom">
+              <span class="fs-xs text-uppercase fw-bold text-dark d-flex align-items-center gap-1">
+                <i class="ph ph-bank fs-5 text-success"></i> Settlement &amp; Bank Details (Disbursement Clearing)
+              </span>
+              <span class="badge bg-light text-muted border fs-xs">EFT / Check Payout</span>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">Bank Name</label>
+                <input type="text" name="bank_name" list="bankListOptions" class="form-control form-control-sm" placeholder="e.g. BDO Unibank">
+                <datalist id="bankListOptions">
+                  <option value="BDO Unibank">
+                  <option value="Bank of the Philippine Islands (BPI)">
+                  <option value="Metrobank">
+                  <option value="LandBank of the Philippines">
+                  <option value="UnionBank of the Philippines">
+                  <option value="Security Bank">
+                  <option value="China Banking Corporation">
+                  <option value="Rizal Commercial Banking Corp (RCBC)">
+                  <option value="Philippine National Bank (PNB)">
+                  <option value="EastWest Bank">
+                </datalist>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">Bank Account Number</label>
+                <input type="text" name="bank_account_number" class="form-control form-control-sm font-monospace" placeholder="e.g. 0012-3456-7890">
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-semibold">Bank Account Name</label>
+                <input type="text" name="bank_account_name" class="form-control form-control-sm" placeholder="e.g. MedTech Pharma Inc.">
+              </div>
+            </div>
+          </div>
+
+          <!-- Contact Details -->
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label small fw-semibold">Contact Representative</label>
               <input type="text" name="contact_person" class="form-control form-control-sm" placeholder="e.g. Juan dela Cruz">
             </div>
-            <div class="col-md-6">
+            <div class="col-md-4">
               <label class="form-label small fw-semibold">Phone Number</label>
               <input type="text" name="phone" class="form-control form-control-sm" placeholder="e.g. +63 (02) 8842-1090">
             </div>
-            <div class="col-md-12">
+            <div class="col-md-4">
               <label class="form-label small fw-semibold">Email Address</label>
               <input type="email" name="email" class="form-control form-control-sm" placeholder="e.g. billing@supplier.ph">
             </div>
           </div>
-          <div class="d-flex justify-content-end gap-2 mt-4">
-            <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-check me-1"></i> Register Supplier</button>
-          </div>
-        </form>
-      </div>
+        </div>
+
+        <div class="modal-footer bg-light-subtle border-top py-2 px-4">
+          <button type="button" class="btn btn-sm btn-light border px-3" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-sm btn-primary px-4 fw-semibold"><i class="ph ph-check-circle me-1"></i> Register Supplier</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
@@ -312,14 +468,35 @@
 
 @push('scripts')
 <script>
+document.addEventListener('DOMContentLoaded', function () {
+  const ewtSelect = document.getElementById('default_ewt_select');
+  const atcInput = document.getElementById('default_atc_code_input');
+
+  if (ewtSelect && atcInput) {
+    ewtSelect.addEventListener('change', function () {
+      const selectedOption = ewtSelect.options[ewtSelect.selectedIndex];
+      if (selectedOption) {
+        atcInput.value = selectedOption.getAttribute('data-atc') || 'WC158';
+      }
+    });
+  }
+});
+
 function openVendorDetailsModal(vendor) {
   if (!vendor) return;
 
   document.getElementById('detailVendorCode').textContent = vendor.code || 'VEND-000';
   document.getElementById('detailVendorName').textContent = vendor.name || 'Supplier Name';
   document.getElementById('detailVendorTin').textContent = vendor.tin || '-';
+  document.getElementById('detailVendorTaxType').textContent = vendor.tax_type || 'VAT-Registered';
+  document.getElementById('detailVendorEwtRate').textContent = vendor.ewt_rate || '1.00%';
+  document.getElementById('detailVendorAtcCode').textContent = vendor.atc_code || 'WC158';
+  document.getElementById('detailVendorAddress').textContent = vendor.registered_address || '—';
   document.getElementById('detailVendorTerms').textContent = vendor.terms || '-';
   document.getElementById('detailVendorBalance').textContent = vendor.balance || '₱0.00';
+  document.getElementById('detailVendorBankName').textContent = vendor.bank_name || '—';
+  document.getElementById('detailVendorBankAccountNo').textContent = vendor.bank_account_number || '—';
+  document.getElementById('detailVendorBankAccountName').textContent = vendor.bank_account_name || '—';
   document.getElementById('detailVendorContact').textContent = vendor.contact || '-';
   document.getElementById('detailVendorPhone').textContent = vendor.phone || '-';
   document.getElementById('detailVendorEmail').textContent = vendor.email || '-';

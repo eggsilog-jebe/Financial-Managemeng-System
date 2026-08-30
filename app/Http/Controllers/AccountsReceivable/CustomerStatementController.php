@@ -20,10 +20,30 @@ final class CustomerStatementController extends Controller
     public function index(Request $request): View
     {
         $patientId = $request->query('patient_id');
+        $admissionType = $request->query('admission_type');
+        $search = $request->query('search');
+        $outstandingOnly = $request->boolean('outstanding_only');
         $startDate = $request->query('start_date', date('Y-01-01'));
         $endDate = $request->query('end_date', date('Y-m-d'));
 
-        $accounts = PatientAccount::orderBy('full_name')->get();
+        $query = PatientAccount::query();
+
+        if ($admissionType && in_array(strtoupper($admissionType), ['INPATIENT', 'OUTPATIENT', 'EMERGENCY'], true)) {
+            $query->whereRaw('UPPER(admission_type) = ?', [strtoupper($admissionType)]);
+        }
+
+        if ($outstandingOnly) {
+            $query->where('current_balance', '>', 0);
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search): void {
+                $q->where('full_name', 'LIKE', "%{$search}%")
+                  ->orWhere('patient_id_number', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $accounts = $query->orderBy('full_name')->get();
         $selectedAccount = null;
         $statement = null;
 
@@ -32,6 +52,9 @@ final class CustomerStatementController extends Controller
             if ($selectedAccount) {
                 $statement = $this->statementService->generateStatement($selectedAccount->id, $startDate, $endDate);
             }
+        } elseif ($accounts->isNotEmpty() && ($admissionType || $search)) {
+            // If filtered and patientId not set, optionally pre-select first match
+            // or leave unselected unless explicitly chosen
         }
 
         return view('accounts-receivable.customer-statements', compact(
@@ -39,6 +62,9 @@ final class CustomerStatementController extends Controller
             'selectedAccount',
             'statement',
             'patientId',
+            'admissionType',
+            'search',
+            'outstandingOnly',
             'startDate',
             'endDate',
         ));

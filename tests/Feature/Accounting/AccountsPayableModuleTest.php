@@ -54,16 +54,23 @@ final class AccountsPayableModuleTest extends TestCase
         $indexResponse = $this->get('/accounts-payable/vendors');
         $indexResponse->assertStatus(200);
 
-        // 2. Create New Vendor
+        // 2. Create New Vendor with BIR 2307 Tax Defaults & Bank Details
         $createPayload = [
-            'vendor_code'        => 'VND-TEST-001',
-            'name'               => 'Metro Bio-Pharma Solutions Inc',
-            'tin'                => '401-998-112-000',
-            'contact_person'     => 'Dr. Eduardo Santos',
-            'phone'              => '+63 (02) 8811-2233',
-            'email'              => 'billing@metropharma.ph',
-            'payment_terms_days' => 45,
-            'is_active'          => 1,
+            'vendor_code'         => 'VND-TEST-001',
+            'name'                => 'MedTech Pharma Inc',
+            'tin'                 => '401-998-112-000',
+            'tax_type'            => 'VAT_REGISTERED',
+            'default_ewt_rate'    => 1.00,
+            'default_atc_code'    => 'WC158',
+            'registered_address'  => 'Unit 802 Medical Tower, Ortigas Center, Pasig City',
+            'bank_name'           => 'BDO Unibank',
+            'bank_account_number' => '0012-3456-7890',
+            'bank_account_name'   => 'MedTech Pharma Inc',
+            'contact_person'      => 'Dr. Eduardo Santos',
+            'phone'               => '+63 (02) 8811-2233',
+            'email'               => 'billing@medtechpharma.ph',
+            'payment_terms_days'  => 45,
+            'is_active'           => 1,
         ];
 
         $storeResponse = $this->post('/accounts-payable/vendors', $createPayload);
@@ -71,24 +78,45 @@ final class AccountsPayableModuleTest extends TestCase
 
         $vendor = Vendor::where('code', 'VND-TEST-001')->first();
         $this->assertNotNull($vendor);
-        $this->assertEquals('Metro Bio-Pharma Solutions Inc', $vendor->name);
+        $this->assertEquals('MedTech Pharma Inc', $vendor->name);
+        $this->assertEquals('VAT_REGISTERED', $vendor->tax_type);
+        $this->assertEquals('1.0000', $vendor->default_ewt_rate);
+        $this->assertEquals('WC158', $vendor->default_atc_code);
+        $this->assertEquals('BDO Unibank', $vendor->bank_name);
+        $this->assertEquals('0012-3456-7890', $vendor->bank_account_number);
         $this->assertEquals(45, $vendor->payment_terms_days);
         $this->assertTrue($vendor->is_active);
 
-        // 3. Update Vendor
+        // 3. View in Vendor Directory Table
+        $indexAfterCreate = $this->get('/accounts-payable/vendors');
+        $indexAfterCreate->assertStatus(200);
+        $indexAfterCreate->assertSee('MedTech Pharma Inc');
+        $indexAfterCreate->assertSee('WC158');
+        $indexAfterCreate->assertSee('BDO Unibank');
+
+        // 4. Update Vendor
         $updatePayload = [
-            'name'               => 'Metro Bio-Pharma Corp',
-            'tin'                => '401-998-112-000',
-            'payment_terms_days' => 60,
+            'name'                => 'MedTech Pharma Corp',
+            'tin'                 => '401-998-112-000',
+            'tax_type'            => 'VAT_REGISTERED',
+            'default_ewt_rate'    => 2.00,
+            'default_atc_code'    => 'WC160',
+            'bank_name'           => 'Bank of the Philippine Islands (BPI)',
+            'bank_account_number' => '9988-7766-55',
+            'bank_account_name'   => 'MedTech Pharma Corp',
+            'payment_terms_days'  => 60,
         ];
 
         $updateResponse = $this->put("/accounts-payable/vendors/{$vendor->id}", $updatePayload);
         $updateResponse->assertRedirect();
         $vendor->refresh();
-        $this->assertEquals('Metro Bio-Pharma Corp', $vendor->name);
+        $this->assertEquals('MedTech Pharma Corp', $vendor->name);
+        $this->assertEquals('2.0000', $vendor->default_ewt_rate);
+        $this->assertEquals('WC160', $vendor->default_atc_code);
+        $this->assertEquals('Bank of the Philippine Islands (BPI)', $vendor->bank_name);
         $this->assertEquals(60, $vendor->payment_terms_days);
 
-        // 4. Toggle Active Status
+        // 5. Toggle Active Status
         $toggleResponse = $this->post("/accounts-payable/vendors/{$vendor->id}/toggle-status");
         $toggleResponse->assertRedirect();
         $vendor->refresh();
@@ -420,5 +448,321 @@ final class AccountsPayableModuleTest extends TestCase
         $this->actingAs($this->cfo);
         $res6 = $this->post("/accounts-payable/payment-approvals/{$voucher->id}/release", ['check_number' => 'CHK-123']);
         $res6->assertRedirect();
+    }
+
+    /** @test */
+    public function test_invoices_vouchers_hub_filters_exports_and_actions(): void
+    {
+        $this->actingAs($this->accountant);
+
+        $vendor = Vendor::create([
+            'code'                => 'VND-HUB-01',
+            'name'                => 'Apex Diagnostics Inc',
+            'tin'                 => '888-999-111-000',
+            'tax_type'            => 'VAT_REGISTERED',
+            'default_ewt_rate'    => 1.00,
+            'default_atc_code'    => 'WC158',
+            'registered_address'  => 'Tower 1, Ortigas, Pasig',
+            'bank_name'           => 'BDO Unibank',
+            'bank_account_number' => '0099-8877-66',
+        ]);
+
+        $bill = PurchaseBill::create([
+            'bill_number'  => 'BILL-APEX-001',
+            'vendor_id'    => $vendor->id,
+            'bill_date'    => '2026-01-15',
+            'due_date'     => '2026-02-15',
+            'total_amount' => '112000.0000',
+            'paid_amount'  => '0.0000',
+            'status'       => 'UNPAID',
+        ]);
+
+        ThreeWayMatch::create([
+            'purchase_bill_id'      => $bill->id,
+            'po_number'             => 'PO-2026-APEX',
+            'grn_number'            => 'GRN-2026-APEX',
+            'vendor_invoice_number' => 'INV-APEX-9988',
+            'po_amount'             => '112000.0000',
+            'grn_amount'            => '112000.0000',
+            'invoice_amount'        => '112000.0000',
+            'price_variance'        => '0.0000',
+            'match_status'          => 'MATCHED',
+        ]);
+
+        Bir2307Certificate::create([
+            'certificate_number' => 'BIR-2307-2026-0099',
+            'purchase_bill_id'   => $bill->id,
+            'vendor_id'          => $vendor->id,
+            'period_from'        => '2026-01-01',
+            'period_to'          => '2026-01-31',
+            'payee_name'         => 'Apex Diagnostics Inc',
+            'payee_tin'          => '888-999-111-000',
+            'atc_code'           => 'WC158',
+            'tax_base_amount'    => '100000.0000',
+            'tax_rate'           => '0.0100',
+            'tax_withheld'       => '1000.0000',
+            'form_status'        => 'GENERATED',
+        ]);
+
+        // 1. Invoices & Vouchers Hub with filters
+        $indexResponse = $this->get('/accounts-payable/invoices-vouchers?vendor_id=' . $vendor->id . '&status=UNPAID');
+        $indexResponse->assertStatus(200);
+        $indexResponse->assertSee('BILL-APEX-001');
+        $indexResponse->assertSee('INV-APEX-9988');
+        $indexResponse->assertSee('Apex Diagnostics Inc');
+        $indexResponse->assertSee('Export AP Register (CSV)');
+        $indexResponse->assertSee('Generate BIR 2307 Batch');
+
+        // 2. Export AP Register CSV
+        $exportResponse = $this->get('/accounts-payable/invoices-vouchers/export?vendor_id=' . $vendor->id);
+        $exportResponse->assertStatus(200);
+        $this->assertEquals('text/csv; charset=UTF-8', $exportResponse->headers->get('Content-Type'));
+
+        // 3. Batch BIR 2307 Export
+        $batchResponse = $this->get('/accounts-payable/invoices-vouchers/batch-2307?vendor_id=' . $vendor->id);
+        $batchResponse->assertStatus(200);
+        $this->assertEquals('text/csv; charset=UTF-8', $batchResponse->headers->get('Content-Type'));
+
+        // 4. Quick Approve
+        $approveResponse = $this->post("/accounts-payable/invoices-vouchers/{$bill->id}/quick-approve");
+        $approveResponse->assertRedirect();
+        $bill->refresh();
+        $this->assertEquals('APPROVED', $bill->status);
+    }
+
+    /** @test */
+    public function test_purchase_bills_3_way_match_ingestion_and_variance_scenarios(): void
+    {
+        $this->actingAs($this->accountant);
+
+        $vendor = Vendor::create([
+            'code' => 'VND-3WAY-01',
+            'name' => 'Bio-Rad Laboratories Philippines',
+            'tin'  => '999-111-222-000',
+        ]);
+
+        // Scenario 1: Matching PO and GRN (3-Way Matched, 0.00 Variance)
+        $matchedPayload = [
+            'vendor_id'              => $vendor->id,
+            'bill_date'              => '2026-01-20',
+            'due_date'               => '2026-02-20',
+            'po_number'              => 'PO-2026-0881',
+            'po_amount'              => 85000.00,
+            'grn_number'             => 'GRN-2026-0881',
+            'grn_amount'             => 85000.00,
+            'vendor_invoice_number'  => 'SI-2026-0881',
+            'items'                  => [
+                [
+                    'description'  => 'Diagnostic Immunoassay Reagents',
+                    'expense_type' => 'GOODS_INVENTORY',
+                    'atc_code'     => 'WI158',
+                    'quantity'     => 50,
+                    'unit_price'   => 1700.00, // 50 * 1700 = 85,000.00
+                ],
+            ],
+        ];
+
+        $matchedRes = $this->post('/accounts-payable/purchase-bills', $matchedPayload);
+        $matchedRes->assertRedirect();
+
+        $matchedBill = PurchaseBill::with('threeWayMatch')->whereHas('threeWayMatch', fn($q) => $q->where('vendor_invoice_number', 'SI-2026-0881'))->first();
+        $this->assertNotNull($matchedBill);
+        $this->assertEquals('85000.0000', $matchedBill->total_amount);
+        $this->assertEquals('MATCHED', $matchedBill->threeWayMatch->match_status);
+        $this->assertEquals('0.0000', $matchedBill->threeWayMatch->price_variance);
+
+        // Scenario 2: Price Variance / Mismatch (Billed 100,000 vs PO 80,000)
+        $mismatchPayload = [
+            'vendor_id'              => $vendor->id,
+            'bill_date'              => '2026-01-22',
+            'due_date'               => '2026-02-22',
+            'po_number'              => 'PO-2026-0999',
+            'po_amount'              => 80000.00,
+            'grn_number'             => 'GRN-2026-0999',
+            'grn_amount'             => 80000.00,
+            'vendor_invoice_number'  => 'SI-2026-0999',
+            'items'                  => [
+                [
+                    'description'  => 'Specialty Centrifuge Consumables',
+                    'expense_type' => 'GOODS_INVENTORY',
+                    'atc_code'     => 'WI158',
+                    'quantity'     => 10,
+                    'unit_price'   => 10000.00, // 10 * 10,000 = 100,000.00
+                ],
+            ],
+        ];
+
+        $mismatchRes = $this->post('/accounts-payable/purchase-bills', $mismatchPayload);
+        $mismatchRes->assertRedirect();
+
+        $mismatchBill = PurchaseBill::with('threeWayMatch')->whereHas('threeWayMatch', fn($q) => $q->where('vendor_invoice_number', 'SI-2026-0999'))->first();
+        $this->assertNotNull($mismatchBill);
+        $this->assertEquals('100000.0000', $mismatchBill->total_amount);
+        $this->assertEquals('OVER_BILLED', $mismatchBill->threeWayMatch->match_status);
+        $this->assertEquals('20000.0000', $mismatchBill->threeWayMatch->price_variance);
+
+        // Scenario 3: Verify View Table & Variance Filters
+        $viewMatched = $this->get('/accounts-payable/purchase-bills?variance_status=MATCHED');
+        $viewMatched->assertStatus(200);
+        $viewMatched->assertSee('SI-2026-0881');
+        $viewMatched->assertSee('3-WAY MATCHED');
+
+        $viewVariance = $this->get('/accounts-payable/purchase-bills?variance_status=VARIANCE');
+        $viewVariance->assertStatus(200);
+        $viewVariance->assertSee('SI-2026-0999');
+        $viewVariance->assertSee('VARIANCE');
+
+        // Scenario 4: External PSM/SWS Sync Trigger
+        $syncRes = $this->post('/accounts-payable/purchase-bills/sync-psm-sws');
+        $syncRes->assertRedirect();
+        $syncRes->assertSessionHas('success');
+    }
+
+    /** @test */
+    public function test_payable_aging_schedule_basis_toggle_and_breakdown_drawer(): void
+    {
+        $this->actingAs($this->accountant);
+
+        $vendor = Vendor::create([
+            'code'                => 'VND-AGING-01',
+            'name'                => 'Pacific Diagnostic Corp',
+            'tin'                 => '555-666-777-000',
+            'payment_terms_days'  => 30,
+            'bank_name'           => 'Metrobank',
+            'bank_account_number' => '1234-5678-90',
+        ]);
+
+        PurchaseBill::create([
+            'bill_number'  => 'BILL-AGING-001',
+            'vendor_id'    => $vendor->id,
+            'bill_date'    => '2026-01-01',
+            'due_date'     => '2026-01-31',
+            'total_amount' => '50000.0000',
+            'paid_amount'  => '0.0000',
+            'status'       => 'UNPAID',
+        ]);
+
+        // 1. View Aging Schedule with Default Due Date Basis
+        $responseDueDate = $this->get('/accounts-payable/payable-aging?as_of_date=2026-02-15&aging_basis=due_date');
+        $responseDueDate->assertStatus(200);
+        $responseDueDate->assertSee('Pacific Diagnostic Corp');
+        $responseDueDate->assertSee('View Breakdown');
+        $responseDueDate->assertSee('Due Date (Default)');
+
+        // 2. View Aging Schedule with Bill Date Basis
+        $responseBillDate = $this->get('/accounts-payable/payable-aging?as_of_date=2026-02-15&aging_basis=bill_date');
+        $responseBillDate->assertStatus(200);
+        $responseBillDate->assertSee('Pacific Diagnostic Corp');
+        $responseBillDate->assertSee('Bill Date (Invoice)');
+
+        // 3. Export Aging CSV with Basis
+        $exportResponse = $this->get('/accounts-payable/payable-aging/export?as_of_date=2026-02-15&aging_basis=due_date');
+        $exportResponse->assertStatus(200);
+        $this->assertEquals('text/csv; charset=UTF-8', $exportResponse->headers->get('Content-Type'));
+    }
+
+    /** @test */
+    public function test_payment_approvals_bulk_authorization_rejection_and_disbursement_release(): void
+    {
+        $bank = BankAccount::create([
+            'name'           => 'BDO Operating Account',
+            'bank_name'      => 'BDO Unibank',
+            'account_number' => '0011223344',
+            'gl_code'        => '1020',
+            'purpose'        => 'Operating',
+            'balance'        => '500000.00',
+            'status'         => 'Active',
+        ]);
+
+        $vendor = Vendor::create([
+            'code'                => 'VND-APPROVAL-01',
+            'name'                => 'Siemens Healthineers Philippines',
+            'tin'                 => '123-456-789-000',
+            'bank_name'           => 'BPI',
+            'bank_account_number' => '9988776655',
+        ]);
+
+        $bill = PurchaseBill::create([
+            'bill_number'  => 'BILL-SIEMENS-001',
+            'vendor_id'    => $vendor->id,
+            'bill_date'    => '2026-01-10',
+            'due_date'     => '2026-02-10',
+            'total_amount' => '150000.0000',
+            'paid_amount'  => '0.0000',
+            'status'       => 'APPROVED',
+        ]);
+
+        $v1 = DisbursementVoucher::create([
+            'voucher_number'       => 'DV-TEST-001',
+            'purchase_bill_id'     => $bill->id,
+            'bank_account_id'      => $bank->id,
+            'voucher_date'         => '2026-01-15',
+            'payee_name'           => 'Siemens Healthineers Philippines',
+            'gross_amount'         => '100000.0000',
+            'withheld_tax_amount'  => '2000.0000',
+            'net_disbursed_amount' => '98000.0000',
+            'payment_method'       => 'CHECK',
+            'status'               => 'DRAFT',
+        ]);
+
+        $v2 = DisbursementVoucher::create([
+            'voucher_number'       => 'DV-TEST-002',
+            'purchase_bill_id'     => $bill->id,
+            'bank_account_id'      => $bank->id,
+            'voucher_date'         => '2026-01-16',
+            'payee_name'           => 'Siemens Healthineers Philippines',
+            'gross_amount'         => '50000.0000',
+            'withheld_tax_amount'  => '1000.0000',
+            'net_disbursed_amount' => '49000.0000',
+            'payment_method'       => 'CHECK',
+            'status'               => 'DRAFT',
+        ]);
+
+        // 1. View Hub
+        $this->actingAs($this->accountant);
+        $viewRes = $this->get('/accounts-payable/payment-approvals');
+        $viewRes->assertStatus(200);
+        $viewRes->assertSee('DV-TEST-001');
+        $viewRes->assertSee('Export Bank EFT Batch');
+        $viewRes->assertSee('Authorize Selected Vouchers');
+
+        // 2. Reject Voucher 2
+        $this->actingAs($this->manager);
+        $rejectRes = $this->post("/accounts-payable/payment-approvals/{$v2->id}/reject");
+        $rejectRes->assertRedirect();
+        $v2->refresh();
+        $this->assertEquals('CANCELLED', $v2->status);
+
+        // 3. Bulk Approve Voucher 1
+        $bulkRes = $this->post('/accounts-payable/payment-approvals/bulk-approve', [
+            'voucher_ids' => [$v1->id],
+        ]);
+        $bulkRes->assertRedirect();
+        $v1->refresh();
+        $this->assertEquals('APPROVED', $v1->status);
+
+        // 4. Export Bank EFT Batch CSV
+        $batchRes = $this->get('/accounts-payable/payment-approvals/export-bank-batch');
+        $batchRes->assertStatus(200);
+        $this->assertEquals('text/csv; charset=UTF-8', $batchRes->headers->get('Content-Type'));
+
+        // 5. CFO Release & Disburse
+        $this->actingAs($this->cfo);
+        $releaseRes = $this->post("/accounts-payable/payment-approvals/{$v1->id}/release", [
+            'check_number' => 'CHK-BDO-889900',
+            'check_date'   => '2026-01-18',
+            'notes'        => 'Released via BDO Check',
+        ]);
+        $releaseRes->assertRedirect();
+        $v1->refresh();
+        $this->assertEquals('RELEASED', $v1->status);
+        $this->assertEquals('CHK-BDO-889900', $v1->check_or_eft_ref);
+
+        // Check GL impact & Check register
+        $this->assertDatabaseHas('check_registers', [
+            'disbursement_voucher_id' => $v1->id,
+            'check_number'            => 'CHK-BDO-889900',
+            'status'                  => 'RELEASED',
+        ]);
     }
 }

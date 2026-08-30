@@ -21,12 +21,17 @@ final class PayableAgingController extends Controller
     {
         $asOfDate = $request->query('as_of_date', date('Y-m-d'));
         $vendorId = $request->query('vendor_id') ? (int) $request->query('vendor_id') : null;
+        $agingBasis = $request->query('aging_basis', 'due_date');
+        if (! in_array($agingBasis, ['due_date', 'bill_date'], true)) {
+            $agingBasis = 'due_date';
+        }
 
-        $report = $this->agingService->getPayableAgingReport($asOfDate, $vendorId);
+        $report = $this->agingService->getPayableAgingReport($asOfDate, $vendorId, $agingBasis);
         $vendorsList = Vendor::orderBy('name')->get();
 
         return view('accounts-payable.payable-aging', [
             'asOfDate'          => $report['as_of_date'],
+            'agingBasis'        => $agingBasis,
             'vendors'           => $report['vendors'],
             'totalCurrent'      => $report['total_current'],
             'total1To30'        => $report['total_1_30'],
@@ -43,6 +48,11 @@ final class PayableAgingController extends Controller
     public function export(Request $request): StreamedResponse
     {
         $asOfDate = $request->query('as_of_date', date('Y-m-d'));
-        return $this->agingService->exportAgingCsv($asOfDate);
+        $agingBasis = $request->query('aging_basis', 'due_date');
+        if (! in_array($agingBasis, ['due_date', 'bill_date'], true)) {
+            $agingBasis = 'due_date';
+        }
+
+        return $this->agingService->exportAgingCsv($asOfDate, $agingBasis);
     }
 }

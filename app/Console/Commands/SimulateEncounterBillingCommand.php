@@ -13,6 +13,8 @@ final class SimulateEncounterBillingCommand extends Command
 {
     protected $signature = 'fms:simulate-encounter-billing 
                             {--name= : Patient Full Name}
+                            {--gender= : Patient Gender (Female / Male / Other)}
+                            {--dob= : Date of Birth (YYYY-MM-DD)}
                             {--type= : Admission Type (INPATIENT / OUTPATIENT / EMERGENCY)}
                             {--discount= : Discount Classification (NONE, SENIOR_CITIZEN, PWD, EMPLOYEE_SUBSIDY, CHARITY)}
                             {--id-number= : OSCA or PWD ID Number}
@@ -33,21 +35,29 @@ final class SimulateEncounterBillingCommand extends Command
         // 1. Gather input parameters
         $name = $this->option('name') ?: ($isInteractive ? $this->ask('1. Patient Full Name', 'Juan Dela Cruz') : 'Juan Dela Cruz');
         
+        $genderOption = $this->option('gender');
+        if (empty($genderOption)) {
+            $genderOption = $isInteractive ? $this->choice('2. Patient Gender', ['Female', 'Male', 'Other'], 0) : 'Female';
+        }
+        $gender = ucfirst(strtolower((string) $genderOption));
+
+        $dob = $this->option('dob') ?: ($isInteractive ? $this->ask('3. Date of Birth (YYYY-MM-DD)', '1988-04-12') : '1988-04-12');
+
         $typeOption = $this->option('type');
         if (empty($typeOption)) {
-            $typeOption = $isInteractive ? $this->choice('2. Admission Type', ['INPATIENT', 'OUTPATIENT', 'EMERGENCY'], 0) : 'INPATIENT';
+            $typeOption = $isInteractive ? $this->choice('4. Admission Type', ['INPATIENT', 'OUTPATIENT', 'EMERGENCY'], 0) : 'INPATIENT';
         }
         $type = strtoupper((string) $typeOption);
 
         $discountOption = $this->option('discount');
         if (empty($discountOption)) {
-            $discountOption = $isInteractive ? $this->choice('3. Statutory Discount', ['NONE', 'SENIOR_CITIZEN', 'PWD', 'EMPLOYEE_SUBSIDY', 'CHARITY'], 0) : 'NONE';
+            $discountOption = $isInteractive ? $this->choice('5. Statutory Discount', ['NONE', 'SENIOR_CITIZEN', 'PWD', 'EMPLOYEE_SUBSIDY', 'CHARITY'], 0) : 'NONE';
         }
         $discount = strtoupper((string) $discountOption);
 
         $idNumber = $this->option('id-number');
         if (empty($idNumber) && in_array($discount, ['SENIOR_CITIZEN', 'PWD'], true)) {
-            $idNumber = $isInteractive ? $this->ask('4. OSCA / PWD ID Card Number', 'OSCA-MNL-2026-991') : 'OSCA-MNL-2026-991';
+            $idNumber = $isInteractive ? $this->ask('6. OSCA / PWD ID Card Number', 'OSCA-MNL-2026-991') : 'OSCA-MNL-2026-991';
         }
 
         $hmoOptions = [
@@ -65,7 +75,7 @@ final class SimulateEncounterBillingCommand extends Command
 
         $hmoOption = $this->option('hmo');
         if (empty($hmoOption)) {
-            $hmoOption = $isInteractive ? $this->choice('5. HMO Provider', $hmoOptions, 0) : 'None';
+            $hmoOption = $isInteractive ? $this->choice('7. HMO Provider', $hmoOptions, 0) : 'None';
         }
         $hmoProvider = ($hmoOption === 'None' || empty($hmoOption)) ? null : (string) $hmoOption;
 
@@ -91,7 +101,7 @@ final class SimulateEncounterBillingCommand extends Command
         }
 
         // Optional interactive customization of line items
-        if ($isInteractive && $this->confirm('6. Would you like to customize or add itemized procedures / service line items?', false)) {
+        if ($isInteractive && $this->confirm('8. Would you like to customize or add itemized procedures / service line items?', false)) {
             $customItems = [];
             $departments = ['ROOM_AND_BOARD', 'CONSULTATION', 'EMERGENCY', 'PHARMACY', 'LABORATORY', 'RADIOLOGY', 'SURGERY', 'MISCELLANEOUS'];
             
@@ -115,7 +125,7 @@ final class SimulateEncounterBillingCommand extends Command
         }
 
         $hasPhilhealth = $isInteractive
-            ? $this->confirm('6. Does the patient have PhilHealth Benefit Coverage?', $type === 'INPATIENT')
+            ? $this->confirm('9. Does the patient have PhilHealth Benefit Coverage?', $type === 'INPATIENT')
             : true;
 
         if ($hasPhilhealth) {
@@ -125,7 +135,7 @@ final class SimulateEncounterBillingCommand extends Command
         }
 
         if ($hmoProvider) {
-            $hmoLimit = $this->option('hmo-limit') ?: ($isInteractive ? $this->ask('7. HMO Approved Coverage Limit (₱)', $defaultHmoLimit) : $defaultHmoLimit);
+            $hmoLimit = $this->option('hmo-limit') ?: ($isInteractive ? $this->ask('10. HMO Approved Coverage Limit (₱)', $defaultHmoLimit) : $defaultHmoLimit);
         } else {
             $hmoLimit = '0.00';
         }
@@ -133,12 +143,12 @@ final class SimulateEncounterBillingCommand extends Command
         // 3. Atomic Database Insertion & GL Posting
         $this->output->write("\nProcessing encounter ingestion & posting to General Ledger... ");
 
-        $result = DB::transaction(function () use ($name, $type, $discount, $idNumber, $hmoProvider, $philhealth, $hmoLimit, $items, $billingService): array {
+        $result = DB::transaction(function () use ($name, $gender, $dob, $type, $discount, $idNumber, $hmoProvider, $philhealth, $hmoLimit, $items, $billingService): array {
             $patient = PatientAccount::create([
                 'patient_id_number' => 'MRN-2026-' . strtoupper(substr(uniqid(), -5)),
                 'full_name'         => $name,
-                'date_of_birth'     => '1988-04-12',
-                'gender'            => 'Female',
+                'date_of_birth'     => $dob,
+                'gender'            => $gender,
                 'admission_type'    => $type,
                 'discount_category' => $discount,
                 'id_card_number'    => $idNumber,
@@ -189,7 +199,8 @@ final class SimulateEncounterBillingCommand extends Command
         $this->table(
             ['Field / Metric', 'Value'],
             [
-                ['Patient Name', $name],
+                ['Patient Name', $name . ' (' . $gender . ')'],
+                ['Date of Birth', $dob],
                 ['MRN Identifier', $result['patient_mrn']],
                 ['Admission Type', $type],
                 ['Discount Applied', $discount . ($idNumber ? " ($idNumber)" : '')],

@@ -716,4 +716,48 @@ final class AccountsReceivableModuleTest extends TestCase
         $agingResponse->assertStatus(200);
         $agingResponse->assertSee('PWD 20%');
     }
+
+    /** @test */
+    public function test_customer_statement_filters_by_admission_type_and_patient(): void
+    {
+        $this->actingAs($this->accountant);
+
+        $inpatient = PatientAccount::create([
+            'patient_id_number' => 'MRN-IPD-01',
+            'full_name'         => 'Inpatient John Doe',
+            'admission_type'    => 'INPATIENT',
+            'current_balance'   => '50000.0000',
+            'status'            => 'Active',
+        ]);
+
+        $outpatient = PatientAccount::create([
+            'patient_id_number' => 'MRN-OPD-01',
+            'full_name'         => 'Outpatient Jane Smith',
+            'admission_type'    => 'OUTPATIENT',
+            'current_balance'   => '1500.0000',
+            'status'            => 'Active',
+        ]);
+
+        Invoice::create([
+            'invoice_number'     => 'INV-OPD-001',
+            'patient_account_id' => $outpatient->id,
+            'invoice_date'       => '2026-01-15',
+            'total_amount'       => '1500.0000',
+            'patient_payable'    => '1500.0000',
+            'status'             => 'UNPAID',
+        ]);
+
+        // 1. Filter statements by OUTPATIENT
+        $response = $this->get('/accounts-receivable/customer-statements?admission_type=OUTPATIENT');
+        $response->assertStatus(200);
+        $response->assertSee('Outpatient Jane Smith');
+        $response->assertDontSee('Inpatient John Doe');
+
+        // 2. Filter statements for Outpatient Jane Smith's specific ledger
+        $soaResponse = $this->get("/accounts-receivable/customer-statements?patient_id={$outpatient->id}&admission_type=OUTPATIENT");
+        $soaResponse->assertStatus(200);
+        $soaResponse->assertSee('Statement Ledger for Outpatient Jane Smith');
+        $soaResponse->assertSee('INV-OPD-001');
+        $soaResponse->assertSee('1,500.00');
+    }
 }

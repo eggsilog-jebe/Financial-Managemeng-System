@@ -270,7 +270,7 @@
             <div>
               <span class="fs-xs text-muted fw-semibold d-block mb-1">Quick Auto-Fill Presets:</span>
               <div class="d-flex flex-wrap gap-2">
-                <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-1 fs-xs" id="btnApply20Pct">
+                <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-1 fs-xs" id="btn-preset-statutory-20">
                   <i class="ph ph-percent me-1"></i> Apply 20% Statutory Discount
                 </button>
                 <button type="button" class="btn btn-xs btn-outline-danger rounded-pill px-2 py-1 fs-xs" id="btnApply100Pct">
@@ -327,7 +327,7 @@
 document.addEventListener('DOMContentLoaded', function () {
   const invoiceSelect = document.getElementById('target_invoice_select');
   const reasonSelect = document.getElementById('credit_reason_select');
-  const amountInput = document.getElementById('credit_amount_input');
+  const amountInput = document.getElementById('credit_amount_input') || document.getElementById('credit_amount');
   const calcCard = document.getElementById('discountCalculationCard');
   const dispGross = document.getElementById('dispGross');
   const dispBalance = document.getElementById('dispBalance');
@@ -338,7 +338,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const statutoryWarningAlert = document.getElementById('statutoryWarningAlert');
   const statutoryRefDisplay = document.getElementById('statutoryRefDisplay');
 
-  const btnApply20Pct = document.getElementById('btnApply20Pct');
+  const btnApply20Pct = document.getElementById('btn-preset-statutory-20') || document.getElementById('btnApply20Pct');
   const btnApply100Pct = document.getElementById('btnApply100Pct');
   const btnApply50Pct = document.getElementById('btnApply50Pct');
 
@@ -452,21 +452,48 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  function applyStatutory20Preset(grossAmount, balanceAmount) {
+    // 1. Compute VAT-Exempt base (gross / 1.12)
+    const vatExemptBase = grossAmount / 1.12;
+
+    // 2. Compute 12% VAT waived
+    const vatRelief = grossAmount - vatExemptBase;
+
+    // 3. Compute 20% Statutory discount on the VAT-exempt base
+    const statutoryDiscount = vatExemptBase * 0.20;
+
+    // 4. Total Credit Note deduction (VAT Exemption + 20% Discount)
+    const totalStatutoryCredit = vatRelief + statutoryDiscount; // 28,571.43 for 100k
+
+    // Set form input value
+    const creditAmountInput = document.getElementById('credit_amount_input') || document.getElementById('credit_amount');
+    if (creditAmountInput) {
+      const finalCredit = (typeof balanceAmount === 'number' && balanceAmount > 0)
+        ? Math.min(balanceAmount, parseFloat(totalStatutoryCredit.toFixed(2)))
+        : parseFloat(totalStatutoryCredit.toFixed(2));
+      creditAmountInput.value = finalCredit.toFixed(2);
+    }
+
+    // Update live forecast card
+    updateCalculationCard();
+  }
+
   function autoFillDiscount(reason) {
     const data = getSelectedInvoiceData();
     if (!data) return;
 
     if (reason === 'SENIOR_CITIZEN_DISCOUNT' || reason === 'PWD_DISCOUNT') {
       if (data.hasStatutory) return;
-      const discount = Math.min(data.balance, parseFloat((data.gross * 0.20).toFixed(2)));
-      amountInput.value = discount > 0 ? discount.toFixed(2) : (data.balance * 0.20).toFixed(2);
+      const baseGross = data.gross > 0 ? data.gross : data.balance;
+      applyStatutory20Preset(baseGross, data.balance);
     } else if (reason === 'CHARITY_SUBSIDY') {
       amountInput.value = data.balance.toFixed(2);
+      updateCalculationCard();
     } else if (reason === 'EMPLOYEE_SUBSIDY') {
       const discount = Math.min(data.balance, parseFloat((data.gross * 0.20).toFixed(2)));
       amountInput.value = discount.toFixed(2);
+      updateCalculationCard();
     }
-    updateCalculationCard();
   }
 
   invoiceSelect.addEventListener('change', function () {
@@ -486,13 +513,24 @@ document.addEventListener('DOMContentLoaded', function () {
     updateCalculationCard();
   });
 
-  btnApply20Pct.addEventListener('click', function () {
-    const data = getSelectedInvoiceData();
-    if (!data || data.hasStatutory) return;
-    const discount = Math.min(data.balance, parseFloat((data.gross * 0.20).toFixed(2)));
-    amountInput.value = (discount > 0 ? discount : data.balance * 0.20).toFixed(2);
-    updateCalculationCard();
-  });
+  if (btnApply20Pct) {
+    btnApply20Pct.addEventListener('click', function () {
+      const data = getSelectedInvoiceData();
+      if (!data || data.hasStatutory) return;
+      const baseGross = data.gross > 0 ? data.gross : data.balance;
+      applyStatutory20Preset(baseGross, data.balance);
+    });
+  }
+
+  const btnPresetStatutory20 = document.getElementById('btn-preset-statutory-20');
+  if (btnPresetStatutory20 && btnPresetStatutory20 !== btnApply20Pct) {
+    btnPresetStatutory20.addEventListener('click', function () {
+      const data = getSelectedInvoiceData();
+      if (!data || data.hasStatutory) return;
+      const baseGross = data.gross > 0 ? data.gross : data.balance;
+      applyStatutory20Preset(baseGross, data.balance);
+    });
+  }
 
   btnApply100Pct.addEventListener('click', function () {
     const data = getSelectedInvoiceData();

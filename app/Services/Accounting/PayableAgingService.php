@@ -14,11 +14,11 @@ final class PayableAgingService
     /**
      * Compute comprehensive Payable Aging Schedule grouped by vendor with 30-day aging buckets.
      */
-    public function getPayableAgingReport(?string $asOfDate = null, ?int $vendorId = null): array
+    public function getPayableAgingReport(?string $asOfDate = null, ?int $vendorId = null, string $agingBasis = 'due_date'): array
     {
         $cutoff = $asOfDate ? Carbon::parse($asOfDate)->endOfDay() : now()->endOfDay();
 
-        $billsQuery = PurchaseBill::with('vendor')
+        $billsQuery = PurchaseBill::with(['vendor', 'birCertificate'])
             ->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE', 'APPROVED'])
             ->where('bill_date', '<=', $cutoff->toDateString());
 
@@ -27,8 +27,6 @@ final class PayableAgingService
         }
 
         $bills = $billsQuery->get();
-
-        $vendors = Vendor::with('purchaseBills')->orderBy('name')->get();
 
         $vendorGroups = [];
         $totalCurrent = '0.0000';
@@ -44,8 +42,11 @@ final class PayableAgingService
                 continue;
             }
 
-            $dueDate = Carbon::parse($bill->due_date);
-            $daysOverdue = (int) $dueDate->diffInDays($cutoff, false); // negative means not yet due
+            $referenceDate = $agingBasis === 'bill_date' 
+                ? Carbon::parse($bill->bill_date) 
+                : Carbon::parse($bill->due_date);
+
+            $daysOverdue = (int) $referenceDate->diffInDays($cutoff, false); // negative means not yet due / current
 
             $cur = '0.0000';
             $d30 = '0.0000';
@@ -75,18 +76,24 @@ final class PayableAgingService
             $vId = $bill->vendor_id;
             if (! isset($vendorGroups[$vId])) {
                 $vendorGroups[$vId] = [
-                    'vendor_id'    => $vId,
-                    'vendor_code'  => $bill->vendor?->code ?? 'N/A',
-                    'vendor_name'  => $bill->vendor?->name ?? 'Unknown Vendor',
-                    'tin'          => $bill->vendor?->tin ?? '-',
-                    'terms'        => $bill->vendor?->payment_terms_days ?? 30,
-                    'current'      => '0.0000',
-                    'days_1_30'    => '0.0000',
-                    'days_31_60'   => '0.0000',
-                    'days_61_90'   => '0.0000',
-                    'days_90_plus' => '0.0000',
-                    'total_due'    => '0.0000',
-                    'bills_count'  => 0,
+                    'vendor_id'           => $vId,
+                    'vendor_code'         => $bill->vendor?->code ?? 'N/A',
+                    'vendor_name'         => $bill->vendor?->name ?? 'Unknown Vendor',
+                    'tin'                 => $bill->vendor?->tin ?? '-',
+                    'tax_type'            => $bill->vendor?->tax_type ?? 'VAT_REGISTERED',
+                    'terms'               => $bill->vendor?->payment_terms_days ?? 30,
+                    'bank_name'           => $bill->vendor?->bank_name ?? '—',
+                    'bank_account_number' => $bill->vendor?->bank_account_number ?? '—',
+                    'bank_account_name'   => $bill->vendor?->bank_account_name ?? '—',
+                    'registered_address'  => $bill->vendor?->registered_address ?? '—',
+                    'current'             => '0.0000',
+                    'days_1_30'           => '0.0000',
+                    'days_31_60'          => '0.0000',
+                    'days_61_90'          => '0.0000',
+                    'days_90_plus'        => '0.0000',
+                    'total_due'           => '0.0000',
+                    'bills_count'         => 0,
+                    'bills'               => [],
                 ];
             }
 
@@ -97,10 +104,26 @@ final class PayableAgingService
             $vendorGroups[$vId]['days_90_plus'] = bcadd($vendorGroups[$vId]['days_90_plus'], $d90p, 4);
             $vendorGroups[$vId]['total_due'] = bcadd($vendorGroups[$vId]['total_due'], $unpaid, 4);
             $vendorGroups[$vId]['bills_count']++;
+
+            $vendorGroups[$vId]['bills'][] = [
+                'id'                    => $bill->id,
+                'bill_number'           => $bill->bill_number,
+                'vendor_invoice_number' => $bill->vendor_invoice_number,
+                'bill_date'             => $bill->bill_date?->format('M d, Y') ?? '—',
+                'due_date'              => $bill->due_date?->format('M d, Y') ?? '—',
+                'days_overdue'          => $daysOverdue,
+                'gross_amount'          => (float) $bill->total_amount,
+                'ewt_amount'            => (float) $bill->withholding_tax_amount,
+                'net_payable'           => (float) $bill->net_payable_amount,
+                'paid_amount'           => (float) $bill->paid_amount,
+                'balance_due'           => (float) $unpaid,
+                'status'                => $bill->status,
+            ];
         }
 
         return [
             'as_of_date'     => $cutoff->toDateString(),
+            'aging_basis'    => $agingBasis,
             'vendors'        => array_values($vendorGroups),
             'total_current'  => $totalCurrent,
             'total_1_30'     => $total1To30,
@@ -115,9 +138,9 @@ final class PayableAgingService
     /**
      * Stream CSV export of the Payable Aging Schedule.
      */
-    public function exportAgingCsv(?string $asOfDate = null): StreamedResponse
+    public function exportAgingCsv(?string $asOfDate = null, string $agingBasis = 'due_date'): StreamedResponse
     {
-        $report = $this->getPayableAgingReport($asOfDate);
+        $report = $this->getPayableAgingReport($asOfDate, null, $agingBasis);
         $filename = 'AP_Aging_Schedule_' . ($asOfDate ?? date('Ymd')) . '_' . date('His') . '.csv';
 
         $headers = [

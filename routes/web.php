@@ -134,8 +134,11 @@ Route::middleware(['auth'])->group(function () {
         });
 
         // Invoices & Vouchers Hub
-        Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector'])->group(function () {
+        Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector,Auditor'])->group(function () {
             Route::get('/invoices-vouchers', [VendorInvoiceController::class, 'index'])->name('invoices');
+            Route::get('/invoices-vouchers/export', [VendorInvoiceController::class, 'exportApRegister'])->name('invoices.export');
+            Route::get('/invoices-vouchers/batch-2307', [VendorInvoiceController::class, 'batchBir2307'])->name('invoices.batch-2307');
+            Route::post('/invoices-vouchers/{id}/quick-approve', [VendorInvoiceController::class, 'quickApprove'])->name('invoices.quick-approve');
             Route::post('/invoices-vouchers/prepare-voucher', [VendorInvoiceController::class, 'prepareVoucher'])->name('invoices.prepare-voucher');
             Route::post('/vouchers/prepare', [VendorInvoiceController::class, 'prepareVoucher'])->name('vouchers.prepare');
         });
@@ -144,6 +147,7 @@ Route::middleware(['auth'])->group(function () {
         Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector'])->group(function () {
             Route::get('/purchase-bills', [PurchaseBillController::class, 'index'])->name('purchase-bills');
             Route::post('/purchase-bills', [PurchaseBillController::class, 'store'])->name('purchase-bills.store');
+            Route::post('/purchase-bills/sync-psm-sws', [PurchaseBillController::class, 'syncPsmSws'])->name('purchase-bills.sync');
             Route::post('/ingest-bill', IngestVendorBillController::class)->name('ingest-bill');
         });
         Route::middleware(['role:FinanceManager,CFO,FinanceDirector'])->group(function () {
@@ -160,9 +164,12 @@ Route::middleware(['auth'])->group(function () {
         Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector'])->group(function () {
             Route::get('/payment-approvals', [PaymentApprovalController::class, 'index'])->name('payment-approvals.index');
             Route::get('/ap-payment-approvals', [PaymentApprovalController::class, 'index'])->name('ap-approvals');
+            Route::get('/payment-approvals/export-bank-batch', [PaymentApprovalController::class, 'exportBankBatch'])->name('payment-approvals.export-bank-batch');
         });
         Route::middleware(['role:FinanceManager,CFO,FinanceDirector'])->group(function () {
             Route::post('/payment-approvals/{id}/approve', [PaymentApprovalController::class, 'approve'])->name('payment-approvals.approve');
+            Route::post('/payment-approvals/{id}/reject', [PaymentApprovalController::class, 'reject'])->name('payment-approvals.reject');
+            Route::post('/payment-approvals/bulk-approve', [PaymentApprovalController::class, 'bulkApprove'])->name('payment-approvals.bulk-approve');
         });
         Route::middleware(['role:CFO,FinanceDirector'])->group(function () {
             Route::post('/payment-approvals/{id}/release', [PaymentApprovalController::class, 'release'])->name('payment-approvals.release');

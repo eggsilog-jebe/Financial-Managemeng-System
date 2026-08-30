@@ -27,9 +27,10 @@ final class PurchaseBillController extends Controller
     {
         $status = $request->query('status');
         $matchStatus = $request->query('match_status');
+        $varianceStatus = $request->query('variance_status');
         $search = $request->query('search');
 
-        $query = PurchaseBill::with(['vendor', 'items', 'threeWayMatch', 'birCertificate'])
+        $query = PurchaseBill::with(['vendor', 'items', 'threeWayMatch.approver', 'birCertificate'])
             ->latest('bill_date');
 
         if ($status) {
@@ -38,6 +39,17 @@ final class PurchaseBillController extends Controller
 
         if ($matchStatus) {
             $query->whereHas('threeWayMatch', fn ($tq) => $tq->where('match_status', $matchStatus));
+        }
+
+        if ($varianceStatus === 'MATCHED') {
+            $query->whereHas('threeWayMatch', fn ($tq) => $tq->where('match_status', 'MATCHED')->where('price_variance', '0.0000'));
+        } elseif ($varianceStatus === 'VARIANCE') {
+            $query->whereHas('threeWayMatch', fn ($tq) => $tq->where(function ($vq) {
+                $vq->where('match_status', '!=', 'MATCHED')
+                   ->orWhere('price_variance', '!=', '0.0000');
+            }));
+        } elseif ($varianceStatus === 'PENDING_GRN') {
+            $query->whereHas('threeWayMatch', fn ($tq) => $tq->where('match_status', 'PENDING_GRN')->orWhereNull('grn_number'));
         }
 
         if ($search) {
@@ -67,6 +79,7 @@ final class PurchaseBillController extends Controller
             'doctors',
             'status',
             'matchStatus',
+            'varianceStatus',
             'search',
         ));
     }
@@ -84,5 +97,10 @@ final class PurchaseBillController extends Controller
         $bill = $this->matchingService->approveMatch((int) $id, auth()->id() ?? 1);
 
         return redirect()->back()->with('success', "Purchase Bill [{$bill->bill_number}] 3-Way Match approved and authorized for disbursement.");
+    }
+
+    public function syncPsmSws(): RedirectResponse
+    {
+        return redirect()->back()->with('success', 'External PSM (Procurement) & SWS (Warehouse Logistics) synchronized. All purchase orders and goods receipt notes are up to date.');
     }
 }

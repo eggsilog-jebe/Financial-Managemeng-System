@@ -40,28 +40,52 @@
   <!-- Statement Filter Builder Card -->
   <div class="card border-0 shadow-sm rounded-3 mb-4">
     <div class="card-body p-3">
-      <form method="GET" action="{{ route('ar.statements') }}" class="row g-3 align-items-end">
-        <div class="col-md-5">
+      <form method="GET" action="{{ route('ar.statements') }}" class="row g-3 align-items-end" id="soaFilterForm">
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold text-dark mb-1"><i class="ph ph-buildings me-1 text-primary"></i> Care Setting / Admission:</label>
+          <select name="admission_type" id="admissionTypeFilter" class="form-select form-select-sm bg-light">
+            <option value="" {{ empty($admissionType) ? 'selected' : '' }}>All Care Settings</option>
+            <option value="OUTPATIENT" {{ strtoupper((string)($admissionType ?? '')) === 'OUTPATIENT' ? 'selected' : '' }}>Outpatient (OPD)</option>
+            <option value="INPATIENT" {{ strtoupper((string)($admissionType ?? '')) === 'INPATIENT' ? 'selected' : '' }}>Inpatient (IPD)</option>
+            <option value="EMERGENCY" {{ strtoupper((string)($admissionType ?? '')) === 'EMERGENCY' ? 'selected' : '' }}>Emergency (ER)</option>
+          </select>
+        </div>
+        <div class="col-md-4">
           <label class="form-label small fw-semibold text-dark mb-1"><i class="ph ph-user me-1 text-primary"></i> Select Patient / Debtor Account:</label>
-          <select name="patient_id" class="form-select form-select-sm bg-light" required>
-            <option value="">-- Choose Patient Account --</option>
+          <select name="patient_id" id="patientSelect" class="form-select form-select-sm bg-light" required>
+            <option value="" data-admission="">-- Choose Patient Account --</option>
             @foreach($accounts as $acc)
-              <option value="{{ $acc->id }}" {{ (string)$patientId === (string)$acc->id ? 'selected' : '' }}>
-                {{ $acc->full_name }} ({{ $acc->patient_id_number }}) — Open Balance: ₱{{ number_format((float) $acc->current_balance, 2) }}
+              @php
+                $typeUpper = strtoupper((string)($acc->admission_type ?? 'INPATIENT'));
+                $badgeText = match($typeUpper) {
+                  'OUTPATIENT' => 'OPD',
+                  'EMERGENCY'  => 'ER',
+                  default      => 'IPD',
+                };
+              @endphp
+              <option value="{{ $acc->id }}" 
+                      data-admission="{{ $typeUpper }}"
+                      data-name="{{ strtolower($acc->full_name) }}"
+                      data-mrn="{{ strtolower($acc->patient_id_number) }}"
+                      {{ (string)$patientId === (string)$acc->id ? 'selected' : '' }}>
+                [{{ $badgeText }}] {{ $acc->full_name }} ({{ $acc->patient_id_number }}) — Open: ₱{{ number_format((float) $acc->current_balance, 2) }}
               </option>
             @endforeach
           </select>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
           <label class="form-label small fw-semibold text-dark mb-1"><i class="ph ph-calendar me-1 text-primary"></i> Period Start Date:</label>
           <input type="date" name="start_date" class="form-control form-control-sm bg-light" value="{{ $startDate }}">
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
           <label class="form-label small fw-semibold text-dark mb-1"><i class="ph ph-calendar me-1 text-primary"></i> Period End Date:</label>
           <input type="date" name="end_date" class="form-control form-control-sm bg-light" value="{{ $endDate }}">
         </div>
-        <div class="col-md-1">
-          <button type="submit" class="btn btn-sm btn-primary w-100"><i class="ph ph-magnifying-glass"></i> View</button>
+        <div class="col-md-1 d-flex gap-1">
+          <button type="submit" class="btn btn-sm btn-primary w-100 fw-semibold" title="Generate Statement"><i class="ph ph-magnifying-glass"></i> View</button>
+          @if($patientId || $admissionType)
+            <a href="{{ route('ar.statements') }}" class="btn btn-sm btn-outline-secondary" title="Reset Filters"><i class="ph ph-arrow-counter-clockwise"></i></a>
+          @endif
         </div>
       </form>
     </div>
@@ -100,7 +124,18 @@
   <div class="card border-0 shadow-sm rounded-3">
     <div class="card-header bg-transparent border-bottom p-3 d-flex justify-content-between align-items-center">
       <div>
-        <h6 class="fw-bold text-dark mb-0">Statement Ledger for {{ $selectedAccount->full_name }}</h6>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <h6 class="fw-bold text-dark mb-0">Statement Ledger for {{ $selectedAccount->full_name }}</h6>
+          @php
+            $selType = strtoupper((string)($selectedAccount->admission_type ?? 'INPATIENT'));
+            $badgeColor = match($selType) {
+              'OUTPATIENT' => 'bg-info-subtle text-info border-info-subtle',
+              'EMERGENCY'  => 'bg-danger-subtle text-danger border-danger-subtle',
+              default      => 'bg-primary-subtle text-primary border-primary-subtle',
+            };
+          @endphp
+          <span class="badge {{ $badgeColor }} border fs-xs">{{ $selectedAccount->admission_type ?? 'Inpatient' }}</span>
+        </div>
         <span class="fs-xs text-muted font-monospace">MRN: {{ $selectedAccount->patient_id_number }} | {{ $statement['start_date'] }} to {{ $statement['end_date'] }}</span>
       </div>
       <span class="badge bg-light text-dark border">{{ count($statement['movements']) }} Ledger Records</span>
@@ -181,4 +216,49 @@
   </div>
   @endif
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const admissionFilter = document.getElementById('admissionTypeFilter');
+  const patientSelect = document.getElementById('patientSelect');
+
+  function filterPatientDropdown() {
+    if (!admissionFilter || !patientSelect) return;
+    const selectedAdmission = admissionFilter.value.toUpperCase();
+    const options = patientSelect.querySelectorAll('option');
+
+    let currentOptionStillValid = false;
+
+    options.forEach(opt => {
+      if (!opt.value) return; // Keep placeholder
+      const optAdmission = (opt.getAttribute('data-admission') || '').toUpperCase();
+      if (!selectedAdmission || optAdmission === selectedAdmission) {
+        opt.hidden = false;
+        opt.disabled = false;
+        if (opt.selected) currentOptionStillValid = true;
+      } else {
+        opt.hidden = true;
+        opt.disabled = true;
+        if (opt.selected) opt.selected = false;
+      }
+    });
+
+    if (!currentOptionStillValid && patientSelect.value && selectedAdmission) {
+      // Find first visible option or reset to placeholder
+      const firstVisible = Array.from(options).find(opt => opt.value && !opt.hidden);
+      if (firstVisible) {
+        firstVisible.selected = true;
+      } else {
+        patientSelect.value = '';
+      }
+    }
+  }
+
+  if (admissionFilter) {
+    admissionFilter.addEventListener('change', filterPatientDropdown);
+  }
+});
+</script>
+@endpush
 @endsection

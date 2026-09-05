@@ -3,9 +3,12 @@
   "framework": null,
   "outputDirectory": "public",
   "buildCommand": "npm install && npm run build",
+  "regions": ["sin1"],
   "functions": {
     "api/index.php": {
-      "runtime": "vercel-php@0.7.2"
+      "runtime": "vercel-php@0.7.2",
+      "memory": 1024,
+      "maxDuration": 15
     }
   },
   "routes": [
@@ -19,22 +22,27 @@
     },
     {
       "src": "^/assets/(.*)",
+      "headers": { "cache-control": "public, max-age=31536000, immutable" },
       "dest": "/public/assets/$1"
     },
     {
       "src": "^/build/(.*)",
+      "headers": { "cache-control": "public, max-age=31536000, immutable" },
       "dest": "/public/build/$1"
     },
     {
       "src": "^/css/(.*)",
+      "headers": { "cache-control": "public, max-age=31536000, immutable" },
       "dest": "/public/css/$1"
     },
     {
       "src": "^/js/(.*)",
+      "headers": { "cache-control": "public, max-age=31536000, immutable" },
       "dest": "/public/js/$1"
     },
     {
       "src": "^/images/(.*)",
+      "headers": { "cache-control": "public, max-age=31536000, immutable" },
       "dest": "/public/images/$1"
     },
     {
@@ -57,7 +65,7 @@
     "APP_MAINTENANCE_DRIVER": "file",
     "DB_CONNECTION": "pgsql",
     "DB_HOST": "aws-0-ap-southeast-1.pooler.supabase.com",
-    "DB_PORT": "5432",
+    "DB_PORT": "6543",
     "DB_DATABASE": "postgres",
     "DB_USERNAME": "postgres.yxtwtaevitkojxwpnqjw",
     "DB_PASSWORD": "b0K2KOdnQm0jy2Qt",
@@ -68,7 +76,7 @@
     "APP_ROUTES_CACHE": "/tmp/bootstrap/cache/routes.php",
     "APP_SERVICES_CACHE": "/tmp/bootstrap/cache/services.php",
     "APP_NAME": "HIMS",
-    "SESSION_DRIVER": "database",
+    "SESSION_DRIVER": "cookie",
     "SESSION_COOKIE": "hims_session",
     "SESSION_SECURE_COOKIE": "true",
     "SESSION_LIFETIME": "120",

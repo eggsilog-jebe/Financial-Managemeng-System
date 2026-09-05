@@ -26,6 +26,11 @@
           :tables="['invoices', 'payments', 'credit_notes', 'hmo_claims']"
           description="Compiles total charges, cashier payments, discounts, and HMO settlements into a running SOA ledger." 
       />
+      @if($patientId || $admissionType)
+        <a href="{{ route('ar.statements') }}" class="btn btn-outline-secondary btn-sm" title="Clear patient filter and return to full patient directory">
+          <i class="ph ph-arrow-counter-clockwise me-1"></i> Reset View
+        </a>
+      @endif
       @if($selectedAccount)
         <a href="{{ route('ar.statements.export', ['patient_id' => $selectedAccount->id, 'start_date' => $startDate, 'end_date' => $endDate]) }}" class="btn btn-outline-secondary btn-sm">
           <i class="ph ph-download-simple me-1"></i> Export Statement CSV
@@ -50,9 +55,9 @@
             <option value="EMERGENCY" {{ strtoupper((string)($admissionType ?? '')) === 'EMERGENCY' ? 'selected' : '' }}>Emergency (ER)</option>
           </select>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-5">
           <label class="form-label small fw-semibold text-dark mb-1"><i class="ph ph-user me-1 text-primary"></i> Select Patient / Debtor Account:</label>
-          <select name="patient_id" id="patientSelect" class="form-select form-select-sm bg-light" required>
+          <select name="patient_id" id="patientSelect" class="form-select form-select-sm bg-light" onchange="if(this.value) this.form.submit();" required>
             <option value="" data-admission="">-- Choose Patient Account --</option>
             @foreach($accounts as $acc)
               @php
@@ -75,17 +80,11 @@
         </div>
         <div class="col-md-2">
           <label class="form-label small fw-semibold text-dark mb-1"><i class="ph ph-calendar me-1 text-primary"></i> Period Start Date:</label>
-          <input type="date" name="start_date" class="form-control form-control-sm bg-light" value="{{ $startDate }}">
+          <input type="date" name="start_date" class="form-control form-control-sm bg-light" value="{{ $startDate }}" onchange="if(document.getElementById('patientSelect').value) this.form.submit();">
         </div>
         <div class="col-md-2">
           <label class="form-label small fw-semibold text-dark mb-1"><i class="ph ph-calendar me-1 text-primary"></i> Period End Date:</label>
-          <input type="date" name="end_date" class="form-control form-control-sm bg-light" value="{{ $endDate }}">
-        </div>
-        <div class="col-md-1 d-flex gap-1">
-          <button type="submit" class="btn btn-sm btn-primary w-100 fw-semibold" title="Generate Statement"><i class="ph ph-magnifying-glass"></i> View</button>
-          @if($patientId || $admissionType)
-            <a href="{{ route('ar.statements') }}" class="btn btn-sm btn-outline-secondary" title="Reset Filters"><i class="ph ph-arrow-counter-clockwise"></i></a>
-          @endif
+          <input type="date" name="end_date" class="form-control form-control-sm bg-light" value="{{ $endDate }}" onchange="if(document.getElementById('patientSelect').value) this.form.submit();">
         </div>
       </form>
     </div>
@@ -209,10 +208,66 @@
     </div>
   </div>
   @else
-  <div class="card border-0 shadow-sm rounded-3 p-5 text-center text-muted">
-    <i class="ph ph-user-focus fs-1 mb-2 text-primary"></i>
-    <h5 class="fw-bold text-dark">No Patient Selected</h5>
-    <p class="small mb-0">Please choose a patient account from the dropdown above to view their Statement of Account (SOA).</p>
+  <!-- Patient Accounts Directory Table (Shown when no individual patient is selected) -->
+  <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-header bg-transparent border-bottom p-3 d-flex justify-content-between align-items-center">
+      <div>
+        <h6 class="fw-bold text-dark mb-0"><i class="ph ph-users-three me-1 text-primary"></i> Patient Accounts Directory</h6>
+        <span class="fs-xs text-muted">Select a patient below or use the dropdown to load their itemized Statement of Account (SOA).</span>
+      </div>
+      <span class="badge bg-primary-subtle text-primary border border-primary-subtle">{{ count($accounts) }} Patients Registered</span>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" id="patientDirectoryTable">
+          <thead class="table-light">
+            <tr>
+              <th>Patient / Debtor Name</th>
+              <th>MRN / Patient ID</th>
+              <th>Care Setting</th>
+              <th>HMO / Insurance Provider</th>
+              <th class="text-end">Current Outstanding Balance</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @forelse($accounts as $acc)
+            @php
+              $typeUpper = strtoupper((string)($acc->admission_type ?? 'INPATIENT'));
+              $badgeClass = match($typeUpper) {
+                'OUTPATIENT' => 'bg-info-subtle text-info border-info-subtle',
+                'EMERGENCY'  => 'bg-danger-subtle text-danger border-danger-subtle',
+                default      => 'bg-primary-subtle text-primary border-primary-subtle',
+              };
+            @endphp
+            <tr style="cursor: pointer;" onclick="window.location.href='{{ route('ar.statements', ['patient_id' => $acc->id, 'start_date' => $startDate, 'end_date' => $endDate]) }}'">
+              <td>
+                <div class="fw-bold text-dark">{{ $acc->full_name }}</div>
+                @if($acc->hmo_provider)
+                  <span class="fs-xs text-muted"><i class="ph ph-shield-check me-1 text-success"></i> {{ $acc->hmo_provider }}</span>
+                @endif
+              </td>
+              <td><span class="font-monospace text-primary fw-semibold">{{ $acc->patient_id_number }}</span></td>
+              <td><span class="badge {{ $badgeClass }} border fs-xs">{{ $acc->admission_type ?? 'Inpatient' }}</span></td>
+              <td>{{ $acc->hmo_provider ?? 'Self-Pay Patient' }}</td>
+              <td class="text-end font-monospace fw-bold {{ (float)$acc->current_balance > 0 ? 'text-danger' : 'text-muted' }}">
+                ₱{{ number_format((float) $acc->current_balance, 2) }}
+              </td>
+              <td class="text-end" onclick="event.stopPropagation();">
+                <a href="{{ route('ar.statements', ['patient_id' => $acc->id, 'start_date' => $startDate, 'end_date' => $endDate]) }}" class="btn btn-sm btn-primary">
+                  <i class="ph ph-receipt me-1"></i> View Full Statement (SOA)
+                </a>
+              </td>
+            </tr>
+            @empty
+            <tr>
+              <td colspan="6" class="text-center py-4 text-muted">No patient accounts found.</td>
+            </tr>
+            @endforelse
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
   @endif
 </div>

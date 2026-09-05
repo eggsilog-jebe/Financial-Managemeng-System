@@ -15,6 +15,7 @@ final class DatabaseSeeder extends Seeder
             UserAndRoleSeeder::class,
             ChartOfAccountsSeeder::class,
             TaxConfigurationSeeder::class,
+            BankAccountSeeder::class,
         ]);
     }
 }

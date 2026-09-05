@@ -52,9 +52,6 @@ final class CustomerStatementController extends Controller
             if ($selectedAccount) {
                 $statement = $this->statementService->generateStatement($selectedAccount->id, $startDate, $endDate);
             }
-        } elseif ($accounts->isNotEmpty() && ($admissionType || $search)) {
-            // If filtered and patientId not set, optionally pre-select first match
-            // or leave unselected unless explicitly chosen
         }
 
         return view('accounts-receivable.customer-statements', compact(

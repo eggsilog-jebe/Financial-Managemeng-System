@@ -19,11 +19,14 @@ final class DepositSlipBatchController extends Controller
             ->latest('deposit_date')
             ->get();
         $slips = $deposits;
-        $totalDeposits = $deposits->sum('total_deposited');
+        $totalDeposits = (string) BankDeposit::sum('total_deposited');
 
         // Closed shifts ready for bank deposit / handover
         $closedShifts = CashierShift::with(['cashier', 'payments'])
             ->where('status', 'CLOSED')
+            ->whereDoesntHave('bankDeposits', function ($q) {
+                $q->whereIn('status', ['PREPARED', 'IN_TRANSIT', 'DEPOSITED', 'RECONCILED']);
+            })
             ->latest('closed_at')
             ->get();
 

@@ -146,6 +146,20 @@
                   <td colspan="4" class="text-center py-4 text-muted">No revenue journal lines posted in period.</td>
                 </tr>
                 @endforelse
+
+                @if(isset($allowances) && count($allowances) > 0)
+                <tr class="table-light">
+                  <td colspan="4" class="fw-bold text-uppercase text-warning fs-xs">Less: Contractual Allowances &amp; Statutory Discounts</td>
+                </tr>
+                @foreach($allowances as $a)
+                <tr>
+                  <td><span class="badge bg-light text-dark border font-monospace">{{ $a['code'] }}</span></td>
+                  <td class="fw-semibold text-dark">{{ $a['name'] }}</td>
+                  <td class="text-muted">{{ $a['department'] }}</td>
+                  <td class="text-end font-monospace text-warning fw-bold">-₱{{ number_format((float) $a['balance'], 2) }}</td>
+                </tr>
+                @endforeach
+                @endif
               </tbody>
               <tfoot class="table-light fw-bold">
                 <tr>

@@ -157,6 +157,20 @@ final class PeriodClosingService
                 throw new DomainException("Fiscal Period [{$period->period_code}] is already hard-closed.");
             }
 
+            $startDateStr = $period->start_date->format('Y-m-d');
+            $endDateStr = $period->end_date->format('Y-m-d');
+
+            // 1. Guard: Check for any unposted DRAFT journal entries within period
+            $pendingDrafts = JournalEntry::where('status', 'DRAFT')
+                ->whereBetween('entry_date', [$startDateStr, $endDateStr])
+                ->count();
+
+            if ($pendingDrafts > 0) {
+                throw new DomainException(
+                    "Cannot close period [{$period->period_code}]: There are {$pendingDrafts} unposted DRAFT journal entries that must be posted or deleted before closing."
+                );
+            }
+
             // Find or create Retained Earnings account (Code 3020 or 3000)
             $retainedEarningsAccount = Account::where('code', '3020')->first()
                 ?? Account::where('category', 'EQUITY')->where('name', 'LIKE', '%Retained Earnings%')->first()
@@ -172,19 +186,20 @@ final class PeriodClosingService
                 ]);
             }
 
-            // Fetch all revenue and expense accounts with activity in this period
+            // Fetch all revenue and expense accounts with activity in this period (excluding prior CLOSING entries)
             $nominalAccounts = Account::whereIn('category', ['REVENUE', 'EXPENSE'])
-                ->with(['journalEntryLines' => function ($q) use ($period): void {
-                    $q->whereHas('journalEntry', function ($je) use ($period): void {
+                ->with(['journalEntryLines' => function ($q) use ($startDateStr, $endDateStr): void {
+                    $q->whereHas('journalEntry', function ($je) use ($startDateStr, $endDateStr): void {
                         $je->where('status', 'POSTED')
-                           ->whereBetween('entry_date', [$period->start_date->format('Y-m-d'), $period->end_date->format('Y-m-d')]);
+                           ->where('type', '!=', 'CLOSING')
+                           ->whereBetween('entry_date', [$startDateStr, $endDateStr]);
                     });
                 }])
                 ->get();
 
             $closingLines = [];
-            $totalRevenueToZero = '0.0000';
-            $totalExpenseToZero = '0.0000';
+            $totalRevenueClosed = '0.0000';
+            $totalExpenseClosed = '0.0000';
 
             foreach ($nominalAccounts as $acc) {
                 $debits = (string) $acc->journalEntryLines->sum('debit');
@@ -194,33 +209,53 @@ final class PeriodClosingService
                     // Net Revenue Credit Balance = Credits - Debits
                     $netCredit = bcsub($credits, $debits, 4);
                     if (bccomp($netCredit, '0.0000', 4) > 0) {
-                        // To zero out Revenue: Debit the revenue account
+                        // Standard revenue credit balance: to zero out, Debit the revenue account
                         $closingLines[] = [
                             'account_id' => $acc->id,
                             'debit'      => $netCredit,
                             'credit'     => '0.0000',
                             'memo'       => "Close {$acc->code} - {$acc->name} for period {$period->period_code}",
                         ];
-                        $totalRevenueToZero = bcadd($totalRevenueToZero, $netCredit, 4);
+                        $totalRevenueClosed = bcadd($totalRevenueClosed, $netCredit, 4);
+                    } elseif (bccomp($netCredit, '0.0000', 4) < 0) {
+                        // Contra-revenue net debit balance (e.g. Sales Discounts/Returns): to zero out, Credit account
+                        $netDebit = bcmul($netCredit, '-1.0000', 4);
+                        $closingLines[] = [
+                            'account_id' => $acc->id,
+                            'debit'      => '0.0000',
+                            'credit'     => $netDebit,
+                            'memo'       => "Close contra-revenue {$acc->code} - {$acc->name} for period {$period->period_code}",
+                        ];
+                        $totalRevenueClosed = bcsub($totalRevenueClosed, $netDebit, 4);
                     }
                 } elseif ($acc->category === 'EXPENSE') {
                     // Net Expense Debit Balance = Debits - Credits
                     $netDebit = bcsub($debits, $credits, 4);
                     if (bccomp($netDebit, '0.0000', 4) > 0) {
-                        // To zero out Expense: Credit the expense account
+                        // Standard expense debit balance: to zero out, Credit the expense account
                         $closingLines[] = [
                             'account_id' => $acc->id,
                             'debit'      => '0.0000',
                             'credit'     => $netDebit,
                             'memo'       => "Close {$acc->code} - {$acc->name} for period {$period->period_code}",
                         ];
-                        $totalExpenseToZero = bcadd($totalExpenseToZero, $netDebit, 4);
+                        $totalExpenseClosed = bcadd($totalExpenseClosed, $netDebit, 4);
+                    } elseif (bccomp($netDebit, '0.0000', 4) < 0) {
+                        // Contra-expense net credit balance (e.g. Vendor Rebates): to zero out, Debit account
+                        $netCredit = bcmul($netDebit, '-1.0000', 4);
+                        $closingLines[] = [
+                            'account_id' => $acc->id,
+                            'debit'      => $netCredit,
+                            'credit'     => '0.0000',
+                            'memo'       => "Close contra-expense {$acc->code} - {$acc->name} for period {$period->period_code}",
+                        ];
+                        $totalExpenseClosed = bcsub($totalExpenseClosed, $netCredit, 4);
                     }
                 }
             }
 
-            // Net Income / (Loss) = Total Revenue - Total Expense
-            $netIncome = bcsub($totalRevenueToZero, $totalExpenseToZero, 4);
+            // Net Income / (Loss) = Total Revenue Closed - Total Expense Closed
+            $netIncome = bcsub($totalRevenueClosed, $totalExpenseClosed, 4);
             $closingJournalEntry = null;
 
             if (! empty($closingLines)) {
@@ -289,8 +324,8 @@ final class PeriodClosingService
                 'period'                => $period->loadMissing(['closedByUser', 'closingJournalEntry']),
                 'closing_journal_entry' => $closingJournalEntry,
                 'net_income'            => $netIncome,
-                'total_revenue_closed'  => $totalRevenueToZero,
-                'total_expense_closed'  => $totalExpenseToZero,
+                'total_revenue_closed'  => $totalRevenueClosed,
+                'total_expense_closed'  => $totalExpenseClosed,
             ];
         });
     }

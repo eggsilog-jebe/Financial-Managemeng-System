@@ -265,6 +265,25 @@ final class InvoiceBillingService
             );
         }
 
+        // Credit: PhilHealth Doctor Professional Fee (PF) Share Liability (Account 2040)
+        $doctorPfShare = '0.0000';
+        if (bccomp($philhealthAmount, '0.0000', 4) > 0) {
+            $doctorPfShare = bcmul($philhealthAmount, '0.4000', 4);
+            $doctorPfAcc = Account::firstOrCreate(
+                ['code' => '2040'],
+                ['name' => 'Due to Accredited Physicians (Doctor PF Holdback)', 'category' => 'LIABILITY', 'normal_balance' => 'CREDIT']
+            );
+
+            $journalLines[] = new JournalLineData(
+                accountId: $doctorPfAcc->id,
+                debit: '0.0000',
+                credit: $doctorPfShare,
+                memo: "PhilHealth 40% Physician PF share on {$invoice->invoice_number}"
+            );
+        }
+
+        $netHospitalRevenue = bcsub($grossTotal, $doctorPfShare, 4);
+
         // Credit: Departmental Hospital Revenue Accounts (4010, 4020, 4030, 4040, 4050, 4060)
         $deptMap = [
             'ROOM_AND_BOARD' => ['code' => '4010', 'name' => 'Inpatient Hospital Care Revenue'],
@@ -301,8 +320,24 @@ final class InvoiceBillingService
                 $deptTotals[$code]['total'] = bcadd($deptTotals[$code]['total'], $itemSubtotal, 4);
             }
 
+            $creditedRevenue = '0.0000';
+            $deptCodes = array_keys($deptTotals);
+            $lastCode = end($deptCodes);
+
             foreach ($deptTotals as $code => $info) {
-                if (bccomp($info['total'], '0.0000', 4) > 0) {
+                if (bccomp($info['total'], '0.0000', 4) <= 0) {
+                    continue;
+                }
+
+                if ($code === $lastCode) {
+                    $deptCredit = bcsub($netHospitalRevenue, $creditedRevenue, 4);
+                } else {
+                    $ratio = bcdiv($info['total'], $grossTotal, 6);
+                    $deptCredit = bcmul($netHospitalRevenue, $ratio, 4);
+                    $creditedRevenue = bcadd($creditedRevenue, $deptCredit, 4);
+                }
+
+                if (bccomp($deptCredit, '0.0000', 4) > 0) {
                     $deptRevenueAcc = Account::firstOrCreate(
                         ['code' => $code],
                         ['name' => $info['name'], 'category' => 'REVENUE', 'normal_balance' => 'CREDIT']
@@ -311,7 +346,7 @@ final class InvoiceBillingService
                     $journalLines[] = new JournalLineData(
                         accountId: $deptRevenueAcc->id,
                         debit: '0.0000',
-                        credit: $info['total'],
+                        credit: $deptCredit,
                         memo: "{$info['name']} recognition on {$invoice->invoice_number}"
                     );
                 }
@@ -320,7 +355,7 @@ final class InvoiceBillingService
             $journalLines[] = new JournalLineData(
                 accountId: $hospitalRevenueAcc->id,
                 debit: '0.0000',
-                credit: $grossTotal,
+                credit: $netHospitalRevenue,
                 memo: 'Clinical gross revenue recognition on ' . $invoice->invoice_number
             );
         }

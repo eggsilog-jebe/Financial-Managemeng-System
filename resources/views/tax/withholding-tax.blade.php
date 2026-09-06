@@ -56,7 +56,7 @@
           <span class="text-muted small fw-medium">Total Gross Income Base</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-currency-circle-dollar fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format(($certificates ?? collect())->sum('gross_income'), 2) }}</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($certificates ?? collect())->sum(fn($c) => $c->tax_base_amount ?? $c->gross_income ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -114,16 +114,16 @@
           <tbody>
             @forelse($certificates ?? [] as $c)
             @php
-              $num = is_array($c) ? $c['num'] : $c->cert_number;
-              $payee = is_array($c) ? $c['payee'] : $c->payee_name;
-              $role = is_array($c) ? $c['role'] : ($c->payee_role ?? 'Payee');
-              $payeeType = is_array($c) ? $c['payee_type'] : $c->payee_type;
-              $tin = is_array($c) ? $c['tin'] : $c->tin;
-              $atc = is_array($c) ? $c['atc'] : $c->atc_code;
-              $gross = is_array($c) ? $c['gross'] : ('₱' . number_format($c->gross_income, 2));
-              $tax = is_array($c) ? $c['tax'] : ('₱' . number_format($c->tax_withheld, 2));
-              $form = is_array($c) ? $c['form'] : ('BIR Form ' . $c->form_type);
-              $formType = is_array($c) ? $c['form_type'] : $c->form_type;
+              $num = is_array($c) ? $c['num'] : ($c->certificate_number ?? $c->cert_number ?? 'N/A');
+              $payee = is_array($c) ? $c['payee'] : ($c->payee_name ?? 'N/A');
+              $role = is_array($c) ? $c['role'] : ($c->payee_role ?? ($c->doctor_id ? 'Doctor' : 'Vendor'));
+              $payeeType = is_array($c) ? $c['payee_type'] : ($c->doctor_id ? 'doctor' : 'supplier');
+              $tin = is_array($c) ? $c['tin'] : ($c->payee_tin ?? $c->tin ?? 'N/A');
+              $atc = is_array($c) ? $c['atc'] : ($c->atc_code ?? 'N/A');
+              $gross = is_array($c) ? $c['gross'] : ('₱' . number_format((float) ($c->tax_base_amount ?? $c->gross_income ?? 0), 2));
+              $tax = is_array($c) ? $c['tax'] : ('₱' . number_format((float) ($c->tax_withheld ?? 0), 2));
+              $form = is_array($c) ? $c['form'] : ('BIR Form ' . ($c->form_type ?? '2307'));
+              $formType = is_array($c) ? $c['form_type'] : ($c->form_type ?? '2307');
               $cData = [
                 'num' => $num,
                 'payee' => $payee,

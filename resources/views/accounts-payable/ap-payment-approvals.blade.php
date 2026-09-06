@@ -43,13 +43,13 @@
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 
           type="internal" 
-          :internalModules="['Invoices & Vouchers', 'Bank Accounts', 'General Ledger']" 
+          :internalModules="['Vendor Invoices & Tax', 'Bank Accounts', 'General Ledger']" 
           :tables="['disbursement_vouchers', 'vendor_invoices', 'bank_accounts', 'journal_entries']"
           glImpact="DR 2010 AP Vendors / CR 1020 Cash in Bank + CR 2110 EWT Payable"
           description="Executive workstation to authorize supplier vouchers and execute bank check/EFT payouts." 
       />
       <a href="{{ route('ap.invoices') }}" class="btn btn-outline-secondary btn-sm">
-        <i class="ph ph-receipt me-1"></i> Invoices &amp; Vouchers Hub
+        <i class="ph ph-receipt me-1"></i> Vendor Invoices Hub
       </a>
       <!-- 1. Header Utility Buttons -->
       <a href="{{ route('ap.payment-approvals.export-bank-batch', ['status' => request('status') ?? 'ALL']) }}" class="btn btn-outline-primary btn-sm" id="btn-export-bank-batch">

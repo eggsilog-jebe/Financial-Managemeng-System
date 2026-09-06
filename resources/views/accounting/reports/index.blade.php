@@ -20,6 +20,9 @@
           glImpact="Calculates Trial Balance, Income Statement (Revenues - Expenses), and Balance Sheet"
           description="Generates real-time financial statements, BIR 2307/tax compliance schedules, and board-ready reports from posted GL records."
       />
+      <a href="{{ route('reporting.equity') }}" class="btn btn-outline-primary btn-sm">
+        <i class="ph ph-arrows-left-right me-1"></i> Changes in Equity (PFRS)
+      </a>
       <a href="{{ route('accounting.export.trial-balance-csv') }}" class="btn btn-outline-success btn-sm">
         <i class="ph ph-file-csv me-1"></i> Export Trial Balance CSV
       </a>

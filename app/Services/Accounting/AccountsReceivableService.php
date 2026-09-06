@@ -37,7 +37,7 @@ final class AccountsReceivableService
 
         foreach ($openInvoices as $inv) {
             $daysOld = $today->diffInDays(Carbon::parse($inv->invoice_date));
-            $balance = (string) $inv->patient_payable;
+            $balance = (string) $inv->balance_due;
 
             $aging['total_ar'] = bcadd($aging['total_ar'], $balance, 4);
             $aging['patient_total'] = bcadd($aging['patient_total'], $balance, 4);

@@ -51,6 +51,7 @@ use App\Http\Controllers\CashManagement\LiquidityManagementController;
 use App\Http\Controllers\FinancialReporting\BalanceSheetController;
 use App\Http\Controllers\FinancialReporting\ProfitAndLossController;
 use App\Http\Controllers\FinancialReporting\CashFlowStatementController;
+use App\Http\Controllers\FinancialReporting\StatementOfChangesInEquityController;
 use App\Http\Controllers\FinancialReporting\FinancialKpiDashboardController;
 use App\Http\Controllers\FinancialReporting\ExecutiveReportPackageController;
 
@@ -317,11 +318,26 @@ Route::middleware(['auth'])->group(function () {
 
     // 6. Budget Management
     Route::prefix('budget-management')->name('budget.')->group(function () {
-        Route::get('/fiscal-planning', [BudgetController::class, 'fiscalPlanning'])->name('fiscal-planning');
-        Route::get('/budget-allocation', [BudgetController::class, 'budgetAllocation'])->name('budget-allocation');
-        Route::get('/departmental-budgets', [BudgetController::class, 'departmentalBudgets'])->name('departmental-budgets');
-        Route::get('/variance-analysis', [BudgetController::class, 'varianceAnalysis'])->name('variance-analysis');
-        Route::get('/budget-reallocations', [BudgetController::class, 'budgetReallocations'])->name('reallocations');
+        // Read-only Budget Workstations
+        Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector,Auditor'])->group(function () {
+            Route::get('/fiscal-planning', [BudgetController::class, 'fiscalPlanning'])->name('fiscal-planning');
+            Route::get('/budget-allocation', [BudgetController::class, 'budgetAllocation'])->name('budget-allocation');
+            Route::get('/departmental-budgets', [BudgetController::class, 'departmentalBudgets'])->name('departmental-budgets');
+            Route::get('/variance-analysis', [BudgetController::class, 'varianceAnalysis'])->name('variance-analysis');
+            Route::get('/budget-reallocations', [BudgetController::class, 'budgetReallocations'])->name('reallocations');
+        });
+
+        // Allocation & Encumbrance Operations (Staff Accountants & Finance Managers)
+        Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector'])->group(function () {
+            Route::post('/allocations', [BudgetController::class, 'storeAllocation'])->name('allocations.store');
+            Route::post('/encumber', [BudgetController::class, 'encumber'])->name('encumber');
+            Route::post('/encumber/{id}/release', [BudgetController::class, 'releaseEncumbrance'])->name('encumber.release');
+        });
+
+        // Inter-Departmental Reallocation (Restricted to Finance Managers & CFO / Directors)
+        Route::middleware(['role:FinanceManager,CFO,FinanceDirector'])->group(function () {
+            Route::post('/reallocate', [BudgetController::class, 'reallocate'])->name('reallocate');
+        });
     });
 
     // 7. Cash Management
@@ -388,6 +404,13 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/cash-flow-statement/export', [CashFlowStatementController::class, 'export'])->name('cash-flow-statement.export');
         });
 
+        // Statement of Changes in Equity (PFRS / IAS 1)
+        Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector,Auditor'])->group(function () {
+            Route::get('/statement-of-changes-in-equity', [StatementOfChangesInEquityController::class, 'index'])->name('equity');
+            Route::get('/equity', [StatementOfChangesInEquityController::class, 'index'])->name('equity.short');
+            Route::get('/statement-of-changes-in-equity/export', [StatementOfChangesInEquityController::class, 'export'])->name('equity.export');
+        });
+
         // Financial KPI Dashboard
         Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector,Auditor'])->group(function () {
             Route::get('/financial-kpi-dashboard', [FinancialKpiDashboardController::class, 'index'])->name('financial-kpi-dashboard');
@@ -401,13 +424,24 @@ Route::middleware(['auth'])->group(function () {
         });
     });
 
-    // 9. Tax Management
+    // 9. Tax Management & Statutory Compliance
     Route::prefix('tax-management')->name('tax.')->group(function () {
-        Route::get('/tax-configuration', [TaxManagementController::class, 'taxConfiguration'])->name('tax-config');
-        Route::get('/withholding-tax', [TaxManagementController::class, 'withholdingTax'])->name('withholding-tax');
-        Route::get('/tax-returns', [TaxManagementController::class, 'taxReturns'])->name('tax-returns');
-        Route::get('/tax-exemptions', [TaxManagementController::class, 'taxExemptions'])->name('tax-exemptions');
-        Route::get('/tax-audit-trail', [TaxManagementController::class, 'taxAuditTrail'])->name('tax-audit');
+        // Read-only access for Accounting Staff, Managers, CFO, and Auditors
+        Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector,Auditor'])->group(function () {
+            Route::get('/tax-configuration', [TaxManagementController::class, 'taxConfiguration'])->name('tax-config');
+            Route::get('/withholding-tax', [TaxManagementController::class, 'withholdingTax'])->name('withholding-tax');
+            Route::get('/tax-returns', [TaxManagementController::class, 'taxReturns'])->name('tax-returns');
+            Route::get('/tax-exemptions', [TaxManagementController::class, 'taxExemptions'])->name('tax-exemptions');
+            Route::get('/tax-audit-trail', [TaxManagementController::class, 'taxAuditTrail'])->name('tax-audit');
+        });
+
+        // Statutory Return Filing & Tax Rule Configuration (Managers and CFO only)
+        Route::middleware(['role:FinanceManager,CFO,FinanceDirector'])->group(function () {
+            Route::post('/tax-returns', [TaxManagementController::class, 'storeTaxReturn'])->name('tax-returns.store');
+            Route::post('/tax-returns/{id}/pay', [TaxManagementController::class, 'markReturnPaid'])->name('tax-returns.pay');
+            Route::post('/tax-rules', [TaxManagementController::class, 'storeTaxRule'])->name('tax-rules.store');
+            Route::post('/tax-rules/{id}/toggle', [TaxManagementController::class, 'toggleTaxRule'])->name('tax-rules.toggle');
+        });
     });
 
     // 10. Accounting UI Interfaces

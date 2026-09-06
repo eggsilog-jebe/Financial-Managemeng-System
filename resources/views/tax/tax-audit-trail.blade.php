@@ -114,14 +114,14 @@
             @forelse($logs ?? [] as $l)
             @php
               $lArr = is_array($l) ? $l : [
-                'time' => $l->created_at->format('Y-m-d H:i:s'),
-                'user' => $l->user ?? 'System',
-                'ip' => $l->ip_address ?? 'N/A',
-                'category' => $l->event_category ?? 'Tax Event',
-                'cat_type' => strtolower($l->event_type ?? 'general'),
-                'voucher' => $l->source_voucher ?? 'N/A',
-                'impact' => '₱' . number_format($l->tax_impact ?? 0, 2),
-                'hash' => $l->hash ?? str_repeat('0', 64),
+                'time' => $l->created_at ? $l->created_at->format('Y-m-d H:i:s') : 'N/A',
+                'user' => $l->user_name ?? ($l->user?->name ?? 'System Officer'),
+                'ip' => $l->ip_address ?? '127.0.0.1',
+                'category' => class_basename($l->auditable_type ?? 'Tax Event'),
+                'cat_type' => strtolower($l->action ?? 'general'),
+                'voucher' => ($l->auditable_type ? class_basename($l->auditable_type) . ' #' . $l->auditable_id : ($l->source_voucher ?? 'N/A')),
+                'impact' => '₱' . number_format((float) ($l->new_values['tax_due'] ?? $l->new_values['tax_withheld'] ?? $l->new_values['rate'] ?? $l->tax_impact ?? 0), 2),
+                'hash' => $l->record_hash ?? $l->hash ?? str_repeat('0', 64),
               ];
             @endphp
             <tr class="audit-row" style="cursor: pointer;" data-cat="{{ $lArr['cat_type'] }}" data-user="{{ strtolower($lArr['user']) }}" onclick="openTaxAuditDetailsModal({{ json_encode($lArr) }})">

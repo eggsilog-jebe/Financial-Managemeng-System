@@ -30,6 +30,29 @@
     </div>
   </div>
 
+  @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <i class="ph ph-check-circle me-1"></i> {{ session('success') }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
+  @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="ph ph-warning-circle me-1"></i> {{ session('error') }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
+  @if($errors->any())
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <ul class="mb-0">
+        @foreach($errors->all() as $error)
+          <li>{{ $error }}</li>
+        @endforeach
+      </ul>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
+
   <!-- Metric Summary Cards -->
   <div class="row g-3 mb-4">
     <div class="col-md-3">
@@ -66,6 +89,48 @@
           <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-globe fs-5"></i></span>
         </div>
         <h4 class="fw-bold mb-0 text-dark">Connected</h4>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Statutory Calculation Engine (BIR Schedules from BirTaxScheduleService) -->
+  <div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-header bg-transparent border-bottom p-3 d-flex justify-content-between align-items-center">
+      <h6 class="fw-bold mb-0 text-dark"><i class="ph ph-calculator me-1 text-primary"></i> Live Statutory Tax Computations (Q{{ $quarter ?? 1 }} {{ $year ?? date('Y') }})</h6>
+      <span class="badge bg-light text-muted border font-monospace fs-xs">BIR Engine Live Aggregation</span>
+    </div>
+    <div class="card-body p-3">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <div class="p-3 border rounded-3 bg-light-subtle h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="fw-bold text-dark fs-sm">BIR Form 1601-EQ (EWT)</span>
+              <span class="badge bg-primary-subtle text-primary">{{ $ewt1601eq['total_forms'] ?? 0 }} Certificates</span>
+            </div>
+            <div class="fs-xs text-muted mb-1">Total Tax Base: <strong class="text-dark font-monospace">₱{{ number_format((float) ($ewt1601eq['total_tax_base'] ?? 0), 2) }}</strong></div>
+            <div class="fs-xs text-muted">Expanded Tax Withheld: <strong class="text-danger font-monospace">₱{{ number_format((float) ($ewt1601eq['total_withheld'] ?? 0), 2) }}</strong></div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="p-3 border rounded-3 bg-light-subtle h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="fw-bold text-dark fs-sm">BIR Form 1601-C (Payroll)</span>
+              <span class="badge bg-info-subtle text-info">{{ $comp1601c['employee_count'] ?? 0 }} Staff</span>
+            </div>
+            <div class="fs-xs text-muted mb-1">Gross Compensation: <strong class="text-dark font-monospace">₱{{ number_format((float) ($comp1601c['gross_compensation'] ?? 0), 2) }}</strong></div>
+            <div class="fs-xs text-muted">Compensation Tax Withheld: <strong class="text-danger font-monospace">₱{{ number_format((float) ($comp1601c['tax_withheld'] ?? 0), 2) }}</strong></div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="p-3 border rounded-3 bg-light-subtle h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="fw-bold text-dark fs-sm">BIR Form 2550Q (VAT)</span>
+              <span class="badge bg-success-subtle text-success">{{ $vat2550q['receipts_count'] ?? 0 }} ORs</span>
+            </div>
+            <div class="fs-xs text-muted mb-1">Vatable Sales: <strong class="text-dark font-monospace">₱{{ number_format((float) ($vat2550q['vatable_sales'] ?? 0), 2) }}</strong> | Exempt: <strong class="text-dark font-monospace">₱{{ number_format((float) ($vat2550q['vat_exempt_sales'] ?? 0), 2) }}</strong></div>
+            <div class="fs-xs text-muted">Output VAT (12%): <strong class="text-primary font-monospace">₱{{ number_format((float) ($vat2550q['output_vat_12'] ?? 0), 2) }}</strong></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -143,8 +208,14 @@
               <td class="font-monospace fs-xs">{{ $period }}</td>
               <td class="font-monospace fs-xs">{{ $due }}</td>
               <td class="text-end font-monospace fw-bold text-danger">{{ $payable }}</td>
-              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> {{ $status }}</span></td>
+              <td><span class="badge {{ $status === 'PAID' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning' }}"><i class="ph {{ $status === 'PAID' ? 'ph-check-circle' : 'ph-clock' }} me-1"></i> {{ $status }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
+                @if($status !== 'PAID')
+                <form action="{{ route('tax.tax-returns.pay', is_array($ret) ? $ret['id'] : $ret->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Confirm statutory tax remittance payment to BIR?');">
+                  @csrf
+                  <button type="submit" class="btn btn-sm btn-icon btn-outline-success" title="Mark Remitted & Paid"><i class="ph ph-check-circle"></i></button>
+                </form>
+                @endif
                 <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Return Details" onclick="openTaxReturnDetailsModal({{ json_encode($retData) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
@@ -248,27 +319,29 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body p-4">
-        <form id="fileReturnForm">
+        <form id="fileReturnForm" action="{{ route('tax.tax-returns.store') }}" method="POST">
+          @csrf
           <div class="row g-3">
             <div class="col-md-6">
               <label class="form-label small fw-semibold">BIR Form Code <span class="text-danger">*</span></label>
-              <select id="modalReturnForm" class="form-select form-select-sm" required>
-                <option value="BIR FORM 2550Q">BIR Form 2550Q (Quarterly VAT Return)</option>
-                <option value="BIR FORM 1601EQ">BIR Form 1601EQ (Quarterly EWT Return)</option>
-                <option value="BIR FORM 1702-EX">BIR Form 1702-EX (Corporate Income Tax)</option>
+              <select name="form_type" id="modalReturnForm" class="form-select form-select-sm" required>
+                <option value="2550Q">BIR Form 2550Q (Quarterly VAT Return)</option>
+                <option value="1601-EQ">BIR Form 1601-EQ (Quarterly EWT Return)</option>
+                <option value="1601-C">BIR Form 1601-C (Monthly Compensation Withholding)</option>
+                <option value="1702-EX">BIR Form 1702-EX (Corporate Income Tax)</option>
               </select>
             </div>
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Tax Period Covered <span class="text-danger">*</span></label>
-              <input type="text" id="modalReturnPeriod" class="form-control form-control-sm" placeholder="e.g. Q3 2026 (Jul - Sep)" value="Q3 2026" required>
+              <input type="text" name="period_covered" id="modalReturnPeriod" class="form-control form-control-sm" placeholder="e.g. Q3 2026 (Jul - Sep)" value="Q3 2026" required>
             </div>
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Statutory Due Date <span class="text-danger">*</span></label>
-              <input type="date" id="modalReturnDue" class="form-control form-control-sm" value="2026-10-25" required>
+              <label class="form-label small fw-semibold">Statutory Due / Filing Date <span class="text-danger">*</span></label>
+              <input type="date" name="filing_date" id="modalReturnDue" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
             </div>
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Total Net Tax Payable (₱) <span class="text-danger">*</span></label>
-              <input type="number" id="modalReturnPayable" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace text-danger fw-bold" placeholder="0.00" value="185000.00" required>
+              <input type="number" name="tax_due" id="modalReturnPayable" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace text-danger fw-bold" placeholder="0.00" value="0.00" required>
             </div>
           </div>
           <div class="d-flex justify-content-end gap-2 mt-4">
@@ -373,75 +446,6 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   if (formSelect) formSelect.addEventListener('change', filterReturns);
   if (statusSelect) statusSelect.addEventListener('change', filterReturns);
-
-  const fileReturnForm = document.getElementById('fileReturnForm');
-  if (fileReturnForm) {
-    fileReturnForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-
-      const codeVal = document.getElementById('modalReturnForm').value;
-      const periodVal = document.getElementById('modalReturnPeriod').value;
-      const dueVal = document.getElementById('modalReturnDue').value;
-      const rawPayable = parseFloat(document.getElementById('modalReturnPayable').value || 0);
-      const formattedPayable = '₱' + rawPayable.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const nextRef = 'eFPS Confirmation Ref: ' + Math.floor(9000000 + Math.random() * 999999);
-
-      const retObj = {
-        code: codeVal,
-        form_type: codeVal.includes('2550') ? '2550' : '1601',
-        title: 'Statutory Tax Return',
-        ref: nextRef,
-        period: periodVal,
-        due: dueVal,
-        payable: formattedPayable,
-        status: 'Pending Payment',
-        status_badge: 'bg-warning-subtle text-warning'
-      };
-
-      const tbody = document.querySelector('#taxReturnTable tbody');
-      if (tbody) {
-        const newRow = document.createElement('tr');
-        newRow.className = 'return-row';
-        newRow.style.cursor = 'pointer';
-        newRow.setAttribute('data-form', retObj.form_type);
-        newRow.setAttribute('data-status', 'pending payment');
-
-        newRow.onclick = function() { openTaxReturnDetailsModal(retObj); };
-
-        newRow.innerHTML = `
-          <td><span class="font-monospace text-primary fw-bold">${codeVal}</span></td>
-          <td>
-            <div class="fw-semibold text-dark">Statutory Tax Return</div>
-            <span class="fs-xs text-muted">${nextRef}</span>
-          </td>
-          <td class="font-monospace fs-xs">${periodVal}</td>
-          <td class="font-monospace fs-xs">${dueVal}</td>
-          <td class="text-end font-monospace fw-bold text-danger">${formattedPayable}</td>
-          <td><span class="badge bg-warning-subtle text-warning"><i class="ph ph-clock me-1"></i> Pending Payment</span></td>
-          <td class="text-end" onclick="event.stopPropagation();">
-            <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Return Details"><i class="ph ph-eye"></i></button>
-          </td>
-        `;
-
-        const eyeBtn = newRow.querySelector('button[title="View Return Details"]');
-        if (eyeBtn) {
-          eyeBtn.onclick = function(ex) {
-            ex.stopPropagation();
-            openTaxReturnDetailsModal(retObj);
-          };
-        }
-
-        tbody.insertBefore(newRow, tbody.firstChild);
-      }
-
-      const modalEl = document.getElementById('fileReturnModal');
-      const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-      if (modalInstance) modalInstance.hide();
-
-      fileReturnForm.reset();
-      filterReturns();
-    });
-  }
 
   filterReturns();
 });

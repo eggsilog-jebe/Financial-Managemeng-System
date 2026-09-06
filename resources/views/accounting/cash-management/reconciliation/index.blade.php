@@ -297,6 +297,8 @@ function toggleAll(className, isChecked) {
 function recalculateReconciliation() {
   const bookBal = parseFloat(document.getElementById('rawBookBalance')?.value || 0);
   const stmtBal = parseFloat(document.getElementById('inputStatementBalance')?.value || 0);
+  const rawTransit = parseFloat(document.getElementById('rawTransitDeposits')?.value || 0);
+  const rawOutChecks = parseFloat(document.getElementById('rawOutstandingChecks')?.value || 0);
 
   // Calculate selected cleared checks
   let selectedChecks = 0;
@@ -310,16 +312,31 @@ function recalculateReconciliation() {
     selectedDeposits += parseFloat(cb.getAttribute('data-amount') || 0);
   });
 
-  // Adjusted Book Balance = Book Balance + Cleared Deposits - Cleared Checks
-  // Variance = Statement Balance - Book Balance
-  const variance = stmtBal - bookBal;
+  // Remaining timing differences (uncleared items as of cutoff date)
+  const remainingOutChecks = Math.max(0, rawOutChecks - selectedChecks);
+  const remainingTransitDeposits = Math.max(0, rawTransit - selectedDeposits);
+
+  // Update dynamic display cards
+  const dispTransit = document.getElementById('displayTransitDeposits');
+  if (dispTransit) {
+    dispTransit.textContent = '+₱' + remainingTransitDeposits.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  const dispChecks = document.getElementById('displayOutstandingChecks');
+  if (dispChecks) {
+    dispChecks.textContent = '-₱' + remainingOutChecks.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  // Two-Way Adjusted Bank Balance (GAAP/IFRS)
+  const adjustedBankBalance = stmtBal + remainingTransitDeposits - remainingOutChecks;
+  const variance = adjustedBankBalance - bookBal;
 
   const dispVar = document.getElementById('displayVariance');
   const statText = document.getElementById('varianceStatusText');
   const btnPost = document.getElementById('btnPostReconciliation');
 
   if (dispVar) {
-    dispVar.textContent = (variance >= 0 ? '' : '-') + '₱' + Math.abs(variance).toFixed(2);
+    dispVar.textContent = (variance >= 0 ? '' : '-') + '₱' + Math.abs(variance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     if (Math.abs(variance) < 0.005) {
       dispVar.className = 'fw-bold mb-0 font-monospace text-success';
       statText.textContent = 'Balanced with Zero Variance (₱0.00)';
@@ -327,9 +344,9 @@ function recalculateReconciliation() {
       btnPost.disabled = false;
     } else {
       dispVar.className = 'fw-bold mb-0 font-monospace text-danger';
-      statText.textContent = 'Unresolved Variance: ₱' + Math.abs(variance).toFixed(2);
+      statText.textContent = 'Unresolved Variance: ₱' + Math.abs(variance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       statText.className = 'fs-xs text-danger fw-bold';
-      btnPost.disabled = false; // Form will enforce backend exception validation
+      btnPost.disabled = false;
     }
   }
 }

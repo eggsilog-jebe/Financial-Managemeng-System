@@ -25,6 +25,7 @@ final class EnsureIdempotency
         }
 
         $cacheKey = 'idempotency:' . md5($idempotencyKey . ':' . $request->path());
+        $lockKey = 'idempotency_lock:' . md5($idempotencyKey . ':' . $request->path());
 
         // Check if an identical request has already been processed within the 24-hour window
         if (Cache::has($cacheKey)) {
@@ -40,22 +41,50 @@ final class EnsureIdempotency
             );
         }
 
-        /** @var Response $response */
-        $response = $next($request);
+        // Acquire an atomic lock to guard against concurrent duplicate requests
+        $lock = Cache::lock($lockKey, 15);
 
-        // Cache successful and client-safe response payloads for 24 hours (86400 seconds)
-        if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 400) {
-            $content = json_decode($response->getContent() ?: '{}', true);
-
-            Cache::put($cacheKey, [
-                'status'  => $response->getStatusCode(),
-                'headers' => [
-                    'Content-Type' => 'application/json',
-                ],
-                'content' => $content,
-            ], now()->addHours(24));
+        if (! $lock->get()) {
+            return response()->json([
+                'message' => 'Concurrent transaction already in progress for this idempotency key. Please retry shortly.',
+                'error'   => 'IDEMPOTENCY_CONFLICT',
+            ], Response::HTTP_CONFLICT);
         }
 
-        return $response;
+        try {
+            // Re-verify cache in case concurrent request completed while waiting
+            if (Cache::has($cacheKey)) {
+                $cachedData = Cache::get($cacheKey);
+
+                return response()->json(
+                    $cachedData['content'],
+                    $cachedData['status'],
+                    array_merge($cachedData['headers'], [
+                        'X-Idempotency-Replay' => 'true',
+                        'X-Idempotency-Key'    => $idempotencyKey,
+                    ])
+                );
+            }
+
+            /** @var Response $response */
+            $response = $next($request);
+
+            // Cache successful and client-safe response payloads for 24 hours (86400 seconds)
+            if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 400) {
+                $content = json_decode($response->getContent() ?: '{}', true);
+
+                Cache::put($cacheKey, [
+                    'status'  => $response->getStatusCode(),
+                    'headers' => [
+                        'Content-Type' => 'application/json',
+                    ],
+                    'content' => $content,
+                ], now()->addHours(24));
+            }
+
+            return $response;
+        } finally {
+            $lock->release();
+        }
     }
 }

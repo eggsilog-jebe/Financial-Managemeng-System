@@ -19,14 +19,23 @@ final class TrialBalanceService
         ?string $category = null,
         ?string $search = null,
     ): array {
-        $query = Account::with(['journalEntryLines' => function ($q) use ($asOfDate): void {
+        $query = Account::withSum(['journalEntryLines as total_debit' => function ($q) use ($asOfDate): void {
             $q->whereHas('journalEntry', function ($je) use ($asOfDate): void {
                 $je->where('status', 'POSTED');
                 if ($asOfDate) {
                     $je->whereDate('entry_date', '<=', $asOfDate);
                 }
             });
-        }])->orderBy('code');
+        }], 'debit')
+        ->withSum(['journalEntryLines as total_credit' => function ($q) use ($asOfDate): void {
+            $q->whereHas('journalEntry', function ($je) use ($asOfDate): void {
+                $je->where('status', 'POSTED');
+                if ($asOfDate) {
+                    $je->whereDate('entry_date', '<=', $asOfDate);
+                }
+            });
+        }], 'credit')
+        ->orderBy('code');
 
         if ($category) {
             $query->where('category', strtoupper($category));
@@ -46,8 +55,8 @@ final class TrialBalanceService
         $totalCreditBalance = '0.0000';
 
         foreach ($accounts as $acc) {
-            $debits = (string) $acc->journalEntryLines->sum('debit');
-            $credits = (string) $acc->journalEntryLines->sum('credit');
+            $debits = (string) ($acc->total_debit ?? '0.0000');
+            $credits = (string) ($acc->total_credit ?? '0.0000');
 
             $netBalance = bcsub($debits, $credits, 4);
 

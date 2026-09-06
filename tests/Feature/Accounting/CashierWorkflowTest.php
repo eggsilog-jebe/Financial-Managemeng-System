@@ -93,7 +93,8 @@ class CashierWorkflowTest extends TestCase
 
         // 4. Assert Invoice Status and Balance Updated
         $this->assertEquals('SETTLED', $invoice->fresh()->status);
-        $this->assertEquals('0.0000', $invoice->fresh()->patient_payable);
+        $this->assertEquals('4500.0000', $invoice->fresh()->paid_amount);
+        $this->assertEquals('0.0000', $invoice->fresh()->balance_due);
 
         // 5. Assert Balanced General Ledger Journal Posted
         $glEntry = JournalEntry::with('lines.account')

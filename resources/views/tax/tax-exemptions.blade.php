@@ -42,7 +42,7 @@
           <span class="text-muted small fw-medium">Total Tax Base Amount</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-currency-circle-dollar fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($certificates ?? collect())->sum('tax_base'), 2) }}</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($certificates ?? collect())->sum(fn($c) => $c->tax_base_amount ?? $c->gross_income ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">

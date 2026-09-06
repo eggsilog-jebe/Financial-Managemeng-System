@@ -27,8 +27,25 @@ final class FundTransferService
                 throw new DomainException("Source and Destination bank accounts must be different.");
             }
 
-            $sourceBank = BankAccount::findOrFail($dto->sourceBankAccountId);
-            $destBank = BankAccount::findOrFail($dto->destinationBankAccountId);
+            $firstId = min($dto->sourceBankAccountId, $dto->destinationBankAccountId);
+            $secondId = max($dto->sourceBankAccountId, $dto->destinationBankAccountId);
+
+            $accounts = BankAccount::whereIn('id', [$firstId, $secondId])
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            $sourceBank = $accounts->get($dto->sourceBankAccountId);
+            $destBank = $accounts->get($dto->destinationBankAccountId);
+
+            if (! $sourceBank) {
+                throw new DomainException("Source bank account [ID {$dto->sourceBankAccountId}] not found.");
+            }
+
+            if (! $destBank) {
+                throw new DomainException("Destination bank account [ID {$dto->destinationBankAccountId}] not found.");
+            }
 
             if (! $sourceBank->is_active || $sourceBank->status !== 'Active') {
                 throw new DomainException("Source bank account [{$sourceBank->name}] is not active.");

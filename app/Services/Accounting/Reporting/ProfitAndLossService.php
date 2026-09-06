@@ -11,6 +11,9 @@ final class ProfitAndLossService
 {
     /**
      * Compute Profit & Loss / Income Statement for a given date range.
+     * Complies with PFRS / Healthcare Financial Accounting standards:
+     * Gross Patient Revenue - Contractual Deductions/Allowances = Net Patient Revenue
+     * Net Patient Revenue - Hospital Operating Expenses = Net Operating Surplus / (Loss)
      */
     public function getProfitAndLossData(?string $dateFrom = null, ?string $dateTo = null, ?string $department = null): array
     {
@@ -43,10 +46,11 @@ final class ProfitAndLossService
         ->get();
 
         $revenueRows = [];
+        $allowanceRows = [];
         $expenseRows = [];
 
         $grossRevenue = '0.0000';
-        $salesDiscounts = '0.0000';
+        $contractualAllowances = '0.0000';
         $totalExpenses = '0.0000';
 
         foreach ($lines as $line) {
@@ -65,21 +69,30 @@ final class ProfitAndLossService
                 'balance'    => $bal,
             ];
 
-            if ($line->category === 'REVENUE') {
-                // If account is Sales Discount / Statutory Discount (code 5010 or 4090 or contra)
-                if (str_contains(strtolower($line->name), 'discount') || str_starts_with($line->code, '5010')) {
-                    $salesDiscounts = bcadd($salesDiscounts, $bal, 4);
-                } else {
-                    $grossRevenue = bcadd($grossRevenue, $bal, 4);
-                }
+            $code = (string) $line->code;
+            $nameLower = strtolower((string) $line->name);
+
+            // Identify Contra-Revenue / Allowances / Discounts (e.g. 4910 Senior/PWD, 4920 PhilHealth, 4930 HMO)
+            $isAllowance = str_starts_with($code, '49')
+                || str_contains($nameLower, 'discount')
+                || str_contains($nameLower, 'allowance')
+                || str_contains($nameLower, 'write-off');
+
+            if ($line->category === 'REVENUE' && ! $isAllowance) {
+                $grossRevenue = bcadd($grossRevenue, $bal, 4);
                 $revenueRows[] = $row;
-            } elseif ($line->category === 'EXPENSE') {
+            } elseif ($isAllowance) {
+                // If account is debit-normal contra-revenue, positive balance is deduction
+                $allowanceAmount = bccomp($bal, '0.0000', 4) < 0 ? bcmul($bal, '-1.0000', 4) : $bal;
+                $contractualAllowances = bcadd($contractualAllowances, $allowanceAmount, 4);
+                $allowanceRows[] = $row;
+            } else {
                 $totalExpenses = bcadd($totalExpenses, $bal, 4);
                 $expenseRows[] = $row;
             }
         }
 
-        $netRevenue = bcsub($grossRevenue, $salesDiscounts, 4);
+        $netRevenue = bcsub($grossRevenue, $contractualAllowances, 4);
         $netIncome = bcsub($netRevenue, $totalExpenses, 4);
 
         // Operating Profit Margin %
@@ -88,19 +101,21 @@ final class ProfitAndLossService
             : 0.0;
 
         return [
-            'date_from'        => $from,
-            'date_to'          => $to,
-            'department'       => $department,
-            'revenues'         => $revenueRows,
-            'expenses'         => $expenseRows,
-            'gross_revenue'    => $grossRevenue,
-            'sales_discounts'  => $salesDiscounts,
-            'net_revenue'      => $netRevenue,
-            'total_revenue'    => $netRevenue,
-            'total_expense'    => $totalExpenses,
-            'total_expenses'   => $totalExpenses,
-            'net_income'       => $netIncome,
-            'profit_margin'    => $profitMargin,
+            'date_from'              => $from,
+            'date_to'                => $to,
+            'department'             => $department,
+            'revenues'               => $revenueRows,
+            'allowances'             => $allowanceRows,
+            'expenses'               => $expenseRows,
+            'gross_revenue'          => $grossRevenue,
+            'sales_discounts'        => $contractualAllowances,
+            'contractual_allowances' => $contractualAllowances,
+            'net_revenue'            => $netRevenue,
+            'total_revenue'          => $netRevenue,
+            'total_expense'          => $totalExpenses,
+            'total_expenses'         => $totalExpenses,
+            'net_income'             => $netIncome,
+            'profit_margin'          => $profitMargin,
         ];
     }
 }

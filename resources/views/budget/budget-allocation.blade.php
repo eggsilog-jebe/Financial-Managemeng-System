@@ -25,6 +25,22 @@
     </div>
   </div>
 
+  @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show mb-4 d-flex align-items-center" role="alert">
+      <i class="ph ph-check-circle fs-4 me-2"></i>
+      <div>{{ session('success') }}</div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
+
+  @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show mb-4 d-flex align-items-center" role="alert">
+      <i class="ph ph-warning-circle fs-4 me-2"></i>
+      <div>{{ session('error') }}</div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
+
   <!-- Metric Summary Cards -->
   <div class="row g-3 mb-4">
     <div class="col-md-3">
@@ -33,7 +49,7 @@
           <span class="text-muted small fw-medium">Total Fiscal Budget Cap</span>
           <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-vault fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($totalAllocated ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -42,7 +58,7 @@
           <span class="text-muted small fw-medium">Encumbered Commitments (POs)</span>
           <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-lock-key fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-danger">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-danger">₱{{ number_format((float) ($totalEncumbered ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -51,7 +67,7 @@
           <span class="text-muted small fw-medium">Actual Expended Funds</span>
           <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-calculator fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($totalSpent ?? 0), 2) }}</h4>
       </div>
     </div>
     <div class="col-md-3">
@@ -60,7 +76,7 @@
           <span class="text-muted small fw-medium">Remaining Liquid Capacity</span>
           <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-hand-coins fs-5"></i></span>
         </div>
-        <h4 class="fw-bold mb-0 text-success">₱0.00</h4>
+        <h4 class="fw-bold mb-0 text-success">₱{{ number_format((float) (($totalRemaining ?? 0) - ($totalEncumbered ?? 0)), 2) }}</h4>
       </div>
     </div>
   </div>

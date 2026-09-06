@@ -179,7 +179,9 @@ final class ReceivableAgingLifecycleTest extends TestCase
 
         $invoice->refresh();
         $this->assertEquals('SETTLED', $invoice->status);
-        $this->assertEquals('0.0000', (string) $invoice->patient_payable);
+        $this->assertEquals('0.0000', (string) $invoice->balance_due);
+        $this->assertEquals('50000.0000', (string) $invoice->paid_amount);
+        $this->assertEquals('50000.0000', (string) $invoice->patient_payable);
 
         // Verify GL entry for split payment
         $glEntry = JournalEntry::where('reference_number', 'JE-COL-' . $payment->payment_reference)->with('lines.account')->first();

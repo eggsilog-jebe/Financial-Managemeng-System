@@ -18,10 +18,13 @@ final class BudgetEncumbrance extends Model
         'status',
     ];
 
-    protected $casts = [
-        'encumbered_amount' => 'decimal:4',
-        'liquidated_amount' => 'decimal:4',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'encumbered_amount' => 'decimal:4',
+            'liquidated_amount' => 'decimal:4',
+        ];
+    }
 
     public function budgetAllocation(): BelongsTo
     {

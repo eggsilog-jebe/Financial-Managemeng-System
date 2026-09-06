@@ -25,6 +25,22 @@
     </div>
   </div>
 
+  @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show mb-4 d-flex align-items-center" role="alert">
+      <i class="ph ph-check-circle fs-4 me-2"></i>
+      <div>{{ session('success') }}</div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
+
+  @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show mb-4 d-flex align-items-center" role="alert">
+      <i class="ph ph-warning-circle fs-4 me-2"></i>
+      <div>{{ session('error') }}</div>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
+
   <!-- Metric Summary Cards -->
   <div class="row g-3 mb-4">
     <div class="col-md-3">
@@ -231,36 +247,37 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body p-4">
-        <form id="requestTransferForm">
+        <form method="POST" action="{{ route('budget.reallocate') }}" id="requestTransferForm">
+          @csrf
+          <input type="hidden" name="transfer_date" value="{{ date('Y-m-d') }}">
           <div class="row g-3">
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Source Department (Surplus) <span class="text-danger">*</span></label>
-              <select id="modalRealFrom" class="form-select form-select-sm" required>
-                <option value="Radiology & Imaging">Radiology &amp; Imaging</option>
-                <option value="Outpatient Clinic">Outpatient Clinic</option>
+              <select name="source_budget_allocation_id" id="modalRealFrom" class="form-select form-select-sm" required>
+                @foreach($budgets ?? [] as $b)
+                  <option value="{{ $b->id }}">{{ $b->department }} (Avail: ₱{{ number_format((float) $b->available_unencumbered_balance, 2) }})</option>
+                @endforeach
               </select>
             </div>
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Destination Department (Deficit) <span class="text-danger">*</span></label>
-              <select id="modalRealTo" class="form-select form-select-sm" required>
-                <option value="Facilities & Utilities">Facilities &amp; Utilities</option>
-                <option value="ICU & Emergency">ICU &amp; Emergency</option>
-                <option value="Pharmacy & Medical Supplies">Pharmacy &amp; Medical Supplies</option>
+              <select name="destination_budget_allocation_id" id="modalRealTo" class="form-select form-select-sm" required>
+                @foreach($budgets ?? [] as $b)
+                  <option value="{{ $b->id }}">{{ $b->department }}</option>
+                @endforeach
               </select>
             </div>
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Transfer Amount (₱) <span class="text-danger">*</span></label>
-              <input type="number" id="modalRealAmount" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace" placeholder="0.00" value="100000.00" required>
+              <input type="number" name="amount" id="modalRealAmount" step="0.01" min="0.01" class="form-control form-control-sm text-end font-monospace" placeholder="0.00" value="100000.00" required>
             </div>
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Target Effective Period</label>
-              <select class="form-select form-select-sm">
-                <option value="q3">Q3 2026 (Immediate)</option>
-              </select>
+              <label class="form-label small fw-semibold">Effective Transfer Date</label>
+              <input type="date" name="transfer_date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
             </div>
             <div class="col-12">
               <label class="form-label small fw-semibold">Operational Justification <span class="text-danger">*</span></label>
-              <input type="text" id="modalRealReason" class="form-control form-control-sm" placeholder="e.g. Emergency equipment repair cost overrun" required>
+              <input type="text" name="reason" id="modalRealReason" class="form-control form-control-sm" placeholder="e.g. Emergency equipment repair cost overrun" required>
             </div>
           </div>
           <div class="d-flex justify-content-end gap-2 mt-4">

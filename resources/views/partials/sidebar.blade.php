@@ -106,8 +106,8 @@
           </button>
           <ul class="nav-submenu" id="nav-ap" @if(!$isAp) hidden @endif>
             <li><a href="{{ route('ap.vendors') }}" class="{{ request()->routeIs('ap.vendors') ? 'active' : '' }}">Vendor Management</a></li>
-            <li><a href="{{ route('ap.invoices') }}" class="{{ request()->routeIs('ap.invoices') ? 'active' : '' }}">Invoices &amp; Vouchers</a></li>
-            <li><a href="{{ route('ap.purchase-bills') }}" class="{{ request()->routeIs('ap.purchase-bills') ? 'active' : '' }}">Purchase Bills</a></li>
+            <li><a href="{{ route('ap.purchase-bills') }}" class="{{ request()->routeIs('ap.purchase-bills') ? 'active' : '' }}">Invoice Matching &amp; Verification</a></li>
+            <li><a href="{{ route('ap.invoices') }}" class="{{ request()->routeIs('ap.invoices') ? 'active' : '' }}">Vendor Invoices &amp; Tax</a></li>
             <li><a href="{{ route('ap.payable-aging') }}" class="{{ request()->routeIs('ap.payable-aging') ? 'active' : '' }}">Payable Aging</a></li>
             <li><a href="{{ route('ap.ap-approvals') }}" class="{{ request()->routeIs('ap.ap-approvals') ? 'active' : '' }}">AP Payment Approvals</a></li>
           </ul>
@@ -141,7 +141,7 @@
             <i class="ph ph-caret-down nav-chevron" aria-hidden="true"></i>
           </button>
           <ul class="nav-submenu" id="nav-disbursement" @if(!$isDisbursement) hidden @endif>
-            <li><a href="{{ route('disbursement.payment-requests') }}" class="{{ request()->routeIs('disbursement.payment-requests') ? 'active' : '' }}">Payment Requests</a></li>
+            <li><a href="{{ route('disbursement.payment-requests') }}" class="{{ request()->routeIs('disbursement.payment-requests') ? 'active' : '' }}">Disbursement Vouchers &amp; Requests</a></li>
             <li><a href="{{ route('disbursement.check-register') }}" class="{{ request()->routeIs('disbursement.check-register') ? 'active' : '' }}">Check Register</a></li>
             <li><a href="{{ route('disbursement.eft-transfers') }}" class="{{ request()->routeIs('disbursement.eft-transfers') ? 'active' : '' }}">EFT Transfers</a></li>
             <li><a href="{{ route('disbursement.disbursement-approval') }}" class="{{ request()->routeIs('disbursement.disbursement-approval') ? 'active' : '' }}">Disbursement Approvals</a></li>
@@ -216,6 +216,7 @@
             <li><a href="{{ route('reporting.balance-sheet') }}" class="{{ request()->routeIs('reporting.balance-sheet') ? 'active' : '' }}">Balance Sheet</a></li>
             <li><a href="{{ route('reporting.profit-loss') }}" class="{{ request()->routeIs('reporting.profit-loss') ? 'active' : '' }}">Profit &amp; Loss (P&amp;L)</a></li>
             <li><a href="{{ route('reporting.cash-flow-statement') }}" class="{{ request()->routeIs('reporting.cash-flow-statement') ? 'active' : '' }}">Cash Flow Statement</a></li>
+            <li><a href="{{ route('reporting.equity') }}" class="{{ request()->routeIs('reporting.equity*') ? 'active' : '' }}">Changes in Equity</a></li>
             <li><a href="{{ route('reporting.kpi-dashboard') }}" class="{{ request()->routeIs('reporting.kpi-dashboard') ? 'active' : '' }}">Financial KPI Dashboard</a></li>
             <li><a href="{{ route('reporting.executive-reports') }}" class="{{ request()->routeIs('reporting.executive-reports') ? 'active' : '' }}">Executive Reports</a></li>
           </ul>

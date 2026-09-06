@@ -26,17 +26,23 @@ final class CreditNoteService
     public function createCreditNote(CreditNoteData $dto, ?int $userId = null): CreditNote
     {
         return DB::transaction(function () use ($dto, $userId): CreditNote {
-            $invoice = Invoice::with('patientAccount')->findOrFail($dto->invoiceId);
+            $invoice = Invoice::where('id', $dto->invoiceId)->lockForUpdate()->firstOrFail();
+            $invoice->loadMissing('patientAccount');
+
+            $committedCNs = (string) CreditNote::where('invoice_id', $invoice->id)
+                ->whereIn('status', ['DRAFT', 'POSTED', 'APPLIED'])
+                ->sum('amount');
 
             $openBalance = $invoice->balance_due;
-            $amount = $dto->amount;
+            $uncommittedBalance = bcsub($openBalance, $committedCNs, 4);
+            $amount = (string) $dto->amount;
 
             if (bccomp($amount, '0.0000', 4) <= 0) {
                 throw new DomainException("Credit Note adjustment amount must be greater than zero.");
             }
 
-            if (bccomp($amount, $openBalance, 4) > 0) {
-                throw new DomainException("Credit Note amount (₱{$amount}) exceeds open patient copay balance (₱{$openBalance}).");
+            if (bccomp($amount, $uncommittedBalance, 4) > 0) {
+                throw new DomainException("Credit Note amount (₱{$amount}) exceeds open uncommitted patient copay balance (₱{$uncommittedBalance}). Existing active/draft credit notes total ₱{$committedCNs}.");
             }
 
             // Prevent Duplicate Statutory Discounts on same invoice (RA 9994 / RA 10754)
@@ -143,10 +149,21 @@ final class CreditNoteService
                 $patient->update(['current_balance' => $newBalance]);
             }
 
-            // 4. Determine Expense / Contra-Revenue Account
-            $isCharity = stripos($creditNote->reason, 'CHARITY') !== false || stripos($creditNote->reason, 'INDIGENT') !== false;
-            $expenseCode = $isCharity ? '4930' : '4910';
-            $expenseName = $isCharity ? 'Charity / Indigent Care Allowances' : 'Statutory Discounts Allowed (Senior/PWD)';
+            // 4. Determine Expense / Contra-Revenue Account based on credit reason
+            $reason = strtoupper((string) $creditNote->reason);
+            if (str_contains($reason, 'CHARITY') || str_contains($reason, 'INDIGENT')) {
+                $expenseCode = '4930';
+                $expenseName = 'Charity / Indigent Care Allowances';
+            } elseif (str_contains($reason, 'BAD_DEBT') || str_contains($reason, 'UNCOLLECTIBLE') || str_contains($reason, 'WRITE_OFF')) {
+                $expenseCode = '5090';
+                $expenseName = 'Bad Debt & Uncollectible Accounts Expense';
+            } elseif (str_contains($reason, 'BILLING_ERROR') || str_contains($reason, 'CORRECTION') || str_contains($reason, 'RETURN')) {
+                $expenseCode = '4920';
+                $expenseName = 'Sales Allowances & Billing Corrections';
+            } else {
+                $expenseCode = '4910';
+                $expenseName = 'Statutory Discounts Allowed (Senior/PWD)';
+            }
 
             $discountAcc = Account::firstOrCreate(
                 ['code' => $expenseCode],

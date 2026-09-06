@@ -30,22 +30,28 @@ final class DisbursementExecutionService
     public function prepareDisbursementVoucher(DisbursementVoucherData $dto, ?int $userId = null): DisbursementVoucher
     {
         return DB::transaction(function () use ($dto, $userId): DisbursementVoucher {
-            $bill = PurchaseBill::with('vendor')->findOrFail($dto->purchaseBillId);
-            $bank = BankAccount::findOrFail($dto->bankAccountId);
+            $bill = PurchaseBill::where('id', $dto->purchaseBillId)->lockForUpdate()->firstOrFail();
+            $bill->loadMissing('vendor');
+            $bank = BankAccount::where('id', $dto->bankAccountId)->lockForUpdate()->firstOrFail();
 
             if ($bill->status === 'PAID') {
                 throw new DomainException("Purchase Bill [{$bill->bill_number}] is already fully paid.");
             }
 
-            $unpaidBalance = bcsub((string) $bill->total_amount, (string) $bill->paid_amount, 4);
+            // Factor in existing active vouchers (DRAFT, AUDITED, APPROVED, RELEASED) to prevent over-disbursement
+            $committedVouchers = (string) DisbursementVoucher::where('purchase_bill_id', $bill->id)
+                ->whereIn('status', ['DRAFT', 'AUDITED', 'APPROVED', 'RELEASED'])
+                ->sum('net_disbursed_amount');
+
+            $availableBalance = bcsub((string) $bill->total_amount, $committedVouchers, 4);
             $amountToDisburse = $dto->amount;
 
             if (bccomp($amountToDisburse, '0.0000', 4) <= 0) {
                 throw new DomainException("Disbursement amount must be greater than zero.");
             }
 
-            if (bccomp($amountToDisburse, $unpaidBalance, 4) > 0) {
-                throw new DomainException("Disbursement amount (₱{$amountToDisburse}) exceeds open balance (₱{$unpaidBalance}).");
+            if (bccomp($amountToDisburse, $availableBalance, 4) > 0) {
+                throw new DomainException("Disbursement amount (₱{$amountToDisburse}) exceeds available uncommitted balance (₱{$availableBalance}). In-flight active vouchers total ₱{$committedVouchers}.");
             }
 
             $voucherNum = 'DV-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(3)));
@@ -123,13 +129,19 @@ final class DisbursementExecutionService
         int $userId
     ): DisbursementVoucher {
         return DB::transaction(function () use ($voucherId, $dto, $userId): DisbursementVoucher {
-            $voucher = DisbursementVoucher::with(['purchaseBill.vendor', 'payrollRun', 'bankAccount'])->findOrFail($voucherId);
+            $voucher = DisbursementVoucher::where('id', $voucherId)->lockForUpdate()->firstOrFail();
+            $voucher->loadMissing(['purchaseBill.vendor', 'payrollRun', 'bankAccount']);
             $bill = $voucher->purchaseBill;
             $payroll = $voucher->payrollRun;
             $bank = $voucher->bankAccount;
 
             if ($voucher->status === 'RELEASED') {
                 throw new DomainException("Disbursement Voucher [{$voucher->voucher_number}] is already released.");
+            }
+
+            // Enforce Segregation of Duties (Maker-Checker): Voucher must be approved prior to release
+            if ($voucher->status !== 'APPROVED') {
+                throw new DomainException("Disbursement Voucher [{$voucher->voucher_number}] must be approved by authorized finance management prior to release.");
             }
 
             $amount = (string) $voucher->net_disbursed_amount;
@@ -159,18 +171,20 @@ final class DisbursementExecutionService
                 'status'           => 'RELEASED',
                 'check_or_eft_ref' => $checkOrRef,
                 'released_at'      => now(),
-                'approved_by'      => $voucher->approved_by ?? $userId,
             ]);
 
-            // 3. Deduct Bank Account Balance
-            $bank->decrement('balance', (float) $amount);
+            // 3. Deduct Bank Account Balance (Strict Decimal Precision & Concurrency Lock)
+            $lockedBank = BankAccount::where('id', $bank->id)->lockForUpdate()->firstOrFail();
+            $newBankBalance = bcsub((string) $lockedBank->balance, $amount, 4);
+            $lockedBank->update(['balance' => $newBankBalance]);
 
-            // 4. Update Source Liability
+            // 4. Update Source Liability with Concurrency Lock
             if ($bill) {
-                $newPaid = bcadd((string) $bill->paid_amount, $amount, 4);
-                $isFullyPaid = bccomp($newPaid, (string) $bill->total_amount, 4) >= 0;
+                $lockedBill = PurchaseBill::where('id', $bill->id)->lockForUpdate()->firstOrFail();
+                $newPaid = bcadd((string) $lockedBill->paid_amount, $amount, 4);
+                $isFullyPaid = bccomp($newPaid, (string) $lockedBill->total_amount, 4) >= 0;
 
-                $bill->update([
+                $lockedBill->update([
                     'paid_amount' => $newPaid,
                     'status'      => $isFullyPaid ? 'PAID' : 'PARTIAL',
                 ]);
@@ -189,7 +203,7 @@ final class DisbursementExecutionService
 
             if ($payroll) {
                 $salariesExpenseAcc = Account::firstOrCreate(
-                    ['code' => '5020'],
+                    ['code' => '5010'],
                     ['name' => 'Salaries and Wages Expense', 'category' => 'EXPENSE', 'normal_balance' => 'DEBIT']
                 );
                 $statutoryPayableAcc = Account::firstOrCreate(

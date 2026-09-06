@@ -162,11 +162,13 @@ final class CollectionManagementModuleTest extends TestCase
 
         // 2. Verify Invoice & Patient Balances
         $this->invoice->refresh();
-        $this->assertEquals('5000.0000', $this->invoice->patient_payable);
+        $this->assertEquals('5000.0000', (string) $this->invoice->balance_due);
+        $this->assertEquals('10000.0000', (string) $this->invoice->paid_amount);
+        $this->assertEquals('15000.0000', (string) $this->invoice->patient_payable);
         $this->assertEquals('PARTIAL', $this->invoice->status);
 
         $this->patient->refresh();
-        $this->assertEquals('5000.0000', $this->patient->current_balance);
+        $this->assertEquals('5000.0000', (string) $this->patient->current_balance);
 
         // 3. Verify Shift Balances
         $shift->refresh();
@@ -210,7 +212,11 @@ final class CollectionManagementModuleTest extends TestCase
             'status'                 => 'VALID',
         ]);
 
-        $this->invoice->update(['patient_payable' => '0.0000', 'status' => 'SETTLED']);
+        $this->invoice->update([
+            'patient_payable' => '15000.0000',
+            'paid_amount'     => '15000.0000',
+            'status'          => 'SETTLED',
+        ]);
         $this->patient->update(['current_balance' => '0.0000']);
 
         // 1. Render BIR EOPT Print View
@@ -230,8 +236,10 @@ final class CollectionManagementModuleTest extends TestCase
         $this->assertEquals('CANCELLED', $or->status);
 
         $this->invoice->refresh();
-        $this->assertEquals('15000.0000', $this->invoice->patient_payable);
-        $this->assertEquals('PARTIAL', $this->invoice->status);
+        $this->assertEquals('15000.0000', (string) $this->invoice->patient_payable);
+        $this->assertEquals('0.0000', (string) $this->invoice->paid_amount);
+        $this->assertEquals('15000.0000', (string) $this->invoice->balance_due);
+        $this->assertEquals('ISSUED', $this->invoice->status);
 
         // Assert Reversing Journal Entry
         $revJe = JournalEntry::with('lines')->where('reference_number', 'JE-REV-' . $payment->payment_reference)->first();
@@ -353,5 +361,158 @@ final class CollectionManagementModuleTest extends TestCase
         $this->actingAs($this->manager);
         $res3 = $this->post("/collection-management/bank-deposits/{$deposit->id}/clear", ['bank_reference_number' => 'REF-OK']);
         $res3->assertRedirect();
+    }
+
+    /** @test */
+    public function test_cashier_cannot_self_reconcile_own_shift_sod(): void
+    {
+        $this->actingAs($this->cashier);
+
+        $shift = CashierShift::create([
+            'shift_code'         => 'SHIFT-SOD-001',
+            'cashier_id'         => $this->cashier->id,
+            'terminal_name'      => 'POS-MAIN-01',
+            'opened_at'          => now()->subHours(8),
+            'closed_at'          => now(),
+            'opening_cash_float' => '5000.0000',
+            'expected_cash'      => '5000.0000',
+            'actual_cash_counted'=> '4800.0000',
+            'cash_variance'      => '-200.0000',
+            'status'             => 'CLOSED',
+        ]);
+
+        // 1. Role SoD: Front desk cashier cannot access shift reconciliation endpoint (HTTP 403)
+        $response = $this->post("/collection-management/shifts/{$shift->id}/reconcile");
+        $response->assertStatus(403);
+        $shift->refresh();
+        $this->assertEquals('CLOSED', $shift->status);
+
+        // 2. Domain SoD: Even a Finance Manager who personally operated a shift cannot self-reconcile their own shift
+        $mgrShift = CashierShift::create([
+            'shift_code'         => 'SHIFT-SOD-MGR-001',
+            'cashier_id'         => $this->manager->id,
+            'terminal_name'      => 'POS-MAIN-02',
+            'opened_at'          => now()->subHours(4),
+            'closed_at'          => now(),
+            'opening_cash_float' => '3000.0000',
+            'expected_cash'      => '3000.0000',
+            'actual_cash_counted'=> '3000.0000',
+            'cash_variance'      => '0.0000',
+            'status'             => 'CLOSED',
+        ]);
+
+        $this->actingAs($this->manager);
+        $mgrSelfRecon = $this->post("/collection-management/shifts/{$mgrShift->id}/reconcile");
+        $mgrSelfRecon->assertSessionHas('error');
+        $mgrShift->refresh();
+        $this->assertEquals('CLOSED', $mgrShift->status);
+
+        // 3. Valid Maker-Checker: Manager reconciling the Cashier's shift succeeds
+        $mgrResponse = $this->post("/collection-management/shifts/{$shift->id}/reconcile");
+        $mgrResponse->assertRedirect();
+        $shift->refresh();
+        $this->assertEquals('RECONCILED', $shift->status);
+    }
+
+    /** @test */
+    public function test_duplicate_bank_deposit_for_same_shift_is_prevented(): void
+    {
+        $this->actingAs($this->accountant);
+
+        $shift = CashierShift::create([
+            'shift_code'         => 'SHIFT-DEP-001',
+            'cashier_id'         => $this->cashier->id,
+            'terminal_name'      => 'POS-MAIN-01',
+            'opened_at'          => now()->subHours(8),
+            'closed_at'          => now(),
+            'opening_cash_float' => '5000.0000',
+            'expected_cash'      => '15000.0000',
+            'actual_cash_counted'=> '15000.0000',
+            'status'             => 'CLOSED',
+        ]);
+
+        // First deposit slip created
+        $payload1 = [
+            'bank_account_id'  => $this->bank->id,
+            'cashier_shift_id' => $shift->id,
+            'deposit_date'     => '2026-01-20',
+            'cash_amount'      => 10000.00,
+        ];
+
+        $res1 = $this->post('/collection-management/bank-deposits', $payload1);
+        $res1->assertRedirect();
+
+        // Attempt second deposit slip for the same cashier shift
+        $res2 = $this->post('/collection-management/bank-deposits', $payload1);
+        $res2->assertSessionHas('error');
+
+        $depositsForShift = BankDeposit::where('cashier_shift_id', $shift->id)->count();
+        $this->assertEquals(1, $depositsForShift);
+    }
+
+    /** @test */
+    public function test_split_payment_voiding_reverses_both_cash_and_digital_gl_lines(): void
+    {
+        $this->actingAs($this->cashier);
+
+        $splitInvoice = Invoice::create([
+            'invoice_number'     => 'INV-SPLIT-VOID-01',
+            'patient_account_id' => $this->patient->id,
+            'invoice_date'       => '2026-01-20',
+            'total_amount'       => '20000.0000',
+            'patient_payable'    => '20000.0000',
+            'status'             => 'ISSUED',
+        ]);
+
+        $collectPayload = [
+            'invoice_id'            => $splitInvoice->id,
+            'payment_method'        => 'SPLIT_PAYMENT',
+            'amount'                => 20000.00,
+            'split_cash_amount'     => 5000.00,
+            'split_digital_amount'  => 15000.00,
+            'split_digital_channel' => 'GCASH',
+            'split_digital_ref'     => 'GCASH-REF-772211',
+            'payor_name'            => 'Ricardo Dalisay',
+        ];
+
+        $res = $this->post('/collection-management/cashier-desk/collect', $collectPayload);
+        $res->assertRedirect();
+
+        $payment = Payment::where('invoice_id', $splitInvoice->id)->first();
+        $this->assertNotNull($payment);
+
+        $splitInvoice->refresh();
+        $this->assertEquals('SETTLED', $splitInvoice->status);
+        $this->assertEquals('0.0000', (string) $splitInvoice->balance_due);
+
+        // Manager voids the split payment
+        $this->actingAs($this->manager);
+        $voidRes = $this->post("/collection-management/payment-receipts/{$payment->id}/void", [
+            'reason' => 'Patient paid wrong account via split tender',
+        ]);
+        $voidRes->assertRedirect();
+
+        $splitInvoice->refresh();
+        $this->assertEquals('ISSUED', $splitInvoice->status);
+        $this->assertEquals('20000.0000', (string) $splitInvoice->balance_due);
+        $this->assertEquals('0.0000', (string) $splitInvoice->paid_amount);
+
+        // Assert balanced reversing GL entry:
+        // DR 1110 (20k), CR 1011 (5k), CR 1002 (15k)
+        $revJe = JournalEntry::with('lines.account')->where('reference_number', 'JE-REV-' . $payment->payment_reference)->first();
+        $this->assertNotNull($revJe);
+
+        $this->assertCount(3, $revJe->lines);
+        $drAr = $revJe->lines->firstWhere('account.code', '1110');
+        $this->assertNotNull($drAr);
+        $this->assertEquals('20000.0000', (string) $drAr->debit);
+
+        $crCash = $revJe->lines->firstWhere('account.code', '1011');
+        $this->assertNotNull($crCash);
+        $this->assertEquals('5000.0000', (string) $crCash->credit);
+
+        $crDigital = $revJe->lines->firstWhere('account.code', '1002');
+        $this->assertNotNull($crDigital);
+        $this->assertEquals('15000.0000', (string) $crDigital->credit);
     }
 }

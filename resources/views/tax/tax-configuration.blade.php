@@ -29,6 +29,29 @@
     </div>
   </div>
 
+  @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+      <i class="ph ph-check-circle me-1"></i> {{ session('success') }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
+  @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <i class="ph ph-warning-circle me-1"></i> {{ session('error') }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
+  @if($errors->any())
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      <ul class="mb-0">
+        @foreach($errors->all() as $error)
+          <li>{{ $error }}</li>
+        @endforeach
+      </ul>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  @endif
+
   <!-- Metric Summary Cards -->
   <div class="row g-3 mb-4">
     <div class="col-md-3">
@@ -144,6 +167,12 @@
               <td class="fs-xs text-muted">{{ $scope }}</td>
               <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> {{ $status }}</span></td>
               <td class="text-end" onclick="event.stopPropagation();">
+                <form action="{{ route('tax.tax-rules.toggle', is_array($r) ? $r['id'] : $r->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Toggle status for this tax rule?');">
+                  @csrf
+                  <button type="submit" class="btn btn-sm btn-icon {{ $status === 'Active' ? 'btn-outline-warning' : 'btn-outline-success' }}" title="Toggle Status (Active/Inactive)">
+                    <i class="ph {{ $status === 'Active' ? 'ph-pause' : 'ph-play' }}"></i>
+                  </button>
+                </form>
                 <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Tax Rule Details" onclick="openTaxRuleDetailsModal({{ json_encode($rData) }})"><i class="ph ph-eye"></i></button>
               </td>
             </tr>
@@ -247,31 +276,37 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body p-4">
-        <form id="addTaxRuleForm">
+        <form id="addTaxRuleForm" action="{{ route('tax.tax-rules.store') }}" method="POST">
+          @csrf
+          <input type="hidden" name="cat_type" value="EXPANDED">
           <div class="row g-3">
             <div class="col-md-6">
+              <label class="form-label small fw-semibold">Tax Rule Code <span class="text-danger">*</span></label>
+              <input type="text" name="tax_code" id="modalTaxCode" class="form-control form-control-sm font-monospace" placeholder="e.g. WC158" required>
+            </div>
+            <div class="col-md-6">
               <label class="form-label small fw-semibold">Tax Rule Name <span class="text-danger">*</span></label>
-              <input type="text" id="modalTaxName" class="form-control form-control-sm" placeholder="e.g. EWT - Medical Services 15%" required>
+              <input type="text" name="name" id="modalTaxName" class="form-control form-control-sm" placeholder="e.g. EWT - Medical Goods 1%" required>
             </div>
             <div class="col-md-6">
               <label class="form-label small fw-semibold">BIR ATC Code <span class="text-danger">*</span></label>
-              <input type="text" id="modalTaxAtc" class="form-control form-control-sm font-monospace" placeholder="e.g. WI011" required>
+              <input type="text" name="atc_code" id="modalTaxAtc" class="form-control form-control-sm font-monospace" placeholder="e.g. WC158" required>
             </div>
             <div class="col-md-6">
               <label class="form-label small fw-semibold">Tax Category <span class="text-danger">*</span></label>
-              <select id="modalTaxCategory" class="form-select form-select-sm" required>
-                <option value="ewt">Expanded Withholding Tax (EWT)</option>
-                <option value="vat">Value Added Tax (VAT)</option>
-                <option value="cit">Corporate Income Tax (CIT)</option>
+              <select name="category" id="modalTaxCategory" class="form-select form-select-sm" required>
+                <option value="WITHHOLDING_TAX">Expanded Withholding Tax (EWT)</option>
+                <option value="VAT">Value Added Tax (VAT)</option>
+                <option value="CIT">Corporate Income Tax (CIT)</option>
               </select>
             </div>
             <div class="col-md-6">
-              <label class="form-label small fw-semibold">Tax Rate Percentage (%) <span class="text-danger">*</span></label>
-              <input type="number" id="modalTaxRate" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace" placeholder="10.00" value="15.00" required>
+              <label class="form-label small fw-semibold">Tax Rate (decimal e.g. 0.0100 for 1%, 12.0000 for 12%) <span class="text-danger">*</span></label>
+              <input type="number" name="rate" id="modalTaxRate" step="0.0001" min="0" max="100" class="form-control form-control-sm text-end font-monospace" placeholder="0.0100" value="0.0100" required>
             </div>
-            <div class="col-12">
-              <label class="form-label small fw-semibold">Applicable Scope / Regulatory Description <span class="text-danger">*</span></label>
-              <input type="text" id="modalTaxScope" class="form-control form-control-sm" placeholder="e.g. Applicable to medical consultants with gross income > P3M" required>
+            <div class="col-md-6">
+              <label class="form-label small fw-semibold">Applicable Scope / Regulatory Description</label>
+              <input type="text" name="scope" id="modalTaxScope" class="form-control form-control-sm" placeholder="e.g. Hospital suppliers of goods">
             </div>
           </div>
           <div class="d-flex justify-content-end gap-2 mt-4">
@@ -376,76 +411,6 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   if (catSelect) catSelect.addEventListener('change', filterTaxRules);
   if (statusSelect) statusSelect.addEventListener('change', filterTaxRules);
-
-  const addTaxRuleForm = document.getElementById('addTaxRuleForm');
-  if (addTaxRuleForm) {
-    addTaxRuleForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-
-      const nameVal = document.getElementById('modalTaxName').value;
-      const atcVal = document.getElementById('modalTaxAtc').value;
-      const catVal = document.getElementById('modalTaxCategory').value;
-      const scopeVal = document.getElementById('modalTaxScope').value;
-      const rawRate = parseFloat(document.getElementById('modalTaxRate').value || 0);
-      const formattedRate = rawRate.toFixed(1) + '%';
-      const nextCode = 'TAX-EWT-' + Math.floor(100 + Math.random() * 900);
-
-      const ruleObj = {
-        code: nextCode,
-        name: nameVal,
-        atc: atcVal,
-        category: 'Expanded Withholding Tax',
-        cat_type: catVal,
-        rate: formattedRate,
-        scope: scopeVal,
-        status: 'Active',
-        status_badge: 'bg-success-subtle text-success'
-      };
-
-      const tbody = document.querySelector('#taxRuleTable tbody');
-      if (tbody) {
-        const newRow = document.createElement('tr');
-        newRow.className = 'tax-row';
-        newRow.style.cursor = 'pointer';
-        newRow.setAttribute('data-cat', catVal.toLowerCase());
-        newRow.setAttribute('data-status', 'active');
-
-        newRow.onclick = function() { openTaxRuleDetailsModal(ruleObj); };
-
-        newRow.innerHTML = `
-          <td>
-            <div class="fw-bold text-dark">${nameVal}</div>
-            <span class="fs-xs font-monospace text-muted">${nextCode}</span>
-          </td>
-          <td><span class="font-monospace text-primary fw-bold">${atcVal}</span></td>
-          <td><span class="badge bg-info-subtle text-info">Expanded Withholding Tax</span></td>
-          <td class="text-end font-monospace fw-bold text-danger">${formattedRate}</td>
-          <td class="fs-xs text-muted">${scopeVal}</td>
-          <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> Active</span></td>
-          <td class="text-end" onclick="event.stopPropagation();">
-            <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Tax Rule Details"><i class="ph ph-eye"></i></button>
-          </td>
-        `;
-
-        const eyeBtn = newRow.querySelector('button[title="View Tax Rule Details"]');
-        if (eyeBtn) {
-          eyeBtn.onclick = function(ex) {
-            ex.stopPropagation();
-            openTaxRuleDetailsModal(ruleObj);
-          };
-        }
-
-        tbody.insertBefore(newRow, tbody.firstChild);
-      }
-
-      const modalEl = document.getElementById('addTaxRuleModal');
-      const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-      if (modalInstance) modalInstance.hide();
-
-      addTaxRuleForm.reset();
-      filterTaxRules();
-    });
-  }
 
   filterTaxRules();
 });

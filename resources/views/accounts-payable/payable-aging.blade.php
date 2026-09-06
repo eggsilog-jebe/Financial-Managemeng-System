@@ -22,7 +22,7 @@
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 
           type="internal" 
-          :internalModules="['Invoices & Vouchers', 'Vendor Management']" 
+          :internalModules="['Vendor Invoices & Tax', 'Vendor Management']" 
           :tables="['vendor_invoices', 'vendors']"
           description="Tracks outstanding supplier payables categorized by vendor credit terms and aging brackets." 
       />

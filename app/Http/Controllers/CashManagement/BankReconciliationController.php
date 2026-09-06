@@ -38,7 +38,11 @@ final class BankReconciliationController extends Controller
         $reconciliations = BankReconciliation::with(['bankAccount', 'reconciler'])
             ->latest('statement_date')
             ->get();
-        $totalBookBalance = $bankAccounts->sum('balance');
+
+        $totalBookBalance = '0.0000';
+        foreach ($bankAccounts as $acc) {
+            $totalBookBalance = bcadd($totalBookBalance, (string) $acc->balance, 4);
+        }
 
         $viewName = view()->exists('accounting.cash-management.reconciliation.index')
             ? 'accounting.cash-management.reconciliation.index'

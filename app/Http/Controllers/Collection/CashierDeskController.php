@@ -49,7 +49,8 @@ final class CashierDeskController extends Controller
             ->latest('invoice_date');
 
         if ($hideZero) {
-            $invoicesQuery->where('patient_payable', '>', 0);
+            $invoicesQuery->where('status', '!=', 'SETTLED')
+                ->whereColumn('paid_amount', '<', 'patient_payable');
         }
 
         if ($search) {
@@ -73,11 +74,12 @@ final class CashierDeskController extends Controller
         $todayPayments = Payment::with(['invoice', 'patientAccount', 'officialReceipt'])
             ->whereDate('payment_date', today())
             ->latest('id')
+            ->take(50)
             ->get();
 
-        $todayTotal = $todayPayments->sum('amount');
-        $cashReceipts = $todayPayments->where('payment_method', 'CASH')->sum('amount');
-        $digitalReceipts = $todayPayments->where('payment_method', '!=', 'CASH')->sum('amount');
+        $todayTotal = (string) Payment::whereDate('payment_date', today())->sum('amount');
+        $cashReceipts = (string) Payment::whereDate('payment_date', today())->where('payment_method', 'CASH')->sum('amount');
+        $digitalReceipts = (string) Payment::whereDate('payment_date', today())->where('payment_method', '!=', 'CASH')->sum('amount');
 
         $viewName = view()->exists('accounting.collection.cashier.index')
             ? 'accounting.collection.cashier.index'

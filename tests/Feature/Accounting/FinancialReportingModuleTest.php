@@ -255,5 +255,145 @@ final class FinancialReportingModuleTest extends TestCase
         $this->actingAs($this->cfo);
         $res2 = $this->get('/financial-reporting/executive-reports');
         $res2->assertStatus(200);
+
+        // Billing Clerk cannot view Changes in Equity
+        $this->actingAs($clerk);
+        $res3 = $this->get('/financial-reporting/statement-of-changes-in-equity');
+        $res3->assertStatus(403);
+
+        // Auditor can view Changes in Equity
+        $this->actingAs($this->auditor);
+        $res4 = $this->get('/financial-reporting/statement-of-changes-in-equity');
+        $res4->assertStatus(200);
+    }
+
+    /** @test */
+    public function test_statement_of_changes_in_equity_reconciles_with_pnl_and_balance_sheet_and_csv_export(): void
+    {
+        $this->actingAs($this->accountant);
+
+        // Period 2026-01-01 to 2026-01-31
+        // Opening Equity: 1,000,000.00
+        // Current period net surplus from P&L: 200,000.00 (300k revenue - 100k salary expense)
+        // Closing Equity: 1,200,000.00
+        $response = $this->get('/financial-reporting/statement-of-changes-in-equity?date_from=2026-01-01&date_to=2026-01-31');
+        $response->assertStatus(200);
+        $response->assertSee('Statement of Changes in Equity (PFRS / IAS 1)');
+        $response->assertSee('1,000,000.00'); // Opening Equity
+        $response->assertSee('200,000.00');   // Current Period Net Surplus
+        $response->assertSee('1,200,000.00'); // Total Ending Equity
+
+        // Test CSV export
+        $export = $this->get('/financial-reporting/statement-of-changes-in-equity/export?date_from=2026-01-01&date_to=2026-01-31');
+        $export->assertStatus(200);
+        $this->assertStringContainsString('text/csv', (string) $export->headers->get('Content-Type'));
+        $content = $export->streamedContent();
+        $this->assertStringContainsString('HOSPITAL STATEMENT OF CHANGES IN EQUITY (PFRS / IAS 1)', $content);
+        $this->assertStringContainsString('Total Ending Equity (PHP)', $content);
+    }
+
+    /** @test */
+    public function test_draft_journal_entries_are_strictly_excluded_from_trial_balance_and_balance_sheet(): void
+    {
+        $this->actingAs($this->accountant);
+
+        // Create a large DRAFT journal entry that must NOT impact any statement
+        $draftJe = JournalEntry::create([
+            'reference_number' => 'JE-DRAFT-999',
+            'entry_date'       => '2026-01-20',
+            'description'      => 'Unapproved Provisional Budget Adjustment',
+            'status'           => 'DRAFT',
+            'type'             => 'GENERAL',
+        ]);
+        JournalEntryLine::create([
+            'journal_entry_id' => $draftJe->id,
+            'account_id'       => $this->assetCash->id,
+            'debit'            => '5000000.0000',
+            'credit'           => '0.0000',
+            'memo'             => 'Unposted Cash Inflow',
+        ]);
+        JournalEntryLine::create([
+            'journal_entry_id' => $draftJe->id,
+            'account_id'       => $this->equityCap->id,
+            'debit'            => '0.0000',
+            'credit'           => '5000000.0000',
+            'memo'             => 'Unposted Equity Contrib',
+        ]);
+
+        // Balance Sheet must only reflect POSTED entries
+        // Cash should still be 900,000.00 (1,000,000 - 100,000), NOT 5,900,000.00
+        $bsResponse = $this->get('/financial-reporting/balance-sheet?as_of_date=2026-01-31');
+        $bsResponse->assertStatus(200);
+        $bsResponse->assertDontSee('5,900,000.00');
+        $bsResponse->assertSee('900,000.00');
+
+        // General Ledger Report Service Trial Balance must also strictly exclude DRAFT
+        /** @var \App\Services\Accounting\GeneralLedgerReportService $glReportService */
+        $glReportService = app(\App\Services\Accounting\GeneralLedgerReportService::class);
+        $trialBalance = $glReportService->getTrialBalance();
+
+        $cashAccount = collect($trialBalance['accounts'])->firstWhere('code', '1010');
+        $this->assertEquals('900000.0000', $cashAccount['debit']);
+        $this->assertEquals('0.0000', $cashAccount['credit']);
+
+        $bsData = $glReportService->getBalanceSheet();
+        $bsCash = collect($bsData['assets'])->firstWhere('code', '1010');
+        $this->assertEquals('900000.0000', $bsCash['balance']);
+    }
+
+    /** @test */
+    public function test_pnl_properly_classifies_healthcare_contractual_allowances_and_discounts(): void
+    {
+        $this->actingAs($this->accountant);
+
+        // Account 4910: Senior Citizen & PWD Statutory Discounts (Contra-Revenue)
+        $discountAcc = Account::create([
+            'code'           => '4910',
+            'name'           => 'Senior Citizen / PWD Statutory Discounts',
+            'category'       => 'REVENUE',
+            'normal_balance' => 'DEBIT',
+        ]);
+
+        // Account 4920: PhilHealth Contractual Allowances (Contra-Revenue)
+        $philHealthAllowanceAcc = Account::create([
+            'code'           => '4920',
+            'name'           => 'PhilHealth Contractual Allowances',
+            'category'       => 'REVENUE',
+            'normal_balance' => 'DEBIT',
+        ]);
+
+        // Post Journal Entry 4: Apply contractual adjustments (DR 4910 20k, DR 4920 30k / CR AR 50k)
+        $jeAdjust = JournalEntry::create([
+            'reference_number' => 'JE-ADJ-001',
+            'entry_date'       => '2026-01-18',
+            'description'      => 'Senior & PhilHealth Contractual Deductions',
+            'status'           => 'POSTED',
+            'type'             => 'GENERAL',
+        ]);
+        JournalEntryLine::create(['journal_entry_id' => $jeAdjust->id, 'account_id' => $discountAcc->id, 'debit' => '20000.0000', 'credit' => '0.0000', 'memo' => 'Senior Discount']);
+        JournalEntryLine::create(['journal_entry_id' => $jeAdjust->id, 'account_id' => $philHealthAllowanceAcc->id, 'debit' => '30000.0000', 'credit' => '0.0000', 'memo' => 'PhilHealth Allowance']);
+        JournalEntryLine::create(['journal_entry_id' => $jeAdjust->id, 'account_id' => $this->assetAr->id, 'debit' => '0.0000', 'credit' => '50000.0000', 'memo' => 'Deduct AR']);
+
+        // Check P&L
+        // Gross Revenue: 300,000.00
+        // Contractual Allowances & Discounts: 50,000.00 (20k + 30k)
+        // Net Revenue: 250,000.00 (300k - 50k)
+        // Expenses: 100,000.00
+        // Net Operating Surplus: 150,000.00 (250k - 100k)
+        $response = $this->get('/financial-reporting/profit-loss?date_from=2026-01-01&date_to=2026-01-31');
+        $response->assertStatus(200);
+        $response->assertSee('Senior Citizen / PWD Statutory Discounts');
+        $response->assertSee('PhilHealth Contractual Allowances');
+        $response->assertSee('50,000.00');  // Total Discounts
+        $response->assertSee('250,000.00'); // Net Revenue
+        $response->assertSee('150,000.00'); // Net Operating Surplus
+
+        // Verify CSV export also carries the deductions
+        $export = $this->get('/financial-reporting/profit-loss/export?date_from=2026-01-01&date_to=2026-01-31');
+        $export->assertStatus(200);
+        $content = $export->streamedContent();
+        $this->assertStringContainsString('Sales Discounts & Allowances (PHP)', $content);
+        $this->assertStringContainsString('Net Operating Revenues (PHP)', $content);
+        $this->assertStringContainsString('--- CONTRACTUAL ALLOWANCES & DISCOUNTS ---', $content);
     }
 }

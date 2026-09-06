@@ -63,14 +63,13 @@ final class JournalEntryController extends Controller
         $entries = $query->paginate(20)->withQueryString();
 
         // Metric summaries
-        $monthStart = now()->startOfMonth();
-        $monthlyEntries = JournalEntry::with('lines')
-            ->where('entry_date', '>=', $monthStart)
-            ->where('status', 'POSTED')
-            ->get();
-
-        $monthlyDebitTotal  = $monthlyEntries->sum(fn (JournalEntry $je): float => (float) $je->lines->sum('debit'));
-        $monthlyCreditTotal = $monthlyEntries->sum(fn (JournalEntry $je): float => (float) $je->lines->sum('credit'));
+        $monthStart = now()->startOfMonth()->toDateString();
+        $monthlyDebitTotal = (string) \App\Models\JournalEntryLine::whereHas('journalEntry', function ($q) use ($monthStart): void {
+            $q->whereDate('entry_date', '>=', $monthStart)->where('status', 'POSTED');
+        })->sum('debit');
+        $monthlyCreditTotal = (string) \App\Models\JournalEntryLine::whereHas('journalEntry', function ($q) use ($monthStart): void {
+            $q->whereDate('entry_date', '>=', $monthStart)->where('status', 'POSTED');
+        })->sum('credit');
         $postedCount        = JournalEntry::where('status', 'POSTED')->count();
         $draftCount         = JournalEntry::where('status', 'DRAFT')->count();
 
@@ -169,6 +168,13 @@ final class JournalEntryController extends Controller
 
     public function reverse(ReverseJournalEntryRequest $request, int $id): Response
     {
+        $user = $request->user();
+        $role = $user?->role ?? 'StaffAccountant';
+
+        if (! in_array($role, ['FinanceManager', 'CFO', 'FinanceDirector'], true) && $user !== null) {
+            abort(403, "Segregation of Duties: Only Finance Managers and CFOs may authorize reversing General Ledger entries.");
+        }
+
         $entry = JournalEntry::findOrFail($id);
         $reason = (string) $request->validated('reason');
         $userId = (int) ($request->user()?->id ?? 1);

@@ -28,9 +28,14 @@ final class BankDepositController extends Controller
         $deposits = BankDeposit::with(['bankAccount', 'cashierShift.cashier'])
             ->latest('deposit_date')
             ->get();
-        $totalDeposits = $deposits->sum('total_deposited');
+        $totalDeposits = (string) BankDeposit::sum('total_deposited');
         $bankAccounts = BankAccount::where('status', 'Active')->get();
-        $closedShifts = CashierShift::where('status', 'CLOSED')->latest('closed_at')->get();
+        $closedShifts = CashierShift::where('status', 'CLOSED')
+            ->whereDoesntHave('bankDeposits', function ($q) {
+                $q->whereIn('status', ['PREPARED', 'IN_TRANSIT', 'DEPOSITED', 'RECONCILED']);
+            })
+            ->latest('closed_at')
+            ->get();
 
         $viewName = view()->exists('accounting.collection.bank-deposits.index')
             ? 'accounting.collection.bank-deposits.index'

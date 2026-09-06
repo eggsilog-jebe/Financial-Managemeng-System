@@ -20,7 +20,8 @@ use InvalidArgumentException;
 final class BillingIngestionService
 {
     public function __construct(
-        private readonly JournalEntryService $journalEntryService
+        private readonly JournalEntryService $journalEntryService,
+        private readonly CasAuditTrailService $auditTrailService
     ) {}
 
     /**
@@ -30,7 +31,7 @@ final class BillingIngestionService
     public function ingestAndPostPatientBill(PatientBillingIngestionData $data): Invoice
     {
         return DB::transaction(function () use ($data): Invoice {
-            $patient = PatientAccount::findOrFail($data->patientAccountId);
+            $patient = PatientAccount::where('id', $data->patientAccountId)->lockForUpdate()->firstOrFail();
 
             // 1. Calculate Gross Total across clinical billables
             $grossTotal = '0.0000';
@@ -155,12 +156,25 @@ final class BillingIngestionService
                 ]);
             }
 
-            // 9. Update Patient Account Balances
-            $patient->increment('total_billed', (float) $grossTotal);
-            $patient->increment('current_balance', (float) $patientPayable);
+            // 9. Update Patient Account Balances using BCMath
+            $patient->update([
+                'total_billed'    => bcadd((string) $patient->total_billed, $grossTotal, 4),
+                'current_balance' => bcadd((string) $patient->current_balance, $patientPayable, 4),
+            ]);
 
             // 10. Post Double-Entry Journal to General Ledger
             $this->postRevenueDoubleEntry($invoice, $data, $grossTotal, $patientPayable, $philhealthDeduction, $hmoDeduction, $totalSeniorPwdDeduction);
+
+            // 11. CAS Audit Trail Recording
+            $this->auditTrailService->logFinancialEvent(
+                auditable: $invoice,
+                action: 'INSERT',
+                oldValues: null,
+                newValues: $invoice->toArray(),
+                userId: auth()->id(),
+                userName: auth()->user()?->name ?? 'Clinical Subsystem Ingestion API',
+                ipAddress: request()?->ip() ?? '127.0.0.1',
+            );
 
             return $invoice->load(['items', 'philhealthClaim', 'hmoClaims', 'statutoryDiscounts']);
         });
@@ -179,7 +193,7 @@ final class BillingIngestionService
         $arPatientAccount    = Account::firstOrCreate(['code' => '1110'], ['name' => 'Accounts Receivable - Patient Copay', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']);
         $arPhilhealthAccount = Account::firstOrCreate(['code' => '1120'], ['name' => 'Accounts Receivable - PhilHealth Claims', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']);
         $arHmoAccount        = Account::firstOrCreate(['code' => '1130'], ['name' => 'Accounts Receivable - HMO Claims', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']);
-        $discountExpenseAcc  = Account::firstOrCreate(['code' => '4910'], ['name' => 'Statutory Discounts Allowed (Senior/PWD)', 'category' => 'EXPENSE', 'normal_balance' => 'DEBIT']);
+        $discountExpenseAcc  = Account::firstOrCreate(['code' => '4910'], ['name' => 'Statutory Discounts Allowed (Senior/PWD)', 'category' => 'REVENUE', 'normal_balance' => 'DEBIT']);
         $hospitalRevenueAcc  = Account::firstOrCreate(['code' => '4010'], ['name' => 'Inpatient Hospital Care Revenue', 'category' => 'REVENUE', 'normal_balance' => 'CREDIT']);
 
         $journalLines = [];
@@ -214,7 +228,7 @@ final class BillingIngestionService
             );
         }
 
-        // Debit: Senior/PWD Statutory Discount Expense
+        // Debit: Senior/PWD Statutory Discount Expense / Contra-Revenue
         if (bccomp($discountAmount, '0.0000', 4) > 0) {
             $journalLines[] = new JournalLineData(
                 accountId: $discountExpenseAcc->id,
@@ -224,12 +238,31 @@ final class BillingIngestionService
             );
         }
 
-        // Credit: Total Hospital Clinical Revenue
+        // Credit: PhilHealth Doctor Professional Fee (PF) Share Liability (Account 2040)
+        $doctorPfShare = '0.0000';
+        if (bccomp($philhealthAmount, '0.0000', 4) > 0) {
+            $doctorPfShare = bcmul($philhealthAmount, '0.4000', 4);
+            $doctorPfAcc = Account::firstOrCreate(
+                ['code' => '2040'],
+                ['name' => 'Due to Accredited Physicians (Doctor PF Holdback)', 'category' => 'LIABILITY', 'normal_balance' => 'CREDIT']
+            );
+
+            $journalLines[] = new JournalLineData(
+                accountId: $doctorPfAcc->id,
+                debit: '0.0000',
+                credit: $doctorPfShare,
+                memo: "PhilHealth 40% Physician PF share on {$invoice->invoice_number}"
+            );
+        }
+
+        // Credit: Net Hospital Clinical Revenue (Gross Total less Doctor PF Share)
+        $netHospitalRevenue = bcsub($grossTotal, $doctorPfShare, 4);
+
         $journalLines[] = new JournalLineData(
             accountId: $hospitalRevenueAcc->id,
             debit: '0.0000',
-            credit: $grossTotal,
-            memo: 'Clinical gross revenue recognition on ' . $invoice->invoice_number
+            credit: $netHospitalRevenue,
+            memo: 'Clinical net hospital revenue recognition on ' . $invoice->invoice_number
         );
 
         // Verify Double-Entry Balance

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Services\Accounting\Reporting;
 
 use App\Models\Account;
-use App\Models\JournalEntryLine;
 use Illuminate\Support\Facades\DB;
 
 final class BalanceSheetService

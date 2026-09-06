@@ -13,6 +13,7 @@ use App\Models\Account;
 use App\Models\BillItem;
 use App\Models\Bir2307Certificate;
 use App\Models\DoctorProfile;
+use App\Models\JournalEntry;
 use App\Models\PurchaseBill;
 use App\Models\ThreeWayMatch;
 use App\Models\Vendor;
@@ -85,17 +86,26 @@ final class AccountsPayableService
             }
 
             // 2. Perform 3-Way Match Verification (PO vs GRN vs Vendor Invoice)
-            $poAmount = property_exists($data, 'poAmount') ? (string) $data->poAmount : $totalGross;
-            $grnAmount = property_exists($data, 'grnAmount') ? (string) $data->grnAmount : $totalGross;
+            $poNumber = property_exists($data, 'poNumber') ? $data->poNumber : null;
+            $grnNumber = property_exists($data, 'grnNumber') ? $data->grnNumber : null;
+
+            $hasPo = !empty($poNumber) && property_exists($data, 'poAmount') && $data->poAmount !== null;
+            $hasGrn = !empty($grnNumber) && property_exists($data, 'grnAmount') && $data->grnAmount !== null;
+
+            $poAmount = $hasPo ? (string) $data->poAmount : '0.0000';
+            $grnAmount = $hasGrn ? (string) $data->grnAmount : '0.0000';
 
             $priceVariance = bcsub($totalGross, $poAmount, 4);
             $receiptVariance = bcsub($totalGross, $grnAmount, 4);
 
-            $matchStatus = 'MATCHED';
-            if (bccomp($priceVariance, '0.0000', 4) !== 0) {
+            if (!$hasPo || !$hasGrn) {
+                $matchStatus = 'PENDING_GRN';
+            } elseif (bccomp($priceVariance, '0.0000', 4) !== 0) {
                 $matchStatus = bccomp($priceVariance, '0.0000', 4) > 0 ? 'OVER_BILLED' : 'PRICE_MISMATCH';
             } elseif (bccomp($receiptVariance, '0.0000', 4) !== 0) {
                 $matchStatus = 'QTY_MISMATCH';
+            } else {
+                $matchStatus = 'MATCHED';
             }
 
             // 3. Create Master Purchase Bill
@@ -166,8 +176,10 @@ final class AccountsPayableService
                 ]);
             }
 
-            // 7. Post General Ledger AP Double-Entry Journal
-            $this->postAPDoubleEntry($bill, $data->billDate, $vendor, $totalGross, $totalNetPayable, $totalEwt);
+            // 7. Post General Ledger AP Double-Entry Journal ONLY if 3-Way Match is Verified
+            if ($matchStatus === 'MATCHED') {
+                $this->postAPDoubleEntry($bill, $data->billDate, $vendor, $totalGross, $totalNetPayable, $totalEwt, $calculatedItems);
+            }
 
             // Log event in BIR CAS audit trail
             $this->auditTrailService->logFinancialEvent(
@@ -184,18 +196,101 @@ final class AccountsPayableService
         });
     }
 
+    /**
+     * Post balanced Double-Entry AP journal entry for an approved/verified Purchase Bill.
+     */
+    public function postApprovedBillDoubleEntry(PurchaseBill $bill): void
+    {
+        if (JournalEntry::where('reference_number', 'JE-AP-' . $bill->bill_number)->exists()) {
+            return;
+        }
+
+        $bill->loadMissing(['vendor', 'items']);
+        $billDate = $bill->bill_date instanceof \DateTimeInterface
+            ? $bill->bill_date->format('Y-m-d')
+            : (string) $bill->bill_date;
+
+        $totalGross = (string) $bill->total_amount;
+        $totalEwt = '0.0000';
+        foreach ($bill->items as $item) {
+            $totalEwt = bcadd($totalEwt, (string) $item->ewt_amount, 4);
+        }
+        $totalNetPayable = bcsub($totalGross, $totalEwt, 4);
+
+        $this->postAPDoubleEntry(
+            bill: $bill,
+            billDate: $billDate,
+            vendor: $bill->vendor,
+            totalGross: $totalGross,
+            netPayable: $totalNetPayable,
+            ewtAmount: $totalEwt,
+            items: $bill->items
+        );
+    }
+
     private function postAPDoubleEntry(
         PurchaseBill $bill,
         string $billDate,
         Vendor $vendor,
         string $totalGross,
         string $netPayable,
-        string $ewtAmount
+        string $ewtAmount,
+        iterable $items = []
     ): void {
-        $inventoryExpenseAcc = Account::firstOrCreate(
-            ['code' => '5020'],
-            ['name' => 'Medical & Hospital Operating Supplies', 'category' => 'EXPENSE', 'normal_balance' => 'DEBIT']
-        );
+        $journalLines = [];
+        $allocatedGross = '0.0000';
+
+        // Categorized GL line distribution based on line item expense classifications
+        foreach ($items as $item) {
+            $gross = is_array($item)
+                ? (string) ($item['gross'] ?? $item['gross_amount'] ?? '0')
+                : (string) ($item->gross_amount ?? $item->gross ?? '0');
+
+            if (bccomp($gross, '0.0000', 4) <= 0) {
+                continue;
+            }
+
+            $type = is_array($item)
+                ? ($item['expense_type'] ?? $item['expenseType'] ?? 'GOODS_INVENTORY')
+                : ($item->expense_type ?? $item->expenseType ?? 'GOODS_INVENTORY');
+
+            $accConfig = match ($type) {
+                'DOCTOR_PROFESSIONAL_FEE' => ['code' => '5030', 'name' => 'Physician & Specialist Professional Fees', 'category' => 'EXPENSE'],
+                'CAPEX_EQUIPMENT'         => ['code' => '1500', 'name' => 'Hospital & Medical Equipment Assets', 'category' => 'ASSET'],
+                'SERVICES_MAINTENANCE'    => ['code' => '5040', 'name' => 'Repairs & Hospital Facilities Maintenance', 'category' => 'EXPENSE'],
+                'UTILITIES'               => ['code' => '5050', 'name' => 'Hospital Utilities Expense (Power & Water)', 'category' => 'EXPENSE'],
+                default                   => ['code' => '5020', 'name' => 'Medical & Hospital Operating Supplies', 'category' => 'EXPENSE'],
+            };
+
+            $expenseAcc = Account::firstOrCreate(
+                ['code' => $accConfig['code']],
+                ['name' => $accConfig['name'], 'category' => $accConfig['category'], 'normal_balance' => 'DEBIT']
+            );
+
+            $journalLines[] = new JournalLineData(
+                accountId: $expenseAcc->id,
+                debit: $gross,
+                credit: '0.0000',
+                memo: "Procurement line item ({$type}) on {$bill->bill_number} from {$vendor->name}"
+            );
+
+            $allocatedGross = bcadd($allocatedGross, $gross, 4);
+        }
+
+        // Fallback for unitemized gross balance
+        $unallocatedGross = bcsub($totalGross, $allocatedGross, 4);
+        if (bccomp($unallocatedGross, '0.0000', 4) > 0) {
+            $defaultExpenseAcc = Account::firstOrCreate(
+                ['code' => '5020'],
+                ['name' => 'Medical & Hospital Operating Supplies', 'category' => 'EXPENSE', 'normal_balance' => 'DEBIT']
+            );
+            $journalLines[] = new JournalLineData(
+                accountId: $defaultExpenseAcc->id,
+                debit: $unallocatedGross,
+                credit: '0.0000',
+                memo: "Unallocated procurement gross expense on {$bill->bill_number} from {$vendor->name}"
+            );
+        }
 
         $apVendorAcc = Account::firstOrCreate(
             ['code' => '2010'],
@@ -207,22 +302,13 @@ final class AccountsPayableService
             ['name' => 'Withholding Tax Payable - Expanded (BIR 2307)', 'category' => 'LIABILITY', 'normal_balance' => 'CREDIT']
         );
 
-        $journalLines = [
-            // Debit: Gross Expense / Inventory
-            new JournalLineData(
-                accountId: $inventoryExpenseAcc->id,
-                debit: $totalGross,
-                credit: '0.0000',
-                memo: "Procurement invoice {$bill->bill_number} from {$vendor->name}"
-            ),
-            // Credit: Net Accounts Payable to Vendor
-            new JournalLineData(
-                accountId: $apVendorAcc->id,
-                debit: '0.0000',
-                credit: $netPayable,
-                memo: "Net AP payable to {$vendor->name} on {$bill->bill_number}"
-            ),
-        ];
+        // Credit: Net Accounts Payable to Vendor
+        $journalLines[] = new JournalLineData(
+            accountId: $apVendorAcc->id,
+            debit: '0.0000',
+            credit: $netPayable,
+            memo: "Net AP payable to {$vendor->name} on {$bill->bill_number}"
+        );
 
         // Credit: BIR Form 2307 EWT Withheld
         if (bccomp($ewtAmount, '0.0000', 4) > 0) {

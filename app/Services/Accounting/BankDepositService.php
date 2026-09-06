@@ -29,6 +29,17 @@ final class BankDepositService
     {
         return DB::transaction(function () use ($dto): BankDeposit {
             $bank = BankAccount::findOrFail($dto->bankAccountId);
+
+            if ($dto->cashierShiftId) {
+                $existingDeposit = BankDeposit::where('cashier_shift_id', $dto->cashierShiftId)
+                    ->whereIn('status', ['PREPARED', 'IN_TRANSIT', 'DEPOSITED', 'RECONCILED'])
+                    ->first();
+
+                if ($existingDeposit) {
+                    throw new DomainException("Cashier Shift has already been deposited or has an active deposit slip [{$existingDeposit->deposit_reference}].");
+                }
+            }
+
             $totalDeposited = bcadd((string) $dto->cashAmount, (string) $dto->checkAmount, 4);
 
             $countToday = BankDeposit::whereDate('deposit_date', $dto->depositDate)->count() + 1;
@@ -77,35 +88,35 @@ final class BankDepositService
 
             $oldValues = $deposit->toArray();
             $totalAmount = (string) $deposit->total_deposited;
-            $bank = $deposit->bankAccount;
+            
+            // 1. Pessimistic lock on BankAccount row
+            $bank = BankAccount::where('id', $deposit->bank_account_id)->lockForUpdate()->firstOrFail();
 
-            // 1. Update deposit record
+            // 2. Update deposit record
             $deposit->update([
                 'bank_reference_number' => $bankRef,
                 'validated_by_teller'   => $teller ?? 'Bank Verified',
                 'status'                => 'DEPOSITED',
             ]);
 
-            // 2. Increment Bank Account Balance
-            if ($bank) {
-                $curBal = (string) $bank->balance;
-                $newBal = bcadd($curBal, $totalAmount, 4);
-                $bank->update([
-                    'balance' => $newBal,
-                ]);
-            }
+            // 3. Increment Bank Account Balance
+            $curBal = (string) $bank->balance;
+            $newBal = bcadd($curBal, $totalAmount, 4);
+            $bank->update([
+                'balance' => $newBal,
+            ]);
 
-            // 3. Post Double-Entry Journal:
+            // 4. Post Double-Entry Journal:
             // DR 1020 (Cash in Bank - Operational)
             // CR 1011 (Cashier Undeposited Collections)
             $bankGlAccount = null;
-            if ($bank && $bank->gl_code) {
+            if ($bank->gl_code) {
                 $bankGlAccount = Account::where('code', $bank->gl_code)->first();
             }
 
             if (! $bankGlAccount) {
                 $bankGlAccount = Account::firstOrCreate(
-                    ['code' => $bank?->gl_code ?: '1020'],
+                    ['code' => $bank->gl_code ?: '1020'],
                     ['name' => 'Cash in Bank - Operations', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']
                 );
             }
@@ -197,8 +208,8 @@ final class BankDepositService
         );
 
         $patientArAcc = Account::firstOrCreate(
-            ['code' => '1120'],
-            ['name' => 'Accounts Receivable - Patients', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']
+            ['code' => '1110'],
+            ['name' => 'Accounts Receivable - Patient Copay', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']
         );
 
         $lines = [

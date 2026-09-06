@@ -104,18 +104,21 @@ final class CashDrawerAndDepositService
                 'status'                 => 'DEPOSITED',
             ]);
 
-            // Increase bank account cash ledger balance
-            $bank->increment('balance', (float) $totalDeposited);
+            // Increase bank account cash ledger balance using BCMath
+            $curBal = (string) $bank->balance;
+            $bank->update([
+                'balance' => bcadd($curBal, $totalDeposited, 4),
+            ]);
 
-            // General Ledger Entry: DR Cash in Bank, CR Undeposited Cash / Cashier Drawer
+            // General Ledger Entry: DR Cash in Bank, CR Undeposited Cash
             $cashAtBankAcc = Account::firstOrCreate(
                 ['code' => '1020'],
                 ['name' => 'Cash in Bank - Operating', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']
             );
 
             $drawerCashAcc = Account::firstOrCreate(
-                ['code' => '1010'],
-                ['name' => 'Cash on Hand - Cashier Drawer', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']
+                ['code' => '1011'],
+                ['name' => 'Cashier Undeposited Collections', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']
             );
 
             $journalLines = [

@@ -17,7 +17,8 @@ use Illuminate\Support\Facades\DB;
 final class PayrollIntegrationService
 {
     public function __construct(
-        private readonly JournalEntryService $journalEntryService
+        private readonly JournalEntryService $journalEntryService,
+        private readonly CasAuditTrailService $auditTrailService
     ) {}
 
     /**
@@ -27,7 +28,7 @@ final class PayrollIntegrationService
     public function ingestAndDisbursePayroll(PayrollRunIngestionData $data): PayrollRun
     {
         return DB::transaction(function () use ($data): PayrollRun {
-            $bank = BankAccount::findOrFail($data->disbursementBankAccountId);
+            $bank = BankAccount::where('id', $data->disbursementBankAccountId)->lockForUpdate()->firstOrFail();
 
             $totalGross = '0.0000';
             $totalSssEe = '0.0000';
@@ -102,6 +103,11 @@ final class PayrollIntegrationService
                 4
             );
 
+            // Guard against bank overdraft
+            if (bccomp((string) $bank->balance, $totalNetPay, 4) < 0) {
+                throw new \DomainException("Insufficient bank funds in {$bank->name} for payroll disbursement. Required: ₱{$totalNetPay}, Available: ₱{$bank->balance}");
+            }
+
             // 1. Create Payroll Run Record
             $runNumber = 'PAYROLL-' . date('Ymd', strtotime($data->payoutDate)) . '-' . strtoupper(bin2hex(random_bytes(2)));
             $payrollRun = PayrollRun::create([
@@ -168,12 +174,14 @@ final class PayrollIntegrationService
                 'released_at'          => now(),
             ]);
 
-            // Deduct Net Payroll from Bank Account
-            $bank->decrement('balance', (float) $totalNetPay);
+            // Deduct Net Payroll from Bank Account with BCMath
+            $bank->balance = bcsub((string) $bank->balance, $totalNetPay, 4);
+            $bank->save();
 
             // 4. Post Double-Entry General Ledger Payroll Journal
             $this->postPayrollDoubleEntry(
                 $payrollRun,
+                $bank,
                 $data->payoutDate,
                 $totalGross,
                 $totalSssEe,
@@ -186,12 +194,24 @@ final class PayrollIntegrationService
                 $totalNetPay
             );
 
+            // 5. CAS Audit Trail Recording
+            $this->auditTrailService->logFinancialEvent(
+                auditable: $payrollRun,
+                action: 'INSERT',
+                oldValues: null,
+                newValues: $payrollRun->toArray(),
+                userId: auth()->id(),
+                userName: auth()->user()?->name ?? 'HRMS Subsystem Ingestion API',
+                ipAddress: request()?->ip() ?? '127.0.0.1',
+            );
+
             return $payrollRun->loadMissing(['items', 'disbursementVoucher']);
         });
     }
 
     private function postPayrollDoubleEntry(
         PayrollRun $run,
+        BankAccount $bank,
         string $payoutDate,
         string $grossSalaries,
         string $sssEe,
@@ -203,14 +223,19 @@ final class PayrollIntegrationService
         string $tax1601c,
         string $netPay
     ): void {
-        // Accounts Definition
-        $salariesExpenseAcc = Account::firstOrCreate(['code' => '5030'], ['name' => 'Salaries & Wages Expense - Hospital Staff', 'category' => 'EXPENSE', 'normal_balance' => 'DEBIT']);
-        $employerStatAcc    = Account::firstOrCreate(['code' => '5031'], ['name' => 'Employer Statutory Contributions Expense', 'category' => 'EXPENSE', 'normal_balance' => 'DEBIT']);
-        $taxPayable1601cAcc = Account::firstOrCreate(['code' => '2040'], ['name' => 'Withholding Tax Payable - Compensation (BIR 1601-C)', 'category' => 'LIABILITY', 'normal_balance' => 'CREDIT']);
-        $sssPayableAcc      = Account::firstOrCreate(['code' => '2041'], ['name' => 'SSS Premiums & EC Payable', 'category' => 'LIABILITY', 'normal_balance' => 'CREDIT']);
-        $phicPayableAcc     = Account::firstOrCreate(['code' => '2042'], ['name' => 'PhilHealth Premiums Payable', 'category' => 'LIABILITY', 'normal_balance' => 'CREDIT']);
-        $hdmfPayableAcc     = Account::firstOrCreate(['code' => '2043'], ['name' => 'Pag-IBIG / HDMF Premiums Payable', 'category' => 'LIABILITY', 'normal_balance' => 'CREDIT']);
-        $cashInBankAcc      = Account::firstOrCreate(['code' => '1020'], ['name' => 'Operating Bank Account - Metrobank', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']);
+        // Accounts Definition aligned with Standard Chart of Accounts
+        $salariesExpenseAcc = Account::firstOrCreate(['code' => '5010'], ['name' => 'Salaries & Wages Expense - Hospital Staff', 'category' => 'EXPENSE', 'normal_balance' => 'DEBIT']);
+        $employerStatAcc    = Account::firstOrCreate(['code' => '5011'], ['name' => 'Employer Statutory Contributions Expense', 'category' => 'EXPENSE', 'normal_balance' => 'DEBIT']);
+        $taxPayable1601cAcc = Account::firstOrCreate(['code' => '2120'], ['name' => 'Withholding Tax Payable - Compensation (BIR 1601-C)', 'category' => 'LIABILITY', 'normal_balance' => 'CREDIT']);
+        $sssPayableAcc      = Account::firstOrCreate(['code' => '2130'], ['name' => 'SSS Premiums Payable', 'category' => 'LIABILITY', 'normal_balance' => 'CREDIT']);
+        $phicPayableAcc     = Account::firstOrCreate(['code' => '2140'], ['name' => 'PhilHealth Premiums Payable', 'category' => 'LIABILITY', 'normal_balance' => 'CREDIT']);
+        $hdmfPayableAcc     = Account::firstOrCreate(['code' => '2150'], ['name' => 'HDMF (Pag-IBIG) Premiums Payable', 'category' => 'LIABILITY', 'normal_balance' => 'CREDIT']);
+
+        $bankGlAccountId = $bank->gl_account_id;
+        if (! $bankGlAccountId) {
+            $bankAccount = Account::firstOrCreate(['code' => '1020'], ['name' => 'Cash in Bank - Operating Account', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']);
+            $bankGlAccountId = $bankAccount->id;
+        }
 
         $totalEmployerExpense = bcadd(bcadd($sssEr, $phicEr, 4), $hdmfEr, 4);
         $totalSssCombined = bcadd($sssEe, $sssEr, 4);
@@ -253,7 +278,7 @@ final class PayrollIntegrationService
                 credit: $totalPhicCombined,
                 memo: "PhilHealth premiums payable (EE ₱{$phicEe} + ER ₱{$phicEr})"
             ),
-            // CR: Total Pag-IBIG Payable (EE + ER)
+            // CR: Total PhilHealth/HDMF Payable (EE + ER)
             new JournalLineData(
                 accountId: $hdmfPayableAcc->id,
                 debit: '0.0000',
@@ -262,7 +287,7 @@ final class PayrollIntegrationService
             ),
             // CR: Cash in Bank (Net Payroll Release)
             new JournalLineData(
-                accountId: $cashInBankAcc->id,
+                accountId: $bankGlAccountId,
                 debit: '0.0000',
                 credit: $netPay,
                 memo: "Net payroll disbursement via PESONet batch on {$run->payroll_run_number}"

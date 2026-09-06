@@ -339,4 +339,146 @@ final class GeneralLedgerModuleTest extends TestCase
         $this->assertNotNull($reLine);
         $this->assertEquals('5000.0000', $reLine->credit);
     }
+
+    /** @test */
+    public function test_reversal_is_blocked_when_current_period_is_locked(): void
+    {
+        $this->actingAs($this->manager);
+
+        // Lock the current period
+        $period = FiscalPeriod::create([
+            'period_code'   => 'CURR-M01',
+            'fiscal_year'   => (string) date('Y'),
+            'period_number' => (int) date('m'),
+            'start_date'    => now()->startOfMonth()->toDateString(),
+            'end_date'      => now()->endOfMonth()->toDateString(),
+            'status'        => 'LOCKED',
+        ]);
+
+        $cash = Account::create(['code' => '1019', 'name' => 'Cash Temp', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']);
+        $revenue = Account::create(['code' => '4019', 'name' => 'Rev Temp', 'category' => 'REVENUE', 'normal_balance' => 'CREDIT']);
+
+        $je = JournalEntry::create([
+            'reference_number' => 'JE-REV-LOCK-01',
+            'entry_date'       => now()->toDateString(),
+            'description'      => 'Posted prior entry',
+            'status'           => 'POSTED',
+        ]);
+        JournalEntryLine::create(['journal_entry_id' => $je->id, 'account_id' => $cash->id, 'debit' => '1000.0000', 'credit' => '0.0000']);
+        JournalEntryLine::create(['journal_entry_id' => $je->id, 'account_id' => $revenue->id, 'debit' => '0.0000', 'credit' => '1000.0000']);
+
+        // Attempt to reverse into locked period
+        $res = $this->post("/general-ledger/journal-entries/{$je->id}/reverse", ['reason' => 'Test lock']);
+        $res->assertSessionHas('error');
+
+        $je->refresh();
+        $this->assertEquals('POSTED', $je->status);
+    }
+
+    /** @test */
+    public function test_period_close_is_blocked_when_unposted_draft_journal_entries_exist(): void
+    {
+        $this->actingAs($this->cfo);
+
+        $period = FiscalPeriod::create([
+            'period_code'   => '2028-M01',
+            'fiscal_year'   => '2028',
+            'period_number' => 1,
+            'start_date'    => '2028-01-01',
+            'end_date'      => '2028-01-31',
+            'status'        => 'OPEN',
+        ]);
+
+        $cash = Account::create(['code' => '1028', 'name' => 'Cash 2028', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']);
+        $exp = Account::create(['code' => '5028', 'name' => 'Expense 2028', 'category' => 'EXPENSE', 'normal_balance' => 'DEBIT']);
+
+        // Create an unposted DRAFT journal entry within the period
+        $draftJe = JournalEntry::create([
+            'reference_number' => 'JE-DRAFT-2028',
+            'entry_date'       => '2028-01-15',
+            'description'      => 'Pending Invoice Entry',
+            'status'           => 'DRAFT',
+        ]);
+        JournalEntryLine::create(['journal_entry_id' => $draftJe->id, 'account_id' => $exp->id, 'debit' => '500.0000', 'credit' => '0.0000']);
+        JournalEntryLine::create(['journal_entry_id' => $draftJe->id, 'account_id' => $cash->id, 'debit' => '0.0000', 'credit' => '500.0000']);
+
+        // Attempt CFO Hard Close
+        $res = $this->post("/general-ledger/period-end-closing/{$period->id}/close");
+        $res->assertSessionHas('error');
+
+        $period->refresh();
+        $this->assertEquals('OPEN', $period->status);
+    }
+
+    /** @test */
+    public function test_period_close_zeros_out_contra_revenue_and_contra_expense_accounts(): void
+    {
+        $this->actingAs($this->cfo);
+
+        $period = FiscalPeriod::create([
+            'period_code'   => '2029-M01',
+            'fiscal_year'   => '2029',
+            'period_number' => 1,
+            'start_date'    => '2029-01-01',
+            'end_date'      => '2029-01-31',
+            'status'        => 'OPEN',
+        ]);
+
+        $cash = Account::create(['code' => '1029', 'name' => 'Cash 2029', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']);
+        $grossRev = Account::create(['code' => '4029', 'name' => 'Gross Inpatient Revenue', 'category' => 'REVENUE', 'normal_balance' => 'CREDIT']);
+        $contraRev = Account::create(['code' => '4929', 'name' => 'Sales Discounts / Allowances', 'category' => 'REVENUE', 'normal_balance' => 'CREDIT']); // Has Debit balance!
+        $operatingExp = Account::create(['code' => '5029', 'name' => 'Hospital Supplies Expense', 'category' => 'EXPENSE', 'normal_balance' => 'DEBIT']);
+        $contraExp = Account::create(['code' => '5929', 'name' => 'Vendor Rebates / Credits', 'category' => 'EXPENSE', 'normal_balance' => 'DEBIT']); // Has Credit balance!
+        $retainedAcc = Account::firstOrCreate(['code' => '3020'], ['name' => 'Retained Earnings', 'category' => 'EQUITY', 'normal_balance' => 'CREDIT']);
+
+        // 1. Post Gross Revenue: CR 4029 (₱100,000), DR Cash (₱100,000)
+        $je1 = JournalEntry::create(['reference_number' => 'JE-REV-01', 'entry_date' => '2029-01-10', 'description' => 'Revenue', 'status' => 'POSTED']);
+        JournalEntryLine::create(['journal_entry_id' => $je1->id, 'account_id' => $cash->id, 'debit' => '100000.0000', 'credit' => '0.0000']);
+        JournalEntryLine::create(['journal_entry_id' => $je1->id, 'account_id' => $grossRev->id, 'debit' => '0.0000', 'credit' => '100000.0000']);
+
+        // 2. Post Contra-Revenue: DR 4929 (₱10,000), CR Cash (₱10,000) -> Net Revenue = 100k - 10k = 90,000
+        $je2 = JournalEntry::create(['reference_number' => 'JE-CN-01', 'entry_date' => '2029-01-12', 'description' => 'Discount', 'status' => 'POSTED']);
+        JournalEntryLine::create(['journal_entry_id' => $je2->id, 'account_id' => $contraRev->id, 'debit' => '10000.0000', 'credit' => '0.0000']);
+        JournalEntryLine::create(['journal_entry_id' => $je2->id, 'account_id' => $cash->id, 'debit' => '0.0000', 'credit' => '10000.0000']);
+
+        // 3. Post Operating Expense: DR 5029 (₱40,000), CR Cash (₱40,000)
+        $je3 = JournalEntry::create(['reference_number' => 'JE-EXP-01', 'entry_date' => '2029-01-15', 'description' => 'Supplies', 'status' => 'POSTED']);
+        JournalEntryLine::create(['journal_entry_id' => $je3->id, 'account_id' => $operatingExp->id, 'debit' => '40000.0000', 'credit' => '0.0000']);
+        JournalEntryLine::create(['journal_entry_id' => $je3->id, 'account_id' => $cash->id, 'debit' => '0.0000', 'credit' => '40000.0000']);
+
+        // 4. Post Contra-Expense: CR 5929 (₱5,000), DR Cash (₱5,000) -> Net Expense = 40k - 5k = 35,000
+        $je4 = JournalEntry::create(['reference_number' => 'JE-REB-01', 'entry_date' => '2029-01-20', 'description' => 'Rebate', 'status' => 'POSTED']);
+        JournalEntryLine::create(['journal_entry_id' => $je4->id, 'account_id' => $cash->id, 'debit' => '5000.0000', 'credit' => '0.0000']);
+        JournalEntryLine::create(['journal_entry_id' => $je4->id, 'account_id' => $contraExp->id, 'debit' => '0.0000', 'credit' => '5000.0000']);
+
+        // Net Income should be: 90,000 (net revenue) - 35,000 (net expense) = 55,000
+        $closeRes = $this->post("/general-ledger/period-end-closing/{$period->id}/close");
+        $closeRes->assertRedirect('/general-ledger/period-end-closing?fiscal_year=2029');
+
+        $period->refresh();
+        $this->assertEquals('AUDITED', $period->status);
+
+        $closingJE = $period->closingJournalEntry()->with('lines.account')->first();
+        $this->assertNotNull($closingJE);
+
+        // Assert DR = CR on the closing entry
+        $totalDr = (string) $closingJE->lines->sum('debit');
+        $totalCr = (string) $closingJE->lines->sum('credit');
+        $this->assertEquals(0, bccomp($totalDr, $totalCr, 4));
+
+        // Retained Earnings credited with exact Net Income of ₱55,000
+        $reLine = $closingJE->lines->firstWhere('account.code', '3020');
+        $this->assertNotNull($reLine);
+        $this->assertEquals('55000.0000', (string) $reLine->credit);
+
+        // Contra-revenue account 4929 was credited by 10,000 to zero out its debit balance
+        $contraRevLine = $closingJE->lines->firstWhere('account.code', '4929');
+        $this->assertNotNull($contraRevLine);
+        $this->assertEquals('10000.0000', (string) $contraRevLine->credit);
+
+        // Contra-expense account 5929 was debited by 5,000 to zero out its credit balance
+        $contraExpLine = $closingJE->lines->firstWhere('account.code', '5929');
+        $this->assertNotNull($contraExpLine);
+        $this->assertEquals('5000.0000', (string) $contraExpLine->debit);
+    }
 }

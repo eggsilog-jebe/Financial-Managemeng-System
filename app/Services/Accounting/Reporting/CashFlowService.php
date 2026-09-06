@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Accounting\Reporting;
 
+use App\Models\Account;
 use App\Models\BankAccount;
 use App\Models\DisbursementVoucher;
 use App\Models\Payment;
@@ -23,13 +24,30 @@ final class CashFlowService
         // 1. Operating Activities:
         // Collections received from patients and HMOs
         $patientCollections = Payment::whereBetween('payment_date', [$from, $to])
+            ->where(function ($q) {
+                $q->whereNull('payment_type')->orWhere('payment_type', '!=', 'VOID');
+            })
             ->sum('amount');
         $operatingReceipts = (string) $patientCollections;
 
-        // Cash disbursements to suppliers (AP)
-        $supplierDisbursements = PurchaseBill::whereBetween('bill_date', [$from, $to])
+        // Cash disbursements to medical suppliers (AP vouchers + direct bill settlements)
+        $voucherSupplierCash = (string) DisbursementVoucher::whereBetween('voucher_date', [$from, $to])
+            ->whereNotNull('purchase_bill_id')
+            ->whereIn('status', ['APPROVED', 'RELEASED', 'CLEARED'])
+            ->sum('net_disbursed_amount');
+
+        $directBillsCash = (string) PurchaseBill::whereBetween('bill_date', [$from, $to])
+            ->where(function ($q) {
+                $q->where('status', 'PAID')
+                  ->orWhere('paid_amount', '>', 0);
+            })
+            ->whereDoesntHave('disbursementVouchers', function ($q) use ($from, $to) {
+                $q->whereBetween('voucher_date', [$from, $to])
+                  ->whereIn('status', ['APPROVED', 'RELEASED', 'CLEARED']);
+            })
             ->sum('paid_amount');
-        $supplierCash = (string) $supplierDisbursements;
+
+        $supplierCash = bcadd($voucherSupplierCash, $directBillsCash, 4);
 
         // Cash disbursements for payroll & personnel
         $payrollDisbursements = DisbursementVoucher::whereBetween('voucher_date', [$from, $to])
@@ -64,7 +82,7 @@ final class CashFlowService
             })
             ->sum(DB::raw('journal_entry_lines.debit - journal_entry_lines.credit'));
 
-        $capexOutflow = (string) $investingLines;
+        $capexOutflow = (string) ($investingLines ?? '0.0000');
         $netInvestingCash = bcsub('0.0000', $capexOutflow, 4);
 
         // 3. Financing Activities (Equity contributions, Debt financing)
@@ -83,7 +101,7 @@ final class CashFlowService
             })
             ->sum(DB::raw('journal_entry_lines.credit - journal_entry_lines.debit'));
 
-        $netFinancingCash = (string) $financingLines;
+        $netFinancingCash = (string) ($financingLines ?? '0.0000');
 
         // 4. Net Increase / Decrease in Cash
         $netCashFlow = bcadd(bcadd($netOperatingCash, $netInvestingCash, 4), $netFinancingCash, 4);

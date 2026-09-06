@@ -71,7 +71,9 @@ final class VendorInvoiceController extends Controller
         $invoices = $query->paginate(15)->withQueryString();
 
         $totalBilled = PurchaseBill::sum('total_amount');
-        $totalPending = PurchaseBill::whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE', 'APPROVED'])->get()->sum(fn ($b) => $b->balance_due);
+        $totalPending = PurchaseBill::whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE', 'APPROVED'])
+            ->selectRaw('COALESCE(SUM(total_amount - paid_amount), 0) as aggregate')
+            ->value('aggregate') ?? '0.0000';
         $totalVouchers = DisbursementVoucher::count();
         $bankAccounts = BankAccount::where('status', 'Active')->get();
         $vendors = Vendor::where('status', 'Active')->orderBy('name')->get();

@@ -144,12 +144,15 @@ final class JournalEntryService
             throw new DomainException("Only posted journal entries can be reversed.");
         }
 
-        return DB::transaction(function () use ($originalEntry, $userId, $reason): JournalEntry {
+        $reversalDate = now()->toDateString();
+        $this->periodClosingService->assertPeriodIsOpen($reversalDate);
+
+        return DB::transaction(function () use ($originalEntry, $userId, $reason, $reversalDate): JournalEntry {
             $originalEntry->loadMissing('lines');
 
             $reversal = JournalEntry::create([
                 'reference_number' => 'REV-' . $originalEntry->reference_number . '-' . strtoupper(bin2hex(random_bytes(2))),
-                'entry_date'       => now()->toDateString(),
+                'entry_date'       => $reversalDate,
                 'description'      => "Reversal of [{$originalEntry->reference_number}]: {$reason}",
                 'type'             => 'ADJUSTING',
                 'status'           => 'POSTED',
@@ -193,10 +196,14 @@ final class JournalEntryService
                             $restoredDiscount = '0.0000';
                         }
 
+                        $isSettled = bccomp($restoredPayable, (string) $invoice->paid_amount, 4) <= 0;
+                        $hasPaid = bccomp((string) $invoice->paid_amount, '0.0000', 4) > 0;
+                        $newStatus = $isSettled ? 'SETTLED' : ($hasPaid ? 'PARTIAL' : 'ISSUED');
+
                         $invoice->update([
                             'patient_payable' => $restoredPayable,
                             'discount_amount' => $restoredDiscount,
-                            'status'          => 'PARTIAL',
+                            'status'          => $newStatus,
                         ]);
                     }
 

@@ -15,17 +15,26 @@ final class GeneralLedgerReportService
      */
     public function getTrialBalance(): array
     {
-        $accounts = Account::with(['journalEntryLines.journalEntry' => function ($q) {
-            $q->where('status', 'POSTED');
-        }])->orderBy('code')->get();
+        $accounts = Account::withSum(['journalEntryLines as total_debit' => function ($q): void {
+            $q->whereHas('journalEntry', function ($je): void {
+                $je->where('status', 'POSTED');
+            });
+        }], 'debit')
+        ->withSum(['journalEntryLines as total_credit' => function ($q): void {
+            $q->whereHas('journalEntry', function ($je): void {
+                $je->where('status', 'POSTED');
+            });
+        }], 'credit')
+        ->orderBy('code')
+        ->get();
 
         $rows = [];
         $totalDebit = '0.0000';
         $totalCredit = '0.0000';
 
         foreach ($accounts as $acc) {
-            $debits = (string) $acc->journalEntryLines->sum('debit');
-            $credits = (string) $acc->journalEntryLines->sum('credit');
+            $debits = (string) ($acc->total_debit ?? '0.0000');
+            $credits = (string) ($acc->total_credit ?? '0.0000');
 
             $netBalance = bcsub($debits, $credits, 4);
 

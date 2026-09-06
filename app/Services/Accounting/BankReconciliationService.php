@@ -84,15 +84,22 @@ final class BankReconciliationService
             $stmtBal = (string) $dto->statementBalance;
             $bookBal = (string) $dto->bookBalance;
 
-            // 1. Calculate cleared items total
+            // 1. Calculate cleared items total and update clearance statuses
             $clearedChecksTotal = '0.0000';
             if (! empty($dto->clearedCheckIds)) {
-                $clearedChecks = CheckRegister::whereIn('id', $dto->clearedCheckIds)
+                $clearedChecks = CheckRegister::with('disbursementVoucher')
+                    ->whereIn('id', $dto->clearedCheckIds)
                     ->where('bank_account_id', $bank->id)
                     ->get();
                 foreach ($clearedChecks as $chk) {
                     $clearedChecksTotal = bcadd($clearedChecksTotal, (string) $chk->amount, 4);
-                    $chk->update(['status' => 'CLEARED']);
+                    $chk->update([
+                        'status'     => 'CLEARED',
+                        'cleared_at' => $dto->statementDate,
+                    ]);
+                    if ($chk->disbursement_voucher_id) {
+                        $chk->disbursementVoucher?->update(['status' => 'CLEARED']);
+                    }
                 }
             }
 
@@ -103,15 +110,46 @@ final class BankReconciliationService
                     ->get();
                 foreach ($clearedDeposits as $dep) {
                     $clearedDepositsTotal = bcadd($clearedDepositsTotal, (string) $dep->total_deposited, 4);
+                    $dep->update(['status' => 'RECONCILED']);
                 }
             }
 
-            // Adjusted Statement Balance = Statement Balance + Deposits in Transit - Outstanding Checks
-            // Or Variance = Statement Balance - Book Balance (after applying timing adjustments)
-            $variance = bcsub($stmtBal, $bookBal, 4);
+            // 2. Determine Timing Differences (Uncleared items as of cutoff date)
+            $unclearedChecks = CheckRegister::where('bank_account_id', $bank->id)
+                ->whereIn('status', ['ISSUED', 'RELEASED', 'PRINTED'])
+                ->whereDate('check_date', '<=', $dto->cutoffDate)
+                ->when(! empty($dto->clearedCheckIds), fn ($q) => $q->whereNotIn('id', $dto->clearedCheckIds))
+                ->get();
+            $totalOutstandingChecks = '0.0000';
+            foreach ($unclearedChecks as $chk) {
+                $totalOutstandingChecks = bcadd($totalOutstandingChecks, (string) $chk->amount, 4);
+            }
+
+            $unclearedDeposits = BankDeposit::where('bank_account_id', $bank->id)
+                ->whereIn('status', ['PREPARED', 'IN_TRANSIT'])
+                ->whereDate('deposit_date', '<=', $dto->cutoffDate)
+                ->when(! empty($dto->clearedDepositIds), fn ($q) => $q->whereNotIn('id', $dto->clearedDepositIds))
+                ->get();
+            $totalDepositsInTransit = '0.0000';
+            foreach ($unclearedDeposits as $dep) {
+                $totalDepositsInTransit = bcadd($totalDepositsInTransit, (string) $dep->total_deposited, 4);
+            }
+
+            // 3. Two-Way Reconciliation (GAAP / IFRS Timing Adjustments):
+            // Adjusted Bank Balance = Statement Balance + Deposits in Transit - Outstanding Checks
+            $adjustedBankBalance = bcsub(
+                bcadd($stmtBal, $totalDepositsInTransit, 4),
+                $totalOutstandingChecks,
+                4
+            );
+
+            // Variance = Adjusted Bank Balance - GL Book Balance
+            $variance = bcsub($adjustedBankBalance, $bookBal, 4);
 
             if (bccomp($variance, '0.0000', 4) !== 0) {
-                throw new DomainException("Bank reconciliation cannot be posted with an unresolved variance of ₱" . number_format((float) $variance, 2) . ". The net variance between adjusted bank statement and GL book balance must be exactly ₱0.00.");
+                throw new DomainException(
+                    "Bank reconciliation cannot be posted with an unresolved variance of ₱" . number_format((float) $variance, 2) . ". Adjusted Bank Balance (₱" . number_format((float) $adjustedBankBalance, 2) . " = Statement ₱" . number_format((float) $stmtBal, 2) . " + In-Transit Deposits ₱" . number_format((float) $totalDepositsInTransit, 2) . " - Outstanding Checks ₱" . number_format((float) $totalOutstandingChecks, 2) . ") must match GL Book Balance (₱" . number_format((float) $bookBal, 2) . ")."
+                );
             }
 
             $reconciliation = BankReconciliation::create([

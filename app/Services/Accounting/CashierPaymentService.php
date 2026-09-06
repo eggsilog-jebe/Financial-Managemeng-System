@@ -76,12 +76,23 @@ final class CashierPaymentService
     public function collectPayment(PosCollectionData $dto): Payment
     {
         return DB::transaction(function () use ($dto): Payment {
-            $invoice = Invoice::with('patientAccount')->findOrFail($dto->invoiceId);
+            $invoice = Invoice::where('id', $dto->invoiceId)->lockForUpdate()->firstOrFail();
+            $invoice->loadMissing('patientAccount');
             $patientId = $dto->patientAccountId ?: $invoice->patient_account_id;
             $paymentDate = $dto->paymentDate ?: date('Y-m-d');
 
+            $amount = (string) $dto->amount;
+            $openBalance = $invoice->balance_due;
+
+            if (bccomp($amount, '0.0000', 4) <= 0) {
+                throw new DomainException("Collection amount must be greater than zero.");
+            }
+
+            if (bccomp($amount, $openBalance, 4) > 0) {
+                throw new DomainException("Payment amount (₱{$amount}) exceeds open invoice balance (₱{$openBalance}).");
+            }
+
             // Calculate change if cash tendered
-            $amount = $dto->amount;
             $tendered = $dto->tenderedAmount ?? $amount;
             $changeAmount = '0.0000';
             if (bccomp((string) $tendered, (string) $amount, 4) > 0) {
@@ -146,19 +157,13 @@ final class CashierPaymentService
                 'status'                 => 'VALID',
             ]);
 
-            // 4. Update Invoice & Patient Balance
-            $currentPayable = (string) $invoice->patient_payable;
-            $newPayable = bcsub($currentPayable, (string) $amount, 4);
-            if (bccomp($newPayable, '0.0000', 4) < 0) {
-                $newPayable = '0.0000';
-            }
+            // 4. Update Invoice & Patient Balance (Preserve immutable patient_payable obligation)
             $newPaid = bcadd((string) $invoice->paid_amount, (string) $amount, 4);
-            $isFullyPaid = bccomp($newPayable, '0.0000', 4) <= 0;
+            $isFullyPaid = bccomp($newPaid, (string) $invoice->patient_payable, 4) >= 0;
             
             $invoice->update([
-                'patient_payable' => $newPayable,
-                'paid_amount'     => $newPaid,
-                'status'          => $isFullyPaid ? 'SETTLED' : 'PARTIAL',
+                'paid_amount' => $newPaid,
+                'status'      => $isFullyPaid ? 'SETTLED' : 'PARTIAL',
             ]);
 
             if ($invoice->patientAccount) {
@@ -304,6 +309,10 @@ final class CashierPaymentService
         return DB::transaction(function () use ($shiftId, $supervisorId): CashierShift {
             $shift = CashierShift::findOrFail($shiftId);
 
+            if ($shift->cashier_id === $supervisorId) {
+                throw new DomainException("Segregation of Duties violation: Cashiers cannot reconcile or audit their own shift.");
+            }
+
             if ($shift->status !== 'CLOSED') {
                 throw new DomainException("Only CLOSED shifts can be reconciled.");
             }
@@ -334,7 +343,7 @@ final class CashierPaymentService
     public function voidPayment(int $paymentId, string $reason, int $authorizedUserId): Payment
     {
         return DB::transaction(function () use ($paymentId, $reason, $authorizedUserId): Payment {
-            $payment = Payment::with(['invoice', 'patientAccount', 'officialReceipt'])->findOrFail($paymentId);
+            $payment = Payment::with(['invoice', 'patientAccount', 'officialReceipt', 'cashierShift'])->findOrFail($paymentId);
 
             if ($payment->officialReceipt && $payment->officialReceipt->status === 'CANCELLED') {
                 throw new DomainException("Payment #{$payment->payment_reference} is already voided.");
@@ -350,20 +359,17 @@ final class CashierPaymentService
                 ]);
             }
 
-            // 2. Restore Invoice Paid Amount & Patient Payable Status
+            // 2. Restore Invoice Paid Amount & Status (Preserve immutable patient_payable obligation)
             if ($payment->invoice) {
-                $curPayable = (string) $payment->invoice->patient_payable;
-                $restoredPayable = bcadd($curPayable, $amount, 4);
-
                 $curPaid = (string) $payment->invoice->paid_amount;
                 $restoredPaid = bcsub($curPaid, $amount, 4);
                 if (bccomp($restoredPaid, '0.0000', 4) < 0) {
                     $restoredPaid = '0.0000';
                 }
+                $newStatus = bccomp($restoredPaid, '0.0000', 4) <= 0 ? 'ISSUED' : 'PARTIAL';
                 $payment->invoice->update([
-                    'patient_payable' => $restoredPayable,
-                    'paid_amount'     => $restoredPaid,
-                    'status'          => 'PARTIAL',
+                    'paid_amount' => $restoredPaid,
+                    'status'      => $newStatus,
                 ]);
             }
 
@@ -374,12 +380,16 @@ final class CashierPaymentService
                 ]);
             }
 
-            // 3. Post Reversing Journal Entry
-            // DR 1120 (Patient AR)
-            // CR 1011 (Cashier Undeposited Collections)
+            // 3. Reversal Double-Entry Lines:
+            // Reverse the exact Asset accounts (1011 for Cash, 1002 for Digital / Cards)
             $undepositedCashAcc = Account::firstOrCreate(
                 ['code' => '1011'],
                 ['name' => 'Cashier Undeposited Collections', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']
+            );
+
+            $digitalClearingAcc = Account::firstOrCreate(
+                ['code' => '1002'],
+                ['name' => 'Digital Collections & POS Clearing', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']
             );
 
             $patientArAcc = Account::firstOrCreate(
@@ -389,20 +399,65 @@ final class CashierPaymentService
 
             $orNumber = $payment->officialReceipt?->or_number ?? $payment->payment_reference;
 
-            $lines = [
-                new JournalLineData(
+            // Check original collection journal to mirror debit/credit lines exactly
+            $originalJe = \App\Models\JournalEntry::where('reference_number', 'JE-COL-' . $payment->payment_reference)
+                ->with('lines.account')
+                ->first();
+
+            $lines = [];
+            $cashReversed = '0.0000';
+            $digitalReversed = '0.0000';
+
+            if ($originalJe && $originalJe->lines->isNotEmpty()) {
+                // Mirror debit lines from original collection as credits in reversal
+                foreach ($originalJe->lines as $origLine) {
+                    if (bccomp((string) $origLine->debit, '0.0000', 4) > 0) {
+                        $lines[] = new JournalLineData(
+                            accountId: $origLine->account_id,
+                            debit: '0.0000',
+                            credit: (string) $origLine->debit,
+                            memo: "Reversal of {$origLine->account->name} for [{$orNumber}]"
+                        );
+
+                        if ($origLine->account->code === '1011') {
+                            $cashReversed = bcadd($cashReversed, (string) $origLine->debit, 4);
+                        } else {
+                            $digitalReversed = bcadd($digitalReversed, (string) $origLine->debit, 4);
+                        }
+                    }
+                }
+
+                // Debit Patient AR for total reversed
+                $lines[] = new JournalLineData(
                     accountId: $patientArAcc->id,
                     debit: (string) $amount,
                     credit: '0.0000',
                     memo: "Reversal of collection [{$orNumber}]: {$reason}"
-                ),
-                new JournalLineData(
-                    accountId: $undepositedCashAcc->id,
-                    debit: '0.0000',
-                    credit: (string) $amount,
-                    memo: "Reversal of undeposited cash for [{$orNumber}]"
-                ),
-            ];
+                );
+            } else {
+                // Fallback if no original JE exists
+                $isCash = ($payment->payment_method === 'CASH');
+                $lines = [
+                    new JournalLineData(
+                        accountId: $patientArAcc->id,
+                        debit: (string) $amount,
+                        credit: '0.0000',
+                        memo: "Reversal of collection [{$orNumber}]: {$reason}"
+                    ),
+                    new JournalLineData(
+                        accountId: $isCash ? $undepositedCashAcc->id : $digitalClearingAcc->id,
+                        debit: '0.0000',
+                        credit: (string) $amount,
+                        memo: "Reversal of " . ($isCash ? 'undeposited cash' : 'digital clearing') . " for [{$orNumber}]"
+                    ),
+                ];
+
+                if ($isCash) {
+                    $cashReversed = $amount;
+                } else {
+                    $digitalReversed = $amount;
+                }
+            }
 
             $this->journalEntryService->createAndPostEntry(new JournalEntryData(
                 referenceNumber: 'JE-REV-' . $payment->payment_reference,
@@ -411,6 +466,22 @@ final class CashierPaymentService
                 lines: $lines,
                 type: 'ADJUSTING'
             ));
+
+            // 4. Adjust Cashier Shift Balances if shift is still OPEN
+            if ($payment->cashierShift && $payment->cashierShift->status === 'OPEN') {
+                $shift = $payment->cashierShift;
+                if (bccomp($cashReversed, '0.0000', 4) > 0) {
+                    $newExp = bcsub((string) $shift->expected_cash, $cashReversed, 4);
+                    $shift->expected_cash = bccomp($newExp, '0.0000', 4) < 0 ? '0.0000' : $newExp;
+                }
+                if (bccomp($digitalReversed, '0.0000', 4) > 0) {
+                    $newDig = bcsub((string) $shift->total_digital_collections, $digitalReversed, 4);
+                    $shift->total_digital_collections = bccomp($newDig, '0.0000', 4) < 0 ? '0.0000' : $newDig;
+                }
+                $newTot = bcsub((string) $shift->total_collections, $amount, 4);
+                $shift->total_collections = bccomp($newTot, '0.0000', 4) < 0 ? '0.0000' : $newTot;
+                $shift->save();
+            }
 
             $this->auditTrailService->logFinancialEvent(
                 auditable: $payment,

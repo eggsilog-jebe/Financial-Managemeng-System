@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Purchase Bills & 3-Way Matching - Accounts Payable | FMS')
+@section('title', 'Invoice Matching & Verification - Accounts Payable | FMS')
 @section('module', 'ap')
 @section('page', 'purchase-bills')
 
@@ -34,10 +34,10 @@
         <ol class="breadcrumb mb-1 fs-xs">
           <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
           <li class="breadcrumb-item">Accounts Payable</li>
-          <li class="breadcrumb-item active">Purchase Bills &amp; 3-Way Matching</li>
+          <li class="breadcrumb-item active">Invoice Matching &amp; Verification</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold text-dark">Supplier Bills &amp; 3-Way Verification</h1>
+      <h1 class="h3 mb-0 font-weight-bold text-dark">Invoice Matching &amp; Verification</h1>
       <p class="text-muted fs-xs mb-0">Cross-check incoming supplier invoices against approved Purchase Orders (PSM) and actual delivered items (SWS Goods Receipts) before approving payment.</p>
     </div>
     <div class="d-flex align-items-center gap-2">

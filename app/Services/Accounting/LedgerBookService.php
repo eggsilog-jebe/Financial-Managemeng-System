@@ -29,18 +29,16 @@ final class LedgerBookService
         $begCredit = '0.0000';
 
         if ($startDate) {
-            $priorLines = JournalEntryLine::with('journalEntry')
-                ->where('account_id', $accountId)
+            $begTotals = JournalEntryLine::where('account_id', $accountId)
                 ->whereHas('journalEntry', function ($q) use ($startDate): void {
                     $q->where('status', 'POSTED')
                       ->whereDate('entry_date', '<', $startDate);
                 })
-                ->get();
+                ->selectRaw('COALESCE(SUM(debit), 0) as total_debit, COALESCE(SUM(credit), 0) as total_credit')
+                ->first();
 
-            foreach ($priorLines as $line) {
-                $begDebit = bcadd($begDebit, (string) $line->debit, 4);
-                $begCredit = bcadd($begCredit, (string) $line->credit, 4);
-            }
+            $begDebit = (string) ($begTotals->total_debit ?? '0.0000');
+            $begCredit = (string) ($begTotals->total_credit ?? '0.0000');
 
             $beginningBalance = $isDebitNormal
                 ? bcsub($begDebit, $begCredit, 4)

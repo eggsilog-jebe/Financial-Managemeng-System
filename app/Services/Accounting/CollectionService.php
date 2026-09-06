@@ -64,15 +64,18 @@ final class CollectionService
                 'status'                 => 'VALID',
             ]);
 
-            // 3. Deduct Patient AR & Invoice Balance
+            // 3. Update Invoice & Patient Balance (Preserve immutable patient_payable obligation)
             if ($data->invoiceId) {
-                $invoice = Invoice::find($data->invoiceId);
+                $invoice = Invoice::where('id', $data->invoiceId)->lockForUpdate()->first();
                 if ($invoice) {
-                    $newPayable = bcsub((string) $invoice->patient_payable, $data->amount, 4);
-                    $newStatus = bccomp($newPayable, '0.0000', 4) <= 0 ? 'SETTLED' : 'PARTIAL';
+                    if (bccomp((string) $data->amount, (string) $invoice->balance_due, 4) > 0) {
+                        throw new DomainException("Collection amount (₱{$data->amount}) exceeds open invoice balance (₱{$invoice->balance_due}).");
+                    }
+                    $newPaid = bcadd((string) $invoice->paid_amount, (string) $data->amount, 4);
+                    $newStatus = bccomp($newPaid, (string) $invoice->patient_payable, 4) >= 0 ? 'SETTLED' : 'PARTIAL';
                     $invoice->update([
-                        'patient_payable' => bccomp($newPayable, '0.0000', 4) < 0 ? '0.0000' : $newPayable,
-                        'status'          => $newStatus,
+                        'paid_amount' => $newPaid,
+                        'status'      => $newStatus,
                     ]);
                 }
             }
@@ -113,19 +116,19 @@ final class CollectionService
     {
         // Select Cash / Bank Asset Account depending on settlement channel
         $debitAccountCode = match ($data->paymentMethod) {
-            'CASH'                     => '1010', // Cash on Hand - Cashier Drawer / Vault
-            'GCASH', 'MAYA', 'QR_PH'   => '1021', // Digital Merchant Settlement Clearing Account
-            default                    => '1020', // Bank Operating Account / Merchant Card
+            'CASH'                   => '1011', // Cashier Undeposited Collections
+            'GCASH', 'MAYA', 'QR_PH' => '1002', // Digital Collections & POS Clearing
+            default                  => '1002', // Merchant Card / Digital Clearing
         };
 
         $cashAssetAccount = Account::firstOrCreate(
             ['code' => $debitAccountCode],
-            ['name' => $debitAccountCode === '1010' ? 'Cash on Hand - Cashier Drawer' : 'Digital Merchant & Bank Clearing', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']
+            ['name' => $debitAccountCode === '1011' ? 'Cashier Undeposited Collections' : 'Digital Collections & POS Clearing', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']
         );
 
         $arPatientAccount = Account::firstOrCreate(
-            ['code' => '1010'], // AR Patient
-            ['name' => 'Accounts Receivable - Patients', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']
+            ['code' => '1110'],
+            ['name' => 'Accounts Receivable - Patient Copay', 'category' => 'ASSET', 'normal_balance' => 'DEBIT']
         );
 
         $journalLines = [

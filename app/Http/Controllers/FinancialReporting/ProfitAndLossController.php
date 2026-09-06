@@ -29,17 +29,20 @@ final class ProfitAndLossController extends Controller
             : 'financial-reporting.profit-loss';
 
         return view($viewName, [
-            'dateFrom'       => $data['date_from'],
-            'dateTo'         => $data['date_to'],
-            'department'     => $data['department'],
-            'revenues'       => collect($data['revenues']),
-            'expenses'       => collect($data['expenses']),
-            'grossRevenue'   => (float) $data['gross_revenue'],
-            'salesDiscounts' => (float) $data['sales_discounts'],
-            'totalRevenue'   => (float) $data['total_revenue'],
-            'totalExpense'   => (float) $data['total_expense'],
-            'netIncome'      => (float) $data['net_income'],
-            'profitMargin'   => $data['profit_margin'],
+            'dateFrom'              => $data['date_from'],
+            'dateTo'                => $data['date_to'],
+            'department'            => $data['department'],
+            'revenues'              => collect($data['revenues']),
+            'allowances'            => collect($data['allowances']),
+            'expenses'              => collect($data['expenses']),
+            'grossRevenue'          => (float) $data['gross_revenue'],
+            'salesDiscounts'        => (float) $data['sales_discounts'],
+            'contractualAllowances' => (float) $data['contractual_allowances'],
+            'netRevenue'            => (float) $data['net_revenue'],
+            'totalRevenue'          => (float) $data['total_revenue'],
+            'totalExpense'          => (float) $data['total_expense'],
+            'netIncome'             => (float) $data['net_income'],
+            'profitMargin'          => $data['profit_margin'],
         ]);
     }
 
@@ -73,10 +76,20 @@ final class ProfitAndLossController extends Controller
 
             fputcsv($handle, ['CODE', 'ACCOUNT DESCRIPTION', 'DEPARTMENT', 'AMOUNT (PHP)']);
 
-            fputcsv($handle, ['--- REVENUES ---']);
+            fputcsv($handle, ['--- GROSS REVENUES ---']);
             foreach ($data['revenues'] as $r) {
                 fputcsv($handle, [$r['code'], $r['name'], $r['department'], number_format((float) $r['balance'], 2)]);
             }
+
+            if (! empty($data['allowances'])) {
+                fputcsv($handle, []);
+                fputcsv($handle, ['--- CONTRACTUAL ALLOWANCES & DISCOUNTS ---']);
+                foreach ($data['allowances'] as $a) {
+                    fputcsv($handle, [$a['code'], $a['name'], $a['department'], '-' . number_format((float) $a['balance'], 2)]);
+                }
+            }
+
+            fputcsv($handle, []);
             fputcsv($handle, ['NET OPERATING REVENUES', '', '', number_format((float) $data['net_revenue'], 2)]);
             fputcsv($handle, []);
 

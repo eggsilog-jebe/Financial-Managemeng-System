@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Invoices & Vouchers Hub - Accounts Payable | FMS')
+@section('title', 'Vendor Invoices & Tax Processing - Accounts Payable | FMS')
 @section('module', 'ap')
 @section('page', 'invoices')
 
@@ -34,16 +34,16 @@
         <ol class="breadcrumb mb-1 fs-xs">
           <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
           <li class="breadcrumb-item">Accounts Payable</li>
-          <li class="breadcrumb-item active">Invoices &amp; Vouchers Hub</li>
+          <li class="breadcrumb-item active">Vendor Invoices &amp; Tax</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Vendor Invoices &amp; Payment Vouchers</h1>
-      <p class="text-muted fs-xs mb-0">Review verified supplier bills, track tax deductions (BIR 2307), and prepare payment vouchers ready for management release.</p>
+      <h1 class="h3 mb-0 font-weight-bold">Vendor Invoices &amp; Tax Processing</h1>
+      <p class="text-muted fs-xs mb-0">Review verified supplier bills, track withholding tax deductions (BIR Form 2307), and record approved vendor liabilities ready for payment release.</p>
     </div>
     <div class="d-flex align-items-center gap-2">
       <x-integration-badge 
           type="internal" 
-          :internalModules="['Purchase Bills (3-Way Match)', 'AP Payment Approvals', 'Withholding Tax (2307)']" 
+          :internalModules="['Invoice Matching & Verification', 'AP Payment Approvals', 'Withholding Tax (2307)']" 
           :tables="['vendor_invoices', 'disbursement_vouchers', 'bir2307_certificates']"
           description="Holds approved vendor liabilities and generates disbursement payment vouchers." 
       />

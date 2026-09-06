@@ -765,4 +765,86 @@ final class AccountsPayableModuleTest extends TestCase
             'status'                  => 'RELEASED',
         ]);
     }
+
+    /** @test */
+    public function test_remediated_financial_and_concurrency_safeguards(): void
+    {
+        $this->actingAs($this->accountant);
+
+        $vendor = Vendor::create(['code' => 'VND-REMEDY', 'name' => 'St. Jude Diagnostics', 'tin' => '111-222-333-000']);
+        $bank = BankAccount::create([
+            'name'           => 'Remedy Treasury',
+            'bank_name'      => 'BDO Unibank',
+            'account_number' => '9988-1122-33',
+            'gl_code'        => '1020',
+            'purpose'        => 'Disbursements',
+            'balance'        => '500000.0000',
+            'status'         => 'Active',
+        ]);
+
+        // 1. Ingest disputed bill with variance (120,000 billed vs 100,000 PO)
+        $payload = [
+            'vendor_id'              => $vendor->id,
+            'bill_date'              => '2026-01-15',
+            'due_date'               => '2026-02-15',
+            'po_number'              => 'PO-REMEDY-01',
+            'po_amount'              => 100000.00,
+            'grn_number'             => 'GRN-REMEDY-01',
+            'grn_amount'             => 100000.00,
+            'vendor_invoice_number'  => 'INV-REMEDY-01',
+            'items'                  => [
+                [
+                    'description'  => 'Cardiology Catheter Kits',
+                    'expense_type' => 'GOODS_INVENTORY',
+                    'atc_code'     => 'WI158',
+                    'quantity'     => 10,
+                    'unit_price'   => 12000.00,
+                ],
+            ],
+        ];
+
+        $res = $this->post('/accounts-payable/purchase-bills', $payload);
+        $res->assertRedirect();
+
+        $bill = PurchaseBill::whereHas('threeWayMatch', fn($q) => $q->where('vendor_invoice_number', 'INV-REMEDY-01'))->firstOrFail();
+        $this->assertEquals('OVER_BILLED', $bill->threeWayMatch->match_status);
+
+        // Verify GL entry was NOT prematurely posted for disputed bill
+        $this->assertDatabaseMissing('journal_entries', [
+            'reference_number' => 'JE-AP-' . $bill->bill_number,
+        ]);
+
+        // 2. Finance Manager resolves variance and approves 3-Way Match
+        $this->actingAs($this->manager);
+        $approveRes = $this->post("/accounts-payable/purchase-bills/{$bill->id}/approve");
+        $approveRes->assertRedirect();
+
+        // Verify GL entry was posted upon official approval
+        $this->assertDatabaseHas('journal_entries', [
+            'reference_number' => 'JE-AP-' . $bill->bill_number,
+        ]);
+
+        // 3. Prepare Voucher for partial amount (₱70,000)
+        $this->actingAs($this->accountant);
+        $voucherRes = $this->post('/accounts-payable/invoices-vouchers/prepare-voucher', [
+            'purchase_bill_id' => $bill->id,
+            'bank_account_id'  => $bank->id,
+            'voucher_date'     => '2026-01-20',
+            'amount'           => 70000.00,
+            'payment_method'   => 'CHECK',
+        ]);
+        $voucherRes->assertRedirect();
+
+        // 4. Attempt to prepare a second voucher that exceeds the remaining balance (e.g. ₱60,000 when ₱50,000 remains)
+        $this->expectException(\DomainException::class);
+        $service = app(\App\Services\Accounting\DisbursementExecutionService::class);
+        $dto = new \App\DTOs\Accounting\DisbursementVoucherData(
+            purchaseBillId: $bill->id,
+            bankAccountId: $bank->id,
+            voucherDate: '2026-01-20',
+            amount: '60000.0000',
+            paymentMethod: 'CHECK'
+        );
+        $service->prepareDisbursementVoucher($dto, $this->accountant->id);
+    }
 }

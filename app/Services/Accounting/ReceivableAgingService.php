@@ -69,8 +69,8 @@ final class ReceivableAgingService
             $invDate = Carbon::parse($inv->invoice_date)->startOfDay();
             $days = (int) $invDate->diffInDays($cutoffDate);
 
-            // 1. Patient Copay Portion
-            $unpaidCopay = (string) $inv->patient_payable;
+            // 1. Patient Copay Portion (Actual uncollected balance)
+            $unpaidCopay = (string) $inv->balance_due;
             if (bccomp($unpaidCopay, '0.0000', 4) > 0 && ($payorType === null || $payorType === 'ALL' || $payorType === 'PATIENT')) {
                 $pId = 'PATIENT_' . $inv->patient_account_id;
                 if (! isset($debtorGroups[$pId])) {

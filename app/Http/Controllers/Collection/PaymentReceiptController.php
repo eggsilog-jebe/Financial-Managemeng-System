@@ -53,10 +53,9 @@ final class PaymentReceiptController extends Controller
 
         $payments = $query->paginate(20)->withQueryString();
 
-        $allPayments = Payment::all();
-        $totalCollected = $allPayments->sum('amount');
-        $cashCollected = $allPayments->where('payment_method', 'CASH')->sum('amount');
-        $digitalCollected = $allPayments->where('payment_method', '!=', 'CASH')->sum('amount');
+        $totalCollected = (string) Payment::sum('amount');
+        $cashCollected = (string) Payment::where('payment_method', 'CASH')->sum('amount');
+        $digitalCollected = (string) Payment::where('payment_method', '!=', 'CASH')->sum('amount');
 
         $viewName = view()->exists('accounting.collection.receipts.index')
             ? 'accounting.collection.receipts.index'

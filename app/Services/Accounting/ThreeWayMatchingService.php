@@ -13,6 +13,7 @@ final class ThreeWayMatchingService
 {
     public function __construct(
         private readonly CasAuditTrailService $auditTrailService,
+        private readonly AccountsPayableService $apService,
     ) {}
 
     /**
@@ -48,7 +49,7 @@ final class ThreeWayMatchingService
     public function approveMatch(int $purchaseBillId, int $userId): PurchaseBill
     {
         return DB::transaction(function () use ($purchaseBillId, $userId): PurchaseBill {
-            $bill = PurchaseBill::with('threeWayMatch')->findOrFail($purchaseBillId);
+            $bill = PurchaseBill::with(['threeWayMatch', 'vendor', 'items'])->findOrFail($purchaseBillId);
 
             if ($bill->threeWayMatch) {
                 $bill->threeWayMatch->update([
@@ -59,6 +60,9 @@ final class ThreeWayMatchingService
             }
 
             $bill->update(['status' => 'APPROVED']);
+
+            // Post verified General Ledger AP double-entry accrual upon match approval
+            $this->apService->postApprovedBillDoubleEntry($bill);
 
             $this->auditTrailService->logFinancialEvent(
                 auditable: $bill,

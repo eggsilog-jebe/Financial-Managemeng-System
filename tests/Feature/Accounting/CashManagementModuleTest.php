@@ -338,11 +338,108 @@ final class CashManagementModuleTest extends TestCase
         $check->refresh();
         $this->assertEquals('CLEARED', $check->status);
 
+        $deposit->refresh();
+        $this->assertEquals('RECONCILED', $deposit->status);
+
         // 3. Reject Post with Non-Zero Variance
         $badPayload = array_merge($reconPayload, ['statement_balance' => 520000.00]);
         $badResponse = $this->post('/cash-management/bank-reconciliation/post', $badPayload);
         $badResponse->assertRedirect();
         $badResponse->assertSessionHas('error');
+    }
+
+    /** @test */
+    public function test_bank_reconciliation_timing_differences_two_way_adjusted_formula(): void
+    {
+        $this->actingAs($this->manager);
+
+        // Current Book Balance = 500,000.00
+        // 1. Create an outstanding check of 30,000.00
+        $voucher = DisbursementVoucher::create([
+            'voucher_number'       => 'DV-2026-TIMING1',
+            'bank_account_id'      => $this->sourceBank->id,
+            'voucher_date'         => '2026-01-20',
+            'payee_name'           => 'Pacific Hospital Supplies',
+            'gross_amount'         => '30000.0000',
+            'withheld_tax_amount'  => '0.0000',
+            'net_disbursed_amount' => '30000.0000',
+            'payment_method'       => 'CHECK',
+            'status'               => 'APPROVED',
+        ]);
+
+        $check = CheckRegister::create([
+            'disbursement_voucher_id' => $voucher->id,
+            'bank_account_id'         => $this->sourceBank->id,
+            'check_number'            => 'CHK-2026-TIMING1',
+            'check_date'              => '2026-01-20',
+            'payee_name'              => 'Pacific Hospital Supplies',
+            'amount'                  => '30000.0000',
+            'status'                  => 'ISSUED',
+        ]);
+
+        // 2. Create a deposit in transit of 70,000.00
+        $deposit = BankDeposit::create([
+            'bank_account_id'   => $this->sourceBank->id,
+            'deposit_reference' => 'DEP-2026-TIMING1',
+            'deposit_date'      => '2026-01-20',
+            'cash_amount'       => '70000.0000',
+            'total_deposited'   => '70000.0000',
+            'status'            => 'IN_TRANSIT',
+        ]);
+
+        // GAAP Two-Way Adjusted Balance:
+        // Adjusted Bank Balance = Statement Balance + Deposits in Transit (70,000) - Outstanding Checks (30,000)
+        // For Adjusted Bank Balance to equal Book Balance (500,000):
+        // Statement Balance = 500,000 - 70,000 + 30,000 = 460,000.00
+        $reconPayload = [
+            'bank_account_id'     => $this->sourceBank->id,
+            'statement_date'      => '2026-01-20',
+            'cutoff_date'         => '2026-01-20',
+            'statement_balance'   => 460000.00,
+            'book_balance'        => 500000.00,
+            'cleared_check_ids'   => [], // Uncleared -> remains outstanding
+            'cleared_deposit_ids' => [], // Uncleared -> remains in transit
+            'notes'               => 'Reconciliation with legitimate timing differences verified.',
+        ];
+
+        $postResponse = $this->post('/cash-management/bank-reconciliation/post', $reconPayload);
+        $postResponse->assertRedirect();
+        $postResponse->assertSessionHas('success');
+
+        // Check & Deposit remain in transit / issued
+        $check->refresh();
+        $this->assertEquals('ISSUED', $check->status);
+        $deposit->refresh();
+        $this->assertEquals('IN_TRANSIT', $deposit->status);
+
+        // Now test where Check clears but Deposit remains in transit:
+        // Statement Balance = 500,000 - 70,000 + 0 = 430,000.00
+        $reconPayload2 = [
+            'bank_account_id'     => $this->sourceBank->id,
+            'statement_date'      => '2026-01-21',
+            'cutoff_date'         => '2026-01-21',
+            'statement_balance'   => 430000.00,
+            'book_balance'        => 500000.00,
+            'cleared_check_ids'   => [$check->id],
+            'cleared_deposit_ids' => [],
+            'notes'               => 'Second reconciliation where check cleared.',
+        ];
+
+        $postResponse2 = $this->post('/cash-management/bank-reconciliation/post', $reconPayload2);
+        $postResponse2->assertRedirect();
+        $postResponse2->assertSessionHas('success');
+
+        $check->refresh();
+        $this->assertEquals('CLEARED', $check->status);
+        $this->assertEquals('2026-01-21', $check->cleared_at->format('Y-m-d'));
+        $voucher->refresh();
+        $this->assertEquals('CLEARED', $voucher->status);
+
+        // Rejected if statement balance is wrong by even 1 peso
+        $wrongPayload = array_merge($reconPayload2, ['statement_balance' => 430001.00]);
+        $wrongResponse = $this->post('/cash-management/bank-reconciliation/post', $wrongPayload);
+        $wrongResponse->assertRedirect();
+        $wrongResponse->assertSessionHas('error');
     }
 
     /** @test */
@@ -380,5 +477,35 @@ final class CashManagementModuleTest extends TestCase
         $this->actingAs($this->manager);
         $res2 = $this->post('/cash-management/fund-transfers', $transferPayload);
         $res2->assertRedirect();
+    }
+
+    /** @test */
+    public function test_fund_transfer_prevents_insufficient_funds_and_self_transfer(): void
+    {
+        $this->actingAs($this->manager);
+
+        // 1. Same source and destination rejected
+        $samePayload = [
+            'source_bank_account_id'      => $this->sourceBank->id,
+            'destination_bank_account_id' => $this->sourceBank->id,
+            'amount'                      => 50000.00,
+            'transfer_date'               => '2026-01-20',
+        ];
+
+        $res1 = $this->post('/cash-management/fund-transfers', $samePayload);
+        $res1->assertRedirect();
+        $res1->assertSessionHasErrors(['destination_bank_account_id']);
+
+        // 2. Amount exceeding source balance rejected
+        $excessPayload = [
+            'source_bank_account_id'      => $this->sourceBank->id,
+            'destination_bank_account_id' => $this->destBank->id,
+            'amount'                      => 99999999.00,
+            'transfer_date'               => '2026-01-20',
+        ];
+
+        $res2 = $this->post('/cash-management/fund-transfers', $excessPayload);
+        $res2->assertRedirect();
+        $res2->assertSessionHas('error');
     }
 }

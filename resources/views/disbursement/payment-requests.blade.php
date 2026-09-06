@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Payment Requests - Disbursement | FMS')
+@section('title', 'Disbursement Vouchers & Requests - Disbursement | FMS')
 @section('module', 'disbursement')
 @section('page', 'payment-requests')
 
@@ -34,10 +34,10 @@
         <ol class="breadcrumb mb-1 fs-xs">
           <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
           <li class="breadcrumb-item">Disbursement Management</li>
-          <li class="breadcrumb-item active">Payment Requests</li>
+          <li class="breadcrumb-item active">Disbursement Vouchers &amp; Requests</li>
         </ol>
       </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Payment Requests &amp; Requisitions</h1>
+      <h1 class="h3 mb-0 font-weight-bold">Disbursement Vouchers &amp; Payment Requisitions</h1>
       <p class="text-muted fs-xs mb-0">Create and monitor payment requests for departmental operating expenses, physician honorariums, supplier bills, and employee reimbursements.</p>
     </div>
     <div class="d-flex align-items-center gap-2">

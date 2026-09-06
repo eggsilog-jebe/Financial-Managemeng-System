@@ -18,10 +18,14 @@ final class CasAuditTrailService
         string $action, // INSERT, UPDATE, DELETE, POST, REVERSE, LOCK
         ?array $oldValues = null,
         ?array $newValues = null,
-        ?int $userId = 1,
+        ?int $userId = null,
         ?string $userName = 'System / Administrator',
         ?string $ipAddress = '127.0.0.1'
     ): CasAuditTrail {
+        if ($userId !== null && ! \App\Models\User::where('id', $userId)->exists()) {
+            $userId = null;
+        }
+
         $lastLog = CasAuditTrail::latest('id')->first();
         $previousHash = $lastLog ? $lastLog->record_hash : str_repeat('0', 64);
 

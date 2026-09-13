@@ -14,7 +14,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
     <script src="{{ asset('assets/js/core/theme-boot.js') }}"></script>
     <script src="{{ asset('assets/js/auth/session.js') }}"></script>
-    <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}?v={{ @filemtime(public_path('assets/css/style.css')) }}">
     @stack('styles')
     <link rel="stylesheet" href="{{ asset('assets/css/components/typography-accessibility.css') }}">
   </head>
@@ -62,7 +62,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ asset('assets/js/data/module-registry.js') }}"></script>
-    <script src="{{ asset('assets/js/core/app-shell.js') }}"></script>
+    <script src="{{ asset('assets/js/core/app-shell.js') }}?v={{ @filemtime(public_path('assets/js/core/app-shell.js')) }}"></script>
 
     <script>
       window.showSystemModal = function(message, title = 'System Notification', iconClass = 'ph-info') {

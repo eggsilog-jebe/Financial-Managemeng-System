@@ -1,7 +1,7 @@
 <header class="navbar-custom">
   <div class="navbar-left">
-    <button class="menu-toggle" type="button" aria-label="Collapse sidebar" aria-controls="app-sidebar" aria-expanded="true"><i class="ph ph-list" aria-hidden="true"></i></button>
-    <div class="app-identity"><p class="app-identity-title">Financial Management System</p><span class="app-identity-subtitle">Transaction Core Suite</span></div>
+    <button class="menu-toggle" type="button" aria-label="Toggle navigation menu" aria-controls="app-sidebar" aria-expanded="false"><i class="ph ph-list" aria-hidden="true"></i></button>
+    <div class="app-identity"><p class="app-identity-title text-truncate">Financial Management System</p><span class="app-identity-subtitle text-truncate">Transaction Core Suite</span></div>
   </div>
   <div class="navbar-center">
     <div class="search-wrap">
@@ -10,16 +10,17 @@
     </div>
   </div>
   <div class="navbar-right d-flex align-items-center gap-2">
-    <div class="d-none d-md-flex align-items-center gap-2 me-2">
+    <div class="d-none d-md-flex align-items-center gap-2 me-1">
       <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">
         <i class="ph ph-user-circle me-1"></i> {{ auth()->user()->role ?? 'CFO' }}
       </span>
-      <small class="text-muted fw-semibold">{{ auth()->user()->name ?? 'Executive Demo User' }}</small>
+      <small class="text-muted fw-semibold text-truncate" style="max-width: 140px;">{{ auth()->user()->name ?? 'Executive Demo User' }}</small>
     </div>
-    <a href="{{ route('login') }}" class="btn btn-sm btn-outline-secondary py-1 px-2" title="Switch Demo Role">
-      <i class="ph ph-arrows-clockwise me-1"></i> Switch Role
+    <a href="{{ route('login') }}" class="btn btn-sm btn-outline-secondary py-1 px-2" title="Switch Demo Role" aria-label="Switch Demo Role">
+      <i class="ph ph-arrows-clockwise"></i>
+      <span class="d-none d-sm-inline ms-1">Switch Role</span>
     </a>
-    <a href="{{ route('logout.get') }}" class="btn btn-sm btn-outline-danger py-1 px-2" title="Logout">
+    <a href="{{ route('logout.get') }}" class="btn btn-sm btn-outline-danger py-1 px-2" title="Logout" aria-label="Logout">
       <i class="ph ph-sign-out"></i>
     </a>
   </div>

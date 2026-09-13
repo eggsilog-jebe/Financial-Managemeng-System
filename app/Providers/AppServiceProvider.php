@@ -28,6 +28,20 @@ class AppServiceProvider extends ServiceProvider
         }
 
         // Define Gates for Financial Segregation of Duties (SoD)
+        \Illuminate\Support\Facades\Gate::before(function ($user, string $ability): ?bool {
+            // In local development or demo exploration without login, allow full visibility
+            if (! $user && app()->environment('local', 'testing')) {
+                return true;
+            }
+
+            // CFO and FinanceDirector always have full superuser access to all modules
+            if ($user && in_array($user->role, ['CFO', 'FinanceDirector'], true)) {
+                return true;
+            }
+
+            return null;
+        });
+
         \Illuminate\Support\Facades\Gate::define('access-cashier-pos', function ($user): bool {
             return in_array($user->role, ['Cashier', 'CFO', 'FinanceDirector'], true);
         });

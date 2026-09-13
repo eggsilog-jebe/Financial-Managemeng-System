@@ -832,7 +832,7 @@ body.sidebar-animating .main-content {
 /* ==========================================================================
    MOBILE & TABLET RESPONSIVE LAYOUT (<= 991px)
    ========================================================================== */
-@media (max-width: 991px) {
+@media (max-width: 991.98px) {
   .main-content,
   body.sidebar-collapsed .main-content {
     margin-left: 0 !important;
@@ -840,16 +840,88 @@ body.sidebar-animating .main-content {
   }
 
   .sidebar {
-    position: fixed;
-    z-index: 700;
-    inset: 0 auto 0 0;
-    width: min(var(--sidebar-width), calc(100vw - 48px)) !important;
-    transform: translateX(-105%);
-    transition: transform var(--sidebar-transition-timing);
+    position: fixed !important;
+    z-index: 1050 !important;
+    inset: 0 auto 0 0 !important;
+    width: min(320px, calc(100vw - 44px)) !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow-y: auto !important;
+    background: #0f172a !important;
+    box-shadow: 6px 0 32px rgba(0, 0, 0, 0.38) !important;
+    transform: translateX(-105%) !important;
+    transition: transform 0.28s cubic-bezier(0.25, 1, 0.5, 1) !important;
+    will-change: transform !important;
+    visibility: hidden !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
   }
 
   body.sidebar-open .sidebar {
     transform: translateX(0) !important;
+    visibility: visible !important;
+  }
+
+  .sidebar-backdrop {
+    position: fixed !important;
+    z-index: 1040 !important;
+    inset: 0 !important;
+    background: rgba(15, 23, 42, 0.55) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transition: opacity 0.24s ease, visibility 0.24s ease !important;
+    display: block !important;
+  }
+
+  body.sidebar-open .sidebar-backdrop {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  body.sidebar-open {
+    overflow: hidden !important;
+  }
+
+  .sidebar-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0 16px !important;
+    height: 64px !important;
+    min-height: 64px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    gap: 12px !important;
+  }
+
+  .sidebar-logo {
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .sidebar-close-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+    font-size: 1.15rem !important;
+    cursor: pointer !important;
+    transition: background 0.18s ease !important;
+    flex-shrink: 0 !important;
+    padding: 0 !important;
+  }
+
+  .sidebar-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+  }
+
+  .sidebar-nav {
+    padding-bottom: 24px !important;
   }
 
   /* Keep all labels, badges, and titles visible inside the mobile drawer */
@@ -872,6 +944,12 @@ body.sidebar-animating .main-content {
   }
 }
 
+@media (min-width: 992px) {
+  .sidebar-close-btn {
+    display: none !important;
+  }
+}
+
 /* ==========================================================================
    DROPDOWN ACCORDION SUBMENU ANIMATIONS & MICRO-INTERACTIONS
    ========================================================================== */
@@ -886,11 +964,31 @@ body.sidebar-animating .main-content {
   color: var(--color-primary) !important;
 }
 
+/* Declarative Accordion Visibility Rules */
+.nav-accordion.is-expanded > .nav-submenu {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.nav-accordion:not(.is-expanded) > .nav-submenu {
+  display: none !important;
+}
+
 .nav-submenu {
   position: relative !important;
   padding: 4px 0 8px 38px !important;
   overflow: hidden;
   will-change: max-height, opacity, transform;
+}
+
+.nav-submenu li a {
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+  text-decoration: none !important;
 }
 
 /* Vertical guide line on the left side of open dropdown submenus */
@@ -926,6 +1024,358 @@ html[data-theme="dark"] .nav-submenu::before {
 .nav-submenu :is(a, button):hover {
   transform: translateX(4px) !important;
   color: var(--color-primary-dark) !important;
+}
+
+/* ==========================================================================
+   EXECUTIVE FINANCIAL MANAGEMENT SYSTEM (FMS) - COMPREHENSIVE RESPONSIVE SUITE
+   DESKTOP (1080p, 1440p, 4K), TABLETS & MOBILE DEVICES (360px - 768px)
+   ========================================================================== */
+
+/* 1. Page Wrapper & Container Padding Normalization */
+.page-wrapper {
+  padding: 24px 28px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Eliminate redundant nested Bootstrap p-4 inside .page-wrapper to prevent double gutters */
+.page-wrapper > .container-fluid,
+.page-wrapper > .container-fluid.p-4,
+.page-wrapper > .container-fluid.p-3 {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+@media (max-width: 991.98px) {
+  .page-wrapper {
+    padding: 16px 18px !important;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .page-wrapper {
+    padding: 12px 14px !important;
+  }
+}
+
+/* 2. Top Navigation Bar (.navbar-custom) Desktop & Mobile */
+.navbar-custom {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 675 !important;
+  min-height: 64px !important;
+  padding: 0 24px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  border-bottom: 1px solid var(--color-border, #e2e8f0) !important;
+  background: var(--color-surface, #ffffff) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+.navbar-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding-left: 0 !important;
+  min-width: 0 !important;
+}
+
+.navbar-left .menu-toggle {
+  position: static !important;
+  flex-shrink: 0 !important;
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 8px !important;
+  display: grid !important;
+  place-items: center !important;
+}
+
+.navbar-left .app-identity {
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.navbar-left .app-identity-title {
+  margin: 0 !important;
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  color: var(--color-text, #0f172a) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.navbar-left .app-identity-subtitle {
+  font-size: 0.75rem !important;
+  color: var(--color-text-muted, #64748b) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.navbar-center {
+  flex: 1 !important;
+  display: flex !important;
+  justify-content: center !important;
+  min-width: 0 !important;
+}
+
+.navbar-center .search-wrap {
+  width: 100% !important;
+  max-width: 480px !important;
+}
+
+.navbar-right {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-shrink: 0 !important;
+}
+
+@media (max-width: 991.98px) {
+  .navbar-custom {
+    flex-wrap: wrap !important;
+    padding: 10px 16px !important;
+    min-height: auto !important;
+    gap: 8px 12px !important;
+  }
+
+  .navbar-center {
+    order: 3 !important;
+    flex-basis: 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-top: 2px !important;
+  }
+
+  .navbar-center .search-wrap {
+    max-width: 100% !important;
+  }
+
+  .navbar-center .search-box {
+    width: 100% !important;
+    height: 38px !important;
+  }
+
+  .navbar-center .search-box input {
+    height: 36px !important;
+    font-size: 13px !important;
+  }
+
+  .navbar-left {
+    flex: 1 !important;
+  }
+
+  .app-identity-subtitle {
+    display: none !important;
+  }
+
+  body.sidebar-open .navbar-custom {
+    z-index: 675 !important;
+    border-color: var(--color-border, #e2e8f0) !important;
+    background: var(--color-surface, #ffffff) !important;
+    pointer-events: auto !important;
+  }
+
+  body.sidebar-open .navbar-custom :is(.app-identity, .navbar-center, .navbar-right) {
+    visibility: visible !important;
+  }
+
+  body.sidebar-open .menu-toggle {
+    left: auto !important;
+    position: static !important;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .navbar-custom {
+    padding: 8px 12px !important;
+  }
+
+  .app-identity-title {
+    font-size: 0.875rem !important;
+  }
+
+  .navbar-right .btn {
+    padding: 0.35rem 0.6rem !important;
+    font-size: 0.75rem !important;
+  }
+}
+
+/* 3. Page Header Cards & Action Toolbars */
+@media (max-width: 767.98px) {
+  .page-header-card,
+  .container-fluid > .d-flex.justify-content-between.align-items-center:first-child,
+  .container-fluid > .d-flex.justify-content-between:first-child,
+  .container-fluid > .d-flex.flex-wrap.justify-content-between.align-items-center:first-child {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.85rem !important;
+    padding: 1rem 1.15rem !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .page-header-card h1,
+  .container-fluid > .d-flex.justify-content-between.align-items-center:first-child h1,
+  .container-fluid > .d-flex.justify-content-between:first-child h1 {
+    font-size: 1.15rem !important;
+  }
+
+  .page-header-card > div:last-child,
+  .container-fluid > .d-flex.justify-content-between.align-items-center:first-child > div:last-child,
+  .container-fluid > .d-flex.justify-content-between:first-child > div:last-child {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+    gap: 0.5rem !important;
+    justify-content: flex-start !important;
+  }
+
+  .page-header-card > div:last-child .btn,
+  .container-fluid > .d-flex.justify-content-between.align-items-center:first-child > div:last-child .btn,
+  .container-fluid > .d-flex.justify-content-between:first-child > div:last-child .btn {
+    flex: 1 1 auto !important;
+    min-width: max-content !important;
+    text-align: center !important;
+    justify-content: center !important;
+  }
+}
+
+/* 4. Card Header Filter Bars & Inline Search Box Fixes */
+@media (max-width: 767.98px) {
+  .card-header form,
+  .card-header .d-flex.flex-wrap {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.65rem !important;
+  }
+
+  .card-header .d-flex.flex-wrap > div,
+  .card-header form .d-flex.flex-wrap > div {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .card-header select,
+  .card-header select[style*="min-width"],
+  .card-header .form-select {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .card-header .search-box,
+  .card-header .search-box.ms-auto,
+  .search-box[style*="width"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+  }
+}
+
+/* 5. Standardized KPI Metric Cards */
+.kpi-card-value,
+.row.g-3 > [class*="col-"] > .card h4,
+.row.g-3 > [class*="col-"] > .card h3 {
+  font-size: clamp(1.15rem, 2.5vw, 1.45rem) !important;
+  line-height: 1.25 !important;
+}
+
+@media (max-width: 575.98px) {
+  .kpi-metric-card,
+  .row.g-3 > [class*="col-"] > .card {
+    padding: 0.85rem 1rem !important;
+    min-height: 100px !important;
+  }
+
+  .row.g-3 > [class*="col-"] > .card .text-muted.small,
+  .kpi-card-title {
+    font-size: 0.72rem !important;
+  }
+}
+
+/* 6. Financial Data Tables & Touch Scrolling */
+.table-responsive {
+  -webkit-overflow-scrolling: touch !important;
+  overflow-x: auto !important;
+  position: relative !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  border-radius: inherit !important;
+}
+
+.table-responsive table {
+  margin-bottom: 0 !important;
+}
+
+@media (max-width: 767.98px) {
+  .table td, .table th {
+    padding: 0.6rem 0.75rem !important;
+    font-size: 0.8rem !important;
+  }
+
+  .table th {
+    font-size: 0.72rem !important;
+  }
+
+  .action-cell .btn {
+    padding: 0.28rem 0.6rem !important;
+    font-size: 0.725rem !important;
+  }
+}
+
+/* 7. Modal Responsiveness */
+@media (max-width: 767.98px) {
+  .modal-dialog {
+    margin: 0.5rem auto !important;
+    max-width: calc(100% - 1rem) !important;
+  }
+
+  .modal-dialog.modal-dialog-centered {
+    min-height: calc(100% - 1rem) !important;
+  }
+
+  .modal-content {
+    border-radius: 12px !important;
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: 1rem 1.15rem !important;
+  }
+
+  .modal-footer {
+    flex-direction: column-reverse !important;
+    align-items: stretch !important;
+    gap: 0.5rem !important;
+  }
+
+  .modal-footer > .btn,
+  .modal-footer > form {
+    width: 100% !important;
+    margin: 0 !important;
+  }
+}
+
+/* 8. Dark Mode Consistency for Mobile Elements */
+html[data-theme="dark"] .navbar-custom {
+  background: rgba(30, 41, 59, 0.95) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+html[data-theme="dark"] .app-identity-title {
+  color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .app-identity-subtitle {
+  color: #94a3b8 !important;
 }
 
 

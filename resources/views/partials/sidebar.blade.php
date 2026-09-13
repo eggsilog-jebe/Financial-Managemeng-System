@@ -21,6 +21,9 @@
           <span class="brand-suite">Transaction Core</span>
         </span>
       </a>
+      <button type="button" class="sidebar-close-btn d-lg-none" aria-label="Close navigation drawer" data-sidebar-close>
+        <i class="ph ph-x" aria-hidden="true"></i>
+      </button>
     </header>
 
     <nav class="sidebar-nav" aria-label="FMS systems">

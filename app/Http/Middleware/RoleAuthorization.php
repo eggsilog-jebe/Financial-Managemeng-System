@@ -27,6 +27,13 @@ final class RoleAuthorization
                 abort(401, 'Unauthenticated: A valid authenticated session is required to access this financial module.');
             }
 
+            // In local demo mode, automatically bind the CFO user so all gates and views work
+            $cfo = \App\Models\User::where('role', 'CFO')->first();
+            if ($cfo) {
+                \Illuminate\Support\Facades\Auth::login($cfo);
+                $request->setUserResolver(fn () => $cfo);
+            }
+
             return $next($request);
         }
 

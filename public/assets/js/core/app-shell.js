@@ -95,19 +95,21 @@
       if (!submenu) return;
 
       if (expand) {
+        submenu.removeAttribute("hidden");
         submenu.hidden = false;
-        submenu.style.overflow = "hidden";
+        submenu.style.display = "block";
         toggle.setAttribute("aria-expanded", "true");
         toggle.closest(".nav-accordion")?.classList.add("is-expanded");
 
         const targetHeight = submenu.scrollHeight;
 
-        if (typeof submenu.animate === "function") {
+        if (typeof submenu.animate === "function" && targetHeight > 0) {
+          submenu.style.overflow = "hidden";
           const openAnim = submenu.animate([
             { maxHeight: "0px", opacity: 0, transform: "translateY(-4px)" },
             { maxHeight: `${targetHeight}px`, opacity: 1, transform: "translateY(0)" }
           ], {
-            duration: 260,
+            duration: 220,
             easing: "cubic-bezier(0.25, 1, 0.5, 1)",
             fill: "forwards"
           });
@@ -119,8 +121,8 @@
               { opacity: 0, transform: "translateX(-8px)" },
               { opacity: 1, transform: "translateX(0)" }
             ], {
-              duration: 220,
-              delay: Math.min(index * 25, 120),
+              duration: 200,
+              delay: Math.min(index * 20, 100),
               easing: "cubic-bezier(0.25, 1, 0.5, 1)",
               fill: "both"
             });
@@ -132,37 +134,50 @@
             submenu.style.removeProperty("overflow");
             submenu.style.removeProperty("opacity");
             submenu.style.removeProperty("transform");
-          }).catch(() => {});
+            submenu.style.display = "block";
+          }).catch(() => {
+            submenu.style.display = "block";
+          });
+        } else {
+          submenu.style.removeProperty("max-height");
+          submenu.style.removeProperty("overflow");
+          submenu.style.display = "block";
         }
       } else {
         toggle.setAttribute("aria-expanded", "false");
         toggle.closest(".nav-accordion")?.classList.remove("is-expanded");
 
         const currentHeight = submenu.scrollHeight;
-        submenu.style.overflow = "hidden";
 
-        if (typeof submenu.animate === "function") {
+        if (typeof submenu.animate === "function" && currentHeight > 0) {
+          submenu.style.overflow = "hidden";
           const closeAnim = submenu.animate([
             { maxHeight: `${currentHeight}px`, opacity: 1, transform: "translateY(0)" },
             { maxHeight: "0px", opacity: 0, transform: "translateY(-4px)" }
           ], {
-            duration: 200,
+            duration: 180,
             easing: "cubic-bezier(0.4, 0, 1, 1)",
             fill: "forwards"
           });
 
           closeAnim.finished.then(() => {
             closeAnim.cancel();
+            submenu.setAttribute("hidden", "");
             submenu.hidden = true;
+            submenu.style.display = "none";
             submenu.style.removeProperty("max-height");
             submenu.style.removeProperty("overflow");
             submenu.style.removeProperty("opacity");
             submenu.style.removeProperty("transform");
           }).catch(() => {
+            submenu.setAttribute("hidden", "");
             submenu.hidden = true;
+            submenu.style.display = "none";
           });
         } else {
+          submenu.setAttribute("hidden", "");
           submenu.hidden = true;
+          submenu.style.display = "none";
         }
       }
     };
@@ -197,13 +212,28 @@
 
     accordionToggles.forEach((toggle) => {
       toggle.addEventListener("click", (event) => {
-        const wasExpanded = toggle.getAttribute("aria-expanded") === "true";
-        if (body.classList.contains("sidebar-collapsed") && window.innerWidth > 991) {
-          body.classList.remove("sidebar-collapsed");
-          sidebarToggle?.setAttribute("aria-expanded", "true");
-          sidebarToggle?.setAttribute("aria-label", "Collapse sidebar");
-          hideNavTooltip();
+        const isChevronClick = Boolean(event.target.closest(".nav-chevron"));
+        const isCollapsed = body.classList.contains("sidebar-collapsed") || sidebar?.classList.contains("is-collapsed");
+
+        // If sidebar is collapsed in icon-only mode on desktop, navigate directly to module homepage
+        if (isCollapsed && window.innerWidth > 991) {
+          if (toggle.dataset.href) {
+            window.location.href = toggle.dataset.href;
+            return;
+          }
+          animateDesktopSidebar(false);
+          return;
         }
+
+        const wasExpanded = toggle.getAttribute("aria-expanded") === "true";
+
+        // If already expanded and user clicked the label/icon (not the chevron arrow), navigate to the module main page
+        if (wasExpanded && !isChevronClick && toggle.dataset.href) {
+          window.location.href = toggle.dataset.href;
+          return;
+        }
+
+        // Toggle accordion expansion
         closeOtherAccordions(toggle);
         setAccordion(toggle, !wasExpanded);
       });
@@ -400,6 +430,7 @@
     const openMobileDrawer = () => {
       if (isSidebarAnimating) return;
       isSidebarAnimating = true;
+      body.classList.remove("sidebar-collapsed");
       body.classList.add("sidebar-open");
       sidebar?.classList.add("is-open");
       sidebar?.classList.remove("is-collapsed");
@@ -467,6 +498,51 @@
     });
 
     backdrop?.addEventListener("click", closeMobileNav);
+
+    // Dedicated mobile drawer close button (X in sidebar header)
+    document.querySelectorAll("[data-sidebar-close]").forEach((btn) => {
+      btn.addEventListener("click", closeMobileNav);
+    });
+
+    // Close mobile drawer on Escape key press
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && body.classList.contains("sidebar-open")) {
+        closeMobileNav();
+      }
+    });
+
+    // Auto-close mobile drawer when tapping a page navigation link
+    sidebarNav?.addEventListener("click", (event) => {
+      const link = event.target.closest("a[href]");
+      if (link && !link.classList.contains("nav-accordion__toggle") && usesDrawer()) {
+        closeMobileNav();
+      }
+    });
+
+    // Handle seamless transition when viewport is resized between mobile and desktop
+    let resizeTimer = null;
+    window.addEventListener("resize", () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (!usesDrawer()) {
+          if (body.classList.contains("sidebar-open")) {
+            body.classList.remove("sidebar-open");
+            sidebar?.classList.remove("is-open");
+          }
+          const isSavedCollapsed = localStorage.getItem("fms_sidebar_collapsed") === "true";
+          if (isSavedCollapsed) {
+            body.classList.add("sidebar-collapsed");
+            sidebar?.classList.add("is-collapsed");
+            sidebar?.setAttribute("data-collapsed", "true");
+          } else {
+            body.classList.remove("sidebar-collapsed");
+            sidebar?.classList.remove("is-collapsed");
+            sidebar?.removeAttribute("data-collapsed");
+          }
+        }
+        syncSidebarToggle();
+      }, 100);
+    }, { passive: true });
     
     // Sidebar Scroll Position Persistence & Auto-Scroll Active Link into View
     if (sidebarNav) {
@@ -498,18 +574,6 @@
       });
     }
 
-    // Responsive resize handler with debounced class synchronization
-    let resizeTimer;
-    window.addEventListener("resize", () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => {
-        if (!usesDrawer()) {
-          body.classList.remove("sidebar-open");
-        }
-        syncSidebarToggle();
-        hideNavTooltip();
-      }, 100);
-    });
     syncSidebarToggle();
 
     const getProfileMenuItems = () => [...(profileMenu?.querySelectorAll('[role="menuitem"], [role="menuitemradio"]') || [])];

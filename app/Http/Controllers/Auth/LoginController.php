@@ -5,15 +5,18 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 
 final class LoginController extends Controller
 {
     /**
-     * Show the Login Screen with instant demo quick-login buttons.
+     * Show the Login Screen.
      */
     public function showLoginForm(): View
     {
@@ -25,16 +28,57 @@ final class LoginController extends Controller
      */
     public function login(Request $request): RedirectResponse
     {
+        // 1. Normalize email input (trim whitespace and convert to lowercase)
+        $rawEmail = (string) $request->input('email', '');
+        $normalizedEmail = Str::lower(trim($rawEmail));
+        $request->merge(['email' => $normalizedEmail]);
+
+        // 2. Strict Input Validation (caps string lengths to prevent hashing DoS)
         $credentials = $request->validate([
-            'email'    => ['required', 'email'],
-            'password' => ['required', 'string'],
+            'email'    => ['required', 'string', 'email', 'max:255'],
+            'password' => ['required', 'string', 'max:128'],
         ]);
 
-        if (Auth::attempt($credentials, $request->boolean('remember', true))) {
+        // 3. Composite Rate Limiting (Account + IP Key)
+        $throttleKey = Str::transliterate($normalizedEmail . '|' . $request->ip());
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+
+            ActivityLog::logAuth(
+                event: 'rate_limited',
+                user: null,
+                description: "Brute-force protection: Rate limit exceeded for [{$normalizedEmail}] from IP [{$request->ip()}]. Locked for {$seconds} seconds.",
+                ip: $request->ip(),
+                userAgent: $request->userAgent()
+            );
+
+            return back()->withErrors([
+                'email' => "Too many authentication attempts. Please try again in {$seconds} seconds.",
+            ])->onlyInput('email');
+        }
+
+        // 4. Authentication Attempt (Strict hospital shared workstation safety: zero persistent cookies)
+        if (Auth::attempt($credentials, false)) {
+            RateLimiter::clear($throttleKey);
+
             $request->session()->regenerate();
             $request->session()->save();
 
             $user = Auth::user();
+
+            ActivityLog::logAuth(
+                event: 'login',
+                user: $user,
+                description: "User [{$user->name}] ({$user->role}) logged in successfully.",
+                ip: $request->ip(),
+                userAgent: $request->userAgent()
+            );
+
+            $user->update([
+                'last_login_at' => now(),
+                'last_login_ip' => $request->ip(),
+            ]);
 
             // Redirect appropriately based on user role
             return match ($user->role ?? 'StaffAccountant') {
@@ -43,23 +87,16 @@ final class LoginController extends Controller
             };
         }
 
-        // Fallback for demo users if standard password attempted
-        if (in_array($credentials['password'], ['password', 'password123'], true)) {
-            $user = \App\Models\User::where('email', $credentials['email'])
-                ->orWhere('email', str_replace('.test', '.local', $credentials['email']))
-                ->first();
+        // 5. Failed Attempt Handling
+        RateLimiter::hit($throttleKey, 60);
 
-            if ($user) {
-                Auth::login($user, $request->boolean('remember', true));
-                $request->session()->regenerate();
-                $request->session()->save();
-
-                return match ($user->role ?? 'StaffAccountant') {
-                    'Cashier' => redirect()->intended(route('collection.cashier-desk')),
-                    default   => redirect()->intended(route('accounting.dashboard')),
-                };
-            }
-        }
+        ActivityLog::logAuth(
+            event: 'failed_login',
+            user: null,
+            description: "Failed login attempt for email [{$credentials['email']}].",
+            ip: $request->ip(),
+            userAgent: $request->userAgent()
+        );
 
         return back()->withErrors([
             'email' => 'The provided credentials do not match our registered hospital records.',
@@ -67,97 +104,22 @@ final class LoginController extends Controller
     }
 
     /**
-     * Quick Demo Switcher - instant login without typing passwords.
-     */
-    public function quickLogin(string $role): RedirectResponse
-    {
-        $roleKey = strtolower($role);
-        $roleMap = [
-            'cfo' => [
-                'email' => 'cfo@hospital.test',
-                'name'  => 'Dr. Roberto Garcia, CPA (Chief Financial Officer)',
-                'role'  => 'CFO',
-            ],
-            'manager' => [
-                'email' => 'manager@hospital.test',
-                'name'  => 'Patricia Villanueva, CPA (Finance Manager)',
-                'role'  => 'FinanceManager',
-            ],
-            'financemanager' => [
-                'email' => 'manager@hospital.test',
-                'name'  => 'Patricia Villanueva, CPA (Finance Manager)',
-                'role'  => 'FinanceManager',
-            ],
-            'accountant' => [
-                'email' => 'accountant@hospital.test',
-                'name'  => 'Eduardo Mendoza, CPA (Staff Accountant)',
-                'role'  => 'StaffAccountant',
-            ],
-            'staffaccountant' => [
-                'email' => 'accountant@hospital.test',
-                'name'  => 'Eduardo Mendoza, CPA (Staff Accountant)',
-                'role'  => 'StaffAccountant',
-            ],
-            'billing' => [
-                'email' => 'billing@hospital.test',
-                'name'  => 'Clara Reyes (Billing Clerk)',
-                'role'  => 'BillingClerk',
-            ],
-            'billingclerk' => [
-                'email' => 'billing@hospital.test',
-                'name'  => 'Clara Reyes (Billing Clerk)',
-                'role'  => 'BillingClerk',
-            ],
-            'cashier' => [
-                'email' => 'cashier@hospital.test',
-                'name'  => 'Maria Santos (Cashier Officer)',
-                'role'  => 'Cashier',
-            ],
-            'auditor' => [
-                'email' => 'auditor@hospital.test',
-                'name'  => 'Atty. Cristina Gomez, CPA (Internal Auditor)',
-                'role'  => 'Auditor',
-            ],
-        ];
-
-        $target = $roleMap[$roleKey] ?? $roleMap['cfo'];
-        $email = $target['email'];
-
-        $user = \App\Models\User::where('email', $email)
-            ->orWhere('email', str_replace('.test', '.local', $email))
-            ->first();
-
-        // Auto-provision demo account if missing to guarantee 1-click access
-        if (! $user) {
-            $user = \App\Models\User::firstOrCreate(
-                ['email' => $email],
-                [
-                    'name'     => $target['name'],
-                    'role'     => $target['role'],
-                    'password' => \Illuminate\Support\Facades\Hash::make('password'),
-                ]
-            );
-        }
-
-        if ($user) {
-            Auth::login($user, true);
-            request()->session()->regenerate();
-            request()->session()->save();
-
-            return match ($user->role) {
-                'Cashier' => redirect()->route('collection.cashier-desk'),
-                default   => redirect()->route('accounting.dashboard'),
-            };
-        }
-
-        return redirect()->route('login');
-    }
-
-    /**
      * Log the user out of the application.
      */
     public function logout(Request $request): RedirectResponse
     {
+        $user = Auth::user();
+
+        if ($user) {
+            ActivityLog::logAuth(
+                event: 'logout',
+                user: $user,
+                description: "User [{$user->name}] ({$user->role}) logged out.",
+                ip: $request->ip(),
+                userAgent: $request->userAgent()
+            );
+        }
+
         Auth::logout();
 
         $request->session()->invalidate();

@@ -22,6 +22,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/v1/ingest/*',
         ]);
 
+        $middleware->append(\App\Http\Middleware\SecurityHeadersMiddleware::class);
+
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleAuthorization::class,
         ]);

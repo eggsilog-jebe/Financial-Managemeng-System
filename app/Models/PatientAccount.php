@@ -21,6 +21,10 @@ final class PatientAccount extends Model
         'date_of_birth',
         'gender',
         'admission_type',
+        'patient_type',
+        'is_nbb',
+        'philhealth_member_type',
+        'philhealth_id_number',
         'discount_category',
         'id_card_number',
         'hmo_provider',
@@ -38,6 +42,7 @@ final class PatientAccount extends Model
         return [
             'total_billed'    => 'decimal:4',
             'current_balance' => 'decimal:4',
+            'is_nbb'          => 'boolean',
         ];
     }
 
@@ -124,6 +129,11 @@ final class PatientAccount extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function guaranteeLetters(): HasMany
+    {
+        return $this->hasMany(GuaranteeLetter::class);
     }
 
     /** @param Builder<PatientAccount> $query */

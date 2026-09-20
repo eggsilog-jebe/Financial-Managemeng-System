@@ -77,5 +77,28 @@ class AppServiceProvider extends ServiceProvider
         \Illuminate\Support\Facades\Gate::define('reverse-journal-entries', function ($user): bool {
             return in_array($user->role, ['FinanceManager', 'CFO', 'FinanceDirector'], true);
         });
+
+        // Register Audit Trail Observers for financial entities
+        $observedModels = [
+            \App\Models\JournalEntry::class,
+            \App\Models\JournalEntryLine::class,
+            \App\Models\PatientAccount::class,
+            \App\Models\Invoice::class,
+            \App\Models\PurchaseBill::class,
+            \App\Models\Vendor::class,
+            \App\Models\DisbursementVoucher::class,
+            \App\Models\CheckRegister::class,
+            \App\Models\OfficialReceipt::class,
+            \App\Models\CashierShift::class,
+            \App\Models\BudgetAllocation::class,
+            \App\Models\BankAccount::class,
+            \App\Models\BankReconciliation::class,
+            \App\Models\GuaranteeLetter::class,
+            \App\Models\User::class,
+        ];
+
+        foreach ($observedModels as $modelClass) {
+            $modelClass::observe(\App\Observers\ActivityLogObserver::class);
+        }
     }
 }

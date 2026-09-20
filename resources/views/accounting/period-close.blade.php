@@ -101,19 +101,19 @@
               <tr>
                 <td><span class="badge bg-light text-dark font-monospace border">FY-2026-07</span></td>
                 <td>Jul 31, 2026</td>
-                <td>Dr. Roberto Garcia, CPA (CFO)</td>
+                <td>Chief Financial Officer (CFO)</td>
                 <td><span class="badge bg-danger-subtle text-danger"><i class="ph ph-lock me-1"></i> LOCKED</span></td>
               </tr>
               <tr>
                 <td><span class="badge bg-light text-dark font-monospace border">FY-2026-06</span></td>
                 <td>Jun 30, 2026</td>
-                <td>Dr. Roberto Garcia, CPA (CFO)</td>
+                <td>Chief Financial Officer (CFO)</td>
                 <td><span class="badge bg-danger-subtle text-danger"><i class="ph ph-lock me-1"></i> LOCKED</span></td>
               </tr>
               <tr>
                 <td><span class="badge bg-light text-dark font-monospace border">FY-2026-05</span></td>
                 <td>May 31, 2026</td>
-                <td>Dr. Roberto Garcia, CPA (CFO)</td>
+                <td>Chief Financial Officer (CFO)</td>
                 <td><span class="badge bg-danger-subtle text-danger"><i class="ph ph-lock me-1"></i> LOCKED</span></td>
               </tr>
             </tbody>

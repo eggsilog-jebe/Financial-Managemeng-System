@@ -21,6 +21,7 @@ use App\Http\Controllers\Accounting\FinancialDashboardController;
 use App\Http\Controllers\Accounting\GeneralLedgerBrowserController;
 use App\Http\Controllers\Accounting\FinancialReportsViewController;
 use App\Http\Controllers\Accounting\PeriodClosingViewController;
+use App\Http\Controllers\Accounting\AuditLogController;
 use App\Http\Controllers\Accounting\Export\ExportAndPrintController;
 use App\Http\Controllers\AccountsPayable\VendorController;
 use App\Http\Controllers\AccountsPayable\VendorInvoiceController;
@@ -32,6 +33,7 @@ use App\Http\Controllers\AccountsReceivable\PatientInvoiceController;
 use App\Http\Controllers\AccountsReceivable\ReceivableAgingController;
 use App\Http\Controllers\AccountsReceivable\CreditNoteController;
 use App\Http\Controllers\AccountsReceivable\CustomerStatementController;
+use App\Http\Controllers\AccountsReceivable\MalasakitAssistanceController;
 use App\Http\Controllers\Disbursement\PaymentRequestController;
 use App\Http\Controllers\Disbursement\CheckRegisterController;
 use App\Http\Controllers\Disbursement\EftTransferController;
@@ -62,8 +64,9 @@ Route::post('/api/v1/ingest/encounter-billing', \App\Http\Controllers\Api\V1\Ing
 // ─── Public: Authentication Routes (no auth required) ────────────────────────
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [LoginController::class, 'login'])->name('login.post');
-    Route::get('/login/quick/{role}', [LoginController::class, 'quickLogin'])->name('login.quick');
+    Route::post('/login', [LoginController::class, 'login'])
+        ->middleware('throttle:60,1')
+        ->name('login.post');
 });
 
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
@@ -217,6 +220,15 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/customer-statements', [CustomerStatementController::class, 'index'])->name('statements');
             Route::get('/customer-statements/print', [CustomerStatementController::class, 'print'])->name('statements.print');
             Route::get('/customer-statements/export', [CustomerStatementController::class, 'export'])->name('statements.export');
+        });
+
+        // Malasakit Center & Government Assistance (RA 11463)
+        Route::middleware(['role:StaffAccountant,BillingClerk,FinanceManager,CFO,FinanceDirector,Auditor'])->group(function () {
+            Route::get('/malasakit-assistance', [MalasakitAssistanceController::class, 'index'])->name('malasakit.index');
+            Route::post('/malasakit-assistance/calculate', [MalasakitAssistanceController::class, 'calculate'])->name('malasakit.calculate');
+        });
+        Route::middleware(['role:StaffAccountant,BillingClerk,FinanceManager,CFO,FinanceDirector'])->group(function () {
+            Route::post('/malasakit-assistance', [MalasakitAssistanceController::class, 'store'])->name('malasakit.store');
         });
     });
 
@@ -479,6 +491,11 @@ Route::middleware(['auth'])->group(function () {
         Route::middleware(['role:CFO,FinanceDirector'])->group(function () {
             Route::get('/period-close', [PeriodClosingViewController::class, 'index'])->name('period-close.index');
             Route::post('/period-close/lock', [PeriodClosingViewController::class, 'lock'])->name('period-close.lock');
+        });
+
+        // System Audit Trail & Compliance (CFO and Auditor only)
+        Route::middleware(['role:CFO,FinanceDirector,Auditor'])->group(function () {
+            Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit-log');
         });
     });
 

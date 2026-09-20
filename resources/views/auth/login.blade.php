@@ -13,21 +13,149 @@
   <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
   <link rel="stylesheet" href="{{ asset('assets/css/components/typography-accessibility.css') }}">
   <style>
-    .quick-role-btn {
+    /* Enterprise Polish & Ergonomic Input Styles */
+    .hospital-header-seal {
       display: flex;
-      flex-direction: column;
-      text-align: left;
-      padding: 10px 12px;
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-md);
-      background: var(--color-surface-muted);
-      text-decoration: none;
-      transition: all var(--transition);
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 14px;
+      margin-bottom: 18px;
+      border-bottom: 1px solid #f1f5f9;
     }
-    .quick-role-btn:hover {
-      background: var(--color-primary-soft);
-      border-color: var(--color-primary);
-      transform: translateY(-2px);
+    .hospital-seal-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      flex-shrink: 0;
+      box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2);
+    }
+    .hospital-seal-text h4 {
+      margin: 0;
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.01em;
+    }
+    .hospital-seal-text p {
+      margin: 0;
+      font-size: 0.69rem;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .input-icon-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 100%;
+    }
+    .input-icon-wrapper .input-leading-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+      font-size: 1.15rem;
+      pointer-events: none;
+      z-index: 2;
+      transition: color 0.15s ease-in-out;
+      line-height: 1;
+    }
+    .input-icon-wrapper input {
+      padding-left: 42px !important;
+      padding-right: 14px;
+      width: 100%;
+    }
+    .input-icon-wrapper.password-field input {
+      padding-right: 48px !important;
+    }
+    .input-icon-wrapper input:focus ~ .input-leading-icon,
+    .input-icon-wrapper:focus-within .input-leading-icon {
+      color: #059669;
+    }
+    /* Password Sub-Row (Directly Below Password Field) */
+    .password-sub-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      min-height: 22px;
+      margin-top: 6px;
+    }
+    .password-sub-row .forgot-password-link {
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1.4;
+      color: #059669;
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    .password-sub-row .forgot-password-link:hover {
+      color: #047857;
+      text-decoration: underline;
+    }
+    .caps-lock-badge {
+      display: none;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.74rem;
+      color: #b45309;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 6px;
+      padding: 4px 10px;
+      margin-top: 6px;
+      font-weight: 500;
+      animation: fadeIn 0.15s ease-in-out;
+    }
+    .legal-notice-box {
+      margin-top: 18px;
+      padding: 9px 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-left: 3px solid #059669;
+      border-radius: 6px;
+      font-size: 0.70rem;
+      color: #475569;
+      line-height: 1.45;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+    .legal-notice-box i {
+      font-size: 1rem;
+      color: #059669;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .support-trigger-btn {
+      background: none;
+      border: none;
+      padding: 0;
+      color: inherit;
+      text-align: left;
+      font: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+    }
+    .support-trigger-btn:hover span.support-link {
+      text-decoration: underline;
+      color: #059669;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-2px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
@@ -58,10 +186,22 @@
     <!-- Sign In Panel -->
     <section class="login-panel" aria-labelledby="login-title">
       <div class="login-card">
+        
+        <!-- Official Hospital / DOH System Seal -->
+        <div class="hospital-header-seal">
+          <div class="hospital-seal-icon" aria-hidden="true">
+            <i class="ph-fill ph-hospital"></i>
+          </div>
+          <div class="hospital-seal-text">
+            <h4>Republic of the Philippines</h4>
+            <p>Department of Health • Public Hospital Network</p>
+          </div>
+        </div>
+
         <header class="login-card-header">
           <p class="page-kicker">Welcome back</p>
           <h2 id="login-title">Sign in to HIMS</h2>
-          <p class="login-help">Use your hospital access credentials or select a quick demo profile below.</p>
+          <p class="login-help">Use your authorized hospital domain credentials to access the financial portal.</p>
         </header>
 
         @if($errors->any())
@@ -75,67 +215,50 @@
           @csrf
           <div class="form-field">
             <label for="login-email">Email address</label>
-            <input id="login-email" name="email" type="email" autocomplete="email" placeholder="name@hospital.org" value="{{ old('email', 'cfo@hospital.local') }}" required autofocus>
+            <div class="input-icon-wrapper">
+              <input id="login-email" name="email" type="email" autocomplete="email" placeholder="name@hospital.gov.ph" value="{{ old('email') }}" maxlength="255" required autofocus>
+              <i class="ph ph-envelope-simple input-leading-icon" aria-hidden="true"></i>
+            </div>
           </div>
 
           <div class="form-field">
             <label for="login-password">Password</label>
-            <div class="password-field">
-              <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" value="password" required aria-describedby="password-note">
+            <div class="input-icon-wrapper password-field">
+              <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" maxlength="128" required>
+              <i class="ph ph-lock-key input-leading-icon" aria-hidden="true"></i>
               <button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false">
                 <i class="ph ph-eye" aria-hidden="true"></i>
               </button>
             </div>
-            <small id="password-note">Default demo password is <strong>password</strong></small>
+            <!-- Sub-row below password field: Caps Lock Warning + Forgot Password Link -->
+            <div class="password-sub-row">
+              <div id="caps-lock-warning" class="caps-lock-badge" role="alert" aria-live="polite">
+                <i class="ph-fill ph-warning"></i>
+                <span>Caps Lock is ON</span>
+              </div>
+              <a href="#helpdeskModal" data-bs-toggle="modal" class="forgot-password-link">Forgot password?</a>
+            </div>
           </div>
 
-          <label class="remember-field">
-            <input id="remember-email" name="remember" type="checkbox" checked>
-            <span>Remember session on this device</span>
-          </label>
-
-          <button class="btn-primary login-submit" type="submit">
+          <button class="btn-primary login-submit mt-3" type="submit">
             <i class="ph ph-sign-in" aria-hidden="true"></i>
             Sign in
           </button>
         </form>
 
-        <!-- 1-Click Instant Demo Logins -->
-        <div class="mt-4 pt-3 border-top">
-          <p class="text-uppercase fw-semibold text-muted mb-2" style="font-size: 11px; letter-spacing: 0.05em;">
-            <i class="ph-fill ph-lightning text-warning me-1"></i> Instant 1-Click Demo Login:
-          </p>
-          <div class="row g-2">
-            <div class="col-6">
-              <a href="{{ route('login.quick', 'cfo') }}" class="quick-role-btn">
-                <strong class="text-dark" style="font-size: 12px;"><i class="ph-bold ph-shield-check text-primary me-1"></i>CFO Executive</strong>
-                <span class="text-muted" style="font-size: 10px;">Full access &amp; locks</span>
-              </a>
-            </div>
-            <div class="col-6">
-              <a href="{{ route('login.quick', 'accountant') }}" class="quick-role-btn">
-                <strong class="text-dark" style="font-size: 12px;"><i class="ph-bold ph-book-open text-success me-1"></i>Staff Accountant</strong>
-                <span class="text-muted" style="font-size: 10px;">GL, AP/AR, Reports</span>
-              </a>
-            </div>
-            <div class="col-6">
-              <a href="{{ route('login.quick', 'cashier') }}" class="quick-role-btn">
-                <strong class="text-dark" style="font-size: 12px;"><i class="ph-bold ph-hand-coins text-warning me-1"></i>Cashier Supervisor</strong>
-                <span class="text-muted" style="font-size: 10px;">POS Desk &amp; Receipts</span>
-              </a>
-            </div>
-            <div class="col-6">
-              <a href="{{ route('login.quick', 'auditor') }}" class="quick-role-btn">
-                <strong class="text-dark" style="font-size: 12px;"><i class="ph-bold ph-file-search text-info me-1"></i>BIR CAS Auditor</strong>
-                <span class="text-muted" style="font-size: 10px;">Read-only Audit Log</span>
-              </a>
-            </div>
-          </div>
+        <div class="login-support" aria-label="Sign-in help">
+          <button type="button" class="support-trigger-btn" data-bs-toggle="modal" data-bs-target="#helpdeskModal">
+            <i class="ph ph-question fs-5 text-muted" aria-hidden="true"></i>
+            <p class="mb-0"><strong>Need access help?</strong> <span class="support-link">Contact your hospital system administrator.</span></p>
+          </button>
         </div>
 
-        <div class="login-support" aria-label="Sign-in help">
-          <i class="ph ph-question" aria-hidden="true"></i>
-          <p><strong>Need access help?</strong><span>Contact your hospital system administrator.</span></p>
+        <!-- RA 10173 / RA 10175 Statutory Compliance Warning -->
+        <div class="legal-notice-box">
+          <i class="ph-fill ph-shield-check" aria-hidden="true"></i>
+          <div>
+            <strong>Legal Warning (RA 10173 & RA 10175):</strong> Unauthorized access, disclosure, or tampering of patient financial or health records is strictly prohibited and subject to criminal prosecution.
+          </div>
         </div>
 
         <footer class="login-card-footer">
@@ -146,20 +269,132 @@
     </section>
   </main>
 
+  <!-- Hospital IT / MIS Helpdesk Directory Modal -->
+  <div class="modal fade" id="helpdeskModal" tabindex="-1" aria-labelledby="helpdeskModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg rounded-4">
+        <div class="modal-header border-bottom border-light-subtle pb-3">
+          <div class="d-flex align-items-center gap-2">
+            <div class="hospital-seal-icon" style="width: 32px; height: 32px; font-size: 1.1rem;">
+              <i class="ph-fill ph-headset"></i>
+            </div>
+            <h5 class="modal-title fs-6 fw-bold text-dark mb-0" id="helpdeskModalLabel">Hospital IT & MIS Support Directory</h5>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4 fs-sm">
+          <p class="text-secondary mb-3">For password resets, account unlocks, or workstation role provisioning, contact the Hospital Management Information System (MIS) office:</p>
+          <div class="list-group list-group-flush rounded-3 border mb-3">
+            <div class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+              <div>
+                <strong class="d-block text-dark">MIS Helpdesk (Hospital LAN)</strong>
+                <small class="text-muted">Direct VOIP Extension</small>
+              </div>
+              <span class="badge px-2 py-1 fs-xs fw-semibold" style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;">Ext. 401 / 402</span>
+            </div>
+            <div class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+              <div>
+                <strong class="d-block text-dark">Emergency Night-Shift Admin</strong>
+                <small class="text-muted">On-Duty Network Supervisor</small>
+              </div>
+              <span class="badge px-2 py-1 fs-xs fw-semibold" style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;">Ext. 405</span>
+            </div>
+            <div class="list-group-item d-flex justify-content-between align-items-center py-2 px-3">
+              <div>
+                <strong class="d-block text-dark">Official IT Support Email</strong>
+                <small class="text-muted">Employee identity verification required</small>
+              </div>
+              <a href="mailto:it-support@hospital.gov.ph" class="text-success text-decoration-none fw-medium">it-support@hospital.gov.ph</a>
+            </div>
+          </div>
+          <div class="alert alert-light border py-2 px-3 rounded-3 mb-0 d-flex gap-2 align-items-center" style="font-size: 0.78rem; background: #f8fafc;">
+            <i class="ph-fill ph-info fs-5 flex-shrink-0 text-primary"></i>
+            <span>Password resets require validation of your hospital employee ID and clinical/administrative department assignment.</span>
+          </div>
+        </div>
+        <div class="modal-footer border-top-0 pt-0">
+          <button type="button" class="btn btn-sm btn-secondary px-3" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Password toggle script
     document.addEventListener('DOMContentLoaded', () => {
       const toggle = document.querySelector('[data-password-toggle]');
       const password = document.getElementById('login-password');
+      const capsWarning = document.getElementById('caps-lock-warning');
+      let maskTimer = null;
+
+      // 1. Password Visibility Toggle with 5-Second Auto-Masking (Anti-Shoulder Surfing)
       if (toggle && password) {
-        toggle.addEventListener('click', () => {
-          const isPass = password.type === 'password';
-          password.type = isPass ? 'text' : 'password';
-          toggle.setAttribute('aria-pressed', String(isPass));
-          toggle.setAttribute('aria-label', isPass ? 'Hide password' : 'Show password');
+        const revertToPassword = () => {
+          password.type = 'password';
+          toggle.setAttribute('aria-pressed', 'false');
+          toggle.setAttribute('aria-label', 'Show password');
           const icon = toggle.querySelector('i');
           if (icon) {
-            icon.className = isPass ? 'ph ph-eye-slash' : 'ph ph-eye';
+            icon.className = 'ph ph-eye';
+          }
+          if (maskTimer) {
+            clearTimeout(maskTimer);
+            maskTimer = null;
+          }
+        };
+
+        toggle.addEventListener('click', () => {
+          const isCurrentlyPassword = password.type === 'password';
+          
+          if (isCurrentlyPassword) {
+            password.type = 'text';
+            toggle.setAttribute('aria-pressed', 'true');
+            toggle.setAttribute('aria-label', 'Hide password');
+            const icon = toggle.querySelector('i');
+            if (icon) {
+              icon.className = 'ph ph-eye-slash';
+            }
+
+            // Auto-revert back to masked dots after 5 seconds
+            if (maskTimer) clearTimeout(maskTimer);
+            maskTimer = setTimeout(revertToPassword, 5000);
+          } else {
+            revertToPassword();
+          }
+        });
+
+        // Revert instantly on blur (if staff tabs out or clicks away)
+        password.addEventListener('blur', () => {
+          if (password.type === 'text') {
+            revertToPassword();
+          }
+          if (capsWarning) {
+            capsWarning.style.display = 'none';
+          }
+        });
+
+        // 2. Caps Lock Detection Warning
+        const checkCapsLock = (e) => {
+          if (e.getModifierState && e.getModifierState('CapsLock')) {
+            capsWarning.style.display = 'flex';
+          } else {
+            capsWarning.style.display = 'none';
+          }
+        };
+
+        password.addEventListener('keydown', checkCapsLock);
+        password.addEventListener('keyup', checkCapsLock);
+      }
+
+      // 3. Prevent double-submission and provide feedback
+      const form = document.getElementById('login-form');
+      const submitBtn = document.querySelector('.login-submit');
+      if (form && submitBtn) {
+        form.addEventListener('submit', () => {
+          if (form.checkValidity()) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Authenticating...';
+            form.submit();
           }
         });
       }

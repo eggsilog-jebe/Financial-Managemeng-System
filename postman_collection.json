@@ -1,0 +1,186 @@
+{
+	"info": {
+		"_postman_id": "b1b68239-15ee-449e-8367-e9a9c687d6e4",
+		"name": "Hospital FMS - Subsystem Ingestion & Simulation",
+		"description": "Postman collection for simulating external hospital subsystem transactions into the Hospital Financial Management System (FMS).\n\nSubsystems Simulated:\n1. Clinical / BDMS / SPRS: Patient Encounters & Billing Ingestion\n2. Supply Chain / PSM / SWS: Vendor Purchase Invoices (3-Way Match)\n3. HRMS: Hospital Staff Payroll Register & Statutory Deductions",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://127.0.0.1:8000",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "1. Clinical Encounter Simulation (BDMS / SPRS)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "X-Idempotency-Key",
+						"value": "SIM-ENC-{{$timestamp}}",
+						"description": "Unique transaction key preventing duplicate ledger postings"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"patient_name\": \"Don Emilio Aguinaldo\",\n  \"date_of_birth\": \"1955-03-22\",\n  \"gender\": \"Male\",\n  \"admission_type\": \"INPATIENT\",\n  \"discount_category\": \"SENIOR_CITIZEN\",\n  \"id_card_number\": \"OSCA-NCR-2026-001\",\n  \"hmo_provider\": \"Maxicare Healthcare\",\n  \"phone\": \"+63 917 555 1234\",\n  \"email\": \"emilio.aguinaldo@hospital.test\",\n  \"address\": \"Kawit, Cavite, Philippines\",\n  \"philhealth_amount\": 15000.00,\n  \"hmo_limit\": 25000.00,\n  \"items\": [\n    {\n      \"department\": \"ROOM_AND_BOARD\",\n      \"description\": \"Inpatient Deluxe Private Suite (3 Days)\",\n      \"quantity\": 3,\n      \"unit_price\": 4500.00\n    },\n    {\n      \"department\": \"PHARMACY\",\n      \"description\": \"IV Therapeutics, Antibiotics & Consumables\",\n      \"quantity\": 1,\n      \"unit_price\": 12500.00\n    },\n    {\n      \"department\": \"LABORATORY\",\n      \"description\": \"Comprehensive Metabolic Panel & Blood Typing\",\n      \"quantity\": 1,\n      \"unit_price\": 3800.00\n    },\n    {\n      \"department\": \"RADIOLOGY\",\n      \"description\": \"Chest X-Ray Digital High-Resolution\",\n      \"quantity\": 1,\n      \"unit_price\": 1800.00\n    }\n  ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/ingest/encounter-billing",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"ingest",
+						"encounter-billing"
+					]
+				},
+				"description": "Simulates an external clinical encounter discharge bill. Automatically provisions a Patient Account (MRN), computes Senior 20% discount (VAT-exempt), partitions PhilHealth case rates and HMO coverage, and posts the journal entry to the General Ledger."
+			}
+		},
+		{
+			"name": "2. Supply Chain Vendor Bill (PSM / SWS)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "X-Idempotency-Key",
+						"value": "SIM-PSM-{{$timestamp}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"vendor_id\": 1,\n  \"po_number\": \"PO-2026-0982\",\n  \"grn_reference\": \"GRN-2026-0511\",\n  \"vendor_invoice_number\": \"INV-MED-8849\",\n  \"bill_date\": \"2026-09-13\",\n  \"due_date\": \"2026-10-13\",\n  \"invoice_amount\": 65000.00,\n  \"ewt_rate\": 0.01,\n  \"atc_code\": \"WI158\",\n  \"items\": [\n    {\n      \"item_code\": \"MED-GLOVES-L\",\n      \"description\": \"Sterile Surgical Gloves (Large - 50 Boxes)\",\n      \"expense_type\": \"GOODS_INVENTORY\",\n      \"quantity\": 50,\n      \"unit_price\": 600.00\n    },\n    {\n      \"item_code\": \"MED-SYRINGE-10ML\",\n      \"description\": \"Disposable Syringes 10ml with Needle (Case)\",\n      \"expense_type\": \"GOODS_INVENTORY\",\n      \"quantity\": 70,\n      \"unit_price\": 500.00\n    }\n  ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/ingest/vendor-bill",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"ingest",
+						"vendor-bill"
+					]
+				},
+				"description": "Ingests a supply chain purchase invoice from PSM/SWS with 3-way match validation (PO, GRN, and Invoice). Applies BIR Withholding Tax (EWT 1% goods / 2% services) and books Accounts Payable with credit terms."
+			}
+		},
+		{
+			"name": "3. HRMS Staff Payroll Register",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "X-Idempotency-Key",
+						"value": "SIM-HRMS-{{$timestamp}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"cutoff_start\": \"2026-09-01\",\n  \"cutoff_end\": \"2026-09-15\",\n  \"payout_date\": \"2026-09-15\",\n  \"disbursement_bank_account_id\": 1,\n  \"total_gross_pay\": 320000.00,\n  \"total_net_pay\": 260000.00,\n  \"total_sss_employee\": 14400.00,\n  \"total_sss_employer\": 30400.00,\n  \"total_philhealth_employee\": 8000.00,\n  \"total_philhealth_employer\": 8000.00,\n  \"total_pagibig_employee\": 3200.00,\n  \"total_pagibig_employer\": 3200.00,\n  \"total_withholding_tax_1601c\": 34400.00,\n  \"employees\": [\n    {\n      \"employee_id_number\": \"EMP-2026-0101\",\n      \"employee_name\": \"Sarah Jenkins, RN (Head Nurse - ICU)\",\n      \"department\": \"ICU_NURSING\",\n      \"basic_salary\": 48000.00\n    },\n    {\n      \"employee_id_number\": \"EMP-2026-0102\",\n      \"employee_name\": \"Mark Anthony Santos, RRT (Chief Radiologic Tech)\",\n      \"department\": \"RADIOLOGY\",\n      \"basic_salary\": 42000.00\n    },\n    {\n      \"employee_id_number\": \"EMP-2026-0103\",\n      \"employee_name\": \"Dr. Gabriel Mendoza, MD (Resident Physician)\",\n      \"department\": \"EMERGENCY\",\n      \"basic_salary\": 85000.00\n    }\n  ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/ingest/payroll-register",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"ingest",
+						"payroll-register"
+					]
+				},
+				"description": "Ingests HRMS semi-monthly payroll register with statutory employee/employer contributions (SSS, PhilHealth, Pag-IBIG) and BIR 1601-C withholding tax, automatically generating disbursement entries and debiting salaries expense."
+			}
+		},
+		{
+			"name": "4. Patient Bill Ingestion (Existing MRN)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					},
+					{
+						"key": "X-Idempotency-Key",
+						"value": "SIM-BDMS-{{$timestamp}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"patient_id\": 1,\n  \"bdms_bill_number\": \"BDMS-2026-9901\",\n  \"invoice_date\": \"2026-09-13\",\n  \"gross_amount\": 18500.00,\n  \"philhealth_amount\": 5000.00,\n  \"hmo_amount\": 4000.00,\n  \"hmo_provider\": \"Intellicare\",\n  \"discount_amount\": 2500.00,\n  \"discount_type\": \"SENIOR_CITIZEN\",\n  \"id_card_number\": \"OSCA-9921\",\n  \"net_copay\": 7000.00,\n  \"charge_lines\": [\n    {\n      \"item_code\": \"LAB-CBC-PLATELET\",\n      \"description\": \"Complete Blood Count with Platelet Count\",\n      \"department\": \"LABORATORY\",\n      \"revenue_category\": \"CLINICAL\",\n      \"quantity\": 1,\n      \"unit_price\": 1200.00,\n      \"is_vatable\": false,\n      \"is_senior_eligible\": true\n    },\n    {\n      \"item_code\": \"RAD-CT-CHEST\",\n      \"description\": \"High-Resolution Chest CT Scan with Contrast\",\n      \"department\": \"RADIOLOGY\",\n      \"revenue_category\": \"CLINICAL\",\n      \"quantity\": 1,\n      \"unit_price\": 11500.00,\n      \"is_vatable\": false,\n      \"is_senior_eligible\": true\n    },\n    {\n      \"item_code\": \"CONSULT-PULMO\",\n      \"description\": \"Pulmonologist Specialist Evaluation\",\n      \"department\": \"CONSULTATION\",\n      \"revenue_category\": \"CLINICAL\",\n      \"quantity\": 1,\n      \"unit_price\": 2800.00,\n      \"is_vatable\": false,\n      \"is_senior_eligible\": true\n    }\n  ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/ingest/patient-bill",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"ingest",
+						"patient-bill"
+					]
+				},
+				"description": "Ingests discharge billing lines for an existing registered Patient Account."
+			}
+		}
+	]
+}

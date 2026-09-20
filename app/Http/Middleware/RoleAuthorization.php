@@ -20,21 +20,12 @@ final class RoleAuthorization
     {
         $user = $request->user();
 
-        // Unauthenticated passthrough is ONLY permitted in local/testing environments (demo mode).
-        // In staging and production, unauthenticated requests must be rejected with 401.
         if (! $user) {
-            if (! app()->environment('local', 'testing')) {
+            if ($request->expectsJson()) {
                 abort(401, 'Unauthenticated: A valid authenticated session is required to access this financial module.');
             }
 
-            // In local demo mode, automatically bind the CFO user so all gates and views work
-            $cfo = \App\Models\User::where('role', 'CFO')->first();
-            if ($cfo) {
-                \Illuminate\Support\Facades\Auth::login($cfo);
-                $request->setUserResolver(fn () => $cfo);
-            }
-
-            return $next($request);
+            return redirect()->guest(route('login'));
         }
 
         $userRole = $user->role ?? 'StaffAccountant';

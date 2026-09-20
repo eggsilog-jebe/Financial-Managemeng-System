@@ -6,73 +6,97 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
-class AuthTest extends TestCase
+final class AuthTest extends TestCase
 {
     use RefreshDatabase;
 
     public function test_login_page_renders_successfully(): void
     {
         $response = $this->get('/login');
+
         $response->assertStatus(200);
-        $response->assertSee('Instant 1-Click Demo Login');
-        $response->assertSee('CFO Executive');
-        $response->assertSee('Staff Accountant');
-        $response->assertSee('Cashier Supervisor');
-        $response->assertSee('BIR CAS Auditor');
+        $response->assertSee('Sign in');
+        $response->assertSee('Email address');
+        $response->assertSee('Password');
+        $response->assertDontSee('Instant 1-Click Demo Login');
+        $response->assertDontSee('value="password"', false);
     }
 
-    public function test_quick_login_cfo_works_and_auto_provisions(): void
+    public function test_quick_login_route_is_removed(): void
     {
         $response = $this->get('/login/quick/cfo');
+
+        $response->assertStatus(404);
+    }
+
+    public function test_standard_login_cfo_succeeds_and_redirects_to_dashboard(): void
+    {
+        User::factory()->create([
+            'email'    => 'cfo@hospital.gov.ph',
+            'role'     => 'CFO',
+            'password' => Hash::make('EnterpriseSecure123!'),
+        ]);
+
+        $response = $this->post('/login', [
+            'email'    => 'cfo@hospital.gov.ph',
+            'password' => 'EnterpriseSecure123!',
+        ]);
 
         $response->assertRedirect(route('accounting.dashboard'));
         $this->assertAuthenticated();
         $this->assertSame('CFO', auth()->user()->role);
     }
 
-    public function test_quick_login_accountant_works(): void
+    public function test_standard_login_cashier_redirects_to_cashier_desk(): void
     {
-        $response = $this->get('/login/quick/accountant');
+        User::factory()->create([
+            'email'    => 'cashier@hospital.gov.ph',
+            'role'     => 'Cashier',
+            'password' => Hash::make('EnterpriseSecure123!'),
+        ]);
 
-        $response->assertRedirect(route('accounting.dashboard'));
-        $this->assertAuthenticated();
-        $this->assertSame('StaffAccountant', auth()->user()->role);
-    }
-
-    public function test_quick_login_cashier_works_and_redirects_to_cashier_desk(): void
-    {
-        $response = $this->get('/login/quick/cashier');
+        $response = $this->post('/login', [
+            'email'    => 'cashier@hospital.gov.ph',
+            'password' => 'EnterpriseSecure123!',
+        ]);
 
         $response->assertRedirect(route('collection.cashier-desk'));
         $this->assertAuthenticated();
         $this->assertSame('Cashier', auth()->user()->role);
     }
 
-    public function test_quick_login_auditor_works(): void
-    {
-        $response = $this->get('/login/quick/auditor');
-
-        $response->assertRedirect(route('accounting.dashboard'));
-        $this->assertAuthenticated();
-        $this->assertSame('Auditor', auth()->user()->role);
-    }
-
-    public function test_standard_login_with_default_password_succeeds(): void
+    public function test_login_with_invalid_credentials_fails(): void
     {
         User::factory()->create([
-            'email' => 'cfo@hospital.test',
+            'email'    => 'cfo@hospital.gov.ph',
+            'password' => Hash::make('CorrectPassword123!'),
+        ]);
+
+        $response = $this->from('/login')->post('/login', [
+            'email'    => 'cfo@hospital.gov.ph',
+            'password' => 'WrongPassword!',
+        ]);
+
+        $response->assertRedirect('/login');
+        $response->assertSessionHasErrors('email');
+        $this->assertGuest();
+    }
+
+    public function test_logout_invalidates_session_and_redirects_to_login(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'cfo@hospital.gov.ph',
             'role'  => 'CFO',
-            'password' => \Illuminate\Support\Facades\Hash::make('password'),
         ]);
 
-        $response = $this->post('/login', [
-            'email'    => 'cfo@hospital.test',
-            'password' => 'password',
-        ]);
+        $this->actingAs($user);
 
-        $response->assertRedirect(route('accounting.dashboard'));
-        $this->assertAuthenticated();
+        $response = $this->post('/logout');
+
+        $response->assertRedirect(route('login'));
+        $this->assertGuest();
     }
 }

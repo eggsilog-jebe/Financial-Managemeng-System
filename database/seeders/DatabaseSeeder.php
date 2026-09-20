@@ -16,6 +16,8 @@ final class DatabaseSeeder extends Seeder
             ChartOfAccountsSeeder::class,
             TaxConfigurationSeeder::class,
             BankAccountSeeder::class,
+            MalasakitGuaranteeLetterSeeder::class,
+            PublicHospitalFinancialDashboardSeeder::class,
         ]);
     }
 }

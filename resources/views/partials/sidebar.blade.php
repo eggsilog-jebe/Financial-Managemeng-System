@@ -1,12 +1,12 @@
 @php
-  $isGl = request()->routeIs('gl.*');
   $isAp = request()->routeIs('ap.*');
   $isAr = request()->routeIs('ar.*');
   $isDisbursement = request()->routeIs('disbursement.*');
   $isCollection = request()->routeIs('collection.*');
   $isBudget = request()->routeIs('budget.*');
-  $isCash = request()->routeIs('cash.*');
+  $isGl = request()->routeIs('gl.*');
   $isReporting = request()->routeIs('reporting.*');
+  $isCash = request()->routeIs('cash.*');
   $isTax = request()->routeIs('tax.*');
 @endphp
 
@@ -79,7 +79,98 @@
 
       <p class="nav-title">Transaction Core Modules</p>
       <ul class="nav-list nav-domain-list">
-        <!-- 1. General Ledger -->
+        <!-- 1. Accounts Payable (AP) -->
+        @can('access-ap-procurement')
+        <li class="nav-accordion{{ $isAp ? ' is-expanded is-active' : '' }}">
+          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('ap.vendors') }}" aria-expanded="{{ $isAp ? 'true' : 'false' }}" aria-controls="nav-ap" aria-label="Accounts Payable" data-nav-tooltip="Accounts Payable">
+            <i class="ph-fill ph-receipt" aria-hidden="true"></i>
+            <span class="nav-label">Accounts Payable (AP)</span>
+            <i class="ph ph-caret-down nav-chevron" aria-hidden="true"></i>
+          </button>
+          <ul class="nav-submenu" id="nav-ap" @if(!$isAp) hidden @endif>
+            <li><a href="{{ route('ap.vendors') }}" class="{{ request()->routeIs('ap.vendors') ? 'active' : '' }}">Vendor Management</a></li>
+            <li><a href="{{ route('ap.purchase-bills') }}" class="{{ request()->routeIs('ap.purchase-bills') ? 'active' : '' }}">Invoice Matching &amp; Verification</a></li>
+            <li><a href="{{ route('ap.invoices') }}" class="{{ request()->routeIs('ap.invoices') ? 'active' : '' }}">Vendor Invoices &amp; Tax</a></li>
+            <li><a href="{{ route('ap.payable-aging') }}" class="{{ request()->routeIs('ap.payable-aging') ? 'active' : '' }}">Payable Aging</a></li>
+            <li><a href="{{ route('ap.ap-approvals') }}" class="{{ request()->routeIs('ap.ap-approvals') ? 'active' : '' }}">AP Payment Approvals</a></li>
+          </ul>
+        </li>
+        @endcan
+
+        <!-- 2. Accounts Receivable (AR) -->
+        @can('access-ar-billing')
+        <li class="nav-accordion{{ $isAr ? ' is-expanded is-active' : '' }}">
+          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('ar.customers') }}" aria-expanded="{{ $isAr ? 'true' : 'false' }}" aria-controls="nav-ar" aria-label="Accounts Receivable" data-nav-tooltip="Accounts Receivable">
+            <i class="ph-fill ph-currency-circle-dollar" aria-hidden="true"></i>
+            <span class="nav-label">Accounts Receivable (AR)</span>
+            <i class="ph ph-caret-down nav-chevron" aria-hidden="true"></i>
+          </button>
+          <ul class="nav-submenu" id="nav-ar" @if(!$isAr) hidden @endif>
+            <li><a href="{{ route('ar.customers') }}" class="{{ request()->routeIs('ar.customers') ? 'active' : '' }}">Patient Accounts</a></li>
+            <li><a href="{{ route('ar.billing') }}" class="{{ request()->routeIs('ar.billing') ? 'active' : '' }}">Invoicing &amp; Billing</a></li>
+            <li><a href="{{ route('ar.malasakit.index') }}" class="{{ request()->routeIs('ar.malasakit.*') ? 'active' : '' }}"><i class="ph-bold ph-heart text-danger me-1"></i>Malasakit &amp; Subsidies</a></li>
+            <li><a href="{{ route('ar.ar-aging') }}" class="{{ request()->routeIs('ar.ar-aging') ? 'active' : '' }}">Receivable Aging</a></li>
+            <li><a href="{{ route('ar.credit-notes') }}" class="{{ request()->routeIs('ar.credit-notes') ? 'active' : '' }}">Credit Notes</a></li>
+            <li><a href="{{ route('ar.statements') }}" class="{{ request()->routeIs('ar.statements') ? 'active' : '' }}">Customer Statements</a></li>
+          </ul>
+        </li>
+        @endcan
+
+        <!-- 3. Disbursement Management -->
+        @can('access-disbursements')
+        <li class="nav-accordion{{ $isDisbursement ? ' is-expanded is-active' : '' }}">
+          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('disbursement.payment-requests') }}" aria-expanded="{{ $isDisbursement ? 'true' : 'false' }}" aria-controls="nav-disbursement" aria-label="Disbursement Management" data-nav-tooltip="Disbursement">
+            <i class="ph-fill ph-arrows-out" aria-hidden="true"></i>
+            <span class="nav-label">Disbursement Management</span>
+            <i class="ph ph-caret-down nav-chevron" aria-hidden="true"></i>
+          </button>
+          <ul class="nav-submenu" id="nav-disbursement" @if(!$isDisbursement) hidden @endif>
+            <li><a href="{{ route('disbursement.payment-requests') }}" class="{{ request()->routeIs('disbursement.payment-requests') ? 'active' : '' }}">Disbursement Vouchers &amp; Requests</a></li>
+            <li><a href="{{ route('disbursement.check-register') }}" class="{{ request()->routeIs('disbursement.check-register') ? 'active' : '' }}">Check Register</a></li>
+            <li><a href="{{ route('disbursement.eft-transfers') }}" class="{{ request()->routeIs('disbursement.eft-transfers') ? 'active' : '' }}">EFT Transfers</a></li>
+            <li><a href="{{ route('disbursement.disbursement-approval') }}" class="{{ request()->routeIs('disbursement.disbursement-approval') ? 'active' : '' }}">Disbursement Approvals</a></li>
+            <li><a href="{{ route('disbursement.petty-cash') }}" class="{{ request()->routeIs('disbursement.petty-cash') ? 'active' : '' }}">Petty Cash</a></li>
+          </ul>
+        </li>
+        @endcan
+
+        <!-- 4. Collection Management -->
+        @can('access-cashier-pos')
+        <li class="nav-accordion{{ $isCollection ? ' is-expanded is-active' : '' }}">
+          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('collection.receipts') }}" aria-expanded="{{ $isCollection ? 'true' : 'false' }}" aria-controls="nav-collection" aria-label="Collection Management" data-nav-tooltip="Collection">
+            <i class="ph-fill ph-vault" aria-hidden="true"></i>
+            <span class="nav-label">Collection Management</span>
+            <i class="ph ph-caret-down nav-chevron" aria-hidden="true"></i>
+          </button>
+          <ul class="nav-submenu" id="nav-collection" @if(!$isCollection) hidden @endif>
+            <li><a href="{{ route('collection.receipts') }}" class="{{ request()->routeIs('collection.receipts') ? 'active' : '' }}">Payment Receipts</a></li>
+            <li><a href="{{ route('collection.cashier-desk') }}" class="{{ request()->routeIs('collection.cashier-desk') ? 'active' : '' }}">Cashier Desk</a></li>
+            <li><a href="{{ route('collection.deposit-slips') }}" class="{{ request()->routeIs('collection.deposit-slips') ? 'active' : '' }}">Deposit Slips</a></li>
+            <li><a href="{{ route('collection.bank-deposits') }}" class="{{ request()->routeIs('collection.bank-deposits') ? 'active' : '' }}">Bank Deposits</a></li>
+            <li><a href="{{ route('collection.payment-gateways') }}" class="{{ request()->routeIs('collection.payment-gateways') ? 'active' : '' }}">Payment Gateway Logs</a></li>
+          </ul>
+        </li>
+        @endcan
+
+        <!-- 5. Budget Management -->
+        @can('access-disbursements')
+        <li class="nav-accordion{{ $isBudget ? ' is-expanded is-active' : '' }}">
+          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('budget.fiscal-planning') }}" aria-expanded="{{ $isBudget ? 'true' : 'false' }}" aria-controls="nav-budget" aria-label="Budget Management" data-nav-tooltip="Budget">
+            <i class="ph-fill ph-calculator" aria-hidden="true"></i>
+            <span class="nav-label">Budget Management</span>
+            <i class="ph ph-caret-down nav-chevron" aria-hidden="true"></i>
+          </button>
+          <ul class="nav-submenu" id="nav-budget" @if(!$isBudget) hidden @endif>
+            <li><a href="{{ route('budget.fiscal-planning') }}" class="{{ request()->routeIs('budget.fiscal-planning') ? 'active' : '' }}">Fiscal Planning</a></li>
+            <li><a href="{{ route('budget.budget-allocation') }}" class="{{ request()->routeIs('budget.budget-allocation') ? 'active' : '' }}">Budget Allocation</a></li>
+            <li><a href="{{ route('budget.departmental-budgets') }}" class="{{ request()->routeIs('budget.departmental-budgets') ? 'active' : '' }}">Departmental Budgets</a></li>
+            <li><a href="{{ route('budget.variance-analysis') }}" class="{{ request()->routeIs('budget.variance-analysis') ? 'active' : '' }}">Variance Analysis</a></li>
+            <li><a href="{{ route('budget.reallocations') }}" class="{{ request()->routeIs('budget.reallocations') ? 'active' : '' }}">Budget Reallocations</a></li>
+          </ul>
+        </li>
+        @endcan
+
+        <!-- 6. General Ledger -->
         @can('access-general-ledger')
         <li class="nav-accordion{{ $isGl ? ' is-expanded is-active' : '' }}">
           <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('gl.chart-of-accounts') }}" aria-expanded="{{ $isGl ? 'true' : 'false' }}" aria-controls="nav-gl" aria-label="General Ledger" data-nav-tooltip="General Ledger">
@@ -99,115 +190,7 @@
         </li>
         @endcan
 
-        <!-- 2. Accounts Payable (AP) -->
-        @can('access-ap-procurement')
-        <li class="nav-accordion{{ $isAp ? ' is-expanded is-active' : '' }}">
-          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('ap.vendors') }}" aria-expanded="{{ $isAp ? 'true' : 'false' }}" aria-controls="nav-ap" aria-label="Accounts Payable" data-nav-tooltip="Accounts Payable">
-            <i class="ph-fill ph-receipt" aria-hidden="true"></i>
-            <span class="nav-label">Accounts Payable (AP)</span>
-            <i class="ph ph-caret-down nav-chevron" aria-hidden="true"></i>
-          </button>
-          <ul class="nav-submenu" id="nav-ap" @if(!$isAp) hidden @endif>
-            <li><a href="{{ route('ap.vendors') }}" class="{{ request()->routeIs('ap.vendors') ? 'active' : '' }}">Vendor Management</a></li>
-            <li><a href="{{ route('ap.purchase-bills') }}" class="{{ request()->routeIs('ap.purchase-bills') ? 'active' : '' }}">Invoice Matching &amp; Verification</a></li>
-            <li><a href="{{ route('ap.invoices') }}" class="{{ request()->routeIs('ap.invoices') ? 'active' : '' }}">Vendor Invoices &amp; Tax</a></li>
-            <li><a href="{{ route('ap.payable-aging') }}" class="{{ request()->routeIs('ap.payable-aging') ? 'active' : '' }}">Payable Aging</a></li>
-            <li><a href="{{ route('ap.ap-approvals') }}" class="{{ request()->routeIs('ap.ap-approvals') ? 'active' : '' }}">AP Payment Approvals</a></li>
-          </ul>
-        </li>
-        @endcan
-
-        <!-- 3. Accounts Receivable (AR) -->
-        @can('access-ar-billing')
-        <li class="nav-accordion{{ $isAr ? ' is-expanded is-active' : '' }}">
-          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('ar.customers') }}" aria-expanded="{{ $isAr ? 'true' : 'false' }}" aria-controls="nav-ar" aria-label="Accounts Receivable" data-nav-tooltip="Accounts Receivable">
-            <i class="ph-fill ph-currency-circle-dollar" aria-hidden="true"></i>
-            <span class="nav-label">Accounts Receivable (AR)</span>
-            <i class="ph ph-caret-down nav-chevron" aria-hidden="true"></i>
-          </button>
-          <ul class="nav-submenu" id="nav-ar" @if(!$isAr) hidden @endif>
-            <li><a href="{{ route('ar.customers') }}" class="{{ request()->routeIs('ar.customers') ? 'active' : '' }}">Patient Accounts</a></li>
-            <li><a href="{{ route('ar.billing') }}" class="{{ request()->routeIs('ar.billing') ? 'active' : '' }}">Invoicing &amp; Billing</a></li>
-            <li><a href="{{ route('ar.ar-aging') }}" class="{{ request()->routeIs('ar.ar-aging') ? 'active' : '' }}">Receivable Aging</a></li>
-            <li><a href="{{ route('ar.credit-notes') }}" class="{{ request()->routeIs('ar.credit-notes') ? 'active' : '' }}">Credit Notes</a></li>
-            <li><a href="{{ route('ar.statements') }}" class="{{ request()->routeIs('ar.statements') ? 'active' : '' }}">Customer Statements</a></li>
-          </ul>
-        </li>
-        @endcan
-
-        <!-- 4. Disbursement Management -->
-        @can('access-disbursements')
-        <li class="nav-accordion{{ $isDisbursement ? ' is-expanded is-active' : '' }}">
-          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('disbursement.payment-requests') }}" aria-expanded="{{ $isDisbursement ? 'true' : 'false' }}" aria-controls="nav-disbursement" aria-label="Disbursement Management" data-nav-tooltip="Disbursement">
-            <i class="ph-fill ph-arrows-out" aria-hidden="true"></i>
-            <span class="nav-label">Disbursement Management</span>
-            <i class="ph ph-caret-down nav-chevron" aria-hidden="true"></i>
-          </button>
-          <ul class="nav-submenu" id="nav-disbursement" @if(!$isDisbursement) hidden @endif>
-            <li><a href="{{ route('disbursement.payment-requests') }}" class="{{ request()->routeIs('disbursement.payment-requests') ? 'active' : '' }}">Disbursement Vouchers &amp; Requests</a></li>
-            <li><a href="{{ route('disbursement.check-register') }}" class="{{ request()->routeIs('disbursement.check-register') ? 'active' : '' }}">Check Register</a></li>
-            <li><a href="{{ route('disbursement.eft-transfers') }}" class="{{ request()->routeIs('disbursement.eft-transfers') ? 'active' : '' }}">EFT Transfers</a></li>
-            <li><a href="{{ route('disbursement.disbursement-approval') }}" class="{{ request()->routeIs('disbursement.disbursement-approval') ? 'active' : '' }}">Disbursement Approvals</a></li>
-            <li><a href="{{ route('disbursement.petty-cash') }}" class="{{ request()->routeIs('disbursement.petty-cash') ? 'active' : '' }}">Petty Cash</a></li>
-          </ul>
-        </li>
-        @endcan
-
-        <!-- 5. Collection Management -->
-        @can('access-cashier-pos')
-        <li class="nav-accordion{{ $isCollection ? ' is-expanded is-active' : '' }}">
-          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('collection.receipts') }}" aria-expanded="{{ $isCollection ? 'true' : 'false' }}" aria-controls="nav-collection" aria-label="Collection Management" data-nav-tooltip="Collection">
-            <i class="ph-fill ph-vault" aria-hidden="true"></i>
-            <span class="nav-label">Collection Management</span>
-            <i class="ph ph-caret-down nav-chevron" aria-hidden="true"></i>
-          </button>
-          <ul class="nav-submenu" id="nav-collection" @if(!$isCollection) hidden @endif>
-            <li><a href="{{ route('collection.receipts') }}" class="{{ request()->routeIs('collection.receipts') ? 'active' : '' }}">Payment Receipts</a></li>
-            <li><a href="{{ route('collection.cashier-desk') }}" class="{{ request()->routeIs('collection.cashier-desk') ? 'active' : '' }}">Cashier Desk</a></li>
-            <li><a href="{{ route('collection.deposit-slips') }}" class="{{ request()->routeIs('collection.deposit-slips') ? 'active' : '' }}">Deposit Slips</a></li>
-            <li><a href="{{ route('collection.bank-deposits') }}" class="{{ request()->routeIs('collection.bank-deposits') ? 'active' : '' }}">Bank Deposits</a></li>
-            <li><a href="{{ route('collection.payment-gateways') }}" class="{{ request()->routeIs('collection.payment-gateways') ? 'active' : '' }}">Payment Gateway Logs</a></li>
-          </ul>
-        </li>
-        @endcan
-
-        <!-- 6. Budget Management -->
-        @can('access-disbursements')
-        <li class="nav-accordion{{ $isBudget ? ' is-expanded is-active' : '' }}">
-          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('budget.fiscal-planning') }}" aria-expanded="{{ $isBudget ? 'true' : 'false' }}" aria-controls="nav-budget" aria-label="Budget Management" data-nav-tooltip="Budget">
-            <i class="ph-fill ph-calculator" aria-hidden="true"></i>
-            <span class="nav-label">Budget Management</span>
-            <i class="ph ph-caret-down nav-chevron" aria-hidden="true"></i>
-          </button>
-          <ul class="nav-submenu" id="nav-budget" @if(!$isBudget) hidden @endif>
-            <li><a href="{{ route('budget.fiscal-planning') }}" class="{{ request()->routeIs('budget.fiscal-planning') ? 'active' : '' }}">Fiscal Planning</a></li>
-            <li><a href="{{ route('budget.budget-allocation') }}" class="{{ request()->routeIs('budget.budget-allocation') ? 'active' : '' }}">Budget Allocation</a></li>
-            <li><a href="{{ route('budget.departmental-budgets') }}" class="{{ request()->routeIs('budget.departmental-budgets') ? 'active' : '' }}">Departmental Budgets</a></li>
-            <li><a href="{{ route('budget.variance-analysis') }}" class="{{ request()->routeIs('budget.variance-analysis') ? 'active' : '' }}">Variance Analysis</a></li>
-            <li><a href="{{ route('budget.reallocations') }}" class="{{ request()->routeIs('budget.reallocations') ? 'active' : '' }}">Budget Reallocations</a></li>
-          </ul>
-        </li>
-        @endcan
-
-        <!-- 7. Cash Management -->
-        @can('access-disbursements')
-        <li class="nav-accordion{{ $isCash ? ' is-expanded is-active' : '' }}">
-          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('cash.bank-accounts') }}" aria-expanded="{{ $isCash ? 'true' : 'false' }}" aria-controls="nav-cash" aria-label="Cash Management" data-nav-tooltip="Cash Management">
-            <i class="ph-fill ph-coins" aria-hidden="true"></i>
-            <span class="nav-label">Cash Management</span>
-            <i class="ph ph-caret-down nav-chevron" aria-hidden="true"></i>
-          </button>
-          <ul class="nav-submenu" id="nav-cash" @if(!$isCash) hidden @endif>
-            <li><a href="{{ route('cash.bank-accounts') }}" class="{{ request()->routeIs('cash.bank-accounts') ? 'active' : '' }}">Bank Accounts</a></li>
-            <li><a href="{{ route('cash.cash-flow-forecast') }}" class="{{ request()->routeIs('cash.cash-flow-forecast') ? 'active' : '' }}">Cash Flow Forecasting</a></li>
-            <li><a href="{{ route('cash.bank-reconciliation') }}" class="{{ request()->routeIs('cash.bank-reconciliation') ? 'active' : '' }}">Bank Reconciliation</a></li>
-            <li><a href="{{ route('cash.fund-transfers') }}" class="{{ request()->routeIs('cash.fund-transfers') ? 'active' : '' }}">Fund Transfers</a></li>
-            <li><a href="{{ route('cash.liquidity') }}" class="{{ request()->routeIs('cash.liquidity') ? 'active' : '' }}">Liquidity Management</a></li>
-          </ul>
-        </li>
-        @endcan
-
-        <!-- 8. Financial Reporting & Analytics -->
+        <!-- 7. Financial Reporting & Analytics -->
         @can('access-financial-reports')
         <li class="nav-accordion{{ $isReporting ? ' is-expanded is-active' : '' }}">
           <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('reporting.balance-sheet') }}" aria-expanded="{{ $isReporting ? 'true' : 'false' }}" aria-controls="nav-reporting" aria-label="Financial Reporting & Analytics" data-nav-tooltip="Reporting">
@@ -222,6 +205,24 @@
             <li><a href="{{ route('reporting.equity') }}" class="{{ request()->routeIs('reporting.equity*') ? 'active' : '' }}">Changes in Equity</a></li>
             <li><a href="{{ route('reporting.kpi-dashboard') }}" class="{{ request()->routeIs('reporting.kpi-dashboard') ? 'active' : '' }}">Financial KPI Dashboard</a></li>
             <li><a href="{{ route('reporting.executive-reports') }}" class="{{ request()->routeIs('reporting.executive-reports') ? 'active' : '' }}">Executive Reports</a></li>
+          </ul>
+        </li>
+        @endcan
+
+        <!-- 8. Cash Management -->
+        @can('access-disbursements')
+        <li class="nav-accordion{{ $isCash ? ' is-expanded is-active' : '' }}">
+          <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('cash.bank-accounts') }}" aria-expanded="{{ $isCash ? 'true' : 'false' }}" aria-controls="nav-cash" aria-label="Cash Management" data-nav-tooltip="Cash Management">
+            <i class="ph-fill ph-coins" aria-hidden="true"></i>
+            <span class="nav-label">Cash Management</span>
+            <i class="ph ph-caret-down nav-chevron" aria-hidden="true"></i>
+          </button>
+          <ul class="nav-submenu" id="nav-cash" @if(!$isCash) hidden @endif>
+            <li><a href="{{ route('cash.bank-accounts') }}" class="{{ request()->routeIs('cash.bank-accounts') ? 'active' : '' }}">Bank Accounts</a></li>
+            <li><a href="{{ route('cash.cash-flow-forecast') }}" class="{{ request()->routeIs('cash.cash-flow-forecast') ? 'active' : '' }}">Cash Flow Forecasting</a></li>
+            <li><a href="{{ route('cash.bank-reconciliation') }}" class="{{ request()->routeIs('cash.bank-reconciliation') ? 'active' : '' }}">Bank Reconciliation</a></li>
+            <li><a href="{{ route('cash.fund-transfers') }}" class="{{ request()->routeIs('cash.fund-transfers') ? 'active' : '' }}">Fund Transfers</a></li>
+            <li><a href="{{ route('cash.liquidity') }}" class="{{ request()->routeIs('cash.liquidity') ? 'active' : '' }}">Liquidity Management</a></li>
           </ul>
         </li>
         @endcan
@@ -243,6 +244,17 @@
           </ul>
         </li>
         @endcan
+
+        <!-- 10. System Audit Trail (CFO and Auditor only) -->
+        @if(in_array(auth()->user()?->role, ['CFO', 'FinanceDirector', 'Auditor'], true))
+        <li class="nav-item">
+          <a class="nav-link{{ request()->routeIs('accounting.audit-log') ? ' active' : '' }}" href="{{ route('accounting.audit-log') }}" data-nav-tooltip="System Audit Trail">
+            <i class="ph-fill ph-shield-check text-danger" aria-hidden="true"></i>
+            <span class="nav-label">System Audit Trail</span>
+            <span class="badge bg-danger-subtle text-danger ms-auto fs-xs" style="font-size: 10px;">Audit</span>
+          </a>
+        </li>
+        @endif
       </ul>
     </nav>
 
@@ -251,14 +263,19 @@
         <button class="sidebar-profile" id="profile-toggle" type="button" aria-label="Open account menu for FMS User" aria-haspopup="menu" aria-expanded="false" aria-controls="profile-menu">
           <span class="profile-avatar" aria-hidden="true">{{ strtoupper(substr(auth()->user()->name ?? 'AD', 0, 2)) }}</span>
           <span class="profile-info">
-            <span class="profile-name">{{ auth()->user()->name ?? 'Executive Demo User' }}</span>
-            <span class="profile-role badge bg-primary-subtle text-primary border border-primary-subtle py-0 px-2 mt-1">{{ auth()->user()->role ?? 'CFO' }}</span>
+            <span class="profile-name">{{ auth()->user()->name ?? 'Hospital User' }}</span>
+            <div class="d-flex align-items-center gap-1 mt-1">
+              <span class="profile-role badge bg-primary-subtle text-primary border border-primary-subtle py-0 px-2">{{ auth()->user()->role ?? 'CFO' }}</span>
+              <span class="text-muted font-monospace" style="font-size: 9px;" title="Last Login Timestamp">
+                <i class="ph ph-clock"></i> {{ auth()->user()?->last_login_at?->diffForHumans() ?? 'Current' }}
+              </span>
+            </div>
           </span>
           <i class="ph ph-caret-up-down profile-chevron" aria-hidden="true"></i>
         </button>
         <div class="profile-menu" id="profile-menu" role="menu" hidden>
           <a class="profile-menu-link" href="{{ route('accounting.dashboard') }}" role="menuitem"><i class="ph ph-squares-four" aria-hidden="true"></i>Dashboard</a>
-          <a class="profile-menu-link" href="{{ route('login') }}" role="menuitem"><i class="ph ph-arrows-clockwise" aria-hidden="true"></i>Switch Demo Role</a>
+          <a class="profile-menu-link" href="{{ route('login') }}" role="menuitem"><i class="ph ph-arrows-clockwise" aria-hidden="true"></i>Switch Account</a>
           <div class="profile-menu-divider" role="separator"></div>
           <form method="POST" action="{{ route('logout') }}" id="logout-form">
             @csrf

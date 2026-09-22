@@ -8,6 +8,7 @@
   $isReporting = request()->routeIs('reporting.*');
   $isCash = request()->routeIs('cash.*');
   $isTax = request()->routeIs('tax.*');
+  $isUserSecurity = request()->routeIs('user-security.*');
 @endphp
 
 <aside class="sidebar" id="app-sidebar" aria-label="Primary navigation">
@@ -108,7 +109,7 @@
           <ul class="nav-submenu" id="nav-ar" @if(!$isAr) hidden @endif>
             <li><a href="{{ route('ar.customers') }}" class="{{ request()->routeIs('ar.customers') ? 'active' : '' }}">Patient Accounts</a></li>
             <li><a href="{{ route('ar.billing') }}" class="{{ request()->routeIs('ar.billing') ? 'active' : '' }}">Invoicing &amp; Billing</a></li>
-            <li><a href="{{ route('ar.malasakit.index') }}" class="{{ request()->routeIs('ar.malasakit.*') ? 'active' : '' }}"><i class="ph-bold ph-heart text-danger me-1"></i>Malasakit &amp; Subsidies</a></li>
+            <li><a href="{{ route('ar.malasakit.index') }}" class="{{ request()->routeIs('ar.malasakit.*') ? 'active' : '' }}">Malasakit &amp; Subsidies</a></li>
             <li><a href="{{ route('ar.ar-aging') }}" class="{{ request()->routeIs('ar.ar-aging') ? 'active' : '' }}">Receivable Aging</a></li>
             <li><a href="{{ route('ar.credit-notes') }}" class="{{ request()->routeIs('ar.credit-notes') ? 'active' : '' }}">Credit Notes</a></li>
             <li><a href="{{ route('ar.statements') }}" class="{{ request()->routeIs('ar.statements') ? 'active' : '' }}">Customer Statements</a></li>
@@ -153,7 +154,7 @@
         @endcan
 
         <!-- 5. Budget Management -->
-        @can('access-disbursements')
+        @can('access-budget')
         <li class="nav-accordion{{ $isBudget ? ' is-expanded is-active' : '' }}">
           <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('budget.fiscal-planning') }}" aria-expanded="{{ $isBudget ? 'true' : 'false' }}" aria-controls="nav-budget" aria-label="Budget Management" data-nav-tooltip="Budget">
             <i class="ph-fill ph-calculator" aria-hidden="true"></i>
@@ -210,7 +211,7 @@
         @endcan
 
         <!-- 8. Cash Management -->
-        @can('access-disbursements')
+        @can('access-cash-management')
         <li class="nav-accordion{{ $isCash ? ' is-expanded is-active' : '' }}">
           <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('cash.bank-accounts') }}" aria-expanded="{{ $isCash ? 'true' : 'false' }}" aria-controls="nav-cash" aria-label="Cash Management" data-nav-tooltip="Cash Management">
             <i class="ph-fill ph-coins" aria-hidden="true"></i>
@@ -228,7 +229,7 @@
         @endcan
 
         <!-- 9. Tax Management -->
-        @can('access-financial-reports')
+        @can('access-tax-management')
         <li class="nav-accordion{{ $isTax ? ' is-expanded is-active' : '' }}">
           <button class="nav-link nav-link-button nav-accordion__toggle" type="button" data-href="{{ route('tax.tax-config') }}" aria-expanded="{{ $isTax ? 'true' : 'false' }}" aria-controls="nav-tax" aria-label="Tax Management" data-nav-tooltip="Tax Management">
             <i class="ph-fill ph-percent" aria-hidden="true"></i>
@@ -245,16 +246,30 @@
         </li>
         @endcan
 
-        <!-- 10. System Audit Trail (CFO and Auditor only) -->
-        @if(in_array(auth()->user()?->role, ['CFO', 'FinanceDirector', 'Auditor'], true))
-        <li class="nav-item">
-          <a class="nav-link{{ request()->routeIs('accounting.audit-log') ? ' active' : '' }}" href="{{ route('accounting.audit-log') }}" data-nav-tooltip="System Audit Trail">
-            <i class="ph-fill ph-shield-check text-danger" aria-hidden="true"></i>
-            <span class="nav-label">System Audit Trail</span>
-            <span class="badge bg-danger-subtle text-danger ms-auto fs-xs" style="font-size: 10px;">Audit</span>
-          </a>
+        <!-- 10. User & Security Management (CFO Only) -->
+        @can('access-user-management')
+        <li class="nav-accordion{{ $isUserSecurity ? ' is-expanded is-active' : '' }}">
+          <button class="nav-link nav-link-button nav-accordion__toggle" type="button"
+                  data-href="{{ route('user-security.users') }}"
+                  aria-expanded="{{ $isUserSecurity ? 'true' : 'false' }}"
+                  aria-controls="nav-user-security"
+                  aria-label="User & Security Management"
+                  data-nav-tooltip="User & Security">
+            <i class="ph-fill ph-users-three" aria-hidden="true"></i>
+            <span class="nav-label">User & Security</span>
+            <span class="badge bg-purple-subtle text-purple ms-auto fs-xs" style="font-size:10px;">CFO</span>
+            <i class="ph ph-caret-down nav-chevron" aria-hidden="true"></i>
+          </button>
+          <ul class="nav-submenu" id="nav-user-security" @if(!$isUserSecurity) hidden @endif>
+            <li><a href="{{ route('user-security.users') }}" class="{{ request()->routeIs('user-security.users*') ? 'active' : '' }}">
+              <i class="ph ph-user-gear me-1"></i>User Accounts
+            </a></li>
+            <li><a href="{{ route('user-security.audit-trail') }}" class="{{ request()->routeIs('user-security.audit-trail') || request()->routeIs('accounting.audit-log') ? 'active' : '' }}">
+              <i class="ph ph-clock-countdown me-1"></i>System Audit Trail
+            </a></li>
+          </ul>
         </li>
-        @endif
+        @endcan
       </ul>
     </nav>
 

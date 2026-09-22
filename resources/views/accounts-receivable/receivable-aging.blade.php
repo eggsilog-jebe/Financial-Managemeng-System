@@ -157,7 +157,7 @@
                 <span class="badge bg-light text-dark border">{{ $d['admission'] }}</span>
                 @if(isset($d['statutory_category']))
                   @if($d['statutory_category'] === 'SENIOR_CITIZEN')
-                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle ms-1"><i class="ph ph-heart me-1"></i>Senior 20%</span>
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle ms-1"><i class="ph ph-identification-card me-1"></i>Senior 20%</span>
                   @elseif($d['statutory_category'] === 'PWD')
                     <span class="badge bg-teal-subtle text-teal border border-teal-subtle ms-1" style="background-color: #e6fffa; color: #0d9488; border-color: #99f6e4 !important;"><i class="ph ph-wheelchair me-1"></i>PWD 20%</span>
                   @elseif($d['statutory_category'] === 'EMPLOYEE' || $d['statutory_category'] === 'EMPLOYEE_SUBSIDY')

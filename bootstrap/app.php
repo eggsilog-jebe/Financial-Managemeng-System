@@ -25,7 +25,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(\App\Http\Middleware\SecurityHeadersMiddleware::class);
 
         $middleware->alias([
-            'role' => \App\Http\Middleware\RoleAuthorization::class,
+            'role'               => \App\Http\Middleware\RoleAuthorization::class,
+            'must-change-password' => \App\Http\Middleware\MustChangePassword::class,
+        ]);
+
+        $middleware->web(append: [
+            \App\Http\Middleware\MustChangePassword::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

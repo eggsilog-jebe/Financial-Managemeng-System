@@ -121,8 +121,9 @@
 .hims-card--interactive:hover { border-color:var(--color-border-strong); box-shadow:var(--shadow-md); transform:translateY(-1px); }
 
 /* Modal and confirmation systems */
-.hims-modal[hidden] { display:none; }
-.hims-modal { position:fixed; z-index:1200; inset:0; display:grid; place-items:center; padding:24px; overflow:auto; background:color-mix(in srgb,var(--color-text) 38%,transparent); }
+.hims-modal[hidden],
+.modal:not(.show) { display:none !important; pointer-events:none !important; }
+.hims-modal:not(.modal) { position:fixed; z-index:1200; inset:0; display:grid; place-items:center; padding:24px; overflow:auto; background:color-mix(in srgb,var(--color-text) 38%,transparent); }
 .hims-modal__dialog { width:min(100%,560px); max-height:calc(100vh - 48px); overflow:auto; border:1px solid var(--color-border); border-radius:var(--radius-card); background:var(--color-surface); box-shadow:var(--shadow-md); }
 .hims-modal__dialog--sm { width:min(100%,440px); }
 .hims-modal__dialog--lg { width:min(100%,760px); }

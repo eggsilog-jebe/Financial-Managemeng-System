@@ -67,6 +67,24 @@ final class LoginController extends Controller
 
             $user = Auth::user();
 
+            if ($user->isSuspended()) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                ActivityLog::logAuth(
+                    event: 'login_blocked_suspended',
+                    user: $user,
+                    description: "Suspended user [{$user->name}] attempted login.",
+                    ip: $request->ip(),
+                    userAgent: $request->userAgent()
+                );
+
+                return back()->withErrors([
+                    'email' => 'This hospital user account has been suspended by an administrator. Please contact the CFO.',
+                ])->onlyInput('email');
+            }
+
             ActivityLog::logAuth(
                 event: 'login',
                 user: $user,

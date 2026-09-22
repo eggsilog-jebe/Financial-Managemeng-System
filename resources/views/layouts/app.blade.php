@@ -17,6 +17,7 @@
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}?v={{ @filemtime(public_path('assets/css/style.css')) }}">
     @stack('styles')
     <link rel="stylesheet" href="{{ asset('assets/css/components/typography-accessibility.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/components/modal-design-system.css') }}?v={{ @filemtime(public_path('assets/css/components/modal-design-system.css')) }}">
   </head>
   <body data-module="@yield('module', 'main')" data-page="@yield('page', 'dashboard')">
     <div class="app-shell" data-auth-guard>
@@ -63,6 +64,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ asset('assets/js/data/module-registry.js') }}"></script>
     <script src="{{ asset('assets/js/core/app-shell.js') }}?v={{ @filemtime(public_path('assets/js/core/app-shell.js')) }}"></script>
+    <script src="{{ asset('assets/js/core/modal-system.js') }}?v={{ @filemtime(public_path('assets/js/core/modal-system.js')) }}"></script>
 
     <script>
       window.showSystemModal = function(message, title = 'System Notification', iconClass = 'ph-info') {

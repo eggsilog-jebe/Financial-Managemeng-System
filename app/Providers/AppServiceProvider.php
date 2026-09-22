@@ -43,19 +43,31 @@ class AppServiceProvider extends ServiceProvider
         });
 
         \Illuminate\Support\Facades\Gate::define('access-cashier-pos', function ($user): bool {
-            return in_array($user->role, ['Cashier', 'CFO', 'FinanceDirector'], true);
+            return in_array($user->role, ['Cashier', 'StaffAccountant', 'FinanceManager', 'CFO', 'FinanceDirector', 'Auditor'], true);
         });
 
         \Illuminate\Support\Facades\Gate::define('access-ar-billing', function ($user): bool {
-            return in_array($user->role, ['BillingClerk', 'StaffAccountant', 'FinanceManager', 'CFO', 'FinanceDirector'], true);
+            return in_array($user->role, ['BillingClerk', 'StaffAccountant', 'FinanceManager', 'CFO', 'FinanceDirector', 'Auditor'], true);
         });
 
         \Illuminate\Support\Facades\Gate::define('access-ap-procurement', function ($user): bool {
-            return in_array($user->role, ['StaffAccountant', 'FinanceManager', 'CFO', 'FinanceDirector'], true);
+            return in_array($user->role, ['StaffAccountant', 'FinanceManager', 'CFO', 'FinanceDirector', 'Auditor'], true);
         });
 
         \Illuminate\Support\Facades\Gate::define('access-disbursements', function ($user): bool {
-            return in_array($user->role, ['StaffAccountant', 'FinanceManager', 'CFO', 'FinanceDirector'], true);
+            return in_array($user->role, ['StaffAccountant', 'FinanceManager', 'CFO', 'FinanceDirector', 'Auditor'], true);
+        });
+
+        \Illuminate\Support\Facades\Gate::define('access-budget', function ($user): bool {
+            return in_array($user->role, ['StaffAccountant', 'FinanceManager', 'CFO', 'FinanceDirector', 'Auditor'], true);
+        });
+
+        \Illuminate\Support\Facades\Gate::define('access-cash-management', function ($user): bool {
+            return in_array($user->role, ['StaffAccountant', 'FinanceManager', 'CFO', 'FinanceDirector', 'Auditor'], true);
+        });
+
+        \Illuminate\Support\Facades\Gate::define('access-tax-management', function ($user): bool {
+            return in_array($user->role, ['StaffAccountant', 'FinanceManager', 'CFO', 'FinanceDirector', 'Auditor'], true);
         });
 
         \Illuminate\Support\Facades\Gate::define('access-general-ledger', function ($user): bool {
@@ -67,6 +79,10 @@ class AppServiceProvider extends ServiceProvider
         });
 
         \Illuminate\Support\Facades\Gate::define('access-period-closing', function ($user): bool {
+            return in_array($user->role, ['CFO', 'FinanceDirector'], true);
+        });
+
+        \Illuminate\Support\Facades\Gate::define('access-user-management', function ($user): bool {
             return in_array($user->role, ['CFO', 'FinanceDirector'], true);
         });
 

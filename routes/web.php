@@ -39,6 +39,7 @@ use App\Http\Controllers\Disbursement\CheckRegisterController;
 use App\Http\Controllers\Disbursement\EftTransferController;
 use App\Http\Controllers\Disbursement\DisbursementApprovalController;
 use App\Http\Controllers\Disbursement\PettyCashController;
+use App\Http\Controllers\Disbursement\StorePayrollRunController;
 use App\Http\Controllers\Collection\CashierDeskController;
 use App\Http\Controllers\Collection\CashierShiftController;
 use App\Http\Controllers\Collection\PaymentReceiptController;
@@ -56,6 +57,8 @@ use App\Http\Controllers\FinancialReporting\CashFlowStatementController;
 use App\Http\Controllers\FinancialReporting\StatementOfChangesInEquityController;
 use App\Http\Controllers\FinancialReporting\FinancialKpiDashboardController;
 use App\Http\Controllers\FinancialReporting\ExecutiveReportPackageController;
+use App\Http\Controllers\UserSecurity\UserManagementController;
+use App\Http\Controllers\Auth\ChangePasswordController;
 
 // ─── External Subsystem Integration API Endpoints ──────────────────────────────
 Route::post('/ingest-encounter-billing', \App\Http\Controllers\Api\V1\Ingestion\SimulateEncounterBillingApiController::class)->name('ingest-encounter-billing');
@@ -128,9 +131,12 @@ Route::middleware(['auth'])->group(function () {
     // 2. Accounts Payable
     Route::prefix('accounts-payable')->name('ap.')->group(function () {
         // Vendor Management
-        Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector'])->group(function () {
+        Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector,Auditor,BillingClerk'])->group(function () {
             Route::get('/vendors', [VendorController::class, 'index'])->name('vendors.index');
             Route::get('/vendor-management', [VendorController::class, 'index'])->name('vendors');
+            Route::get('/vendors/export', [VendorController::class, 'exportVendors'])->name('vendors.export');
+        });
+        Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector'])->group(function () {
             Route::post('/vendors', [VendorController::class, 'store'])->name('vendors.store');
             Route::put('/vendors/{id}', [VendorController::class, 'update'])->name('vendors.update');
             Route::patch('/vendors/{id}/toggle', [VendorController::class, 'toggle'])->name('vendors.toggle');
@@ -148,8 +154,10 @@ Route::middleware(['auth'])->group(function () {
         });
 
         // Purchase Bills & 3-Way Matching
-        Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector'])->group(function () {
+        Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector,Auditor'])->group(function () {
             Route::get('/purchase-bills', [PurchaseBillController::class, 'index'])->name('purchase-bills');
+        });
+        Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector'])->group(function () {
             Route::post('/purchase-bills', [PurchaseBillController::class, 'store'])->name('purchase-bills.store');
             Route::post('/purchase-bills/sync-psm-sws', [PurchaseBillController::class, 'syncPsmSws'])->name('purchase-bills.sync');
             Route::post('/ingest-bill', IngestVendorBillController::class)->name('ingest-bill');
@@ -165,7 +173,7 @@ Route::middleware(['auth'])->group(function () {
         });
 
         // AP Payment Approvals & Disbursement
-        Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector'])->group(function () {
+        Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector,Auditor'])->group(function () {
             Route::get('/payment-approvals', [PaymentApprovalController::class, 'index'])->name('payment-approvals.index');
             Route::get('/ap-payment-approvals', [PaymentApprovalController::class, 'index'])->name('ap-approvals');
             Route::get('/payment-approvals/export-bank-batch', [PaymentApprovalController::class, 'exportBankBatch'])->name('payment-approvals.export-bank-batch');
@@ -183,18 +191,22 @@ Route::middleware(['auth'])->group(function () {
     // 3. Accounts Receivable
     Route::prefix('accounts-receivable')->name('ar.')->group(function () {
         // Patient Accounts
-        Route::middleware(['role:StaffAccountant,BillingClerk,Cashier,FinanceManager,CFO,FinanceDirector'])->group(function () {
+        Route::middleware(['role:StaffAccountant,BillingClerk,Cashier,FinanceManager,CFO,FinanceDirector,Auditor'])->group(function () {
             Route::get('/patients', [PatientAccountController::class, 'index'])->name('patients.index');
             Route::get('/patient-accounts', [PatientAccountController::class, 'index'])->name('customers');
+        });
+        Route::middleware(['role:StaffAccountant,BillingClerk,Cashier,FinanceManager,CFO,FinanceDirector'])->group(function () {
             Route::post('/patients', [PatientAccountController::class, 'store'])->name('patients.store');
         });
 
         // Invoicing & Patient Billing
-        Route::middleware(['role:StaffAccountant,BillingClerk,FinanceManager,CFO,FinanceDirector'])->group(function () {
+        Route::middleware(['role:StaffAccountant,BillingClerk,FinanceManager,CFO,FinanceDirector,Auditor'])->group(function () {
             Route::get('/invoices', [PatientInvoiceController::class, 'index'])->name('invoices.index');
             Route::get('/invoicing-billing', [PatientInvoiceController::class, 'index'])->name('billing');
-            Route::post('/invoices', [PatientInvoiceController::class, 'store'])->name('invoices.store');
             Route::get('/invoices/{id}/print', [PatientInvoiceController::class, 'print'])->name('invoices.print');
+        });
+        Route::middleware(['role:StaffAccountant,BillingClerk,FinanceManager,CFO,FinanceDirector'])->group(function () {
+            Route::post('/invoices', [PatientInvoiceController::class, 'store'])->name('invoices.store');
             Route::post('/ingest-billables', IngestClinicalBillablesController::class)->name('ingest-billables');
         });
 
@@ -205,8 +217,10 @@ Route::middleware(['auth'])->group(function () {
         });
 
         // Credit Notes & Statutory Discounts
-        Route::middleware(['role:StaffAccountant,BillingClerk,FinanceManager,CFO,FinanceDirector'])->group(function () {
+        Route::middleware(['role:StaffAccountant,BillingClerk,FinanceManager,CFO,FinanceDirector,Auditor'])->group(function () {
             Route::get('/credit-notes', [CreditNoteController::class, 'index'])->name('credit-notes');
+        });
+        Route::middleware(['role:StaffAccountant,BillingClerk,FinanceManager,CFO,FinanceDirector'])->group(function () {
             Route::post('/credit-notes', [CreditNoteController::class, 'store'])->name('credit-notes.store');
         });
         Route::middleware(['role:FinanceManager,CFO,FinanceDirector'])->group(function () {
@@ -235,36 +249,46 @@ Route::middleware(['auth'])->group(function () {
     // 4. Disbursement Management
     Route::prefix('disbursement-management')->name('disbursement.')->group(function () {
         // Payment Requests
-        Route::middleware(['role:StaffAccountant,BillingClerk,FinanceManager,CFO,FinanceDirector'])->group(function () {
+        Route::middleware(['role:StaffAccountant,BillingClerk,FinanceManager,CFO,FinanceDirector,Auditor'])->group(function () {
             Route::get('/payment-requests', [PaymentRequestController::class, 'index'])->name('payment-requests');
+            Route::get('/payment-requests/export', [PaymentRequestController::class, 'export'])->name('payment-requests.export');
+        });
+        Route::middleware(['role:StaffAccountant,BillingClerk,FinanceManager,CFO,FinanceDirector'])->group(function () {
             Route::post('/payment-requests', [PaymentRequestController::class, 'store'])->name('payment-requests.store');
         });
         Route::middleware(['role:Auditor,FinanceManager,CFO,FinanceDirector'])->group(function () {
             Route::post('/payment-requests/{id}/audit', [PaymentRequestController::class, 'audit'])->name('payment-requests.audit');
             Route::post('/payment-requests/{id}/void', [PaymentRequestController::class, 'void'])->name('payment-requests.void');
         });
+        Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector'])->group(function () {
+            Route::post('/payroll-runs', StorePayrollRunController::class)->name('payroll.store');
+        });
         Route::post('/ingest-payroll', IngestPayrollRunController::class)->name('ingest-payroll');
 
         // Check Register & Printing
-        Route::middleware(['role:StaffAccountant,Cashier,FinanceManager,CFO,FinanceDirector'])->group(function () {
+        Route::middleware(['role:StaffAccountant,Cashier,FinanceManager,CFO,FinanceDirector,Auditor'])->group(function () {
             Route::get('/check-register', [CheckRegisterController::class, 'index'])->name('check-register');
-            Route::post('/check-register', [CheckRegisterController::class, 'store'])->name('check-register.store');
             Route::get('/check-register/{id}/print', [CheckRegisterController::class, 'print'])->name('check-register.print');
+        });
+        Route::middleware(['role:StaffAccountant,Cashier,FinanceManager,CFO,FinanceDirector'])->group(function () {
+            Route::post('/check-register', [CheckRegisterController::class, 'store'])->name('check-register.store');
             Route::post('/check-register/{id}/clear', [CheckRegisterController::class, 'clear'])->name('check-register.clear');
         });
 
         // EFT & Electronic Payouts
-        Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector'])->group(function () {
+        Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector,Auditor'])->group(function () {
             Route::get('/eft-transfers', [EftTransferController::class, 'index'])->name('eft-transfers');
-            Route::post('/eft-transfers', [EftTransferController::class, 'store'])->name('eft-transfers.store');
             Route::get('/eft-transfers/export', [EftTransferController::class, 'export'])->name('eft-transfers.export');
+        });
+        Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector'])->group(function () {
+            Route::post('/eft-transfers', [EftTransferController::class, 'store'])->name('eft-transfers.store');
         });
         Route::middleware(['role:FinanceManager,CFO,FinanceDirector'])->group(function () {
             Route::post('/eft-transfers/{id}/approve', [EftTransferController::class, 'approve'])->name('eft-transfers.approve');
         });
 
         // Disbursement Approvals & Release Workstation
-        Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector'])->group(function () {
+        Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector,Auditor'])->group(function () {
             Route::get('/disbursement-approvals', [DisbursementApprovalController::class, 'index'])->name('disbursement-approval');
         });
         Route::middleware(['role:FinanceManager,CFO,FinanceDirector'])->group(function () {
@@ -275,8 +299,10 @@ Route::middleware(['auth'])->group(function () {
         });
 
         // Petty Cash Custody & Replenishment
-        Route::middleware(['role:Cashier,StaffAccountant,FinanceManager,CFO,FinanceDirector'])->group(function () {
+        Route::middleware(['role:Cashier,StaffAccountant,FinanceManager,CFO,FinanceDirector,Auditor'])->group(function () {
             Route::get('/petty-cash', [PettyCashController::class, 'index'])->name('petty-cash');
+        });
+        Route::middleware(['role:Cashier,StaffAccountant,FinanceManager,CFO,FinanceDirector'])->group(function () {
             Route::post('/petty-cash/funds', [PettyCashController::class, 'storeFund'])->name('petty-cash.funds.store');
             Route::post('/petty-cash/expense', [PettyCashController::class, 'storeExpense'])->name('petty-cash.expense');
             Route::post('/petty-cash/replenish', [PettyCashController::class, 'replenish'])->name('petty-cash.replenish');
@@ -286,8 +312,10 @@ Route::middleware(['auth'])->group(function () {
     // 5. Collection Management
     Route::prefix('collection-management')->name('collection.')->group(function () {
         // Cashier Desk & Shift Lifecycle
-        Route::middleware(['role:Cashier,StaffAccountant,FinanceManager,CFO,FinanceDirector'])->group(function () {
+        Route::middleware(['role:Cashier,StaffAccountant,FinanceManager,CFO,FinanceDirector,Auditor'])->group(function () {
             Route::get('/cashier-desk', [CashierDeskController::class, 'index'])->name('cashier-desk');
+        });
+        Route::middleware(['role:Cashier,StaffAccountant,FinanceManager,CFO,FinanceDirector'])->group(function () {
             Route::post('/cashier-desk/collect', [CashierDeskController::class, 'collect'])->name('cashier-desk.collect');
             Route::post('/shifts/open', [CashierShiftController::class, 'open'])->name('shifts.open');
             Route::post('/shifts/close', [CashierShiftController::class, 'close'])->name('shifts.close');
@@ -307,13 +335,15 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/process-payment', ProcessPaymentController::class)->name('process-payment');
 
         // Deposit Slips & Batching
-        Route::middleware(['role:Cashier,StaffAccountant,FinanceManager,CFO,FinanceDirector'])->group(function () {
+        Route::middleware(['role:Cashier,StaffAccountant,FinanceManager,CFO,FinanceDirector,Auditor'])->group(function () {
             Route::get('/deposit-slips', [DepositSlipBatchController::class, 'index'])->name('deposit-slips');
         });
 
         // Bank Deposits & Clearing
-        Route::middleware(['role:Cashier,StaffAccountant,FinanceManager,CFO,FinanceDirector'])->group(function () {
+        Route::middleware(['role:Cashier,StaffAccountant,FinanceManager,CFO,FinanceDirector,Auditor'])->group(function () {
             Route::get('/bank-deposits', [BankDepositController::class, 'index'])->name('bank-deposits');
+        });
+        Route::middleware(['role:Cashier,StaffAccountant,FinanceManager,CFO,FinanceDirector'])->group(function () {
             Route::post('/bank-deposits', [BankDepositController::class, 'store'])->name('bank-deposits.store');
         });
         Route::middleware(['role:FinanceManager,CFO,FinanceDirector'])->group(function () {
@@ -322,8 +352,10 @@ Route::middleware(['auth'])->group(function () {
         });
 
         // Payment Gateway Logs
-        Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector'])->group(function () {
+        Route::middleware(['role:Cashier,StaffAccountant,FinanceManager,CFO,FinanceDirector,Auditor'])->group(function () {
             Route::get('/payment-gateway-logs', [PaymentGatewayLogController::class, 'index'])->name('payment-gateways');
+        });
+        Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector'])->group(function () {
             Route::post('/payment-gateway-logs/{id}/retrigger-gl', [PaymentGatewayLogController::class, 'retriggerGl'])->name('payment-gateways.retrigger-gl');
         });
     });
@@ -431,7 +463,7 @@ Route::middleware(['auth'])->group(function () {
         });
 
         // Executive Reports Dossier
-        Route::middleware(['role:FinanceManager,CFO,FinanceDirector,Auditor'])->group(function () {
+        Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector,Auditor'])->group(function () {
             Route::get('/executive-reports', [ExecutiveReportPackageController::class, 'index'])->name('executive-reports');
         });
     });
@@ -498,5 +530,24 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit-log');
         });
     });
+
+    // 11. User & Security Management (CFO Only)
+    Route::prefix('user-security')->name('user-security.')->middleware(['role:CFO,FinanceDirector'])->group(function () {
+        // User Accounts
+        Route::get('/users', [UserManagementController::class, 'index'])->name('users');
+        Route::get('/users/create', [UserManagementController::class, 'create'])->name('users.create');
+        Route::post('/users', [UserManagementController::class, 'store'])->name('users.store');
+        Route::get('/users/{user}/edit', [UserManagementController::class, 'edit'])->name('users.edit');
+        Route::patch('/users/{user}', [UserManagementController::class, 'update'])->name('users.update');
+        Route::post('/users/{user}/reset-password', [UserManagementController::class, 'resetPassword'])->name('users.reset-password');
+        Route::post('/users/{user}/toggle-status', [UserManagementController::class, 'toggleStatus'])->name('users.toggle-status');
+
+        // System Audit Trail (alias - same controller)
+        Route::get('/audit-trail', [AuditLogController::class, 'index'])->name('audit-trail');
+    });
+
+    // Change Password (for users with must_change_password flag)
+    Route::get('/change-password', [ChangePasswordController::class, 'show'])->name('password.change');
+    Route::post('/change-password', [ChangePasswordController::class, 'update'])->name('password.change.update');
 
 }); // end auth middleware group

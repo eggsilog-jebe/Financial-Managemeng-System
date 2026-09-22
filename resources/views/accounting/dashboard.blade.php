@@ -72,7 +72,7 @@
         </div>
         <div class="col-md-3 col-6">
           <a href="{{ route('ar.malasakit.index') }}" class="btn btn-outline-purple w-100 text-start p-2 rounded-2 d-flex align-items-center gap-2" style="border-color: #8b5cf6; color: #6d28d9;">
-            <i class="ph ph-heart-straight fs-5 text-purple" style="color: #8b5cf6;"></i>
+            <i class="ph ph-hand-coins fs-5 text-purple" style="color: #8b5cf6;"></i>
             <div>
               <strong class="d-block fs-xs text-dark">Malasakit Center</strong>
               <span class="fs-xxs text-muted">RA 11463 GL Assistance</span>
@@ -137,7 +137,7 @@
       @elseif($userRole === 'BillingClerk')
         <div class="col-md-4 col-12">
           <a href="{{ route('ar.malasakit.index') }}" class="btn btn-outline-purple w-100 text-start p-2 rounded-2 d-flex align-items-center gap-2" style="border-color: #8b5cf6; color: #6d28d9;">
-            <i class="ph ph-heart-straight fs-5 text-purple" style="color: #8b5cf6;"></i>
+            <i class="ph ph-hand-coins fs-5 text-purple" style="color: #8b5cf6;"></i>
             <div>
               <strong class="d-block fs-xs text-dark">Malasakit Desk</strong>
               <span class="fs-xxs text-muted">Register GLs &amp; Simulate Bills</span>
@@ -221,7 +221,7 @@
         </div>
         <div class="col-md-3 col-6">
           <a href="{{ route('ar.malasakit.index') }}" class="btn btn-outline-purple w-100 text-start p-2 rounded-2 d-flex align-items-center gap-2" style="border-color: #8b5cf6; color: #6d28d9;">
-            <i class="ph ph-heart-straight fs-5 text-purple" style="color: #8b5cf6;"></i>
+            <i class="ph ph-hand-coins fs-5 text-purple" style="color: #8b5cf6;"></i>
             <div>
               <strong class="d-block fs-xs text-dark">Malasakit Assistance</strong>
               <span class="fs-xxs text-muted">GL Accounting</span>
@@ -301,7 +301,7 @@
       <div>
         <div class="d-flex align-items-center gap-2">
           <h5 class="fw-bold mb-0 text-dark">
-            <i class="ph ph-hand-heart text-purple me-2" style="color: #8b5cf6;"></i>
+            <i class="ph ph-hand-coins text-purple me-2" style="color: #8b5cf6;"></i>
             Public Hospital Fund Sources &amp; Universal Healthcare Co-Pay Coverage
           </h5>
           <span class="badge bg-success-subtle text-success border border-success-subtle fs-xs">

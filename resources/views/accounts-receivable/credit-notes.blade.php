@@ -173,154 +173,140 @@
 </div>
 
 <!-- Modal: Issue Credit Note -->
-<div class="modal fade" id="createCreditNoteModal" tabindex="-1" aria-labelledby="createCreditNoteModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-      <div class="modal-header bg-light-subtle border-bottom py-3 px-4">
-        <div class="d-flex align-items-center gap-2">
-          <span class="p-2 rounded-3 bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center">
-            <i class="ph ph-receipt-x fs-4"></i>
-          </span>
-          <div>
-            <h5 class="modal-title font-weight-bold mb-0">Issue Credit Note &amp; Statutory Discount</h5>
-            <span class="fs-xs text-muted">Apply Senior Citizen / PWD 20% discount, charity relief, or balance write-offs</span>
-          </div>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
+<x-modal 
+  id="createCreditNoteModal" 
+  title="Issue Credit Note & Statutory Discount" 
+  subtitle="Apply Senior Citizen / PWD 20% discount, charity relief, or balance write-offs" 
+  icon="ph-receipt-x" 
+  iconVariant="primary" 
+  size="lg" 
+  :scrollable="true" 
+  :centered="true" 
+  formAction="{{ route('ar.credit-notes.store') }}" 
+  formId="creditNoteForm" 
+  formMethod="POST" 
+  submitId="submitCreditNoteBtn"
+  submitText="Submit Credit Adjustment" 
+  submitIcon="ph-check-circle"
+>
+  <div class="row g-3 mb-3">
+    <div class="col-md-7">
+      <label class="form-label small fw-semibold" for="target_invoice_select">Target Open Invoice <span class="text-danger">*</span></label>
+      <select name="invoice_id" id="target_invoice_select" class="form-select form-select-sm" required>
+        <option value="" data-gross="0" data-balance="0" data-has-statutory="0" data-statutory-type="" data-statutory-ref="">-- Choose Open Patient Invoice --</option>
+        @foreach($openInvoices as $inv)
+          @php
+            $existingStatCN = $inv->creditNotes->whereIn('reason', ['SENIOR_CITIZEN_DISCOUNT', 'PWD_DISCOUNT', 'SENIOR_CITIZEN', 'PWD'])->whereIn('status', ['POSTED', 'APPLIED', 'DRAFT'])->first();
+            $hasStatutory = $inv->statutoryDiscounts->isNotEmpty() || $existingStatCN !== null;
+            $statutoryType = $existingStatCN ? $existingStatCN->reason : ($inv->statutoryDiscounts->isNotEmpty() ? $inv->statutoryDiscounts->first()->discount_type : '');
+            $statutoryRef = $existingStatCN ? $existingStatCN->credit_note_number : ($inv->statutoryDiscounts->isNotEmpty() ? 'Intake RA 9994/10754' : '');
+          @endphp
+          <option value="{{ $inv->id }}" 
+                  data-gross="{{ $inv->gross_total }}" 
+                  data-balance="{{ $inv->patient_copay_balance }}"
+                  data-has-statutory="{{ $hasStatutory ? '1' : '0' }}"
+                  data-statutory-type="{{ $statutoryType }}"
+                  data-statutory-ref="{{ $statutoryRef }}">
+              {{ $inv->invoice_number }} — {{ $inv->patient_name }} (Open Copay: ₱{{ number_format((float) $inv->patient_copay_balance, 2) }}){{ $hasStatutory ? ' [Statutory Applied]' : '' }}
+          </option>
+        @endforeach
+      </select>
+    </div>
 
-      <form method="POST" action="{{ route('ar.credit-notes.store') }}" id="creditNoteForm">
-        @csrf
-        <div class="modal-body p-4">
-          <div class="row g-3 mb-3">
-            <div class="col-md-7">
-              <label class="form-label small fw-semibold" for="target_invoice_select">Target Open Invoice <span class="text-danger">*</span></label>
-              <select name="invoice_id" id="target_invoice_select" class="form-select form-select-sm" required>
-                <option value="" data-gross="0" data-balance="0" data-has-statutory="0" data-statutory-type="" data-statutory-ref="">-- Choose Open Patient Invoice --</option>
-                @foreach($openInvoices as $inv)
-                  @php
-                    $existingStatCN = $inv->creditNotes->whereIn('reason', ['SENIOR_CITIZEN_DISCOUNT', 'PWD_DISCOUNT', 'SENIOR_CITIZEN', 'PWD'])->whereIn('status', ['POSTED', 'APPLIED', 'DRAFT'])->first();
-                    $hasStatutory = $inv->statutoryDiscounts->isNotEmpty() || $existingStatCN !== null;
-                    $statutoryType = $existingStatCN ? $existingStatCN->reason : ($inv->statutoryDiscounts->isNotEmpty() ? $inv->statutoryDiscounts->first()->discount_type : '');
-                    $statutoryRef = $existingStatCN ? $existingStatCN->credit_note_number : ($inv->statutoryDiscounts->isNotEmpty() ? 'Intake RA 9994/10754' : '');
-                  @endphp
-                  <option value="{{ $inv->id }}" 
-                          data-gross="{{ $inv->gross_total }}" 
-                          data-balance="{{ $inv->patient_copay_balance }}"
-                          data-has-statutory="{{ $hasStatutory ? '1' : '0' }}"
-                          data-statutory-type="{{ $statutoryType }}"
-                          data-statutory-ref="{{ $statutoryRef }}">
-                      {{ $inv->invoice_number }} — {{ $inv->patient_name }} (Open Copay: ₱{{ number_format((float) $inv->patient_copay_balance, 2) }}){{ $hasStatutory ? ' [Statutory Applied]' : '' }}
-                  </option>
-                @endforeach
-              </select>
-            </div>
-
-            <div class="col-md-5">
-              <label class="form-label small fw-semibold" for="credit_reason_select">Adjustment Reason / Type <span class="text-danger">*</span></label>
-              <select name="reason" id="credit_reason_select" class="form-select form-select-sm" required>
-                <option value="SENIOR_CITIZEN_DISCOUNT">Statutory Senior Citizen Discount (20%)</option>
-                <option value="PWD_DISCOUNT">Person with Disability (PWD) Discount (20%)</option>
-                <option value="CHARITY_SUBSIDY">Medical Social Service Charity Subsidy</option>
-                <option value="EMPLOYEE_SUBSIDY">Hospital Employee &amp; Dependent Subsidy</option>
-                <option value="BILLING_ADJUSTMENT">Disputed Item / Procedure Cancellation</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Statutory Discount Alert Banner -->
-          <div class="alert alert-warning border border-warning-subtle d-flex align-items-start gap-2 py-2 px-3 mb-3 rounded-3" id="statutoryWarningAlert" style="display: none;">
-            <i class="ph ph-info fs-4 text-warning flex-shrink-0 mt-1"></i>
-            <div class="fs-xs">
-              <strong>Statutory Discount Already Applied:</strong> A statutory discount is already applied to this invoice (<span id="statutoryRefDisplay" class="font-monospace fw-bold"></span>). To change or re-apply statutory relief, please void/reverse the existing credit note first. Non-statutory adjustments (Charity, Billing Corrections) are still allowed.
-            </div>
-          </div>
-
-          <!-- Dynamic Discount Calculation Card -->
-          <div class="card border border-primary-subtle bg-light-subtle rounded-3 p-3 mb-3" id="discountCalculationCard" style="display: none;">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-              <span class="fs-xs text-uppercase fw-bold text-primary d-flex align-items-center gap-1">
-                <i class="ph ph-calculator fs-5"></i> Dynamic Discount Calculation &amp; Balance Forecast
-              </span>
-              <span class="badge bg-primary-subtle text-primary border border-primary-subtle fs-xs" id="invoiceTag">INV</span>
-            </div>
-
-            <div class="row g-2 mb-3 text-center">
-              <div class="col-4">
-                <div class="bg-white p-2 rounded-2 border">
-                  <span class="text-muted fs-xs d-block">Gross Billed Total</span>
-                  <strong class="font-monospace text-dark fs-6" id="dispGross">₱0.00</strong>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="bg-white p-2 rounded-2 border">
-                  <span class="text-muted fs-xs d-block">Open Copay Balance</span>
-                  <strong class="font-monospace text-danger fs-6" id="dispBalance">₱0.00</strong>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="bg-white p-2 rounded-2 border" id="dispForecastCard">
-                  <span class="text-muted fs-xs d-block">Forecasted Remaining</span>
-                  <strong class="font-monospace text-success fs-6" id="dispRemaining">₱0.00</strong>
-                </div>
-              </div>
-            </div>
-
-            <!-- Quick Auto-Fill Preset Buttons -->
-            <div>
-              <span class="fs-xs text-muted fw-semibold d-block mb-1">Quick Auto-Fill Presets:</span>
-              <div class="d-flex flex-wrap gap-2">
-                <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-1 fs-xs" id="btn-preset-statutory-20">
-                  <i class="ph ph-percent me-1"></i> Apply 20% Statutory Discount
-                </button>
-                <button type="button" class="btn btn-xs btn-outline-danger rounded-pill px-2 py-1 fs-xs" id="btnApply100Pct">
-                  <i class="ph ph-check-circle me-1"></i> 100% Full Balance Write-Off
-                </button>
-                <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-1 fs-xs" id="btnApply50Pct">
-                  <i class="ph ph-divide me-1"></i> 50% Charity Subsidy
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Input Fields -->
-          <div class="row g-3">
-            <div class="col-md-7">
-              <label class="form-label small fw-semibold" for="credit_amount_input">Credit Amount (₱) <span class="text-danger">*</span></label>
-              <div class="input-group input-group-sm">
-                <span class="input-group-text font-monospace fw-bold">₱</span>
-                <input type="number" step="0.01" min="0.01" name="amount" id="credit_amount_input" class="form-control font-monospace fw-bold text-danger fs-6" placeholder="0.00" required>
-              </div>
-              <div class="form-text fs-xs text-muted mt-1" id="amountFeedback">
-                Credit amount cannot exceed the target invoice's open patient copay balance.
-              </div>
-            </div>
-
-            <div class="col-md-5">
-              <label class="form-label small fw-semibold" for="issue_date_input">Issue Date</label>
-              <input type="date" name="issue_date" id="issue_date_input" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
-            </div>
-          </div>
-
-          <div class="form-check form-switch mt-3 pt-2 border-top">
-            <input type="hidden" name="save_as_draft" value="0">
-            <input class="form-check-input" type="checkbox" role="switch" id="save_as_draft" name="save_as_draft" value="1" checked>
-            <label class="form-check-label fs-xs text-muted" for="save_as_draft">
-              Save as Draft for Management Approval (Uncheck for immediate posting if authorized)
-            </label>
-          </div>
-        </div>
-
-        <div class="modal-footer bg-light-subtle border-top py-2 px-4">
-          <button type="button" class="btn btn-sm btn-light border px-3" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-sm btn-primary px-4 fw-semibold" id="submitCreditNoteBtn">
-            <i class="ph ph-check-circle me-1"></i> Submit Credit Adjustment
-          </button>
-        </div>
-      </form>
+    <div class="col-md-5">
+      <label class="form-label small fw-semibold" for="credit_reason_select">Adjustment Reason / Type <span class="text-danger">*</span></label>
+      <select name="reason" id="credit_reason_select" class="form-select form-select-sm" required>
+        <option value="SENIOR_CITIZEN_DISCOUNT">Statutory Senior Citizen Discount (20%)</option>
+        <option value="PWD_DISCOUNT">Person with Disability (PWD) Discount (20%)</option>
+        <option value="CHARITY_SUBSIDY">Medical Social Service Charity Subsidy</option>
+        <option value="EMPLOYEE_SUBSIDY">Hospital Employee &amp; Dependent Subsidy</option>
+        <option value="BILLING_ADJUSTMENT">Disputed Item / Procedure Cancellation</option>
+      </select>
     </div>
   </div>
-</div>
+
+  <!-- Statutory Discount Alert Banner -->
+  <div class="alert alert-warning border border-warning-subtle d-flex align-items-start gap-2 py-2 px-3 mb-3 rounded-3" id="statutoryWarningAlert" style="display: none;">
+    <i class="ph ph-info fs-4 text-warning flex-shrink-0 mt-1"></i>
+    <div class="fs-xs">
+      <strong>Statutory Discount Already Applied:</strong> A statutory discount is already applied to this invoice (<span id="statutoryRefDisplay" class="font-monospace fw-bold"></span>). To change or re-apply statutory relief, please void/reverse the existing credit note first. Non-statutory adjustments (Charity, Billing Corrections) are still allowed.
+    </div>
+  </div>
+
+  <!-- Dynamic Discount Calculation Card -->
+  <div class="card border border-primary-subtle bg-light-subtle rounded-3 p-3 mb-3" id="discountCalculationCard" style="display: none;">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+      <span class="fs-xs text-uppercase fw-bold text-primary d-flex align-items-center gap-1">
+        <i class="ph ph-calculator fs-5"></i> Dynamic Discount Calculation &amp; Balance Forecast
+      </span>
+      <span class="badge bg-primary-subtle text-primary border border-primary-subtle fs-xs" id="invoiceTag">INV</span>
+    </div>
+
+    <div class="row g-2 mb-3 text-center">
+      <div class="col-4">
+        <div class="bg-white p-2 rounded-2 border">
+          <span class="text-muted fs-xs d-block">Gross Billed Total</span>
+          <strong class="font-monospace text-dark fs-6" id="dispGross">₱0.00</strong>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="bg-white p-2 rounded-2 border">
+          <span class="text-muted fs-xs d-block">Open Copay Balance</span>
+          <strong class="font-monospace text-danger fs-6" id="dispBalance">₱0.00</strong>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="bg-white p-2 rounded-2 border" id="dispForecastCard">
+          <span class="text-muted fs-xs d-block">Forecasted Remaining</span>
+          <strong class="font-monospace text-success fs-6" id="dispRemaining">₱0.00</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Auto-Fill Preset Buttons -->
+    <div>
+      <span class="fs-xs text-muted fw-semibold d-block mb-1">Quick Auto-Fill Presets:</span>
+      <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-xs btn-outline-primary rounded-pill px-2 py-1 fs-xs" id="btn-preset-statutory-20">
+          <i class="ph ph-percent me-1"></i> Apply 20% Statutory Discount
+        </button>
+        <button type="button" class="btn btn-xs btn-outline-danger rounded-pill px-2 py-1 fs-xs" id="btnApply100Pct">
+          <i class="ph ph-check-circle me-1"></i> 100% Full Balance Write-Off
+        </button>
+        <button type="button" class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-1 fs-xs" id="btnApply50Pct">
+          <i class="ph ph-divide me-1"></i> 50% Charity Subsidy
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input Fields -->
+  <div class="row g-3">
+    <div class="col-md-7">
+      <label class="form-label small fw-semibold" for="credit_amount_input">Credit Amount (₱) <span class="text-danger">*</span></label>
+      <div class="input-group input-group-sm">
+        <span class="input-group-text font-monospace fw-bold">₱</span>
+        <input type="number" step="0.01" min="0.01" name="amount" id="credit_amount_input" class="form-control font-monospace fw-bold text-danger fs-6" placeholder="0.00" required>
+      </div>
+      <div class="form-text fs-xs text-muted mt-1" id="amountFeedback">
+        Credit amount cannot exceed the target invoice's open patient copay balance.
+      </div>
+    </div>
+
+    <div class="col-md-5">
+      <label class="form-label small fw-semibold" for="issue_date_input">Issue Date</label>
+      <input type="date" name="issue_date" id="issue_date_input" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
+    </div>
+  </div>
+
+  <div class="form-check form-switch mt-3 pt-2 border-top">
+    <input type="hidden" name="save_as_draft" value="0">
+    <input class="form-check-input" type="checkbox" role="switch" id="save_as_draft" name="save_as_draft" value="1" checked>
+    <label class="form-check-label fs-xs text-muted" for="save_as_draft">
+      Save as Draft for Management Approval (Uncheck for immediate posting if authorized)
+    </label>
+  </div>
+</x-modal>
 
 @push('scripts')
 <script>

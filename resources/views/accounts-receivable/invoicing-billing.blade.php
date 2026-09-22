@@ -56,6 +56,9 @@
       <a href="#" class="btn btn-outline-secondary btn-sm" onclick="alert('Exporting Billing Register CSV...'); return false;">
         <i class="ph ph-download-simple me-1"></i> Export Billing Register CSV
       </a>
+      <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createInvoiceModal">
+        <i class="ph ph-receipt me-1"></i> New Patient Invoice
+      </button>
     </div>
   </div>
 
@@ -189,7 +192,7 @@
                 <div class="fw-semibold text-dark d-flex align-items-center gap-1">
                   {{ $inv->patientAccount?->full_name ?? 'Unknown Patient' }}
                   @if($inv->effective_discount_category === 'SENIOR_CITIZEN')
-                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle ms-1" style="font-size: 10px;"><i class="ph ph-heart me-1"></i>Senior 20%</span>
+                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle ms-1" style="font-size: 10px;"><i class="ph ph-identification-card me-1"></i>Senior 20%</span>
                   @elseif($inv->effective_discount_category === 'PWD')
                     <span class="badge bg-teal-subtle text-teal border border-teal-subtle ms-1" style="background-color: #e6fffa; color: #0d9488; border-color: #99f6e4 !important; font-size: 10px;"><i class="ph ph-wheelchair me-1"></i>PWD 20%</span>
                   @endif
@@ -312,7 +315,7 @@
 
       <!-- Statutory Discount Banner -->
       <div id="drawerStatutoryBanner" class="mt-2 p-2.5 bg-warning-subtle border border-warning-subtle rounded-3 text-warning-emphasis fs-xs" style="display: none;">
-        <i class="ph ph-heart-break me-1"></i> <span id="drawerStatutoryText"></span>
+        <i class="ph ph-tag me-1"></i> <span id="drawerStatutoryText"></span>
       </div>
     </div>
 
@@ -349,6 +352,195 @@
     </div>
   </div>
 </div>
+
+<!-- Modal: Create Patient Invoice -->
+<x-modal 
+    id="createInvoiceModal" 
+    title="Generate Patient Discharge Billing Statement"
+    subtitle="Audit clinical charges, PhilHealth case rates, dual HMO limits & generate official billing statement."
+    icon="ph-receipt"
+    iconVariant="primary"
+    size="xl"
+    :scrollable="true"
+    :centered="true"
+    formAction="{{ route('ar.invoices.store') }}"
+    formId="formCreateInvoice"
+    formMethod="POST"
+    submitText="Generate & Post Patient Invoice"
+    submitIcon="ph-check"
+>
+  <!-- Step 1: Patient Selection & Dates -->
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <label class="form-label small fw-semibold text-dark">Patient Account Profile <span class="text-danger">*</span></label>
+      <select name="patient_account_id" id="invPatientSelect" class="form-select form-select-sm" required onchange="handlePatientSelectForInvoice(this)">
+        <option value="">-- Choose Registered Patient Profile --</option>
+        @foreach($patients as $p)
+          <option value="{{ $p->id }}" 
+                  data-discount="{{ $p->discount_category }}" 
+                  data-idcard="{{ $p->id_card_number }}" 
+                  data-hmo="{{ $p->hmo_provider }}">
+            {{ $p->full_name }} (MRN: {{ $p->patient_id_number }}) &bull; {{ $p->admission_type }} [{{ $p->discount_category ?? 'NONE' }}]
+          </option>
+        @endforeach
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small fw-semibold text-dark">Invoice / Billing Date <span class="text-danger">*</span></label>
+      <input type="date" name="invoice_date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small fw-semibold text-dark">Payment Due Date</label>
+      <input type="date" name="due_date" class="form-control form-control-sm" value="{{ date('Y-m-d', strtotime('+30 days')) }}">
+    </div>
+  </div>
+
+  <!-- Step 2: Statutory & Insurance Adjustments -->
+  <div class="card border border-light-subtle bg-light-subtle p-3 rounded-3 mb-3">
+    <h6 class="fw-bold text-dark fs-xs text-uppercase mb-2">
+      <i class="ph ph-scales me-1 text-primary"></i> Statutory Deductions &amp; Third-Party Coverage
+    </h6>
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label small fw-semibold text-muted">Statutory Discount Category</label>
+        <select name="discount_type" id="invDiscountType" class="form-select form-select-sm">
+          <option value="NONE" selected>None / Regular</option>
+          <option value="SENIOR_CITIZEN">Senior Citizen (RA 9994 20%)</option>
+          <option value="PWD">PWD (RA 10754 20%)</option>
+          <option value="EMPLOYEE">Hospital Employee Subsidy</option>
+          <option value="CHARITY">Charity / Indigent Relief</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small fw-semibold text-muted">Statutory ID Card Number</label>
+        <input type="text" name="id_card_number" id="invIdCard" class="form-control form-control-sm font-monospace" placeholder="OSCA / PWD ID">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small fw-semibold text-muted">PhilHealth Primary Case Code</label>
+        <input type="text" name="philhealth_primary_case_code" class="form-control form-control-sm font-monospace" placeholder="e.g. J18.9 or RVS-47562">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small fw-semibold text-muted">PhilHealth Case Rate (₱)</label>
+        <div class="input-group input-group-sm">
+          <span class="input-group-text">₱</span>
+          <input type="number" step="0.01" min="0" name="philhealth_primary_case_rate_amount" class="form-control font-monospace" placeholder="0.00">
+        </div>
+      </div>
+    </div>
+    <div class="row g-3 mt-1">
+      <div class="col-md-6">
+        <label class="form-label small fw-semibold text-muted">Primary HMO Provider</label>
+        <select id="invPrimaryHmoSelect" class="form-select form-select-sm" onchange="syncInvoiceDualHmo()">
+          <option value="" selected>None / Direct Self-Pay</option>
+          <option value="Maxicare Healthcare Corporation">Maxicare Healthcare Corporation</option>
+          <option value="Intellicare (Asalus Corporation)">Intellicare (Asalus Corporation)</option>
+          <option value="Medicard Philippines, Inc.">Medicard Philippines, Inc.</option>
+          <option value="PhilCare (PhilhealthCare, Inc.)">PhilCare (PhilhealthCare, Inc.)</option>
+          <option value="Cocolife Healthcare">Cocolife Healthcare</option>
+          <option value="Etiqa Life &amp; General Insurance">Etiqa Life &amp; General Insurance</option>
+          <option value="ValuCare Health Systems, Inc.">ValuCare Health Systems, Inc.</option>
+          <option value="Pacific Cross Philippines">Pacific Cross Philippines</option>
+          <option value="InLife Health Care">InLife Health Care (Insular)</option>
+          <option value="CareHealth Plus Systems">CareHealth Plus Systems</option>
+          <option value="Eastwest Healthcare">Eastwest Healthcare</option>
+          <option value="Generali Life Assurance">Generali Life Assurance</option>
+          <option value="__OTHER__">Other / Corporate Payor (Specify)</option>
+        </select>
+        <input type="text" id="invPrimaryHmoOther" class="form-control form-control-sm mt-1" placeholder="Specify Primary HMO..." style="display: none;" oninput="syncInvoiceDualHmo()">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label small fw-semibold text-muted">Secondary HMO (Cross-Coverage)</label>
+        <select id="invSecondaryHmoSelect" class="form-select form-select-sm" onchange="syncInvoiceDualHmo()">
+          <option value="" selected>None / No Secondary HMO</option>
+          <option value="Maxicare Healthcare Corporation">Maxicare Healthcare Corporation</option>
+          <option value="Intellicare (Asalus Corporation)">Intellicare (Asalus Corporation)</option>
+          <option value="Medicard Philippines, Inc.">Medicard Philippines, Inc.</option>
+          <option value="PhilCare (PhilhealthCare, Inc.)">PhilCare (PhilhealthCare, Inc.)</option>
+          <option value="Cocolife Healthcare">Cocolife Healthcare</option>
+          <option value="Etiqa Life &amp; General Insurance">Etiqa Life &amp; General Insurance</option>
+          <option value="ValuCare Health Systems, Inc.">ValuCare Health Systems, Inc.</option>
+          <option value="Pacific Cross Philippines">Pacific Cross Philippines</option>
+          <option value="InLife Health Care">InLife Health Care (Insular)</option>
+          <option value="CareHealth Plus Systems">CareHealth Plus Systems</option>
+          <option value="Eastwest Healthcare">Eastwest Healthcare</option>
+          <option value="Generali Life Assurance">Generali Life Assurance</option>
+          <option value="__OTHER__">Other / Corporate Payor (Specify)</option>
+        </select>
+        <input type="text" id="invSecondaryHmoOther" class="form-control form-control-sm mt-1" placeholder="Specify Secondary HMO..." style="display: none;" oninput="syncInvoiceDualHmo()">
+      </div>
+      <div class="col-md-12">
+        <label class="form-label small fw-semibold text-muted">Total HMO Approved Benefit Limit (₱)</label>
+        <div class="input-group input-group-sm">
+          <span class="input-group-text">₱</span>
+          <input type="number" step="0.01" min="0" name="hmo_approved_limit" class="form-control font-monospace" placeholder="0.00">
+        </div>
+      </div>
+    </div>
+    <input type="hidden" name="hmo_provider" id="invHmoFinal" value="">
+  </div>
+
+  <!-- Step 3: Itemized Hospital Charges -->
+  <div class="mb-1">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h6 class="fw-bold text-dark fs-xs text-uppercase mb-0">
+        <i class="ph ph-list-numbers me-1 text-primary"></i> Itemized Clinical &amp; Hospital Charges
+      </h6>
+      <button type="button" class="btn btn-outline-primary btn-sm py-1 px-2 fs-xs" onclick="addModalInvoiceRow()">
+        <i class="ph ph-plus me-1"></i> Add Line Charge
+      </button>
+    </div>
+
+    <div class="table-responsive border rounded-3">
+      <table class="table table-sm align-middle mb-0 fs-xs" id="tableModalInvoiceItems">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 40%;">Description of Service / Medication <span class="text-danger">*</span></th>
+            <th style="width: 20%;">Department</th>
+            <th style="width: 12%;" class="text-center">Qty <span class="text-danger">*</span></th>
+            <th style="width: 15%;" class="text-end">Unit Price (₱) <span class="text-danger">*</span></th>
+            <th style="width: 13%;" class="text-end">Gross (₱)</th>
+            <th style="width: 50px;"></th>
+          </tr>
+        </thead>
+        <tbody id="modalInvoiceItemsBody">
+          <tr>
+            <td>
+              <input type="text" name="items[0][description]" class="form-control form-control-sm" placeholder="e.g. Inpatient Room &amp; Board Accommodation" required>
+              <input type="hidden" name="items[0][is_vatable]" value="1">
+              <input type="hidden" name="items[0][is_senior_pwd_eligible]" value="1">
+            </td>
+            <td>
+              <select name="items[0][department]" class="form-select form-select-sm">
+                <option value="CLINICAL" selected>Clinical / Ward</option>
+                <option value="PHARMACY">Pharmacy</option>
+                <option value="LABORATORY">Laboratory</option>
+                <option value="IMAGING">Radiology</option>
+                <option value="OR">Operating Room</option>
+              </select>
+            </td>
+            <td>
+              <input type="number" step="1" min="1" name="items[0][quantity]" class="form-control form-control-sm text-center item-qty" value="1" required oninput="recalcInvoiceModalRow(this)">
+            </td>
+            <td>
+              <input type="number" step="0.01" min="0" name="items[0][unit_price]" class="form-control form-control-sm text-end font-monospace item-price" placeholder="0.00" required oninput="recalcInvoiceModalRow(this)">
+            </td>
+            <td class="text-end font-monospace fw-bold text-dark item-line-gross">₱ 0.00</td>
+            <td class="text-center text-muted">
+              <i class="ph ph-lock small" title="At least one charge required"></i>
+            </td>
+          </tr>
+        </tbody>
+        <tfoot class="table-light fw-bold">
+          <tr>
+            <td colspan="4" class="text-end">Estimated Incurred Gross Total:</td>
+            <td class="text-end font-monospace text-primary fs-6" id="modalInvoiceGrossTotal">₱ 0.00</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</x-modal>
 @endsection
 
 @push('scripts')
@@ -377,7 +569,7 @@ function openInvoiceDetailsDrawer(btn) {
       if (data.statutory_category === 'PWD') {
         statBadgeEl.innerHTML = `<span class="badge bg-teal-subtle text-teal border border-teal-subtle ms-1" style="background-color: #e6fffa; color: #0d9488; border-color: #99f6e4 !important;"><i class="ph ph-wheelchair me-1"></i>♿ PWD 20%</span>`;
       } else if (data.statutory_category === 'SENIOR_CITIZEN') {
-        statBadgeEl.innerHTML = `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle ms-1"><i class="ph ph-heart me-1"></i>👴 Senior 20%</span>`;
+        statBadgeEl.innerHTML = `<span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle ms-1"><i class="ph ph-identification-card me-1"></i>Senior 20%</span>`;
       } else {
         statBadgeEl.innerHTML = '';
       }
@@ -452,6 +644,168 @@ function openInvoiceDetailsDrawer(btn) {
     bsOffcanvas.show();
   } catch (err) {
     console.error('Failed to parse invoice drawer data:', err);
+  }
+}
+
+// Modal Form Interactivity
+function handlePatientSelectForInvoice(sel) {
+  const opt = sel.options[sel.selectedIndex];
+  if (!opt || !opt.value) return;
+
+  const discount = opt.getAttribute('data-discount') || 'NONE';
+  const idcard = opt.getAttribute('data-idcard') || '';
+  const hmo = opt.getAttribute('data-hmo') || '';
+  const parts = hmo.split(',').map(s => s.trim()).filter(Boolean);
+  const primaryVal = parts[0] || '';
+  const secondaryVal = parts[1] || '';
+
+  const pSelect = document.getElementById('invPrimaryHmoSelect');
+  const pOther = document.getElementById('invPrimaryHmoOther');
+  const sSelect = document.getElementById('invSecondaryHmoSelect');
+  const sOther = document.getElementById('invSecondaryHmoOther');
+
+  setDropdownOrOther(pSelect, pOther, primaryVal);
+  setDropdownOrOther(sSelect, sOther, secondaryVal);
+  syncInvoiceDualHmo();
+}
+
+function setDropdownOrOther(selectEl, otherEl, value) {
+  if (!selectEl) return;
+  if (!value) {
+    selectEl.selectedIndex = 0;
+    if (otherEl) { otherEl.style.display = 'none'; otherEl.value = ''; }
+    return;
+  }
+  let matched = false;
+  for (let i = 0; i < selectEl.options.length; i++) {
+    if (selectEl.options[i].value === value) {
+      selectEl.selectedIndex = i;
+      matched = true;
+      break;
+    }
+  }
+  if (!matched) {
+    selectEl.value = '__OTHER__';
+    if (otherEl) {
+      otherEl.style.display = 'block';
+      otherEl.value = value;
+    }
+  } else {
+    if (otherEl) {
+      otherEl.style.display = 'none';
+      otherEl.value = '';
+    }
+  }
+}
+
+function syncInvoiceDualHmo() {
+  const pSelect = document.getElementById('invPrimaryHmoSelect');
+  const pOther = document.getElementById('invPrimaryHmoOther');
+  const sSelect = document.getElementById('invSecondaryHmoSelect');
+  const sOther = document.getElementById('invSecondaryHmoOther');
+  const finalInput = document.getElementById('invHmoFinal');
+
+  if (!pSelect || !sSelect || !finalInput) return;
+
+  let primary = pSelect.value;
+  if (pSelect.value === '__OTHER__') {
+    pOther.style.display = 'block';
+    primary = pOther.value.trim();
+  } else {
+    pOther.style.display = 'none';
+    pOther.value = '';
+  }
+
+  let secondary = sSelect.value;
+  if (sSelect.value === '__OTHER__') {
+    sOther.style.display = 'block';
+    secondary = sOther.value.trim();
+  } else {
+    sOther.style.display = 'none';
+    sOther.value = '';
+  }
+
+  const providers = [];
+  if (primary) providers.push(primary);
+  if (secondary) providers.push(secondary);
+
+  finalInput.value = providers.join(', ');
+}
+
+let modalInvoiceRowIndex = 1;
+function addModalInvoiceRow() {
+  const tbody = document.getElementById('modalInvoiceItemsBody');
+  const tr = document.createElement('tr');
+  const idx = modalInvoiceRowIndex++;
+
+  tr.innerHTML = `
+    <td>
+      <input type="text" name="items[${idx}][description]" class="form-control form-control-sm" placeholder="e.g. Diagnostic Laboratory / Surgery Fee / Medications" required>
+      <input type="hidden" name="items[${idx}][is_vatable]" value="1">
+      <input type="hidden" name="items[${idx}][is_senior_pwd_eligible]" value="1">
+    </td>
+    <td>
+      <select name="items[${idx}][department]" class="form-select form-select-sm">
+        <option value="CLINICAL">Clinical / Ward</option>
+        <option value="PHARMACY">Pharmacy</option>
+        <option value="LABORATORY">Laboratory</option>
+        <option value="IMAGING">Radiology</option>
+        <option value="OR">Operating Room</option>
+      </select>
+    </td>
+    <td>
+      <input type="number" step="1" min="1" name="items[${idx}][quantity]" class="form-control form-control-sm text-center item-qty" value="1" required oninput="recalcInvoiceModalRow(this)">
+    </td>
+    <td>
+      <input type="number" step="0.01" min="0" name="items[${idx}][unit_price]" class="form-control form-control-sm text-end font-monospace item-price" placeholder="0.00" required oninput="recalcInvoiceModalRow(this)">
+    </td>
+    <td class="text-end font-monospace fw-bold text-dark item-line-gross">₱ 0.00</td>
+    <td class="text-center">
+      <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="removeModalInvoiceRow(this)" title="Remove item">
+        <i class="ph ph-trash fs-6"></i>
+      </button>
+    </td>
+  `;
+  tbody.appendChild(tr);
+  recalcInvoiceModalTotal();
+}
+
+function removeModalInvoiceRow(btn) {
+  const tr = btn.closest('tr');
+  if (tr) {
+    tr.remove();
+    recalcInvoiceModalTotal();
+  }
+}
+
+function recalcInvoiceModalRow(input) {
+  const tr = input.closest('tr');
+  if (!tr) return;
+
+  const qty = parseFloat(tr.querySelector('.item-qty')?.value) || 0;
+  const price = parseFloat(tr.querySelector('.item-price')?.value) || 0;
+  const lineGross = qty * price;
+
+  const grossCell = tr.querySelector('.item-line-gross');
+  if (grossCell) {
+    grossCell.textContent = '₱ ' + lineGross.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  recalcInvoiceModalTotal();
+}
+
+function recalcInvoiceModalTotal() {
+  let total = 0;
+  const rows = document.querySelectorAll('#modalInvoiceItemsBody tr');
+  rows.forEach(r => {
+    const qty = parseFloat(r.querySelector('.item-qty')?.value) || 0;
+    const price = parseFloat(r.querySelector('.item-price')?.value) || 0;
+    total += (qty * price);
+  });
+
+  const totalEl = document.getElementById('modalInvoiceGrossTotal');
+  if (totalEl) {
+    totalEl.textContent = '₱ ' + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 }
 </script>

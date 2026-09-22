@@ -428,216 +428,207 @@
 <!-- ========================================================= -->
 <!-- Modal: Ingest Purchase Bill with Live 3-Way Match Calculator -->
 <!-- ========================================================= -->
-<div class="modal fade" id="createBillModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-      <div class="modal-header bg-light-subtle border-bottom py-3 px-4">
-        <div class="d-flex align-items-center gap-2">
-          <span class="p-2 rounded-3 bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center">
-            <i class="ph ph-file-plus fs-4"></i>
-          </span>
-          <div>
-            <h5 class="modal-title font-weight-bold mb-0">Ingest Purchase Bill &amp; 3-Way Match</h5>
-            <span class="fs-xs text-muted">Verify incoming supplier sales invoice against Purchase Orders and Warehouse Goods Receipts</span>
-          </div>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- ========================================================= -->
+<!-- Modal: Ingest Purchase Bill with Live 3-Way Match Calculator -->
+<!-- ========================================================= -->
+<x-modal 
+  id="createBillModal" 
+  title="Ingest Purchase Bill & 3-Way Match" 
+  subtitle="Verify incoming supplier sales invoice against Purchase Orders and Warehouse Goods Receipts" 
+  icon="ph-file-plus" 
+  iconVariant="primary" 
+  size="xl" 
+  :scrollable="true" 
+  :centered="true" 
+  formAction="{{ route('ap.purchase-bills.store') }}" 
+  formId="ingestBillForm" 
+  formEnctype="multipart/form-data" 
+  formMethod="POST" 
+  submitText="Post Purchase Bill & 3-Way Match" 
+  submitIcon="ph-check-circle"
+>
+  <!-- 1. Dynamic PO / GRN Preset Selector -->
+  <div class="p-3 bg-primary-subtle rounded-3 border border-primary-subtle mb-3">
+    <div class="row align-items-center g-2">
+      <div class="col-md-4">
+        <label class="form-label small fw-bold text-primary mb-0 d-flex align-items-center gap-1">
+          <i class="ph ph-lightning fs-5"></i> Quick-Fill from Active Procurement:
+        </label>
       </div>
-
-      <form method="POST" action="{{ route('ap.purchase-bills.store') }}" enctype="multipart/form-data" id="ingestBillForm">
-        @csrf
-        <div class="modal-body p-4">
-          <!-- 1. Dynamic PO / GRN Preset Selector -->
-          <div class="p-3 bg-primary-subtle rounded-3 border border-primary-subtle mb-3">
-            <div class="row align-items-center g-2">
-              <div class="col-md-4">
-                <label class="form-label small fw-bold text-primary mb-0 d-flex align-items-center gap-1">
-                  <i class="ph ph-lightning fs-5"></i> Quick-Fill from Active Procurement:
-                </label>
-              </div>
-              <div class="col-md-8">
-                <select id="poPresetSelector" class="form-select form-select-sm bg-white" onchange="applyPoPreset(this.value)">
-                  <option value="">-- Select Active PO from PSM (Procurement) or Enter Custom --</option>
-                  <option value="PO_01" data-vendor="1" data-po="PO-2026-0881" data-grn="GRN-2026-0881" data-amt="85000" data-item="Pharmaceutical Ampoules & Syringes" data-qty="50" data-price="1700" data-atc="WI158">
-                    PO-2026-0881 | MedTech Pharma Inc. | ₱85,000.00 (Supplies)
-                  </option>
-                  <option value="PO_02" data-vendor="2" data-po="PO-2026-0912" data-grn="GRN-2026-0912" data-amt="120000" data-item="Dialysis Filters & Medical Tubing" data-qty="60" data-price="2000" data-atc="WI158">
-                    PO-2026-0912 | B. Braun Medical | ₱120,000.00 (Equipment)
-                  </option>
-                  <option value="PO_03" data-vendor="3" data-po="PO-2026-0955" data-grn="GRN-2026-0955" data-amt="45000" data-item="Bio-Hazard Sterilization Maintenance" data-qty="1" data-price="45000" data-atc="WI160">
-                    PO-2026-0955 | Metro Bio-Pharma | ₱45,000.00 (Services)
-                  </option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <!-- Master Header Row -->
-          <div class="row g-3 mb-3">
-            <div class="col-md-4">
-              <label class="form-label small fw-semibold">Supplier / Vendor <span class="text-danger">*</span></label>
-              <select name="vendor_id" id="modalVendorSelect" class="form-select form-select-sm" required>
-                <option value="">-- Select Vendor --</option>
-                @foreach($vendors as $v)
-                  <option value="{{ $v->id }}" data-tax-type="{{ $v->tax_type ?? 'VAT_REGISTERED' }}" data-ewt="{{ $v->default_ewt_rate ?? '1.00' }}" data-atc="{{ $v->default_atc_code ?? 'WC158' }}">
-                    {{ $v->name }} ({{ $v->code }})
-                  </option>
-                @endforeach
-              </select>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label small fw-semibold">Bill Date <span class="text-danger">*</span></label>
-              <input type="date" name="bill_date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label small fw-semibold">Payment Due Date <span class="text-danger">*</span></label>
-              <input type="date" name="due_date" class="form-control form-control-sm" value="{{ date('Y-m-d', strtotime('+30 days')) }}" required>
-            </div>
-          </div>
-
-          <!-- 3-Way Reference Controls Row -->
-          <div class="card border rounded-3 p-3 bg-light-subtle mb-3">
-            <div class="row g-3">
-              <div class="col-md-4">
-                <label class="form-label small fw-semibold">Purchase Order (PO #)</label>
-                <input type="text" name="po_number" id="modalPoNumber" class="form-control form-control-sm font-monospace" placeholder="e.g. PO-2026-0044" value="PO-{{ date('Ymd') }}-{{ rand(100,999) }}">
-                <div class="mt-1">
-                  <input type="number" step="0.01" min="0" name="po_amount" id="modalPoAmount" class="form-control form-control-sm font-monospace text-end" placeholder="PO Authorized ₱" oninput="recalculateBillTotals()">
-                </div>
-              </div>
-              <div class="col-md-4">
-                <label class="form-label small fw-semibold">Goods Receipt Note (GRN #)</label>
-                <input type="text" name="grn_number" id="modalGrnNumber" class="form-control form-control-sm font-monospace" placeholder="e.g. GRN-2026-0092" value="GRN-{{ date('Ymd') }}-{{ rand(100,999) }}">
-                <div class="mt-1">
-                  <input type="number" step="0.01" min="0" name="grn_amount" id="modalGrnAmount" class="form-control form-control-sm font-monospace text-end" placeholder="GRN Received ₱" oninput="recalculateBillTotals()">
-                </div>
-              </div>
-              <div class="col-md-4">
-                <label class="form-label small fw-semibold">Vendor Sales Invoice # <span class="text-danger">*</span></label>
-                <input type="text" name="vendor_invoice_number" id="modalVendorInvoice" class="form-control form-control-sm font-monospace" placeholder="e.g. SI-88992211" required>
-                <div class="fs-xs text-muted mt-1">Supplier actual billing reference</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Line Items Table -->
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h6 class="fw-bold mb-0 small text-uppercase"><i class="ph ph-list-dashes me-1 text-primary"></i>Bill Item Breakdown &amp; Tax Withholding</h6>
-            <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2" onclick="addBillLineItem()"><i class="ph ph-plus me-1"></i> Add Line</button>
-          </div>
-
-          <div class="table-responsive border rounded-3 mb-3">
-            <table class="table table-sm align-middle mb-0" id="billItemsTable">
-              <thead class="table-light fs-xs">
-                <tr>
-                  <th style="width: 25%;">Item Description</th>
-                  <th style="width: 20%;">Expense Classification</th>
-                  <th style="width: 15%;">BIR ATC Withholding</th>
-                  <th style="width: 12%;" class="text-end">Qty</th>
-                  <th style="width: 13%;" class="text-end">Unit Price (₱)</th>
-                  <th style="width: 15%;" class="text-end">Gross (₱)</th>
-                </tr>
-              </thead>
-              <tbody id="billItemsTbody">
-                <tr>
-                  <td><input type="text" name="items[0][description]" class="form-control form-control-sm item-desc" placeholder="Item description..." required></td>
-                  <td>
-                    <select name="items[0][expense_type]" class="form-select form-select-sm item-expense" onchange="autoSelectAtc(this)">
-                      <option value="GOODS_INVENTORY" data-atc="WI158">Goods / Inventory (1%)</option>
-                      <option value="SERVICES_MAINTENANCE" data-atc="WI160">Services & Maintenance (2%)</option>
-                      <option value="SPACE_RENTAL" data-atc="WC100">Space Rental (5%)</option>
-                      <option value="DOCTOR_PROFESSIONAL_FEE" data-atc="WI010">Doctor PF (10%)</option>
-                      <option value="EXEMPT" data-atc="EXEMPT">Non-Taxable / Exempt (0%)</option>
-                    </select>
-                  </td>
-                  <td>
-                    <select name="items[0][atc_code]" class="form-select form-select-sm item-atc" onchange="recalculateBillTotals()">
-                      <option value="WI158" data-rate="0.01">WI158 (Goods 1%)</option>
-                      <option value="WI160" data-rate="0.02">WI160 (Services 2%)</option>
-                      <option value="WC100" data-rate="0.05">WC100 (Rental 5%)</option>
-                      <option value="WI010" data-rate="0.10">WI010 (Doctor PF 10%)</option>
-                      <option value="EXEMPT" data-rate="0.00">EXEMPT (0%)</option>
-                    </select>
-                  </td>
-                  <td><input type="number" step="1" min="1" name="items[0][quantity]" class="form-control form-control-sm text-end item-qty" value="1" oninput="recalculateBillTotals()" required></td>
-                  <td><input type="number" step="0.01" min="0" name="items[0][unit_price]" class="form-control form-control-sm text-end item-price" value="0.00" oninput="recalculateBillTotals()" required></td>
-                  <td class="text-end font-monospace fw-bold item-line-gross">₱0.00</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- 2. Live 3-Way Match Calculator Card & Total Tax Breakdown -->
-          <div class="row g-3">
-            <div class="col-md-7">
-              <!-- Live 3-Way Match Verification Card -->
-              <div class="card border rounded-3 p-3 h-100 bg-light-subtle">
-                <span class="fs-xs text-uppercase fw-bold text-dark d-flex align-items-center gap-1 mb-2 pb-1 border-bottom">
-                  <i class="ph ph-scales fs-5 text-primary"></i> Live 3-Way Match Calculator &amp; Variance Engine
-                </span>
-                <div class="row g-2 fs-xs">
-                  <div class="col-4">
-                    <span class="text-muted d-block">PO Total:</span>
-                    <strong class="font-monospace fs-6 text-dark" id="livePoTotal">₱0.00</strong>
-                  </div>
-                  <div class="col-4">
-                    <span class="text-muted d-block">GRN Total:</span>
-                    <strong class="font-monospace fs-6 text-dark" id="liveGrnTotal">₱0.00</strong>
-                  </div>
-                  <div class="col-4">
-                    <span class="text-muted d-block">Vendor Invoiced:</span>
-                    <strong class="font-monospace fs-6 text-primary" id="liveInvTotal">₱0.00</strong>
-                  </div>
-                </div>
-
-                <div class="mt-3 pt-2 border-top d-flex align-items-center justify-content-between">
-                  <span class="fs-xs fw-semibold text-muted">Computed Variance:</span>
-                  <div id="liveMatchBadge">
-                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 fs-xs font-monospace">
-                      <i class="ph ph-check-circle me-1"></i> ₱0.00 [3-Way Match Passed]
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-md-5">
-              <!-- Total Calculation Summary -->
-              <div class="card border rounded-3 p-3 bg-light h-100 fs-xs">
-                <div class="d-flex justify-content-between mb-1">
-                  <span>Total Gross Invoiced:</span>
-                  <span class="font-monospace fw-bold" id="lblTotalGross">₱0.00</span>
-                </div>
-                <div class="d-flex justify-content-between mb-1 text-muted">
-                  <span>Estimated BIR 2307 EWT:</span>
-                  <span class="font-monospace text-danger" id="lblTotalEwt">₱0.00</span>
-                </div>
-                <div class="d-flex justify-content-between border-top pt-2 mt-2">
-                  <span class="fw-bold fs-6">Net Accounts Payable:</span>
-                  <span class="font-monospace fw-bold fs-6 text-primary" id="lblTotalNet">₱0.00</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 4. Document Attachment Box -->
-          <div class="mt-3">
-            <label class="form-label small fw-semibold text-muted mb-1"><i class="ph ph-paperclip me-1"></i> Supporting Documents (Scanned Sales Invoice / Delivery Receipt)</label>
-            <div class="border border-dashed rounded-3 p-3 text-center bg-white">
-              <input type="file" name="attachment" id="billAttachment" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png">
-              <span class="fs-xs text-muted d-block mt-1">Accepts PDF, JPG, PNG attachments up to 10MB</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="modal-footer bg-light-subtle border-top py-2 px-4">
-          <button type="button" class="btn btn-sm btn-light border px-3" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-sm btn-primary px-4 fw-semibold"><i class="ph ph-check-circle me-1"></i> Post Purchase Bill &amp; 3-Way Match</button>
-        </div>
-      </form>
+      <div class="col-md-8">
+        <select id="poPresetSelector" class="form-select form-select-sm bg-white" onchange="applyPoPreset(this.value)">
+          <option value="">-- Select Active PO from PSM (Procurement) or Enter Custom --</option>
+          <option value="PO_01" data-vendor="1" data-po="PO-2026-0881" data-grn="GRN-2026-0881" data-amt="85000" data-item="Pharmaceutical Ampoules & Syringes" data-qty="50" data-price="1700" data-atc="WI158">
+            PO-2026-0881 | MedTech Pharma Inc. | ₱85,000.00 (Supplies)
+          </option>
+          <option value="PO_02" data-vendor="2" data-po="PO-2026-0912" data-grn="GRN-2026-0912" data-amt="120000" data-item="Dialysis Filters & Medical Tubing" data-qty="60" data-price="2000" data-atc="WI158">
+            PO-2026-0912 | B. Braun Medical | ₱120,000.00 (Equipment)
+          </option>
+          <option value="PO_03" data-vendor="3" data-po="PO-2026-0955" data-grn="GRN-2026-0955" data-amt="45000" data-item="Bio-Hazard Sterilization Maintenance" data-qty="1" data-price="45000" data-atc="WI160">
+            PO-2026-0955 | Metro Bio-Pharma | ₱45,000.00 (Services)
+          </option>
+        </select>
+      </div>
     </div>
   </div>
-</div>
+
+  <!-- Master Header Row -->
+  <div class="row g-3 mb-3">
+    <div class="col-md-4">
+      <label class="form-label small fw-semibold">Supplier / Vendor <span class="text-danger">*</span></label>
+      <select name="vendor_id" id="modalVendorSelect" class="form-select form-select-sm" required>
+        <option value="">-- Select Vendor --</option>
+        @foreach($vendors as $v)
+          <option value="{{ $v->id }}" data-tax-type="{{ $v->tax_type ?? 'VAT_REGISTERED' }}" data-ewt="{{ $v->default_ewt_rate ?? '1.00' }}" data-atc="{{ $v->default_atc_code ?? 'WC158' }}">
+            {{ $v->name }} ({{ $v->code }})
+          </option>
+        @endforeach
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label small fw-semibold">Bill Date <span class="text-danger">*</span></label>
+      <input type="date" name="bill_date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label small fw-semibold">Payment Due Date <span class="text-danger">*</span></label>
+      <input type="date" name="due_date" class="form-control form-control-sm" value="{{ date('Y-m-d', strtotime('+30 days')) }}" required>
+    </div>
+  </div>
+
+  <!-- 3-Way Reference Controls Row -->
+  <div class="card border rounded-3 p-3 bg-light-subtle mb-3">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label small fw-semibold">Purchase Order (PO #)</label>
+        <input type="text" name="po_number" id="modalPoNumber" class="form-control form-control-sm font-monospace" placeholder="e.g. PO-2026-0044" value="PO-{{ date('Ymd') }}-{{ rand(100,999) }}">
+        <div class="mt-1">
+          <input type="number" step="0.01" min="0" name="po_amount" id="modalPoAmount" class="form-control form-control-sm font-monospace text-end" placeholder="PO Authorized ₱" oninput="recalculateBillTotals()">
+        </div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small fw-semibold">Goods Receipt Note (GRN #)</label>
+        <input type="text" name="grn_number" id="modalGrnNumber" class="form-control form-control-sm font-monospace" placeholder="e.g. GRN-2026-0092" value="GRN-{{ date('Ymd') }}-{{ rand(100,999) }}">
+        <div class="mt-1">
+          <input type="number" step="0.01" min="0" name="grn_amount" id="modalGrnAmount" class="form-control form-control-sm font-monospace text-end" placeholder="GRN Received ₱" oninput="recalculateBillTotals()">
+        </div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label small fw-semibold">Vendor Sales Invoice # <span class="text-danger">*</span></label>
+        <input type="text" name="vendor_invoice_number" id="modalVendorInvoice" class="form-control form-control-sm font-monospace" placeholder="e.g. SI-88992211" required>
+        <div class="fs-xs text-muted mt-1">Supplier actual billing reference</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Line Items Table -->
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <h6 class="fw-bold mb-0 small text-uppercase"><i class="ph ph-list-dashes me-1 text-primary"></i>Bill Item Breakdown &amp; Tax Withholding</h6>
+    <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2" onclick="addBillLineItem()"><i class="ph ph-plus me-1"></i> Add Line</button>
+  </div>
+
+  <div class="table-responsive border rounded-3 mb-3">
+    <table class="table table-sm align-middle mb-0" id="billItemsTable">
+      <thead class="table-light fs-xs">
+        <tr>
+          <th style="width: 25%;">Item Description</th>
+          <th style="width: 20%;">Expense Classification</th>
+          <th style="width: 15%;">BIR ATC Withholding</th>
+          <th style="width: 12%;" class="text-end">Qty</th>
+          <th style="width: 13%;" class="text-end">Unit Price (₱)</th>
+          <th style="width: 15%;" class="text-end">Gross (₱)</th>
+        </tr>
+      </thead>
+      <tbody id="billItemsTbody">
+        <tr>
+          <td><input type="text" name="items[0][description]" class="form-control form-control-sm item-desc" placeholder="Item description..." required></td>
+          <td>
+            <select name="items[0][expense_type]" class="form-select form-select-sm item-expense" onchange="autoSelectAtc(this)">
+              <option value="GOODS_INVENTORY" data-atc="WI158">Goods / Inventory (1%)</option>
+              <option value="SERVICES_MAINTENANCE" data-atc="WI160">Services & Maintenance (2%)</option>
+              <option value="SPACE_RENTAL" data-atc="WC100">Space Rental (5%)</option>
+              <option value="DOCTOR_PROFESSIONAL_FEE" data-atc="WI010">Doctor PF (10%)</option>
+              <option value="EXEMPT" data-atc="EXEMPT">Non-Taxable / Exempt (0%)</option>
+            </select>
+          </td>
+          <td>
+            <select name="items[0][atc_code]" class="form-select form-select-sm item-atc" onchange="recalculateBillTotals()">
+              <option value="WI158" data-rate="0.01">WI158 (Goods 1%)</option>
+              <option value="WI160" data-rate="0.02">WI160 (Services 2%)</option>
+              <option value="WC100" data-rate="0.05">WC100 (Rental 5%)</option>
+              <option value="WI010" data-rate="0.10">WI010 (Doctor PF 10%)</option>
+              <option value="EXEMPT" data-rate="0.00">EXEMPT (0%)</option>
+            </select>
+          </td>
+          <td><input type="number" step="1" min="1" name="items[0][quantity]" class="form-control form-control-sm text-end item-qty" value="1" oninput="recalculateBillTotals()" required></td>
+          <td><input type="number" step="0.01" min="0" name="items[0][unit_price]" class="form-control form-control-sm text-end item-price" value="0.00" oninput="recalculateBillTotals()" required></td>
+          <td class="text-end font-monospace fw-bold item-line-gross">₱0.00</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 2. Live 3-Way Match Calculator Card & Total Tax Breakdown -->
+  <div class="row g-3">
+    <div class="col-md-7">
+      <!-- Live 3-Way Match Verification Card -->
+      <div class="card border rounded-3 p-3 h-100 bg-light-subtle">
+        <span class="fs-xs text-uppercase fw-bold text-dark d-flex align-items-center gap-1 mb-2 pb-1 border-bottom">
+          <i class="ph ph-scales fs-5 text-primary"></i> Live 3-Way Match Calculator &amp; Variance Engine
+        </span>
+        <div class="row g-2 fs-xs">
+          <div class="col-4">
+            <span class="text-muted d-block">PO Total:</span>
+            <strong class="font-monospace fs-6 text-dark" id="livePoTotal">₱0.00</strong>
+          </div>
+          <div class="col-4">
+            <span class="text-muted d-block">GRN Total:</span>
+            <strong class="font-monospace fs-6 text-dark" id="liveGrnTotal">₱0.00</strong>
+          </div>
+          <div class="col-4">
+            <span class="text-muted d-block">Vendor Invoiced:</span>
+            <strong class="font-monospace fs-6 text-primary" id="liveInvTotal">₱0.00</strong>
+          </div>
+        </div>
+
+        <div class="mt-3 pt-2 border-top d-flex align-items-center justify-content-between">
+          <span class="fs-xs fw-semibold text-muted">Computed Variance:</span>
+          <div id="liveMatchBadge">
+            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 fs-xs font-monospace">
+              <i class="ph ph-check-circle me-1"></i> ₱0.00 [3-Way Match Passed]
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-5">
+      <!-- Total Calculation Summary -->
+      <div class="card border rounded-3 p-3 bg-light h-100 fs-xs">
+        <div class="d-flex justify-content-between mb-1">
+          <span>Total Gross Invoiced:</span>
+          <span class="font-monospace fw-bold" id="lblTotalGross">₱0.00</span>
+        </div>
+        <div class="d-flex justify-content-between mb-1 text-muted">
+          <span>Estimated BIR 2307 EWT:</span>
+          <span class="font-monospace text-danger" id="lblTotalEwt">₱0.00</span>
+        </div>
+        <div class="d-flex justify-content-between border-top pt-2 mt-2">
+          <span class="fw-bold fs-6">Net Accounts Payable:</span>
+          <span class="font-monospace fw-bold fs-6 text-primary" id="lblTotalNet">₱0.00</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Document Attachment Box -->
+  <div class="mt-3">
+    <label class="form-label small fw-semibold text-muted mb-1"><i class="ph ph-paperclip me-1"></i> Supporting Documents (Scanned Sales Invoice / Delivery Receipt)</label>
+    <div class="border border-dashed rounded-3 p-3 text-center bg-white">
+      <input type="file" name="attachment" id="billAttachment" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png">
+      <span class="fs-xs text-muted d-block mt-1">Accepts PDF, JPG, PNG attachments up to 10MB</span>
+    </div>
+  </div>
+</x-modal>
 @endsection
 
 @push('scripts')

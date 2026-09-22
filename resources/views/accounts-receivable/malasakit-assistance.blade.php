@@ -10,7 +10,7 @@
   <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
     <div>
       <h1 class="h3 mb-1 font-weight-bold">
-        <i class="ph-fill ph-heart text-danger me-2 align-middle"></i>Malasakit Center Financial Assistance &amp; Subsidies
+        <i class="ph-bold ph-hand-coins text-primary me-2 align-middle"></i>Malasakit Center Financial Assistance &amp; Subsidies
       </h1>
       <p class="text-muted mb-0">
         RA 11463 (Malasakit Centers Act) &bull; RA 11223 (UHC Act) &bull; PCSO, DSWD (AICS), DOH-MAIP Guarantee Letters
@@ -231,7 +231,7 @@
           @empty
             <tr>
               <td colspan="9" class="text-center py-5 text-muted">
-                <i class="ph ph-heart-break fs-1 d-block mb-2 text-danger opacity-50"></i>
+                <i class="ph ph-file-text fs-1 d-block mb-2 text-muted opacity-50"></i>
                 <p class="mb-0 fw-medium">No Guarantee Letters registered yet.</p>
                 <button type="button" class="btn btn-sm btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addGlModal">
                   <i class="ph-bold ph-plus me-1"></i> Register the First Guarantee Letter

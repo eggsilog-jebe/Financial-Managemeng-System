@@ -192,7 +192,7 @@
 
                 @if(! $isZeroCopay)
                   <!-- Settle Payment Modal (Minimalist Fintech Design) -->
-                  <div class="modal fade" id="payModal{{ $inv->id }}" tabindex="-1" aria-hidden="true"
+                  <div class="modal fade" id="payModal{{ $inv->id }}" tabindex="-1" aria-labelledby="payModal{{ $inv->id }}Label" aria-hidden="true"
                        x-data="{
                            settlementAmount: '{{ $copayFormatted }}',
                            paymentMethod: 'CASH',
@@ -248,8 +248,8 @@
                                }
                            }
                        }">
-                    <div class="modal-dialog modal-dialog-centered">
-                      <div class="modal-content border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+                    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+                      <div class="modal-content border-0 shadow-lg hims-modal__content">
                         <form method="POST" action="{{ route('collection.cashier-desk.collect') }}">
                           @csrf
                           <input type="hidden" name="invoice_id" value="{{ $inv->id }}">
@@ -257,15 +257,25 @@
                             <input type="hidden" name="cashier_shift_id" value="{{ $activeShift->id }}">
                           @endif
                           
-                          <!-- Minimal Header -->
-                          <div class="modal-header bg-white border-bottom border-light-subtle py-3 px-4 align-items-center">
-                            <h6 class="modal-title fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                              <i class="ph ph-receipt text-primary fs-5"></i> Counter Settlement
-                            </h6>
-                            <button type="button" class="btn-close fs-xs" data-bs-dismiss="modal" aria-label="Close"></button>
+                          <!-- Modal Header -->
+                          <div class="modal-header hims-modal__header bg-light-subtle border-bottom px-4 py-3 align-items-center">
+                            <div class="d-flex align-items-center gap-2 flex-grow-1 overflow-hidden">
+                              <span class="hims-modal__icon-badge p-2 rounded-3 border d-inline-flex align-items-center justify-content-center flex-shrink-0 bg-primary-subtle text-primary border-primary-subtle">
+                                <i class="ph ph-receipt fs-4"></i>
+                              </span>
+                              <div class="text-truncate">
+                                <h5 class="modal-title fw-bold text-dark mb-0 fs-5 lh-sm text-truncate" id="payModal{{ $inv->id }}Label">
+                                  Counter Settlement
+                                </h5>
+                                <p class="text-muted fs-xs mb-0 mt-1 lh-sm text-truncate">
+                                  Process patient copay collection &amp; issue BIR receipt
+                                </p>
+                              </div>
+                            </div>
+                            <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
                           </div>
 
-                          <div class="modal-body p-4">
+                          <div class="modal-body hims-modal__body p-4">
                             <!-- Patient Summary Card -->
                             <div class="p-3 bg-light border border-light-subtle rounded-3 mb-3">
                               <div class="d-flex justify-content-between text-muted fs-xs mb-1">
@@ -401,10 +411,11 @@
                             </div>
                           </div>
 
-                          <div class="modal-footer bg-white border-top border-light-subtle py-3 px-4 d-flex justify-content-end gap-2">
-                            <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-sm btn-primary px-3 fw-medium shadow-sm" :disabled="isUnderTendered">
-                              <i class="ph ph-check-circle me-1"></i> Post &amp; Issue BIR Receipt
+                          <div class="modal-footer hims-modal__footer bg-light-subtle border-top px-4 py-3 d-flex align-items-center justify-content-between">
+                            <button type="button" class="btn btn-sm btn-light border px-3" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-sm btn-primary px-3 d-inline-flex align-items-center gap-1 hims-btn-submit" :disabled="isUnderTendered">
+                              <i class="ph ph-check-circle"></i>
+                              <span>Post &amp; Issue BIR Receipt</span>
                             </button>
                           </div>
                         </form>
@@ -559,117 +570,113 @@
 </div>
 
 <!-- Modal: Open Terminal Shift -->
-<div class="modal fade" id="openShiftModal" tabindex="-1" aria-labelledby="openShiftModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title font-weight-bold" id="openShiftModalLabel"><i class="ph ph-play-circle me-2 text-primary"></i>Open Cashier Terminal Shift</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body p-4">
-        <form method="POST" action="{{ route('collection.shifts.open') }}">
-          @csrf
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Select POS Station <span class="text-danger">*</span></label>
-            <select name="terminal_name" class="form-select form-select-sm" required>
-              <option value="POS-MAIN-01 (Main Lobby)">POS-MAIN-01 (Main Lobby)</option>
-              <option value="POS-ER-01 (Emergency Room)">POS-ER-01 (Emergency Room)</option>
-              <option value="POS-PHARM-01 (Pharmacy Central)">POS-PHARM-01 (Pharmacy Central)</option>
-              <option value="POS-OPD-01 (Outpatient Consultation)">POS-OPD-01 (Outpatient Consultation)</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Opening Cash Float (₱) <span class="text-danger">*</span></label>
-            <input type="number" step="0.01" min="0" name="opening_cash_float" class="form-control form-control-sm text-end font-monospace" value="5000.00" required>
-            <span class="fs-xs text-muted">Amount of physical petty cash drawer assigned at start of shift.</span>
-          </div>
-          <div class="d-flex justify-content-end gap-2 mt-4">
-            <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-check me-1"></i> Start Shift Now</button>
-          </div>
-        </form>
-      </div>
-    </div>
+<x-modal 
+  id="openShiftModal" 
+  title="Open Cashier Terminal Shift" 
+  subtitle="Assign station and opening cash drawer float" 
+  icon="ph-play-circle" 
+  iconVariant="primary" 
+  size="md" 
+  formAction="{{ route('collection.shifts.open') }}" 
+  formMethod="POST" 
+  submitText="Start Shift Now" 
+  submitIcon="ph-check"
+>
+  <div class="mb-3">
+    <label class="form-label small fw-semibold">Select POS Station <span class="text-danger">*</span></label>
+    <select name="terminal_name" class="form-select form-select-sm" required>
+      <option value="POS-MAIN-01 (Main Lobby)">POS-MAIN-01 (Main Lobby)</option>
+      <option value="POS-ER-01 (Emergency Room)">POS-ER-01 (Emergency Room)</option>
+      <option value="POS-PHARM-01 (Pharmacy Central)">POS-PHARM-01 (Pharmacy Central)</option>
+      <option value="POS-OPD-01 (Outpatient Consultation)">POS-OPD-01 (Outpatient Consultation)</option>
+    </select>
   </div>
-</div>
+  <div class="mb-0">
+    <label class="form-label small fw-semibold">Opening Cash Float (₱) <span class="text-danger">*</span></label>
+    <input type="number" step="0.01" min="0" name="opening_cash_float" class="form-control form-control-sm text-end font-monospace" value="5000.00" required>
+    <span class="fs-xs text-muted">Amount of physical petty cash drawer assigned at start of shift.</span>
+  </div>
+</x-modal>
 
 <!-- Modal: Close Shift & Turnover (Real-Time Variance Calculator) -->
 @if($activeShift)
-<div class="modal fade" id="closeShiftModal" tabindex="-1" aria-labelledby="closeShiftModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow">
-      <div class="modal-header bg-warning-subtle text-warning-emphasis border-0 pb-2">
-        <h5 class="modal-title font-weight-bold" id="closeShiftModalLabel"><i class="ph ph-scales me-2"></i>Close Shift &amp; Drawer Turnover</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body p-4">
-        <form method="POST" action="{{ route('collection.shifts.close') }}">
-          @csrf
-          <input type="hidden" name="shift_id" value="{{ $activeShift->id }}">
+<x-modal 
+  id="closeShiftModal" 
+  title="Close Shift & Drawer Turnover" 
+  subtitle="Reconcile collected cash with system expected balance" 
+  icon="ph-scales" 
+  iconVariant="warning" 
+  size="md" 
+  formAction="{{ route('collection.shifts.close') }}" 
+  formMethod="POST" 
+  submitText="Close & Generate Turnover" 
+  submitIcon="ph-lock" 
+  submitVariant="btn-warning"
+>
+  <input type="hidden" name="shift_id" value="{{ $activeShift->id }}">
 
-          <!-- Shift Metrics Breakdown -->
-          <div class="p-3 bg-light rounded-3 mb-3 fs-xs">
-            <div class="d-flex justify-content-between mb-1">
-              <span class="text-muted">Terminal Station:</span>
-              <strong class="text-dark">{{ $activeShift->terminal_name }}</strong>
-            </div>
-            <div class="d-flex justify-content-between mb-1">
-              <span class="text-muted">Shift Code:</span>
-              <span class="font-monospace text-primary fw-bold">{{ $activeShift->shift_code }}</span>
-            </div>
-            <div class="d-flex justify-content-between mb-1">
-              <span class="text-muted">Opening Cash Float:</span>
-              <span class="font-monospace">₱{{ number_format((float) $activeShift->opening_cash_float, 2) }}</span>
-            </div>
-            <div class="d-flex justify-content-between mb-1">
-              <span class="text-muted">Digital / Card Collections:</span>
-              <span class="font-monospace">₱{{ number_format((float) $activeShift->total_digital_collections, 2) }}</span>
-            </div>
-            <hr class="my-2">
-            <div class="d-flex justify-content-between fs-sm fw-bold">
-              <span>System Expected Cash:</span>
-              <span class="text-success font-monospace">₱{{ number_format((float) $activeShift->expected_cash, 2) }}</span>
-              <input type="hidden" id="modalExpectedCash" value="{{ (float) $activeShift->expected_cash }}">
-            </div>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Actual Physical Cash Counted (₱) <span class="text-danger">*</span></label>
-            <input type="number" step="0.01" min="0" name="actual_cash_counted" id="modalActualCash" class="form-control form-control-sm text-end font-monospace fw-bold" required oninput="calcShiftVariance()">
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Calculated Drawer Variance</label>
-            <input type="text" id="modalVarianceDisplay" class="form-control form-control-sm bg-light text-end font-monospace fw-bold" value="₱0.00" readonly>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Variance Reason / Explanation (Optional)</label>
-            <textarea name="variance_reason" rows="2" class="form-control form-control-sm" placeholder="Explain any cash overage or shortage..."></textarea>
-          </div>
-
-          <div class="d-flex justify-content-end gap-2 mt-4">
-            <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-sm btn-warning"><i class="ph ph-lock me-1"></i> Close &amp; Generate Turnover</button>
-          </div>
-        </form>
-      </div>
+  <!-- Shift Metrics Breakdown -->
+  <div class="p-3 bg-light rounded-3 mb-3 fs-xs border border-light-subtle">
+    <div class="d-flex justify-content-between mb-1">
+      <span class="text-muted">Terminal Station:</span>
+      <strong class="text-dark">{{ $activeShift->terminal_name }}</strong>
+    </div>
+    <div class="d-flex justify-content-between mb-1">
+      <span class="text-muted">Shift Code:</span>
+      <span class="font-monospace text-primary fw-bold">{{ $activeShift->shift_code }}</span>
+    </div>
+    <div class="d-flex justify-content-between mb-1">
+      <span class="text-muted">Opening Cash Float:</span>
+      <span class="font-monospace">₱{{ number_format((float) $activeShift->opening_cash_float, 2) }}</span>
+    </div>
+    <div class="d-flex justify-content-between mb-1">
+      <span class="text-muted">Digital / Card Collections:</span>
+      <span class="font-monospace">₱{{ number_format((float) $activeShift->total_digital_collections, 2) }}</span>
+    </div>
+    <hr class="my-2">
+    <div class="d-flex justify-content-between fs-sm fw-bold">
+      <span>System Expected Cash:</span>
+      <span class="text-success font-monospace">₱{{ number_format((float) $activeShift->expected_cash, 2) }}</span>
+      <input type="hidden" id="modalExpectedCash" value="{{ (float) $activeShift->expected_cash }}">
     </div>
   </div>
-</div>
+
+  <div class="mb-3">
+    <label class="form-label small fw-semibold">Actual Physical Cash Counted (₱) <span class="text-danger">*</span></label>
+    <input type="number" step="0.01" min="0" name="actual_cash_counted" id="modalActualCash" class="form-control form-control-sm text-end font-monospace fw-bold" required oninput="calcShiftVariance()">
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label small fw-semibold">Calculated Drawer Variance</label>
+    <input type="text" id="modalVarianceDisplay" class="form-control form-control-sm bg-light text-end font-monospace fw-bold" value="₱0.00" readonly>
+  </div>
+
+  <div class="mb-0">
+    <label class="form-label small fw-semibold">Variance Reason / Explanation (Optional)</label>
+    <textarea name="variance_reason" rows="2" class="form-control form-control-sm" placeholder="Explain any cash overage or shortage..."></textarea>
+  </div>
+</x-modal>
 @endif
 
 <!-- Printable Shift Turnover / Bag Tag Summary Modal -->
 @if(session('turnover_summary'))
 @php $t = session('turnover_summary'); @endphp
-<div class="modal fade show d-block" id="turnoverPrintModal" tabindex="-1" style="background: rgba(0,0,0,0.5);">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-      <div class="modal-header bg-dark text-white border-0 py-3 px-4">
-        <h5 class="modal-title fw-bold mb-0"><i class="ph ph-tag me-2"></i>Physical Cash Turnover Bag Tag</h5>
-        <a href="{{ route('collection.cashier-desk') }}" class="btn-close btn-close-white"></a>
+<div class="modal fade show d-block" id="turnoverPrintModal" tabindex="-1" style="background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(6px);">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content border-0 shadow-lg hims-modal__content">
+      <div class="modal-header hims-modal__header bg-dark text-white border-0 py-3 px-4">
+        <div class="d-flex align-items-center gap-2">
+          <span class="p-2 rounded-3 bg-secondary-subtle text-white border border-secondary d-inline-flex align-items-center justify-content-center">
+            <i class="ph ph-tag fs-4"></i>
+          </span>
+          <div>
+            <h5 class="modal-title fw-bold mb-0">Physical Cash Turnover Bag Tag</h5>
+            <small class="text-light-subtle fs-xs">Shift reconciliation and custody turnover slip</small>
+          </div>
+        </div>
+        <a href="{{ route('collection.cashier-desk') }}" class="btn-close btn-close-white" aria-label="Close"></a>
       </div>
-      <div class="modal-body p-4" id="printableTurnoverArea">
+      <div class="modal-body hims-modal__body p-4" id="printableTurnoverArea">
         <div class="text-center border-bottom pb-2 mb-3">
           <h6 class="fw-bold mb-0 text-uppercase">St. Jude Metropolitan Medical Center</h6>
           <small class="text-muted fs-xs">Cashier Shift Custody Turnover Slip &bull; BIR CAS Audited</small>
@@ -704,9 +711,9 @@
           </div>
         </div>
       </div>
-      <div class="modal-footer bg-light border-0 py-2 px-4">
-        <a href="{{ route('collection.cashier-desk') }}" class="btn btn-sm btn-light border">Close</a>
-        <button type="button" class="btn btn-sm btn-dark" onclick="window.print()"><i class="ph ph-printer me-1"></i> Print Turnover Tag</button>
+      <div class="modal-footer hims-modal__footer bg-light-subtle border-top py-3 px-4 d-flex align-items-center justify-content-between">
+        <a href="{{ route('collection.cashier-desk') }}" class="btn btn-sm btn-light border px-3">Close</a>
+        <button type="button" class="btn btn-sm btn-dark px-3 d-inline-flex align-items-center gap-1" onclick="window.print()"><i class="ph ph-printer"></i> <span>Print Turnover Tag</span></button>
       </div>
     </div>
   </div>

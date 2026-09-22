@@ -27,7 +27,7 @@ final class StorePatientInvoiceRequest extends FormRequest
             'philhealth_primary_case_rate_amount'   => ['nullable', 'numeric', 'min:0'],
             'philhealth_secondary_case_code'        => ['nullable', 'string', 'max:30'],
             'philhealth_secondary_case_rate_amount' => ['nullable', 'numeric', 'min:0'],
-            'hmo_provider'                          => ['nullable', 'string', 'max:100'],
+            'hmo_provider'                          => ['nullable', 'string', 'max:255'],
             'hmo_loa_number'                        => ['nullable', 'string', 'max:50'],
             'hmo_card_number'                       => ['nullable', 'string', 'max:50'],
             'hmo_approved_limit'                    => ['nullable', 'numeric', 'min:0'],

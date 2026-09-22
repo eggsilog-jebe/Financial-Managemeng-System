@@ -23,7 +23,7 @@ final class StorePatientAccountRequest extends FormRequest
             'admission_type'    => ['required', 'string', 'in:Inpatient,Outpatient,Emergency'],
             'discount_category' => ['nullable', 'string', 'in:NONE,SENIOR_CITIZEN,PWD,EMPLOYEE_SUBSIDY,EMPLOYEE,CHARITY'],
             'id_card_number'    => ['nullable', 'string', 'max:50'],
-            'hmo_provider'      => ['nullable', 'string', 'max:100'],
+            'hmo_provider'      => ['nullable', 'string', 'max:255'],
             'phone'             => ['nullable', 'string', 'max:50'],
             'email'             => ['nullable', 'email', 'max:100'],
             'address'           => ['nullable', 'string', 'max:255'],

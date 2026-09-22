@@ -52,6 +52,9 @@
       <a href="#" class="btn btn-outline-secondary btn-sm" onclick="alert('Exporting Payor Directory CSV...'); return false;">
         <i class="ph ph-download-simple me-1"></i> Export Payor Directory CSV
       </a>
+      <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#createPatientModal">
+        <i class="ph ph-user-plus me-1"></i> Register Patient Account
+      </button>
     </div>
   </div>
 
@@ -150,7 +153,7 @@
               <td>
                 <span class="badge bg-light text-dark border">{{ $acc->admission_type ?? 'Inpatient' }}</span>
                 @if($discount === 'SENIOR_CITIZEN')
-                  <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle ms-1"><i class="ph ph-heart me-1"></i>Senior 20%</span>
+                  <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle ms-1"><i class="ph ph-identification-card me-1"></i>Senior 20%</span>
                 @elseif($discount === 'PWD')
                   <span class="badge bg-teal-subtle text-teal border border-teal-subtle ms-1" style="background-color: #e6fffa; color: #0d9488; border-color: #99f6e4 !important;"><i class="ph ph-wheelchair me-1"></i>PWD 20%</span>
                 @elseif($discount === 'EMPLOYEE_SUBSIDY' || $discount === 'EMPLOYEE')
@@ -163,7 +166,11 @@
                 <div class="d-flex flex-column gap-1">
                   <div>
                     @if($acc->hmo_provider)
-                      <span class="badge bg-info-subtle text-info border border-info-subtle"><i class="ph ph-shield me-1"></i> {{ $acc->hmo_provider }}</span>
+                      @foreach(explode(',', $acc->hmo_provider) as $hmoItem)
+                        <span class="badge bg-info-subtle text-info border border-info-subtle d-inline-block text-truncate mb-1" style="max-width: 220px;" title="{{ trim($hmoItem) }}">
+                          <i class="ph ph-shield me-1"></i>{{ trim($hmoItem) }}
+                        </span>
+                      @endforeach
                     @else
                       <span class="badge bg-light text-muted border">Self-Pay (Cash)</span>
                     @endif
@@ -251,7 +258,7 @@
                         <div class="col-6">
                           <span class="text-muted d-block">Statutory Category:</span>
                           @if($discount === 'SENIOR_CITIZEN')
-                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle fs-xs"><i class="ph ph-heart me-1"></i>Senior Citizen (RA 9994)</span>
+                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle fs-xs"><i class="ph ph-identification-card me-1"></i>Senior Citizen (RA 9994)</span>
                           @elseif($discount === 'PWD')
                             <span class="badge bg-teal-subtle border fs-xs" style="background-color: #e6fffa; color: #0d9488; border-color: #99f6e4 !important;"><i class="ph ph-wheelchair me-1"></i>PWD (RA 10754)</span>
                           @elseif($discount === 'EMPLOYEE_SUBSIDY' || $discount === 'EMPLOYEE')
@@ -361,4 +368,165 @@
     </div>
   </div>
 </div>
+
+<!-- Modal: Register Patient Account -->
+<x-modal 
+    id="createPatientModal" 
+    title="Register Patient Billing Profile"
+    subtitle="Create an active patient billing account for clinical charges, statutory discounts & HMO tracking."
+    icon="ph-user-plus"
+    iconVariant="primary"
+    size="lg"
+    :scrollable="true"
+    :centered="true"
+    formAction="{{ route('ar.patients.store') }}"
+    formMethod="POST"
+    submitText="Save & Register Patient"
+    submitIcon="ph-check"
+>
+  <div class="row g-3 mb-3">
+    <div class="col-md-7">
+      <label class="form-label small fw-semibold text-dark">Patient Full Name <span class="text-danger">*</span></label>
+      <input type="text" name="full_name" class="form-control form-control-sm" placeholder="e.g. Juan Dela Cruz" required>
+    </div>
+    <div class="col-md-5">
+      <label class="form-label small fw-semibold text-dark">Patient MRN / ID Number</label>
+      <input type="text" name="patient_mrn" class="form-control form-control-sm font-monospace" placeholder="e.g. MRN-2026-00451 (Leave blank to auto-generate)">
+    </div>
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-4">
+      <label class="form-label small fw-semibold text-dark">Admission / Care Type <span class="text-danger">*</span></label>
+      <select name="admission_type" class="form-select form-select-sm" required>
+        <option value="Inpatient" selected>Inpatient (Admitted Ward/ICU)</option>
+        <option value="Outpatient">Outpatient (Clinic/Consultation)</option>
+        <option value="Emergency">Emergency (ER Room)</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label small fw-semibold text-dark">Statutory Discount Category</label>
+      <select name="discount_category" class="form-select form-select-sm">
+        <option value="NONE" selected>None / Regular</option>
+        <option value="SENIOR_CITIZEN">Senior Citizen (RA 9994: 20% + VAT Exemption)</option>
+        <option value="PWD">PWD (RA 10754: 20% + VAT Exemption)</option>
+        <option value="EMPLOYEE">Hospital Employee / Dependent Subsidy</option>
+        <option value="CHARITY">Charity / Medical Social Services</option>
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label small fw-semibold text-dark">Statutory ID Card Number</label>
+      <input type="text" name="id_card_number" class="form-control form-control-sm font-monospace" placeholder="e.g. OSCA-98741 or PWD-5542">
+    </div>
+  </div>
+
+  <!-- HMO Coverage (Supports Primary & Secondary Dual HMO / COB) -->
+  <div class="card border border-light-subtle bg-light-subtle p-3 rounded-3 mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h6 class="fw-bold text-dark fs-xs text-uppercase mb-0">
+        <i class="ph ph-shield-check me-1 text-primary"></i> Health Insurance Coverage (Dual HMO / COB)
+      </h6>
+      <span class="badge bg-primary-subtle text-primary border border-primary-subtle fs-xxs">Select up to 2 HMOs</span>
+    </div>
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label small fw-semibold text-dark">Primary HMO Provider</label>
+        <select id="patientPrimaryHmoSelect" class="form-select form-select-sm" onchange="syncPatientDualHmo()">
+          <option value="" selected>None / Direct Self-Pay</option>
+          <option value="Maxicare Healthcare Corporation">Maxicare Healthcare Corporation</option>
+          <option value="Intellicare (Asalus Corporation)">Intellicare (Asalus Corporation)</option>
+          <option value="Medicard Philippines, Inc.">Medicard Philippines, Inc.</option>
+          <option value="PhilCare (PhilhealthCare, Inc.)">PhilCare (PhilhealthCare, Inc.)</option>
+          <option value="Cocolife Healthcare">Cocolife Healthcare</option>
+          <option value="Etiqa Life &amp; General Insurance">Etiqa Life &amp; General Insurance</option>
+          <option value="ValuCare Health Systems, Inc.">ValuCare Health Systems, Inc.</option>
+          <option value="Pacific Cross Philippines">Pacific Cross Philippines</option>
+          <option value="InLife Health Care">InLife Health Care (Insular)</option>
+          <option value="CareHealth Plus Systems">CareHealth Plus Systems</option>
+          <option value="Eastwest Healthcare">Eastwest Healthcare</option>
+          <option value="Generali Life Assurance">Generali Life Assurance</option>
+          <option value="__OTHER__">Other / Corporate Payor (Specify)</option>
+        </select>
+        <input type="text" id="patientPrimaryHmoOther" class="form-control form-control-sm mt-1" placeholder="Specify Primary HMO name..." style="display: none;" oninput="syncPatientDualHmo()">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label small fw-semibold text-dark">
+          Secondary HMO <span class="text-muted fw-normal fs-xs">(Optional - Cross Coverage)</span>
+        </label>
+        <select id="patientSecondaryHmoSelect" class="form-select form-select-sm" onchange="syncPatientDualHmo()">
+          <option value="" selected>None / No Secondary HMO</option>
+          <option value="Maxicare Healthcare Corporation">Maxicare Healthcare Corporation</option>
+          <option value="Intellicare (Asalus Corporation)">Intellicare (Asalus Corporation)</option>
+          <option value="Medicard Philippines, Inc.">Medicard Philippines, Inc.</option>
+          <option value="PhilCare (PhilhealthCare, Inc.)">PhilCare (PhilhealthCare, Inc.)</option>
+          <option value="Cocolife Healthcare">Cocolife Healthcare</option>
+          <option value="Etiqa Life &amp; General Insurance">Etiqa Life &amp; General Insurance</option>
+          <option value="ValuCare Health Systems, Inc.">ValuCare Health Systems, Inc.</option>
+          <option value="Pacific Cross Philippines">Pacific Cross Philippines</option>
+          <option value="InLife Health Care">InLife Health Care (Insular)</option>
+          <option value="CareHealth Plus Systems">CareHealth Plus Systems</option>
+          <option value="Eastwest Healthcare">Eastwest Healthcare</option>
+          <option value="Generali Life Assurance">Generali Life Assurance</option>
+          <option value="__OTHER__">Other / Corporate Payor (Specify)</option>
+        </select>
+        <input type="text" id="patientSecondaryHmoOther" class="form-control form-control-sm mt-1" placeholder="Specify Secondary HMO name..." style="display: none;" oninput="syncPatientDualHmo()">
+      </div>
+    </div>
+    <input type="hidden" name="hmo_provider" id="patientHmoFinal" value="">
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">
+      <label class="form-label small fw-semibold text-dark">Contact Phone Number</label>
+      <input type="text" name="phone" class="form-control form-control-sm" placeholder="e.g. 0917-123-4567">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label small fw-semibold text-dark">Email Address</label>
+      <input type="email" name="email" class="form-control form-control-sm" placeholder="patient@example.com">
+    </div>
+  </div>
+
+  <div class="mb-1">
+    <label class="form-label small fw-semibold text-dark">Home / Billing Address</label>
+    <input type="text" name="address" class="form-control form-control-sm" placeholder="Barangay, City / Municipality, Province">
+  </div>
+</x-modal>
 @endsection
+
+@push('scripts')
+<script>
+function syncPatientDualHmo() {
+  const pSelect = document.getElementById('patientPrimaryHmoSelect');
+  const pOther = document.getElementById('patientPrimaryHmoOther');
+  const sSelect = document.getElementById('patientSecondaryHmoSelect');
+  const sOther = document.getElementById('patientSecondaryHmoOther');
+  const finalInput = document.getElementById('patientHmoFinal');
+
+  if (!pSelect || !sSelect || !finalInput) return;
+
+  let primary = pSelect.value;
+  if (pSelect.value === '__OTHER__') {
+    pOther.style.display = 'block';
+    primary = pOther.value.trim();
+  } else {
+    pOther.style.display = 'none';
+    pOther.value = '';
+  }
+
+  let secondary = sSelect.value;
+  if (sSelect.value === '__OTHER__') {
+    sOther.style.display = 'block';
+    secondary = sOther.value.trim();
+  } else {
+    sOther.style.display = 'none';
+    sOther.value = '';
+  }
+
+  const providers = [];
+  if (primary) providers.push(primary);
+  if (secondary) providers.push(secondary);
+
+  finalInput.value = providers.join(', ');
+}
+</script>
+@endpush

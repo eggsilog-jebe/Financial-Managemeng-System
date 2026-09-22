@@ -14,42 +14,6 @@
   <link rel="stylesheet" href="{{ asset('assets/css/components/typography-accessibility.css') }}">
   <style>
     /* Enterprise Polish & Ergonomic Input Styles */
-    .hospital-header-seal {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding-bottom: 14px;
-      margin-bottom: 18px;
-      border-bottom: 1px solid #f1f5f9;
-    }
-    .hospital-seal-icon {
-      width: 38px;
-      height: 38px;
-      border-radius: 8px;
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
-      color: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.25rem;
-      flex-shrink: 0;
-      box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2);
-    }
-    .hospital-seal-text h4 {
-      margin: 0;
-      font-size: 0.84rem;
-      font-weight: 700;
-      color: #0f172a;
-      letter-spacing: -0.01em;
-    }
-    .hospital-seal-text p {
-      margin: 0;
-      font-size: 0.69rem;
-      font-weight: 600;
-      color: #64748b;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
     .input-icon-wrapper {
       position: relative;
       display: flex;
@@ -116,25 +80,101 @@
       font-weight: 500;
       animation: fadeIn 0.15s ease-in-out;
     }
-    .legal-notice-box {
-      margin-top: 18px;
-      padding: 9px 12px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-left: 3px solid #059669;
-      border-radius: 6px;
-      font-size: 0.70rem;
-      color: #475569;
-      line-height: 1.45;
-      display: flex;
-      gap: 8px;
-      align-items: flex-start;
+    .login-panel {
+      padding: 20px 24px !important;
     }
-    .legal-notice-box i {
-      font-size: 1rem;
-      color: #059669;
+    .login-card {
+      padding: 22px 26px !important;
+      border-radius: 12px !important;
+    }
+    .hospital-header-seal {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .hospital-seal-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
       flex-shrink: 0;
-      margin-top: 1px;
+      box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2);
+    }
+    .hospital-seal-text h4 {
+      margin: 0;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.01em;
+    }
+    .hospital-seal-text p {
+      margin: 0;
+      font-size: 0.67rem;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .login-card h2 {
+      font-size: 20px !important;
+    }
+    .login-card-header .page-kicker {
+      font-size: 11px !important;
+      margin-bottom: 2px !important;
+    }
+    .login-help {
+      margin: 4px 0 14px !important;
+      font-size: 12px !important;
+    }
+    .form-field {
+      margin-bottom: 11px !important;
+      gap: 4px !important;
+    }
+    .form-field label {
+      font-size: 12px !important;
+    }
+    .form-field input {
+      min-height: 40px !important;
+      font-size: 13.5px !important;
+    }
+    .login-submit {
+      min-height: 40px !important;
+      margin-top: 10px !important;
+      font-size: 13.5px !important;
+    }
+    .login-support {
+      margin-top: 12px !important;
+      padding-top: 10px !important;
+    }
+    .login-compliance-footer {
+      max-width: 440px;
+      margin-top: 12px;
+      padding: 0 10px;
+      text-align: center;
+    }
+    .login-compliance-footer p {
+      font-size: 0.70rem;
+      line-height: 1.45;
+      color: #64748b;
+      margin-bottom: 4px;
+    }
+    .login-compliance-meta {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 0.67rem;
+      color: #94a3b8;
+      font-weight: 500;
+      letter-spacing: 0.02em;
     }
     .support-trigger-btn {
       background: none;
@@ -171,11 +211,6 @@
         <p class="login-kicker">Hospital Information Management System</p>
         <h1>HIMS Main System</h1>
         <p class="login-brand-description">One connected workspace for hospital operations and financial management modules.</p>
-        <ul class="login-brand-signals" aria-label="System trust information">
-          <li><i class="ph-fill ph-shield-check" aria-hidden="true"></i><span>Secure Authentication</span></li>
-          <li><i class="ph-fill ph-identification-card" aria-hidden="true"></i><span>Role-Based Access Control</span></li>
-          <li><i class="ph-fill ph-buildings" aria-hidden="true"></i><span>Centralized Hospital Operations</span></li>
-        </ul>
       </div>
       <footer class="login-brand-footer">
         <span>HIMS Command Center</span>
@@ -185,86 +220,88 @@
 
     <!-- Sign In Panel -->
     <section class="login-panel" aria-labelledby="login-title">
-      <div class="login-card">
-        
-        <!-- Official Hospital / DOH System Seal -->
-        <div class="hospital-header-seal">
-          <div class="hospital-seal-icon" aria-hidden="true">
-            <i class="ph-fill ph-hospital"></i>
-          </div>
-          <div class="hospital-seal-text">
-            <h4>Republic of the Philippines</h4>
-            <p>Department of Health • Public Hospital Network</p>
-          </div>
-        </div>
-
-        <header class="login-card-header">
-          <p class="page-kicker">Welcome back</p>
-          <h2 id="login-title">Sign in to HIMS</h2>
-          <p class="login-help">Use your authorized hospital domain credentials to access the financial portal.</p>
-        </header>
-
-        @if($errors->any())
-          <div class="alert alert-danger rounded-3 py-2 px-3 fs-sm border-0 mb-3" role="alert">
-            <i class="ph ph-warning-circle me-1 align-middle"></i>
-            {{ $errors->first() }}
-          </div>
-        @endif
-
-        <form id="login-form" method="POST" action="{{ route('login.post') }}" novalidate>
-          @csrf
-          <div class="form-field">
-            <label for="login-email">Email address</label>
-            <div class="input-icon-wrapper">
-              <input id="login-email" name="email" type="email" autocomplete="email" placeholder="name@hospital.gov.ph" value="{{ old('email') }}" maxlength="255" required autofocus>
-              <i class="ph ph-envelope-simple input-leading-icon" aria-hidden="true"></i>
+      <div class="login-panel-container d-flex flex-column align-items-center w-100" style="max-width: 440px;">
+        <div class="login-card w-100">
+          
+          <!-- Official Hospital / DOH System Seal -->
+          <div class="hospital-header-seal">
+            <div class="hospital-seal-icon" aria-hidden="true">
+              <i class="ph-fill ph-hospital"></i>
+            </div>
+            <div class="hospital-seal-text">
+              <h4>Republic of the Philippines</h4>
+              <p>Department of Health • Public Hospital Network</p>
             </div>
           </div>
 
-          <div class="form-field">
-            <label for="login-password">Password</label>
-            <div class="input-icon-wrapper password-field">
-              <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" maxlength="128" required>
-              <i class="ph ph-lock-key input-leading-icon" aria-hidden="true"></i>
-              <button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false">
-                <i class="ph ph-eye" aria-hidden="true"></i>
-              </button>
+          <header class="login-card-header">
+            <p class="page-kicker">Welcome back</p>
+            <h2 id="login-title">Sign in to HIMS</h2>
+            <p class="login-help">Use your authorized hospital domain credentials to access the financial portal.</p>
+          </header>
+
+          @if($errors->any())
+            <div class="alert alert-danger rounded-3 py-2 px-3 fs-sm border-0 mb-3" role="alert">
+              <i class="ph ph-warning-circle me-1 align-middle"></i>
+              {{ $errors->first() }}
             </div>
-            <!-- Sub-row below password field: Caps Lock Warning + Forgot Password Link -->
-            <div class="password-sub-row">
-              <div id="caps-lock-warning" class="caps-lock-badge" role="alert" aria-live="polite">
-                <i class="ph-fill ph-warning"></i>
-                <span>Caps Lock is ON</span>
+          @endif
+
+          <form id="login-form" method="POST" action="{{ route('login.post') }}" novalidate>
+            @csrf
+            <div class="form-field">
+              <label for="login-email">Email address</label>
+              <div class="input-icon-wrapper">
+                <input id="login-email" name="email" type="email" autocomplete="email" placeholder="name@hospital.gov.ph" value="{{ old('email') }}" maxlength="255" required autofocus>
+                <i class="ph ph-envelope-simple input-leading-icon" aria-hidden="true"></i>
               </div>
-              <a href="#helpdeskModal" data-bs-toggle="modal" class="forgot-password-link">Forgot password?</a>
             </div>
+
+            <div class="form-field">
+              <label for="login-password">Password</label>
+              <div class="input-icon-wrapper password-field">
+                <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" maxlength="128" required>
+                <i class="ph ph-lock-key input-leading-icon" aria-hidden="true"></i>
+                <button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false">
+                  <i class="ph ph-eye" aria-hidden="true"></i>
+                </button>
+              </div>
+              <!-- Sub-row below password field: Caps Lock Warning + Forgot Password Link -->
+              <div class="password-sub-row">
+                <div id="caps-lock-warning" class="caps-lock-badge" role="alert" aria-live="polite">
+                  <i class="ph-fill ph-warning"></i>
+                  <span>Caps Lock is ON</span>
+                </div>
+                <a href="#helpdeskModal" data-bs-toggle="modal" class="forgot-password-link">Forgot password?</a>
+              </div>
+            </div>
+
+            <button class="btn-primary login-submit mt-3" type="submit">
+              <i class="ph ph-sign-in" aria-hidden="true"></i>
+              Sign in
+            </button>
+          </form>
+
+          <div class="login-support" aria-label="Sign-in help">
+            <button type="button" class="support-trigger-btn" data-bs-toggle="modal" data-bs-target="#helpdeskModal">
+              <i class="ph ph-question fs-5 text-muted" aria-hidden="true"></i>
+              <p class="mb-0"><strong>Need access help?</strong> <span class="support-link">Contact your hospital system administrator.</span></p>
+            </button>
           </div>
-
-          <button class="btn-primary login-submit mt-3" type="submit">
-            <i class="ph ph-sign-in" aria-hidden="true"></i>
-            Sign in
-          </button>
-        </form>
-
-        <div class="login-support" aria-label="Sign-in help">
-          <button type="button" class="support-trigger-btn" data-bs-toggle="modal" data-bs-target="#helpdeskModal">
-            <i class="ph ph-question fs-5 text-muted" aria-hidden="true"></i>
-            <p class="mb-0"><strong>Need access help?</strong> <span class="support-link">Contact your hospital system administrator.</span></p>
-          </button>
         </div>
 
-        <!-- RA 10173 / RA 10175 Statutory Compliance Warning -->
-        <div class="legal-notice-box">
-          <i class="ph-fill ph-shield-check" aria-hidden="true"></i>
-          <div>
-            <strong>Legal Warning (RA 10173 & RA 10175):</strong> Unauthorized access, disclosure, or tampering of patient financial or health records is strictly prohibited and subject to criminal prosecution.
+        <!-- Statutory Compliance & Security Notice (Muted Enterprise Footer) -->
+        <div class="login-compliance-footer w-100">
+          <p>
+            <i class="ph-fill ph-shield-check me-1 text-secondary align-middle"></i>
+            <strong>Notice under RA 10173 &amp; RA 10175:</strong> Authorized hospital personnel only. Unauthorized access, disclosure, or alteration of patient financial data is strictly prohibited by law.
+          </p>
+          <div class="login-compliance-meta">
+            <span>Authorized Access Only</span>
+            <span>&bull;</span>
+            <span>FMS Transaction Core</span>
           </div>
         </div>
-
-        <footer class="login-card-footer">
-          <span>Authorized personnel only</span>
-          <span>IHIMS Transaction Core</span>
-        </footer>
       </div>
     </section>
   </main>

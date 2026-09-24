@@ -1,0 +1,72 @@
+name: Auto Deploy Financial Management System
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    name: Deploy to HostForge VPS
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH and Deploy to Server
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            set -e
+
+            # Project directory on HostForge server (default: /var/www/fms)
+            DEPLOY_PATH="${{ secrets.DEPLOY_PATH || '/var/www/fms' }}"
+
+            echo "🚀 Deploying to $DEPLOY_PATH on HostForge..."
+
+            # Ensure directory exists and mark safe for Git
+            mkdir -p "$DEPLOY_PATH"
+            cd "$DEPLOY_PATH"
+            git config --global --add safe.directory "$DEPLOY_PATH"
+
+            # Check if Git repo is already initialized
+            if [ ! -d ".git" ]; then
+              echo "📦 Cloning repository..."
+              git clone https://github.com/eggsilog-jebe/Financial-Managemeng-System.git .
+            fi
+
+            # Fetch latest commit and hard reset to match GitHub main
+            echo "📥 Fetching latest commit from GitHub..."
+            git fetch origin main
+            git reset --hard origin/main
+
+            # Install/update Composer dependencies (production mode)
+            if [ -f "composer.json" ]; then
+              echo "📦 Installing composer dependencies..."
+              composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+            fi
+
+            # Run database migrations
+            echo "🗄️ Running database migrations..."
+            php artisan migrate --force
+
+            # Clear and refresh application caches
+            echo "🧹 Clearing and warming application cache..."
+            php artisan optimize:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+
+            # Set correct file ownership and permissions for web server
+            echo "🔒 Setting file permissions..."
+            chown -R www-data:www-data "$DEPLOY_PATH"
+            chmod -R 775 "$DEPLOY_PATH/storage" "$DEPLOY_PATH/bootstrap/cache"
+
+            # Reload web server and PHP-FPM
+            echo "🔄 Reloading web server..."
+            systemctl reload nginx || systemctl restart nginx || echo "Nginx reload skipped"
+
+            # Optional: Reload PHP-FPM if active
+            systemctl reload php8.4-fpm 2>/dev/null || systemctl reload php8.3-fpm 2>/dev/null || systemctl reload php8.2-fpm 2>/dev/null || true
+
+            echo "✅ Deployment completed successfully!"

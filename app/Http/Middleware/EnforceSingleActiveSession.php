@@ -25,7 +25,7 @@ final class EnforceSingleActiveSession
     ) {}
 
     /**
-     * Routes exempt from session displacement checks.
+     * Routes exempt from session displacement checks (pre-auth holding and lifecycle routes).
      *
      * @var string[]
      */
@@ -34,6 +34,15 @@ final class EnforceSingleActiveSession
         'login.post',
         'logout',
         'logout.get',
+        'workstation.pending',
+        'workstation.status',
+        'workstation.cancel',
+        'two-factor.challenge',
+        'two-factor.challenge.verify',
+        'two-factor.setup',
+        'two-factor.setup.store',
+        'two-factor.setup.confirm',
+        'two-factor.setup.destroy',
     ];
 
     public function handle(Request $request, Closure $next): Response
@@ -81,8 +90,9 @@ final class EnforceSingleActiveSession
 
             if ($request->expectsJson()) {
                 return response()->json([
-                    'message' => $warning,
-                    'reason'  => $terminationReason,
+                    'message'      => $warning,
+                    'reason'       => $terminationReason,
+                    'redirect_url' => route('login', ['displaced' => 1]),
                 ], 401);
             }
 
@@ -91,9 +101,27 @@ final class EnforceSingleActiveSession
                 ->withErrors(['email' => $warning]);
         }
 
-        // Touch the session activity timestamp
-        $this->sessionManager->touchSession($sessionId);
+        // Throttle session activity touches to at most once per 60 seconds
+        $lastTouch = (int) $request->session()->get('fms_last_touch_ts', 0);
+        if ((time() - $lastTouch) >= 60) {
+            $request->attributes->set('fms_touch_session', true);
+            $request->session()->put('fms_last_touch_ts', time());
+        }
 
         return $next($request);
+    }
+
+    /**
+     * Touch session activity timestamp asynchronously after response has been sent to client.
+     */
+    public function terminate(Request $request, Response $response): void
+    {
+        if ($request->attributes->get('fms_touch_session', false) && $request->hasSession()) {
+            try {
+                $this->sessionManager->touchSession($request->session()->getId());
+            } catch (\Throwable) {
+                // Silently ignore failures during terminate
+            }
+        }
     }
 }

@@ -27,6 +27,20 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
+        // Share pending workstation authorization count with sidebar and dashboard for Super Admins
+        view()->composer(['partials.sidebar', 'accounting.dashboard'], function ($view): void {
+            if (auth()->check() && in_array(auth()->user()->role, ['CFO', 'FinanceDirector', 'SuperAdmin'], true)) {
+                try {
+                    $pendingCount = \App\Models\UserWorkstation::where('status', \App\Models\UserWorkstation::STATUS_PENDING)->count();
+                    $view->with('pendingWorkstationsCount', $pendingCount);
+                } catch (\Throwable) {
+                    $view->with('pendingWorkstationsCount', 0);
+                }
+            } else {
+                $view->with('pendingWorkstationsCount', 0);
+            }
+        });
+
         // Define Gates for Financial Segregation of Duties (SoD)
         \Illuminate\Support\Facades\Gate::before(function ($user, string $ability): ?bool {
             // In local development or demo exploration without login, allow full visibility
@@ -94,23 +108,70 @@ class AppServiceProvider extends ServiceProvider
             return in_array($user->role, ['FinanceManager', 'CFO', 'FinanceDirector'], true);
         });
 
-        // Register Audit Trail Observers for financial entities
+        // Register Audit Trail Observers for all financial and security entities
         $observedModels = [
+            // General Ledger & Chart of Accounts
+            \App\Models\Account::class,
             \App\Models\JournalEntry::class,
             \App\Models\JournalEntryLine::class,
+            \App\Models\FiscalPeriod::class,
+
+            // Patient Billing & Accounts Receivable
             \App\Models\PatientAccount::class,
             \App\Models\Invoice::class,
-            \App\Models\PurchaseBill::class,
+            \App\Models\InvoiceItem::class,
+            \App\Models\BillItem::class,
+            \App\Models\CreditNote::class,
+            \App\Models\DoctorProfile::class,
+            \App\Models\StatutoryDiscount::class,
+
+            // Accounts Payable & Procurement
             \App\Models\Vendor::class,
+            \App\Models\PurchaseBill::class,
+            \App\Models\ThreeWayMatch::class,
+            \App\Models\Bir2307Certificate::class,
+
+            // Disbursements & Payroll
             \App\Models\DisbursementVoucher::class,
+            \App\Models\PaymentRequest::class,
             \App\Models\CheckRegister::class,
-            \App\Models\OfficialReceipt::class,
+            \App\Models\PettyCashFund::class,
+            \App\Models\PettyCashExpense::class,
+            \App\Models\PayrollRun::class,
+            \App\Models\PayrollItem::class,
+
+            // Cashier POS & Collections
             \App\Models\CashierShift::class,
-            \App\Models\BudgetAllocation::class,
+            \App\Models\Payment::class,
+            \App\Models\OfficialReceipt::class,
+            \App\Models\PaymentReceipt::class,
+
+            // Cash & Bank Management
             \App\Models\BankAccount::class,
+            \App\Models\BankDeposit::class,
             \App\Models\BankReconciliation::class,
+            \App\Models\BankStatementLine::class,
+            \App\Models\FundTransfer::class,
+
+            // Fiscal Budgets
+            \App\Models\BudgetAllocation::class,
+            \App\Models\BudgetEncumbrance::class,
+            \App\Models\BudgetReallocation::class,
+
+            // Claims & Subsidies
             \App\Models\GuaranteeLetter::class,
+            \App\Models\HmoClaim::class,
+            \App\Models\PhilhealthClaim::class,
+
+            // Tax & Compliance
+            \App\Models\TaxCertificate::class,
+            \App\Models\TaxReturn::class,
+            \App\Models\TaxRule::class,
+
+            // User & Terminal Security
             \App\Models\User::class,
+            \App\Models\UserWorkstation::class,
+            \App\Models\UserActiveSession::class,
         ];
 
         foreach ($observedModels as $modelClass) {

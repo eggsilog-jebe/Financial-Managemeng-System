@@ -39,9 +39,7 @@ final class AuditLogController extends Controller
             'total_logs'       => ActivityLog::count(),
             'logins_today'     => ActivityLog::where('event', 'login')->whereDate('created_at', $today)->count(),
             'failed_logins'    => ActivityLog::where('event', 'failed_login')->whereDate('created_at', $today)->count(),
-            'mutations_today'  => ActivityLog::whereIn('event', ['created', 'updated', 'deleted', 'posted', 'reversed'])
-                                    ->whereDate('created_at', $today)
-                                    ->count(),
+            'mutations_today'  => ActivityLog::whereDate('created_at', $today)->count(),
         ];
 
         // Unique filter options for the filter bar

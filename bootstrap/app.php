@@ -42,6 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
             '2fa'                 => \App\Http\Middleware\EnsureTwoFactorAuthenticated::class,
             'idle.timeout'        => \App\Http\Middleware\IdleSessionTimeout::class,
             'single.session'      => \App\Http\Middleware\EnforceSingleActiveSession::class,
+            'audit.activity'      => \App\Http\Middleware\AuditUserActivity::class,
         ]);
 
         $middleware->web(append: [
@@ -49,6 +50,7 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\EnsureTwoFactorAuthenticated::class,
             \App\Http\Middleware\IdleSessionTimeout::class,
             \App\Http\Middleware\EnforceSingleActiveSession::class,
+            \App\Http\Middleware\AuditUserActivity::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

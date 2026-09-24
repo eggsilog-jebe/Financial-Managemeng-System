@@ -10,6 +10,7 @@ use App\Exceptions\Accounting\UnbalancedJournalEntryException;
 use App\Models\FiscalPeriod;
 use App\Models\JournalEntry;
 use App\Models\JournalEntryLine;
+use App\Services\Accounting\AccountingCacheService;
 use DomainException;
 use Illuminate\Support\Facades\DB;
 
@@ -18,6 +19,7 @@ final class JournalEntryService
     public function __construct(
         private readonly CasAuditTrailService $auditTrailService,
         private readonly PeriodClosingService $periodClosingService,
+        private readonly ?AccountingCacheService $cacheService = null,
     ) {}
 
     /**
@@ -39,7 +41,7 @@ final class JournalEntryService
         // 2. Guard: Check that entry_date does not fall into a LOCKED or CLOSED period
         $this->periodClosingService->assertPeriodIsOpen($data->entryDate);
 
-        return DB::transaction(function () use ($data, $autoPost): JournalEntry {
+        $result = DB::transaction(function () use ($data, $autoPost): JournalEntry {
             $refNumber = method_exists($data, 'getReferenceNumber')
                 ? $data->getReferenceNumber()
                 : ($data->referenceNumber ?? ('JE-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(3)))));
@@ -89,6 +91,12 @@ final class JournalEntryService
 
             return $entry->loadMissing(['lines.account', 'creator']);
         });
+
+        if ($autoPost) {
+            $this->cacheService?->invalidateFinancialCaches();
+        }
+
+        return $result;
     }
 
     /**
@@ -109,7 +117,7 @@ final class JournalEntryService
         // Assert balance of lines
         $this->assertBalancedDoubleEntry($entry->lines->toArray());
 
-        return DB::transaction(function () use ($entry, $userId): JournalEntry {
+        $result = DB::transaction(function () use ($entry, $userId): JournalEntry {
             $oldValues = $entry->toArray();
 
             $entry->update([
@@ -130,6 +138,10 @@ final class JournalEntryService
 
             return $entry->loadMissing(['lines.account', 'creator']);
         });
+
+        $this->cacheService?->invalidateFinancialCaches();
+
+        return $result;
     }
 
     /**
@@ -147,7 +159,7 @@ final class JournalEntryService
         $reversalDate = now()->toDateString();
         $this->periodClosingService->assertPeriodIsOpen($reversalDate);
 
-        return DB::transaction(function () use ($originalEntry, $userId, $reason, $reversalDate): JournalEntry {
+        $result = DB::transaction(function () use ($originalEntry, $userId, $reason, $reversalDate): JournalEntry {
             $originalEntry->loadMissing('lines');
 
             $reversal = JournalEntry::create([
@@ -241,6 +253,10 @@ final class JournalEntryService
 
             return $reversal->loadMissing(['lines.account', 'creator']);
         });
+
+        $this->cacheService?->invalidateFinancialCaches();
+
+        return $result;
     }
 
     /**

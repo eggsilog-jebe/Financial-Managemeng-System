@@ -116,6 +116,66 @@ final class ActivityLog extends Model
     }
 
     /**
+     * Helper to log discrete user operational actions (approvals, rejections, terminations, exports, etc.).
+     *
+     * @param array<string, mixed>|null $details
+     */
+    public static function logAction(
+        string $event,
+        string $module,
+        string $description,
+        ?array $details = null,
+        ?Model $auditable = null
+    ): self {
+        $user = auth()->user();
+
+        return self::create([
+            'user_id'        => $user?->id,
+            'user_name'      => $user?->name ?? 'System Process',
+            'user_role'      => $user?->role ?? 'System',
+            'user_email'     => $user?->email,
+            'event'          => $event,
+            'module'         => $module,
+            'auditable_type' => $auditable ? $auditable::class : null,
+            'auditable_id'   => $auditable?->getKey(),
+            'description'    => $description,
+            'old_values'     => null,
+            'new_values'     => $details,
+            'ip_address'     => Request::ip(),
+            'user_agent'     => Request::userAgent(),
+            'url'            => Request::fullUrl(),
+        ]);
+    }
+
+    /**
+     * Helper to log user navigation and record view access (reads).
+     *
+     * @param array<string, mixed>|null $params
+     */
+    public static function logView(
+        string $module,
+        string $description,
+        ?array $params = null
+    ): self {
+        $user = auth()->user();
+
+        return self::create([
+            'user_id'     => $user?->id,
+            'user_name'   => $user?->name ?? 'Guest / Unauthenticated',
+            'user_role'   => $user?->role ?? 'Guest',
+            'user_email'  => $user?->email,
+            'event'       => 'viewed',
+            'module'      => $module,
+            'description' => $description,
+            'old_values'  => null,
+            'new_values'  => $params,
+            'ip_address'  => Request::ip(),
+            'user_agent'  => Request::userAgent(),
+            'url'         => Request::fullUrl(),
+        ]);
+    }
+
+    /**
      * Scope: Filter by event type.
      */
     public function scopeOfEvent(Builder $query, ?string $event): Builder

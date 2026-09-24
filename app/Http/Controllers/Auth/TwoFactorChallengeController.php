@@ -54,7 +54,15 @@ final class TwoFactorChallengeController extends Controller
             return redirect()->to($target);
         }
 
-        return view('auth.two-factor-challenge');
+        $workstationTitle = match (true) {
+            $user->isSuperAdmin() => 'New Super Admin Workstation',
+            default               => 'Authorized ' . ($user->roleLabel() ?? 'Personnel') . ' Workstation',
+        };
+
+        return view('auth.two-factor-challenge', [
+            'user'             => $user,
+            'workstationTitle' => $workstationTitle,
+        ]);
     }
 
     /**

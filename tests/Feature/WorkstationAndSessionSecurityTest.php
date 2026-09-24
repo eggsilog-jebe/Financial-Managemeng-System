@@ -305,4 +305,86 @@ final class WorkstationAndSessionSecurityTest extends TestCase
             $activeSession->fresh()->termination_reason
         );
     }
+
+    public function test_unauthorized_workstation_login_creates_pending_request_without_displacing_active_session_until_approved(): void
+    {
+        $admin = User::factory()->create([
+            'role'                    => 'CFO',
+            'two_factor_confirmed_at' => now(),
+        ]);
+        $user  = User::factory()->create([
+            'email'                   => 'cashier@hospital.gov.ph',
+            'role'                    => 'Cashier',
+            'password'                => Hash::make('CashierPass123!'),
+            'two_factor_confirmed_at' => now(),
+        ]);
+
+        // Workstation 1 is authorized and has an active live session
+        $workstation1 = UserWorkstation::create([
+            'user_id'          => $user->id,
+            'device_uuid'      => 'ws-authorized-station-1',
+            'workstation_name' => 'Main POS Counter',
+            'status'           => UserWorkstation::STATUS_APPROVED,
+            'approved_at'      => now(),
+        ]);
+
+        $session1Id = 'session-pos-terminal-1-active';
+        $activeSession1 = UserActiveSession::create([
+            'user_id'          => $user->id,
+            'session_id'       => $session1Id,
+            'workstation_id'   => $workstation1->id,
+            'device_name'      => 'Main POS Counter',
+            'ip_address'       => '192.168.1.50',
+            'login_at'         => now()->subMinutes(30),
+            'last_activity_at' => now()->subMinutes(1),
+            'is_terminated'    => false,
+        ]);
+
+        // User attempts login from Workstation 2 (Unauthorized / Unbound device)
+        $unauthorizedDeviceUuid = 'ws-unauthorized-new-laptop-999';
+        $loginResponse = $this->withCookie(WorkstationBindingService::COOKIE_NAME, $unauthorizedDeviceUuid)
+            ->post('/login', [
+                'email'       => 'cashier@hospital.gov.ph',
+                'password'    => 'CashierPass123!',
+                'device_uuid' => $unauthorizedDeviceUuid,
+            ]);
+
+        // Workstation 2 MUST be redirected to workstation.pending holding page
+        $loginResponse->assertRedirect(route('workstation.pending'));
+
+        // Workstation 2 record must be created as PENDING
+        $pendingWorkstation = UserWorkstation::where('device_uuid', $unauthorizedDeviceUuid)->first();
+        $this->assertNotNull($pendingWorkstation);
+        $this->assertSame(UserWorkstation::STATUS_PENDING, $pendingWorkstation->status);
+
+        // Crucial: Active Session 1 must NOT be displaced yet while Workstation 2 is pending
+        $this->assertFalse($activeSession1->fresh()->is_terminated);
+
+        // Super Admin visits Workstation Security and sees the pending request
+        $this->flushSession();
+        $adminView = $this->actingAs($admin)
+            ->withSession(['auth.2fa_passed' => true])
+            ->get(route('user-security.workstations'));
+
+        $adminView->assertOk();
+        $adminView->assertSee('Real-Time Pending Workstation Requests');
+        $adminView->assertSee($user->email);
+        $adminView->assertSee($pendingWorkstation->workstation_name);
+
+        // Super Admin approves the pending workstation
+        $approveResponse = $this->actingAs($admin)
+            ->post(route('user-security.workstations.approve', $pendingWorkstation));
+
+        $approveResponse->assertSessionHas('success');
+        $this->assertTrue($pendingWorkstation->fresh()->isApproved());
+
+        // When approved Workstation 2 completes login / polling, it registers session 2
+        $session2Id = 'session-laptop-terminal-2-approved';
+        $sessionManager = app(\App\Services\Security\ActiveSessionManagerService::class);
+        $sessionManager->registerSession($user, $session2Id, $pendingWorkstation->fresh(), request());
+
+        // Now Session 1 IS displaced by the approved login
+        $this->assertTrue($activeSession1->fresh()->is_terminated);
+        $this->assertSame(UserActiveSession::REASON_DISPLACED, $activeSession1->fresh()->termination_reason);
+    }
 }

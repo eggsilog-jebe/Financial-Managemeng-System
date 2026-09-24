@@ -257,7 +257,11 @@
                   data-nav-tooltip="User & Security">
             <i class="ph-fill ph-users-three" aria-hidden="true"></i>
             <span class="nav-label">User & Security</span>
-            <span class="badge bg-purple-subtle text-purple ms-auto fs-xs" style="font-size:10px;">CFO</span>
+            @if(($pendingWorkstationsCount ?? 0) > 0)
+              <span class="badge bg-warning text-dark ms-auto fs-xs" style="font-size:10px;">{{ $pendingWorkstationsCount }} pending</span>
+            @else
+              <span class="badge bg-purple-subtle text-purple ms-auto fs-xs" style="font-size:10px;">CFO</span>
+            @endif
             <i class="ph ph-caret-down nav-chevron" aria-hidden="true"></i>
           </button>
           <ul class="nav-submenu" id="nav-user-security" @if(!$isUserSecurity) hidden @endif>
@@ -266,6 +270,9 @@
             </a></li>
             <li><a href="{{ route('user-security.workstations') }}" class="{{ request()->routeIs('user-security.workstations*') ? 'active' : '' }}">
               <i class="ph ph-desktop me-1"></i>Workstation Security
+              @if(($pendingWorkstationsCount ?? 0) > 0)
+                <span class="badge bg-warning text-dark ms-auto fs-xs">{{ $pendingWorkstationsCount }}</span>
+              @endif
             </a></li>
             <li><a href="{{ route('user-security.audit-trail') }}" class="{{ request()->routeIs('user-security.audit-trail') || request()->routeIs('accounting.audit-log') ? 'active' : '' }}">
               <i class="ph ph-clock-countdown me-1"></i>System Audit Trail

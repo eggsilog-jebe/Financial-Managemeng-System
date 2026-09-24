@@ -1378,6 +1378,221 @@ html[data-theme="dark"] .app-identity-subtitle {
   color: #94a3b8 !important;
 }
 
+/* ==========================================================================
+   9. MINIMALIST ENTERPRISE FILTER SYSTEM
+   ========================================================================== */
+.filter-bar-minimal {
+  background: #ffffff;
+  border: 1px solid #eef2f6;
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+  transition: all 0.2s ease;
+}
+
+.filter-bar-minimal:focus-within {
+  border-color: #e2e8f0;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+}
+
+.filter-control-minimal {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.filter-control-minimal .filter-icon-leading {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 15px;
+  pointer-events: none;
+  transition: color 0.15s ease;
+  z-index: 2;
+}
+
+.filter-input-minimal {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  background: #f8fafc;
+  border: 1px solid #eef2f6;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #0f172a;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.filter-input-minimal::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.filter-input-minimal.has-leading-icon {
+  padding-left: 36px;
+}
+
+.filter-input-minimal:hover {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+}
+
+.filter-input-minimal:focus {
+  background: #ffffff;
+  border-color: #059669;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12);
+}
+
+.filter-control-minimal:focus-within .filter-icon-leading {
+  color: #059669;
+}
+
+.filter-select-minimal {
+  width: 100%;
+  height: 38px;
+  padding: 0 30px 0 12px;
+  background: #f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 256 256'%3E%3Cpath fill='%2394a3b8' d='m213.66 101.66l-80 80a8 8 0 0 1-11.32 0l-80-80a8 8 0 0 1 11.32-11.32L128 164.69l74.34-74.35a8 8 0 0 1 11.32 11.32Z'/%3E%3C/svg%3E") no-repeat right 10px center;
+  border: 1px solid #eef2f6;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+  outline: none;
+  appearance: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filter-select-minimal:hover {
+  background-color: #f1f5f9;
+  border-color: #e2e8f0;
+}
+
+.filter-select-minimal:focus {
+  background-color: #ffffff;
+  border-color: #059669;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12);
+}
+
+.filter-select-minimal.is-active {
+  background-color: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #065f46;
+  font-weight: 600;
+}
+
+.filter-btn-submit {
+  height: 38px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #059669;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.filter-btn-submit:hover {
+  background: #047857;
+  color: #ffffff;
+  transform: translateY(-0.5px);
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);
+}
+
+.filter-btn-reset {
+  height: 38px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: transparent;
+  color: #64748b;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.filter-btn-reset:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+  text-decoration: none;
+}
+
+.active-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding-top: 10px;
+  margin-top: 10px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.active-filter-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-right: 4px;
+}
+
+.active-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  background: #f1f5f9;
+  color: #334155;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  border: 1px solid #e2e8f0;
+}
+
+.active-filter-chip:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+.active-filter-chip i {
+  font-size: 12px;
+}
+
+.active-filter-clear-all {
+  font-size: 11px;
+  font-weight: 500;
+  color: #dc2626;
+  text-decoration: none;
+  margin-left: 4px;
+}
+
+.active-filter-clear-all:hover {
+  text-decoration: underline;
+}
+
+
 
 
 

@@ -39,9 +39,9 @@ final class TwoFactorChallengeTest extends TestCase
             ->get('/two-factor-challenge');
 
         $response->assertStatus(200);
-        $response->assertSee('Enter Authenticator Code');
+        $response->assertSee('Security Verification');
         $response->assertSee('Google Authenticator');
-        $response->assertSee('Verify &amp; Sign In', false);
+        $response->assertSee('Verify &amp; Enter Workspace', false);
     }
 
     public function test_challenge_verifies_successfully_with_valid_totp_code(): void

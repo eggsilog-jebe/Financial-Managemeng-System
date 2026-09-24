@@ -77,7 +77,7 @@
             <i class="ph-bold ph-database fs-4"></i>
           </div>
           <div>
-            <div class="text-muted small fw-medium">Data Mutations Today</div>
+            <div class="text-muted small fw-medium">Activities &amp; Changes Today</div>
             <div class="fs-4 fw-bold text-dark">{{ number_format($stats['mutations_today']) }}</div>
           </div>
         </div>
@@ -85,64 +85,104 @@
     </div>
   </div>
 
-  <!-- Filter & Search Toolbar -->
-  <div class="card border-0 shadow-sm rounded-3 mb-4">
-    <div class="card-body p-3">
-      <form method="GET" action="{{ route('accounting.audit-log') }}" class="row g-2 align-items-center">
-        <!-- Search -->
-        <div class="col-md-3">
-          <div class="input-group input-group-sm">
-            <span class="input-group-text bg-light border-end-0"><i class="ph ph-magnifying-glass"></i></span>
-            <input type="text" name="search" class="form-control border-start-0" placeholder="Search description, user, IP..." value="{{ $search }}">
-          </div>
+  <!-- Minimalist Filter & Search Toolbar -->
+  <div class="filter-bar-minimal mb-4">
+    <form method="GET" action="{{ route('accounting.audit-log') }}" class="row g-2 align-items-center">
+      <!-- Search Field with Leading Icon -->
+      <div class="col-12 col-md-3">
+        <div class="filter-control-minimal">
+          <i class="ph ph-magnifying-glass filter-icon-leading" aria-hidden="true"></i>
+          <input type="text" name="search" class="filter-input-minimal has-leading-icon" placeholder="Search logs, user, IP..." value="{{ $search }}">
         </div>
+      </div>
 
-        <!-- Event Filter -->
-        <div class="col-md-2">
-          <select name="event" class="form-select form-select-sm">
-            <option value="">All Events</option>
-            @foreach($events as $ev)
-              <option value="{{ $ev }}" @selected($event === $ev)>{{ ucfirst(str_replace('_', ' ', $ev)) }}</option>
-            @endforeach
-          </select>
-        </div>
+      <!-- Event Filter -->
+      <div class="col-6 col-md-2">
+        <select name="event" class="filter-select-minimal {{ $event ? 'is-active' : '' }}" aria-label="Filter by Event">
+          <option value="">All Events</option>
+          @foreach($events as $ev)
+            <option value="{{ $ev }}" @selected($event === $ev)>{{ ucfirst(str_replace('_', ' ', $ev)) }}</option>
+          @endforeach
+        </select>
+      </div>
 
-        <!-- Module Filter -->
-        <div class="col-md-2">
-          <select name="module" class="form-select form-select-sm">
-            <option value="">All Modules</option>
-            @foreach($modules as $mod)
-              <option value="{{ $mod }}" @selected($module === $mod)>{{ $mod }}</option>
-            @endforeach
-          </select>
-        </div>
+      <!-- Module Filter -->
+      <div class="col-6 col-md-2">
+        <select name="module" class="filter-select-minimal {{ $module ? 'is-active' : '' }}" aria-label="Filter by Module">
+          <option value="">All Modules</option>
+          @foreach($modules as $mod)
+            <option value="{{ $mod }}" @selected($module === $mod)>{{ $mod }}</option>
+          @endforeach
+        </select>
+      </div>
 
-        <!-- Role Filter -->
-        <div class="col-md-2">
-          <select name="role" class="form-select form-select-sm">
-            <option value="">All Roles</option>
-            @foreach($roles as $r)
-              <option value="{{ $r }}" @selected($role === $r)>{{ $r }}</option>
-            @endforeach
-          </select>
-        </div>
+      <!-- Role Filter -->
+      <div class="col-6 col-md-2">
+        <select name="role" class="filter-select-minimal {{ $role ? 'is-active' : '' }}" aria-label="Filter by Role">
+          <option value="">All Roles</option>
+          @foreach($roles as $r)
+            <option value="{{ $r }}" @selected($role === $r)>{{ $r }}</option>
+          @endforeach
+        </select>
+      </div>
 
-        <!-- Date Range -->
-        <div class="col-md-2">
-          <input type="date" name="date_from" class="form-control form-control-sm" value="{{ $dateFrom }}" placeholder="From date" title="From date">
-        </div>
+      <!-- Date Range -->
+      <div class="col-6 col-md-1">
+        <input type="date" name="date_from" class="filter-input-minimal {{ $dateFrom ? 'is-active' : '' }}" value="{{ $dateFrom }}" placeholder="Date" title="Filter from date">
+      </div>
 
-        <!-- Submit & Reset Actions -->
-        <div class="col-md-1 d-flex gap-1">
-          <button type="submit" class="btn btn-primary btn-sm w-100" title="Apply Filters">
-            <i class="ph ph-funnel"></i>
-          </button>
-          <a href="{{ route('accounting.audit-log') }}" class="btn btn-light btn-sm border" title="Reset Filters">
+      <!-- Minimalist Actions -->
+      <div class="col-12 col-md-2 d-flex align-items-center justify-content-end gap-1">
+        <button type="submit" class="filter-btn-submit flex-grow-1" title="Apply Filters">
+          <i class="ph ph-funnel"></i>
+          <span>Filter</span>
+        </button>
+        @if($search || $event || $module || $role || $dateFrom)
+          <a href="{{ route('accounting.audit-log') }}" class="filter-btn-reset" title="Reset all filters">
             <i class="ph ph-arrow-counter-clockwise"></i>
+            <span>Clear</span>
           </a>
-        </div>
-      </form>
-    </div>
+        @endif
+      </div>
+    </form>
+
+    <!-- Active Filter Chips (Minimalist Tag Pills) -->
+    @if($search || $event || $module || $role || $dateFrom)
+      <div class="active-filter-chips">
+        <span class="active-filter-label"><i class="ph ph-sliders-horizontal me-1"></i> Active:</span>
+        @if($search)
+          <a href="{{ request()->fullUrlWithQuery(['search' => null]) }}" class="active-filter-chip" title="Remove search filter">
+            <span>Search: "{{ Str::limit($search, 18) }}"</span>
+            <i class="ph ph-x"></i>
+          </a>
+        @endif
+        @if($event)
+          <a href="{{ request()->fullUrlWithQuery(['event' => null]) }}" class="active-filter-chip" title="Remove event filter">
+            <span>Event: {{ ucfirst(str_replace('_', ' ', $event)) }}</span>
+            <i class="ph ph-x"></i>
+          </a>
+        @endif
+        @if($module)
+          <a href="{{ request()->fullUrlWithQuery(['module' => null]) }}" class="active-filter-chip" title="Remove module filter">
+            <span>Module: {{ $module }}</span>
+            <i class="ph ph-x"></i>
+          </a>
+        @endif
+        @if($role)
+          <a href="{{ request()->fullUrlWithQuery(['role' => null]) }}" class="active-filter-chip" title="Remove role filter">
+            <span>Role: {{ $role }}</span>
+            <i class="ph ph-x"></i>
+          </a>
+        @endif
+        @if($dateFrom)
+          <a href="{{ request()->fullUrlWithQuery(['date_from' => null]) }}" class="active-filter-chip" title="Remove date filter">
+            <span>Date: {{ $dateFrom }}</span>
+            <i class="ph ph-x"></i>
+          </a>
+        @endif
+        <a href="{{ route('accounting.audit-log') }}" class="active-filter-clear-all">Reset all</a>
+      </div>
+    @endif
   </div>
 
   <!-- Audit Log Table -->
@@ -207,12 +247,21 @@
                     'login' => 'bg-success text-white',
                     'logout' => 'bg-secondary text-white',
                     'failed_login' => 'bg-danger text-white',
+                    '2fa_passed' => 'bg-info-subtle text-info border border-info-subtle',
+                    'session_displaced', 'session_terminated' => 'bg-dark text-white',
                     'created' => 'bg-primary text-white',
                     'updated' => 'bg-warning text-dark',
                     'deleted' => 'bg-danger text-white',
                     'posted' => 'bg-info text-white',
                     'reversed' => 'bg-dark text-white',
-                    default => 'bg-light text-dark'
+                    'viewed' => 'bg-light text-secondary border',
+                    'exported', 'printed' => 'bg-primary-subtle text-primary border border-primary-subtle',
+                    'approved' => 'bg-success text-white',
+                    'rejected' => 'bg-danger text-white',
+                    'revoked' => 'bg-warning-subtle text-warning-emphasis border border-warning-subtle',
+                    'collected' => 'bg-success-subtle text-success border border-success-subtle',
+                    'closed', 'locked' => 'bg-dark text-white',
+                    default => 'bg-light text-dark border'
                   };
                 @endphp
                 <span class="badge {{ $eventBadge }} py-1 px-2 font-monospace" style="font-size: 11px;">

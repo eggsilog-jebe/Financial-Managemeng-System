@@ -64,6 +64,15 @@ final class EnsureTwoFactorAuthenticated
             return $next($request);
         }
 
+        // If workstation authorization is pending, hold user at workstation.pending until approved
+        if ($request->session()->has('auth.pending_workstation_id')) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Workstation authorization pending.'], 403);
+            }
+
+            return redirect()->route('workstation.pending');
+        }
+
         // 1. If the user has NOT completed 2FA enrollment yet → gate and force setup
         if (! $user->hasTwoFactorEnabled()) {
             if ($request->expectsJson()) {

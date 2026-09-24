@@ -7,6 +7,23 @@
 @section('content')
 <div class="container-fluid p-4">
 
+  @if(($pendingWorkstationsCount ?? 0) > 0)
+    <div class="alert alert-warning border-0 shadow-sm rounded-3 p-3 d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2" style="background:#fffbeb; border-left: 4px solid #f59e0b !important;">
+      <div class="d-flex align-items-center gap-3">
+        <span class="p-2 rounded-3 bg-warning text-dark d-inline-flex align-items-center justify-content-center" style="width:38px;height:38px;">
+          <i class="ph-fill ph-broadcast fs-4"></i>
+        </span>
+        <div>
+          <strong class="d-block text-dark" style="font-size:0.9rem;">Pending Workstation Authorization Requests</strong>
+          <span class="text-secondary fs-xs">There are {{ $pendingWorkstationsCount }} unauthorized computer(s) requesting access to the hospital financial system.</span>
+        </div>
+      </div>
+      <a href="{{ route('user-security.workstations') }}" class="btn btn-sm btn-warning fw-semibold px-3 rounded-2 text-dark">
+        <i class="ph ph-check-circle me-1"></i>Review &amp; Authorize Requests
+      </a>
+    </div>
+  @endif
+
   <!-- Executive Context Header -->
   <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
     <div>

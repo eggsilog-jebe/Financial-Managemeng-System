@@ -286,17 +286,6 @@
             </button>
           </form>
         </div>
-
-        <!-- Compliance Footer -->
-        <div class="login-compliance-footer w-100 mt-3">
-          <p>
-            <i class="ph-fill ph-shield-check me-1 text-secondary align-middle"></i>
-            <strong>HIPAA / RA 10173 Compliant:</strong> TOTP-based 2FA provides phishing-resistant authentication for hospital financial records.
-          </p>
-          <div class="login-compliance-meta">
-            <span>Security Provisioning</span><span>&bull;</span><span>FMS Transaction Core</span>
-          </div>
-        </div>
       </div>
     </section>
   </main>

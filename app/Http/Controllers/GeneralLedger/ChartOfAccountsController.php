@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Accounting\StoreAccountRequest;
 use App\Http\Requests\Accounting\UpdateAccountRequest;
 use App\Models\Account;
+use App\Services\Accounting\AccountingCacheService;
 use App\Services\Accounting\ChartOfAccountsService;
 use DomainException;
 use Illuminate\Contracts\View\View;
@@ -21,6 +22,7 @@ final class ChartOfAccountsController extends Controller
 {
     public function __construct(
         private readonly ChartOfAccountsService $coaService,
+        private readonly AccountingCacheService $cacheService,
     ) {}
 
     public function index(Request $request): View
@@ -42,27 +44,30 @@ final class ChartOfAccountsController extends Controller
             search: $search,
         );
 
-        // Summary totals per classification
-        $allAccounts = Account::with(['journalEntryLines.journalEntry' => function ($q): void {
-            $q->where('status', 'POSTED');
-        }])->get();
+        // Summary totals per classification (cached via Redis)
+        $totals = $this->cacheService->rememberCoaTotals(function (): array {
+            $allAccounts = Account::with(['journalEntryLines.journalEntry' => function ($q): void {
+                $q->where('status', 'POSTED');
+            }])->get();
 
-        $assetTotal     = $allAccounts->where('category', 'ASSET')->sum(fn (Account $a): float => (float) $a->current_balance);
-        $liabilityTotal = $allAccounts->where('category', 'LIABILITY')->sum(fn (Account $a): float => (float) $a->current_balance);
-        $equityTotal    = $allAccounts->where('category', 'EQUITY')->sum(fn (Account $a): float => (float) $a->current_balance);
-        $revenueTotal   = $allAccounts->where('category', 'REVENUE')->sum(fn (Account $a): float => (float) $a->current_balance);
-        $expenseTotal   = $allAccounts->where('category', 'EXPENSE')->sum(fn (Account $a): float => (float) $a->current_balance);
+            return [
+                'assetTotal'     => (float) $allAccounts->where('category', 'ASSET')->sum(fn (Account $a): float => (float) $a->current_balance),
+                'liabilityTotal' => (float) $allAccounts->where('category', 'LIABILITY')->sum(fn (Account $a): float => (float) $a->current_balance),
+                'equityTotal'    => (float) $allAccounts->where('category', 'EQUITY')->sum(fn (Account $a): float => (float) $a->current_balance),
+                'revenueTotal'   => (float) $allAccounts->where('category', 'REVENUE')->sum(fn (Account $a): float => (float) $a->current_balance),
+                'expenseTotal'   => (float) $allAccounts->where('category', 'EXPENSE')->sum(fn (Account $a): float => (float) $a->current_balance),
+            ];
+        }, 300);
 
         return view('general-ledger.chart-of-accounts', [
             'accounts'       => $accounts,
             'category'       => $category,
             'status'         => $status,
             'search'         => $search,
-            'assetTotal'     => $assetTotal,
-            'liabilityTotal' => $liabilityTotal,
-            'equityTotal'    => $equityTotal,
-            'revenueTotal'   => $revenueTotal,
-            'expenseTotal'   => $expenseTotal,
+            'assetTotal'     => $totals['assetTotal'],
+            'liabilityTotal' => $totals['liabilityTotal'],
+            'equityTotal'    => $totals['equityTotal'],
+            'revenueTotal'   => $totals['revenueTotal'],
         ]);
     }
 
@@ -75,6 +80,8 @@ final class ChartOfAccountsController extends Controller
             userName: $request->user()?->name,
             ipAddress: $request->ip(),
         );
+
+        $this->cacheService->invalidateFinancialCaches();
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -100,6 +107,7 @@ final class ChartOfAccountsController extends Controller
                 userName: $request->user()?->name,
                 ipAddress: $request->ip(),
             );
+            $this->cacheService->invalidateFinancialCaches();
         } catch (DomainException $e) {
             if ($request->wantsJson()) {
                 return response()->json(['error' => $e->getMessage()], 422);
@@ -129,6 +137,7 @@ final class ChartOfAccountsController extends Controller
                 userName: $request->user()?->name,
                 ipAddress: $request->ip(),
             );
+            $this->cacheService->invalidateFinancialCaches();
         } catch (DomainException $e) {
             if ($request->wantsJson()) {
                 return response()->json(['error' => $e->getMessage()], 422);

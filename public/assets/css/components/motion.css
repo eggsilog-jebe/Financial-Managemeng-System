@@ -25,70 +25,20 @@ body,
     box-shadow var(--duration-base) var(--ease-standard);
 }
 
-/* Coordinated page reveal; JavaScript adds .is-visible once. */
+/* Coordinated page reveal; renders instantly without artificial navigation lag */
 .motion-ready .motion-enter {
-  opacity: 0;
-  transform: translate3d(0, 10px, 0);
+  opacity: 1;
+  transform: none;
 }
 
 .motion-ready .motion-enter.is-visible {
-  animation: hims-enter var(--duration-enter) var(--ease-emphasized) both;
+  opacity: 1;
+  transform: none;
 }
 
-.motion-ready .dashboard-header.is-visible { animation-delay: 0ms; }
-.motion-ready .dashboard-banner.is-visible { animation-delay: 55ms; }
-.motion-ready .dashboard-section-header.is-visible { animation-delay: 90ms; }
-
-.motion-ready .operations-metric-grid .operations-metric-card:nth-child(1).is-visible { animation-delay: 35ms; }
-.motion-ready .operations-metric-grid .operations-metric-card:nth-child(2).is-visible { animation-delay: 65ms; }
-.motion-ready .operations-metric-grid .operations-metric-card:nth-child(3).is-visible { animation-delay: 95ms; }
-.motion-ready .operations-metric-grid .operations-metric-card:nth-child(4).is-visible { animation-delay: 125ms; }
-.motion-ready .operations-metric-grid .operations-metric-card:nth-child(5).is-visible { animation-delay: 155ms; }
-.motion-ready .operations-metric-grid .operations-metric-card:nth-child(6).is-visible { animation-delay: 185ms; }
-.motion-ready .operations-intelligence-grid > .operations-widget:nth-child(1).is-visible { animation-delay: 35ms; }
-.motion-ready .operations-intelligence-grid > .operations-widget:nth-child(2).is-visible { animation-delay: 70ms; }
-.motion-ready .operations-intelligence-grid > .operations-widget:nth-child(3).is-visible { animation-delay: 45ms; }
-.motion-ready .operations-intelligence-grid > .operations-widget:nth-child(4).is-visible { animation-delay: 80ms; }
-.motion-ready .operations-intelligence-grid > .operations-widget:nth-child(5).is-visible { animation-delay: 45ms; }
-.motion-ready .operations-intelligence-grid > .operations-widget:nth-child(6).is-visible { animation-delay: 80ms; }
-.motion-ready .operations-intelligence-grid > .operations-widget:nth-child(7).is-visible { animation-delay: 45ms; }
-.motion-ready .operations-intelligence-grid > .operations-widget:nth-child(8).is-visible { animation-delay: 80ms; }
-
-.motion-ready .command-kpi-grid .stat-card:nth-child(1).is-visible { animation-delay: 90ms; }
-.motion-ready .command-kpi-grid .stat-card:nth-child(2).is-visible { animation-delay: 125ms; }
-.motion-ready .command-kpi-grid .stat-card:nth-child(3).is-visible { animation-delay: 160ms; }
-.motion-ready .command-kpi-grid .stat-card:nth-child(4).is-visible { animation-delay: 195ms; }
-.motion-ready .command-kpi-grid .stat-card:nth-child(5).is-visible { animation-delay: 230ms; }
-.motion-ready .command-kpi-grid .stat-card:nth-child(6).is-visible { animation-delay: 265ms; }
-
-.motion-ready .module-grid .module-card:nth-child(1).is-visible { animation-delay: 35ms; }
-.motion-ready .module-grid .module-card:nth-child(2).is-visible { animation-delay: 70ms; }
-.motion-ready .module-grid .module-card:nth-child(3).is-visible { animation-delay: 105ms; }
-.motion-ready .module-grid .module-card:nth-child(4).is-visible { animation-delay: 140ms; }
-.motion-ready .module-grid .module-card:nth-child(5).is-visible { animation-delay: 175ms; }
-.motion-ready .module-grid .module-card:nth-child(6).is-visible { animation-delay: 210ms; }
-.motion-ready .module-grid .module-card:nth-child(7).is-visible { animation-delay: 245ms; }
-.motion-ready .module-launcher-list .module-launcher-tile:nth-child(1).is-visible { animation-delay: 35ms; }
-.motion-ready .module-launcher-list .module-launcher-tile:nth-child(2).is-visible { animation-delay: 65ms; }
-.motion-ready .module-launcher-list .module-launcher-tile:nth-child(3).is-visible { animation-delay: 95ms; }
-.motion-ready .module-launcher-list .module-launcher-tile:nth-child(4).is-visible { animation-delay: 125ms; }
-.motion-ready .module-launcher-list .module-launcher-tile:nth-child(5).is-visible { animation-delay: 155ms; }
-.motion-ready .module-launcher-list .module-launcher-tile:nth-child(6).is-visible { animation-delay: 185ms; }
-.motion-ready .module-launcher-list .module-launcher-tile:nth-child(7).is-visible { animation-delay: 215ms; }
-
-.motion-ready .dashboard-split > .card:nth-child(1).is-visible { animation-delay: 35ms; }
-.motion-ready .dashboard-split > .card:nth-child(2).is-visible { animation-delay: 80ms; }
-.motion-ready .dashboard-primary-grid > .card:nth-child(1).is-visible,
-.motion-ready .dashboard-bottom-grid > .card:nth-child(1).is-visible { animation-delay: 35ms; }
-.motion-ready .dashboard-primary-grid > .card:nth-child(2).is-visible,
-.motion-ready .dashboard-bottom-grid > .card:nth-child(2).is-visible { animation-delay: 75ms; }
-.motion-ready .dashboard-primary-grid > .card:nth-child(3).is-visible,
-.motion-ready .dashboard-bottom-grid > .card:nth-child(3).is-visible { animation-delay: 115ms; }
-.motion-ready .dashboard-bottom-grid > .card:nth-child(4).is-visible { animation-delay: 155ms; }
-
 @keyframes hims-enter {
-  from { opacity: 0; transform: translate3d(0, 10px, 0); }
-  to { opacity: 1; transform: translate3d(0, 0, 0); }
+  from { opacity: 1; transform: none; }
+  to { opacity: 1; transform: none; }
 }
 
 /* Cards share timing; module tiles retain a distinct accent. */
@@ -269,19 +219,11 @@ body,
   42% { opacity: 0.68; }
 }
 
-/* Activity and alert details reveal once with their containing widgets. */
+/* Activity and alert details reveal immediately without lag */
 .motion-ready .activity-item,
-.motion-ready .alert-item { opacity: 0; transform: translate3d(0, 5px, 0); }
+.motion-ready .alert-item { opacity: 1; transform: none; }
 .motion-ready .card.is-visible .activity-item,
-.motion-ready .card.is-visible .alert-item { animation: hims-row-enter var(--duration-slow) var(--ease-emphasized) both; }
-.motion-ready .card.is-visible :is(.activity-item, .alert-item):nth-child(2) { animation-delay: 35ms; }
-.motion-ready .card.is-visible :is(.activity-item, .alert-item):nth-child(3) { animation-delay: 70ms; }
-.motion-ready .card.is-visible :is(.activity-item, .alert-item):nth-child(4) { animation-delay: 105ms; }
-.motion-ready .card.is-visible :is(.activity-item, .alert-item):nth-child(5) { animation-delay: 140ms; }
-@keyframes hims-row-enter {
-  from { opacity: 0; transform: translate3d(0, 5px, 0); }
-  to { opacity: 1; transform: translate3d(0, 0, 0); }
-}
+.motion-ready .card.is-visible .alert-item { opacity: 1; transform: none; }
 
 .activity-item,
 .alert-item { transition: background-color var(--duration-base) var(--ease-standard), border-color var(--duration-base) var(--ease-standard); }

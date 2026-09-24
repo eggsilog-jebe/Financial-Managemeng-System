@@ -10,6 +10,7 @@ use App\Models\UserActiveSession;
 use App\Models\UserWorkstation;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Service managing enterprise single active session enforcement and live session tracking.
@@ -39,6 +40,7 @@ final class ActiveSessionManagerService
 
         foreach ($previousActiveSessions as $oldSession) {
             $oldSession->terminate(UserActiveSession::REASON_DISPLACED);
+            Cache::put("session:terminated:{$oldSession->session_id}", UserActiveSession::REASON_DISPLACED, 3600);
 
             ActivityLog::logAuth(
                 event:       'session_displaced',
@@ -48,6 +50,10 @@ final class ActiveSessionManagerService
                 userAgent:   $request->userAgent()
             );
         }
+
+        // Fast-path Redis registrations for instantaneous validation
+        Cache::put("user:active_session:{$user->id}", $sessionId, 86400);
+        Cache::forget("session:terminated:{$sessionId}");
 
         // 2. Create or reactivate the current session
         /** @var UserActiveSession $activeSession */
@@ -83,33 +89,63 @@ final class ActiveSessionManagerService
 
     /**
      * Check if a session has been terminated or displaced.
+     * Executes in a single query to eliminate latency on cross-network database connections.
      *
      * @return string|null Reason string if terminated/displaced, null if still active and valid.
      */
     public function checkSessionDisplacement(string $sessionId, User $user): ?string
     {
-        /** @var UserActiveSession|null $record */
-        $record = UserActiveSession::where('session_id', $sessionId)
-            ->where('user_id', $user->id)
-            ->first();
+        // 1. Fast Path: Check if this session was explicitly marked terminated in Redis
+        $cachedReason = Cache::get("session:terminated:{$sessionId}");
+        if ($cachedReason !== null) {
+            return (string) $cachedReason;
+        }
 
-        // If explicitly marked as terminated, return the reason
+        // 2. Fast Path: Check if this session is the current active session in Redis
+        $activeSessionId = Cache::get("user:active_session:{$user->id}");
+        if ($activeSessionId === $sessionId) {
+            return null; // Instant sub-millisecond in-memory validation
+        }
+
+        // 3. Fallback: Query database
+        $sessions = UserActiveSession::select(['id', 'session_id', 'user_id', 'login_at', 'is_terminated', 'termination_reason'])
+            ->where('user_id', $user->id)
+            ->where(function ($q) use ($sessionId): void {
+                $q->where('session_id', $sessionId)
+                    ->orWhere('is_terminated', false);
+            })
+            ->orderByDesc('login_at')
+            ->get();
+
+        /** @var UserActiveSession|null $record */
+        $record = $sessions->firstWhere('session_id', $sessionId);
+
+        // If explicitly marked as terminated, cache and return the reason
         if ($record && $record->is_terminated) {
-            return $record->termination_reason ?: UserActiveSession::REASON_DISPLACED;
+            $reason = $record->termination_reason ?: UserActiveSession::REASON_DISPLACED;
+            Cache::put("session:terminated:{$sessionId}", $reason, 3600);
+            return $reason;
         }
 
         // Check if there is another newer active session for this user (displacement guard)
-        $newerSessionExists = UserActiveSession::where('user_id', $user->id)
-            ->where('is_terminated', false)
-            ->where('session_id', '!=', $sessionId)
-            ->where('login_at', '>', $record?->login_at ?? now()->subDay())
-            ->exists();
+        $threshold = $record?->login_at ?? now()->subDay();
+        $newerSession = $sessions->first(function (UserActiveSession $s) use ($sessionId, $threshold): bool {
+            return ! $s->is_terminated
+                && $s->session_id !== $sessionId
+                && $s->login_at > $threshold;
+        });
 
-        if ($newerSessionExists) {
+        if ($newerSession !== null) {
             if ($record) {
                 $record->terminate(UserActiveSession::REASON_DISPLACED);
             }
+            Cache::put("session:terminated:{$sessionId}", UserActiveSession::REASON_DISPLACED, 3600);
             return UserActiveSession::REASON_DISPLACED;
+        }
+
+        // Warm up active session in Redis for fast future queries
+        if ($record && ! $record->is_terminated) {
+            Cache::put("user:active_session:{$user->id}", $sessionId, 86400);
         }
 
         return null;
@@ -124,6 +160,8 @@ final class ActiveSessionManagerService
         string $reason = UserActiveSession::REASON_ADMIN_REVOKED
     ): void {
         $session->terminate($reason);
+        Cache::put("session:terminated:{$session->session_id}", $reason, 3600);
+        Cache::forget("user:active_session:{$session->user_id}");
 
         ActivityLog::logAuth(
             event:       'session_force_terminated',
@@ -139,10 +177,13 @@ final class ActiveSessionManagerService
      */
     public function terminateCurrentSession(string $sessionId): void
     {
+        Cache::put("session:terminated:{$sessionId}", UserActiveSession::REASON_MANUAL_LOGOUT, 3600);
+
         UserActiveSession::where('session_id', $sessionId)
             ->where('is_terminated', false)
             ->each(function ($session) {
                 $session->terminate(UserActiveSession::REASON_MANUAL_LOGOUT);
+                Cache::forget("user:active_session:{$session->user_id}");
             });
     }
 

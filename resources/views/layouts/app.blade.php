@@ -159,6 +159,31 @@
           window.location.reload();
         }
       });
+
+      // Speculative prefetch for navigation links on hover/focus to achieve near-instantaneous page transitions
+      document.addEventListener('DOMContentLoaded', function () {
+        const prefetched = new Set();
+        const prefetchLink = function (url) {
+          if (!url || prefetched.has(url) || url.startsWith('#') || url.includes('/logout') || url.includes('javascript:')) return;
+          try {
+            const link = document.createElement('link');
+            link.rel = 'prefetch';
+            link.href = url;
+            link.as = 'document';
+            document.head.appendChild(link);
+            prefetched.add(url);
+          } catch (_) {}
+        };
+
+        document.querySelectorAll('.sidebar-nav a[href], .dashboard-header a[href], .module-card a[href]').forEach(function (el) {
+          const href = el.getAttribute('href');
+          if (href && !href.startsWith('#')) {
+            el.addEventListener('mouseenter', function () { prefetchLink(href); }, { passive: true });
+            el.addEventListener('focus', function () { prefetchLink(href); }, { passive: true });
+            el.addEventListener('touchstart', function () { prefetchLink(href); }, { passive: true });
+          }
+        });
+      });
     </script>
     <script src="{{ asset('assets/js/auth/idle-monitor.js') }}"></script>
     @stack('scripts')

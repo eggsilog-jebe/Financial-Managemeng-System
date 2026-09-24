@@ -39,24 +39,39 @@
   // Bootstrap modal instance
   const bsModal = window.bootstrap ? bootstrap.Modal.getOrCreateInstance(modal, { backdrop: 'static', keyboard: false }) : null;
 
-  // ── Heartbeat ──────────────────────────────────────────────────────────────
-  function sendHeartbeat() {
+  // ── Heartbeat & Displacement Detection ──────────────────────────────────────
+  function sendHeartbeat(force = false) {
     const now = Date.now();
-    if (now - lastHeartbeat < HEARTBEAT_INTERVAL_MS) return;
+    if (!force && (now - lastHeartbeat < HEARTBEAT_INTERVAL_MS)) return;
     lastHeartbeat = now;
 
     fetch('/session/heartbeat', {
       method:  'POST',
       headers: {
-        'Content-Type':  'application/json',
-        'X-CSRF-TOKEN':  csrfToken,
+        'Content-Type':     'application/json',
+        'X-CSRF-TOKEN':     csrfToken,
         'X-Requested-With': 'XMLHttpRequest',
+        'Accept':           'application/json',
       },
       credentials: 'same-origin',
+    }).then(response => {
+      // If displaced by another concurrent login or terminated by admin, immediately redirect to login
+      if (response.status === 401) {
+        return response.json().then(data => {
+          window.location.href = data.redirect_url || '/login?displaced=1';
+        }).catch(() => {
+          window.location.href = '/login?displaced=1';
+        });
+      }
     }).catch(() => {
       // Silently swallow network errors — server-side guard will handle expiry
     });
   }
+
+  // Periodic displacement check every 8 seconds (kicks previous session out in real-time)
+  setInterval(() => {
+    sendHeartbeat(true);
+  }, 8000);
 
   // ── Countdown Display ──────────────────────────────────────────────────────
   function startCountdown(durationSeconds) {

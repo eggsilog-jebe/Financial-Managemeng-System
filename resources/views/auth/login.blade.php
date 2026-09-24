@@ -262,13 +262,16 @@
             <p class="login-help">Use your authorized hospital domain credentials to access the financial portal.</p>
           </header>
 
-          @if(session('displacement_warning'))
+          @if(session('displacement_warning') || request()->has('displaced'))
+            @php
+              $dispWarning = session('displacement_warning') ?? '⚠️ Security Displacement Alert: Your account was accessed from another computer or workstation. Only one concurrent session is authorized per hospital personnel. Your previous session has been terminated.';
+            @endphp
             <div class="alert rounded-3 py-2 px-3 fs-sm border-0 mb-3" role="alert" style="background: #fef2f2; border-left: 3.5px solid #ef4444 !important; color: #991b1b;">
               <div class="d-flex align-items-start gap-2">
                 <i class="ph-fill ph-shield-warning text-danger fs-5 flex-shrink-0 mt-1"></i>
                 <div>
                   <div class="fw-bold">Session Displaced</div>
-                  <div style="font-size: 0.8rem;">{{ session('displacement_warning') }}</div>
+                  <div style="font-size: 0.8rem;">{{ $dispWarning }}</div>
                 </div>
               </div>
             </div>

@@ -8,18 +8,24 @@ use App\Models\Account;
 use App\Models\BankAccount;
 use App\Models\Invoice;
 use App\Models\PurchaseBill;
+use App\Services\Accounting\AccountingCacheService;
 use Illuminate\Support\Facades\DB;
 
 final class FinancialKpiService
 {
+    public function __construct(
+        private readonly AccountingCacheService $cacheService,
+    ) {}
+
     /**
      * Compute Executive KPI Metrics Deck & 12-Month Trajectory.
      */
     public function getKpiMetrics(): array
     {
-        // 1. Total Outstanding Accounts Receivable (AR)
-        $totalAr = Invoice::whereIn('status', ['ISSUED', 'PARTIALLY_PAID', 'PENDING', 'UNPAID'])->sum('patient_payable');
-        $totalArStr = (string) $totalAr;
+        return $this->cacheService->rememberKpiMetrics(function (): array {
+            // 1. Total Outstanding Accounts Receivable (AR)
+            $totalAr = Invoice::whereIn('status', ['ISSUED', 'PARTIALLY_PAID', 'PENDING', 'UNPAID'])->sum('patient_payable');
+            $totalArStr = (string) $totalAr;
 
         // 2. Total Outstanding Accounts Payable (AP)
         $totalAp = PurchaseBill::whereIn('status', ['UNPAID', 'PARTIAL', 'APPROVED', 'OVERDUE'])->sum(DB::raw('total_amount - paid_amount'));
@@ -171,5 +177,6 @@ final class FinancialKpiService
             'days_cash_on_hand'       => $dcoh,
             'trajectory'              => $months,
         ];
+        }, 300);
     }
 }

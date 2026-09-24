@@ -72,20 +72,23 @@ Route::middleware('guest')->group(function () {
         ->name('login.post');
 });
 
-// 2FA Challenge — accessible after password auth but before 2FA verification
+// Workstation & 2FA Challenge — accessible after password auth
 Route::middleware('auth')->group(function () {
+    // Workstation / Computer Binding Authorization Holding Screen & Status
+    Route::get('/workstation-authorization-pending', [\App\Http\Controllers\Auth\WorkstationAuthorizationController::class, 'show'])
+        ->name('workstation.pending');
+    Route::get('/workstation/status', [\App\Http\Controllers\Auth\WorkstationAuthorizationController::class, 'checkStatus'])
+        ->name('workstation.status');
+    Route::post('/workstation/cancel', [\App\Http\Controllers\Auth\WorkstationAuthorizationController::class, 'cancel'])
+        ->name('workstation.cancel');
+
     Route::get('/two-factor-challenge', [\App\Http\Controllers\Auth\TwoFactorChallengeController::class, 'show'])
         ->name('two-factor.challenge');
     Route::post('/two-factor-challenge', [\App\Http\Controllers\Auth\TwoFactorChallengeController::class, 'verify'])
         ->middleware('throttle:10,1')
         ->name('two-factor.challenge.verify');
 
-    // Email OTP: generate and dispatch a one-time code to the user's email
-    Route::post('/two-factor-challenge/email-otp/send', [\App\Http\Controllers\Auth\TwoFactorChallengeController::class, 'sendEmailOtp'])
-        ->middleware('throttle:10,1')
-        ->name('two-factor.email-otp.send');
-
-    // 2FA Setup / Enrollment
+    // 2FA Setup / TOTP Enrollment (Google Authenticator)
     Route::get('/two-factor-setup', [\App\Http\Controllers\Auth\TwoFactorSetupController::class, 'show'])
         ->name('two-factor.setup');
     Route::post('/two-factor-setup', [\App\Http\Controllers\Auth\TwoFactorSetupController::class, 'store'])
@@ -574,6 +577,14 @@ Route::middleware(['auth'])->group(function () {
 
         // System Audit Trail (alias - same controller)
         Route::get('/audit-trail', [AuditLogController::class, 'index'])->name('audit-trail');
+
+        // Workstation Binding & Active Session Security
+        Route::get('/workstations', [\App\Http\Controllers\UserSecurity\WorkstationSecurityController::class, 'index'])->name('workstations');
+        Route::get('/workstations/poll', [\App\Http\Controllers\UserSecurity\WorkstationSecurityController::class, 'pollData'])->name('workstations.poll');
+        Route::post('/workstations/{workstation}/approve', [\App\Http\Controllers\UserSecurity\WorkstationSecurityController::class, 'approve'])->name('workstations.approve');
+        Route::post('/workstations/{workstation}/reject', [\App\Http\Controllers\UserSecurity\WorkstationSecurityController::class, 'reject'])->name('workstations.reject');
+        Route::delete('/workstations/{workstation}', [\App\Http\Controllers\UserSecurity\WorkstationSecurityController::class, 'revoke'])->name('workstations.revoke');
+        Route::post('/active-sessions/{session}/terminate', [\App\Http\Controllers\UserSecurity\WorkstationSecurityController::class, 'terminateSession'])->name('sessions.terminate');
     });
 
     // Change Password (for users with must_change_password flag)

@@ -80,4 +80,34 @@ class User extends Authenticatable
             default          => $this->role ?? 'Unknown',
         };
     }
+
+    /** Whether this user has Super Administrator / CFO privileges. */
+    public function isSuperAdmin(): bool
+    {
+        return in_array($this->role, ['SuperAdmin', 'CFO', 'FinanceDirector'], true);
+    }
+
+    /** All workstations bound or requested for this user. */
+    public function workstations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(UserWorkstation::class);
+    }
+
+    /** Approved and active workstations (max 3). */
+    public function approvedWorkstations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(UserWorkstation::class)->where('status', UserWorkstation::STATUS_APPROVED);
+    }
+
+    /** Pending workstation authorization requests. */
+    public function pendingWorkstations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(UserWorkstation::class)->where('status', UserWorkstation::STATUS_PENDING);
+    }
+
+    /** Active live sessions for this user. */
+    public function activeSessions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(UserActiveSession::class)->where('is_terminated', false);
+    }
 }

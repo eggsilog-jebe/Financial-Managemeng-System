@@ -17,6 +17,10 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
 
+        $middleware->encryptCookies(except: [
+            'fms_workstation_token',
+        ]);
+
         $middleware->validateCsrfTokens(except: [
             'api/*',
             'api/v1/ingest/*',
@@ -37,12 +41,14 @@ return Application::configure(basePath: dirname(__DIR__))
             'must-change-password'=> \App\Http\Middleware\MustChangePassword::class,
             '2fa'                 => \App\Http\Middleware\EnsureTwoFactorAuthenticated::class,
             'idle.timeout'        => \App\Http\Middleware\IdleSessionTimeout::class,
+            'single.session'      => \App\Http\Middleware\EnforceSingleActiveSession::class,
         ]);
 
         $middleware->web(append: [
             \App\Http\Middleware\MustChangePassword::class,
             \App\Http\Middleware\EnsureTwoFactorAuthenticated::class,
             \App\Http\Middleware\IdleSessionTimeout::class,
+            \App\Http\Middleware\EnforceSingleActiveSession::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

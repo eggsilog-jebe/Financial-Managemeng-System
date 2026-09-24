@@ -6,7 +6,10 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
+use App\Models\UserWorkstation;
 use App\Services\Auth\TwoFactorRememberService;
+use App\Services\Security\ActiveSessionManagerService;
+use App\Services\Security\WorkstationBindingService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,8 +20,11 @@ use Illuminate\Support\Str;
 final class LoginController extends Controller
 {
     public function __construct(
-        private readonly TwoFactorRememberService $twoFactorRememberService,
+        private readonly TwoFactorRememberService     $twoFactorRememberService,
+        private readonly WorkstationBindingService   $workstationService,
+        private readonly ActiveSessionManagerService $sessionManager,
     ) {}
+
     /**
      * Show the Login Screen.
      */
@@ -62,7 +68,7 @@ final class LoginController extends Controller
             ])->onlyInput('email');
         }
 
-        // 4. Authentication Attempt (Strict hospital shared workstation safety: zero persistent cookies)
+        // 4. Primary Credential Authentication Attempt
         if (Auth::attempt($credentials, false)) {
             RateLimiter::clear($throttleKey);
 
@@ -90,43 +96,99 @@ final class LoginController extends Controller
                 ])->onlyInput('email');
             }
 
-            $request->session()->put('auth.last_activity_at', now()->toIso8601String());
-
-            ActivityLog::logAuth(
-                event:       'login',
-                user:        $user,
-                description: "User [{$user->name}] ({$user->role}) logged in successfully.",
-                ip:          $request->ip(),
-                userAgent:   $request->userAgent()
-            );
-
             $user->update([
                 'last_login_at' => now(),
                 'last_login_ip' => $request->ip(),
             ]);
 
-            // Mark 2FA as not yet verified for this new login session — verification required on every login
+            // 5. Workstation / Computer Binding Verification
+            $deviceUuid   = $this->workstationService->resolveDeviceUuid($request);
+            $deviceCookie = $this->workstationService->createDeviceCookie($deviceUuid);
+            $eval         = $this->workstationService->evaluateWorkstation($user, $deviceUuid, $request);
+
+            // Fail-safe bootstrap: If this is a Super Admin logging into their very first workstation
+            if ($eval['status'] === 'unrecognized' && $user->isSuperAdmin() && $user->approvedWorkstations()->count() === 0) {
+                $bootstrapWorkstation = $this->workstationService->submitAuthorizationRequest($user, $deviceUuid, $request, 'Primary Super Admin Console');
+                $bootstrapWorkstation->update([
+                    'status'      => UserWorkstation::STATUS_APPROVED,
+                    'approved_by' => $user->id,
+                    'approved_at' => now(),
+                ]);
+                $eval = [
+                    'status'      => UserWorkstation::STATUS_APPROVED,
+                    'workstation' => $bootstrapWorkstation,
+                    'message'     => null,
+                    'can_request' => false,
+                ];
+            }
+
+            // Case A: Workstation was explicitly rejected by Super Admin
+            if ($eval['status'] === UserWorkstation::STATUS_REJECTED) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return back()->withErrors([
+                    'email' => '🚫 Workstation Access Rejected: This computer has been rejected by the Super Administrator. Access denied.',
+                ])->onlyInput('email')->withCookie($deviceCookie);
+            }
+
+            // Case B: Workstation was revoked
+            if ($eval['status'] === UserWorkstation::STATUS_REVOKED) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return back()->withErrors([
+                    'email' => '🚫 Workstation Access Revoked: Authorization for this workstation was revoked by the Super Administrator. Please contact IT / CFO.',
+                ])->onlyInput('email')->withCookie($deviceCookie);
+            }
+
+            // Case C: Unrecognized or Pending Workstation -> Route to holding screen
+            if ($eval['status'] === UserWorkstation::STATUS_PENDING || $eval['status'] === 'unrecognized') {
+                $workstation = $eval['workstation']
+                    ?? $this->workstationService->submitAuthorizationRequest($user, $deviceUuid, $request);
+
+                $request->session()->put('auth.pending_workstation_id', $workstation->id);
+                $request->session()->put('auth.pending_device_uuid', $deviceUuid);
+
+                return redirect()->route('workstation.pending')
+                    ->withCookie($deviceCookie)
+                    ->with('info', '📡 New workstation detected. Authorization request sent in real-time to Super Administrator.');
+            }
+
+            // Case D: Workstation is APPROVED
+            /** @var UserWorkstation $workstation */
+            $workstation = $eval['workstation'];
+            $request->session()->put('auth.workstation_id', $workstation->id);
+            $request->session()->put('auth.device_uuid', $deviceUuid);
+
+            // 6. Single Active Session Enforcement: Terminates previous sessions immediately
+            $this->sessionManager->registerSession($user, $request->session()->getId(), $workstation, $request);
+
+            $request->session()->put('auth.last_activity_at', now()->toIso8601String());
+
+            ActivityLog::logAuth(
+                event:       'login',
+                user:        $user,
+                description: "User [{$user->name}] ({$user->role}) logged in from authorized workstation [{$workstation->workstation_name}].",
+                ip:          $request->ip(),
+                userAgent:   $request->userAgent()
+            );
+
+            // 7. Second Factor Requirement (TOTP)
             $request->session()->put('auth.2fa_passed', false);
 
-            // If user has 2FA enabled, always redirect to the challenge page
             if ($user->hasTwoFactorEnabled()) {
-                return redirect()->route('two-factor.challenge');
+                return redirect()->route('two-factor.challenge')->withCookie($deviceCookie);
             }
 
-            // No 2FA yet — redirect to setup so they can enroll
-            if (! $user->hasTwoFactorEnabled()) {
-                return redirect()->route('two-factor.setup')
-                    ->with('info', '🔐 For your hospital account security, please set up Two-Factor Authentication before continuing.');
-            }
-
-            // Redirect appropriately based on user role
-            return match ($user->role ?? 'StaffAccountant') {
-                'Cashier' => redirect()->intended(route('collection.cashier-desk')),
-                default   => redirect()->intended(route('accounting.dashboard')),
-            };
+            return redirect()->route('two-factor.setup')
+                ->withCookie($deviceCookie)
+                ->with('info', '🔐 For your hospital account security, please set up Google Authenticator before continuing.');
         }
 
-        // 5. Failed Attempt Handling
+        // 8. Failed Credential Handling
         RateLimiter::hit($throttleKey, 60);
 
         ActivityLog::logAuth(
@@ -150,6 +212,9 @@ final class LoginController extends Controller
         $user = Auth::user();
 
         if ($user) {
+            $sessionId = $request->session()->getId();
+            $this->sessionManager->terminateCurrentSession($sessionId);
+
             ActivityLog::logAuth(
                 event:       'logout',
                 user:        $user,

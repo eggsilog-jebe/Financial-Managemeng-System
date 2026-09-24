@@ -262,6 +262,18 @@
             <p class="login-help">Use your authorized hospital domain credentials to access the financial portal.</p>
           </header>
 
+          @if(session('displacement_warning'))
+            <div class="alert rounded-3 py-2 px-3 fs-sm border-0 mb-3" role="alert" style="background: #fef2f2; border-left: 3.5px solid #ef4444 !important; color: #991b1b;">
+              <div class="d-flex align-items-start gap-2">
+                <i class="ph-fill ph-shield-warning text-danger fs-5 flex-shrink-0 mt-1"></i>
+                <div>
+                  <div class="fw-bold">Session Displaced</div>
+                  <div style="font-size: 0.8rem;">{{ session('displacement_warning') }}</div>
+                </div>
+              </div>
+            </div>
+          @endif
+
           @if(session('session_expired'))
             <div class="alert rounded-3 py-2 px-3 fs-sm border-0 mb-3" role="alert" style="background: #fff7ed; border-left: 3px solid #f59e0b !important; color: #92400e;">
               <i class="ph ph-clock-countdown me-1 align-middle"></i>
@@ -269,7 +281,7 @@
             </div>
           @endif
 
-          @if($errors->any())
+          @if($errors->any() && !session('displacement_warning'))
             <div class="alert alert-danger rounded-3 py-2 px-3 fs-sm border-0 mb-3" role="alert">
               <i class="ph ph-warning-circle me-1 align-middle"></i>
               {{ $errors->first() }}
@@ -278,6 +290,7 @@
 
           <form id="login-form" method="POST" action="{{ route('login.post') }}" novalidate>
             @csrf
+            <input type="hidden" name="device_uuid" id="login-device-uuid">
             <div class="form-field">
               <label for="login-email">Email address</label>
               <div class="input-icon-wrapper">
@@ -506,7 +519,21 @@
         });
       }
 
-      // 4. Prevent browser bfcache restoration if navigating back while authenticated
+      // 4. Persistent Hardware Workstation UUID Binding
+      try {
+        let deviceUuid = localStorage.getItem('fms_device_uuid');
+        if (!deviceUuid) {
+          deviceUuid = 'ws-' + ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+            (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+          );
+          localStorage.setItem('fms_device_uuid', deviceUuid);
+        }
+        const uuidInput = document.getElementById('login-device-uuid');
+        if (uuidInput) uuidInput.value = deviceUuid;
+        document.cookie = 'fms_workstation_token=' + deviceUuid + '; path=/; max-age=157680000; SameSite=Lax';
+      } catch (_) {}
+
+      // 5. Prevent browser bfcache restoration if navigating back while authenticated
       window.addEventListener('pageshow', (event) => {
         if (event.persisted || (window.performance && window.performance.getEntriesByType('navigation')[0]?.type === 'back_forward')) {
           window.location.reload();

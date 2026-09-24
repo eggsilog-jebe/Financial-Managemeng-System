@@ -56,16 +56,27 @@ final class LoginSecurityHardeningTest extends TestCase
 
     public function test_login_normalizes_whitespace_and_casing_on_email(): void
     {
-        User::factory()->create([
+        $user = User::factory()->create([
             'email'    => 'accountant@hospital.gov.ph',
             'role'     => 'Accountant',
             'password' => Hash::make('CorrectPassword123!'),
         ]);
 
-        $response = $this->post('/login', [
-            'email'    => '   AcCoUnTanT@Hospital.Gov.PH   ',
-            'password' => 'CorrectPassword123!',
+        $deviceUuid = 'ws-accountant-norm-1';
+        \App\Models\UserWorkstation::create([
+            'user_id'          => $user->id,
+            'device_uuid'      => $deviceUuid,
+            'workstation_name' => 'Accountant Workstation 1',
+            'status'           => \App\Models\UserWorkstation::STATUS_APPROVED,
+            'approved_at'      => now(),
         ]);
+
+        $response = $this->withHeaders(['X-Workstation-UUID' => $deviceUuid])
+            ->post('/login', [
+                'email'       => '   AcCoUnTanT@Hospital.Gov.PH   ',
+                'password'    => 'CorrectPassword123!',
+                'device_uuid' => $deviceUuid,
+            ]);
 
         $response->assertRedirect(route('two-factor.challenge'));
         $this->assertAuthenticated();

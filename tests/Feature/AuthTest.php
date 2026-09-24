@@ -52,16 +52,27 @@ final class AuthTest extends TestCase
 
     public function test_standard_login_cashier_redirects_to_two_factor_challenge(): void
     {
-        User::factory()->create([
+        $user = User::factory()->create([
             'email'    => 'cashier@hospital.gov.ph',
             'role'     => 'Cashier',
             'password' => Hash::make('EnterpriseSecure123!'),
         ]);
 
-        $response = $this->post('/login', [
-            'email'    => 'cashier@hospital.gov.ph',
-            'password' => 'EnterpriseSecure123!',
+        $deviceUuid = 'ws-cashier-pos-1';
+        \App\Models\UserWorkstation::create([
+            'user_id'          => $user->id,
+            'device_uuid'      => $deviceUuid,
+            'workstation_name' => 'Cashier POS Terminal 1',
+            'status'           => \App\Models\UserWorkstation::STATUS_APPROVED,
+            'approved_at'      => now(),
         ]);
+
+        $response = $this->withHeaders(['X-Workstation-UUID' => $deviceUuid])
+            ->post('/login', [
+                'email'       => 'cashier@hospital.gov.ph',
+                'password'    => 'EnterpriseSecure123!',
+                'device_uuid' => $deviceUuid,
+            ]);
 
         $response->assertRedirect(route('two-factor.challenge'));
         $this->assertAuthenticated();

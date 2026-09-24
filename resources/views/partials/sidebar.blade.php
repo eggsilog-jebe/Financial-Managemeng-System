@@ -264,6 +264,9 @@
             <li><a href="{{ route('user-security.users') }}" class="{{ request()->routeIs('user-security.users*') ? 'active' : '' }}">
               <i class="ph ph-user-gear me-1"></i>User Accounts
             </a></li>
+            <li><a href="{{ route('user-security.workstations') }}" class="{{ request()->routeIs('user-security.workstations*') ? 'active' : '' }}">
+              <i class="ph ph-desktop me-1"></i>Workstation Security
+            </a></li>
             <li><a href="{{ route('user-security.audit-trail') }}" class="{{ request()->routeIs('user-security.audit-trail') || request()->routeIs('accounting.audit-log') ? 'active' : '' }}">
               <i class="ph ph-clock-countdown me-1"></i>System Audit Trail
             </a></li>

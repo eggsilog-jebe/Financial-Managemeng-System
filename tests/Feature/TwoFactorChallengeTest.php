@@ -5,22 +5,33 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Models\User;
-use App\Services\Auth\EmailOtpService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Hash;
+use PragmaRX\Google2FA\Google2FA;
 use Tests\TestCase;
 
 final class TwoFactorChallengeTest extends TestCase
 {
     use RefreshDatabase;
 
+    private Google2FA $google2fa;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->google2fa = new Google2FA();
+    }
+
     public function test_challenge_page_renders_for_authenticated_user_with_2fa(): void
     {
+        $secret = $this->google2fa->generateSecretKey(32);
+
         $user = User::factory()->create([
             'email'                   => 'cfo@hospital.gov.ph',
             'role'                    => 'CFO',
             'two_factor_confirmed_at' => now(),
-            'two_factor_secret'       => null,
+            'two_factor_secret'       => Crypt::encryptString($secret),
         ]);
 
         $response = $this->actingAs($user)
@@ -28,66 +39,69 @@ final class TwoFactorChallengeTest extends TestCase
             ->get('/two-factor-challenge');
 
         $response->assertStatus(200);
-        $response->assertSee('Check Your Email');
-        $response->assertSee('Verify & Sign In', false);
+        $response->assertSee('Enter Authenticator Code');
+        $response->assertSee('Google Authenticator');
+        $response->assertSee('Verify &amp; Sign In', false);
     }
 
-    public function test_challenge_verifies_successfully_with_email_otp_parameter(): void
+    public function test_challenge_verifies_successfully_with_valid_totp_code(): void
     {
+        $secret = $this->google2fa->generateSecretKey(32);
+
         $user = User::factory()->create([
             'email'                   => 'cfo@hospital.gov.ph',
             'role'                    => 'CFO',
             'two_factor_confirmed_at' => now(),
-            'two_factor_secret'       => null,
+            'two_factor_secret'       => Crypt::encryptString($secret),
         ]);
 
-        // Place OTP in cache as EmailOtpService does
-        Cache::put('email_otp:' . $user->id, '132381', 600);
+        $validTotp = $this->google2fa->getCurrentOtp($secret);
 
         $response = $this->actingAs($user)->post('/two-factor-challenge', [
-            'email_otp' => '132381',
-        ]);
-
-        $response->assertRedirect(route('accounting.dashboard'));
-        $this->assertTrue(session('auth.2fa_passed'));
-        $this->assertFalse(Cache::has('email_otp:' . $user->id)); // Burned
-    }
-
-    public function test_challenge_verifies_successfully_with_code_parameter(): void
-    {
-        $user = User::factory()->create([
-            'email'                   => 'cfo@hospital.gov.ph',
-            'role'                    => 'CFO',
-            'two_factor_confirmed_at' => now(),
-            'two_factor_secret'       => null,
-        ]);
-
-        Cache::put('email_otp:' . $user->id, '132381', 600);
-
-        $response = $this->actingAs($user)->post('/two-factor-challenge', [
-            'code' => '132381',
+            'code' => $validTotp,
         ]);
 
         $response->assertRedirect(route('accounting.dashboard'));
         $this->assertTrue(session('auth.2fa_passed'));
     }
 
-    public function test_challenge_fails_with_invalid_otp(): void
+    public function test_challenge_verifies_successfully_with_recovery_code(): void
     {
+        $secret = $this->google2fa->generateSecretKey(32);
+        $recoveryCode = 'ABCDE-12345';
+
+        $user = User::factory()->create([
+            'email'                     => 'cfo@hospital.gov.ph',
+            'role'                      => 'CFO',
+            'two_factor_confirmed_at'   => now(),
+            'two_factor_secret'         => Crypt::encryptString($secret),
+            'two_factor_recovery_codes' => Crypt::encryptString(json_encode([Hash::make($recoveryCode)])),
+        ]);
+
+        $response = $this->actingAs($user)->post('/two-factor-challenge', [
+            'recovery_code' => $recoveryCode,
+        ]);
+
+        $response->assertRedirect(route('accounting.dashboard'));
+        $this->assertTrue(session('auth.2fa_passed'));
+    }
+
+    public function test_challenge_fails_with_invalid_totp_code(): void
+    {
+        $secret = $this->google2fa->generateSecretKey(32);
+
         $user = User::factory()->create([
             'email'                   => 'cfo@hospital.gov.ph',
             'role'                    => 'CFO',
             'two_factor_confirmed_at' => now(),
-            'two_factor_secret'       => null,
+            'two_factor_secret'       => Crypt::encryptString($secret),
         ]);
-
-        Cache::put('email_otp:' . $user->id, '132381', 600);
 
         $response = $this->from('/two-factor-challenge')
             ->actingAs($user)
             ->withSession(['auth.2fa_passed' => false])
             ->post('/two-factor-challenge', [
-                'email_otp' => '999999',
+                'code' => '000000',
             ]);
 
         $response->assertRedirect('/two-factor-challenge');
@@ -97,19 +111,20 @@ final class TwoFactorChallengeTest extends TestCase
 
     public function test_challenge_validation_rejects_empty_submission(): void
     {
+        $secret = $this->google2fa->generateSecretKey(32);
+
         $user = User::factory()->create([
             'email'                   => 'cfo@hospital.gov.ph',
             'role'                    => 'CFO',
             'two_factor_confirmed_at' => now(),
-            'two_factor_secret'       => null,
+            'two_factor_secret'       => Crypt::encryptString($secret),
         ]);
 
         $response = $this->from('/two-factor-challenge')
             ->actingAs($user)
             ->withSession(['auth.2fa_passed' => false])
             ->post('/two-factor-challenge', [
-                'email_otp' => '',
-                'code'      => '',
+                'code' => '',
             ]);
 
         $response->assertRedirect('/two-factor-challenge');
@@ -129,6 +144,79 @@ final class TwoFactorChallengeTest extends TestCase
             ->get('/two-factor-challenge');
 
         $response->assertRedirect(route('accounting.dashboard'));
+    }
+
+    public function test_unconfirmed_user_logging_in_redirects_to_totp_setup(): void
+    {
+        $user = User::factory()->create([
+            'email'                   => 'staff@hospital.gov.ph',
+            'role'                    => 'StaffAccountant',
+            'password'                => Hash::make('HospitalSecret123!'),
+            'two_factor_confirmed_at' => null,
+            'two_factor_secret'       => null,
+        ]);
+
+        $deviceUuid = 'ws-staff-setup-terminal';
+        \App\Models\UserWorkstation::create([
+            'user_id'          => $user->id,
+            'device_uuid'      => $deviceUuid,
+            'workstation_name' => 'Staff Accounting Terminal',
+            'status'           => \App\Models\UserWorkstation::STATUS_APPROVED,
+            'approved_at'      => now(),
+        ]);
+
+        $response = $this->withHeaders(['X-Workstation-UUID' => $deviceUuid])
+            ->post('/login', [
+                'email'       => 'staff@hospital.gov.ph',
+                'password'    => 'HospitalSecret123!',
+                'device_uuid' => $deviceUuid,
+            ]);
+
+        $response->assertRedirect(route('two-factor.setup'));
+    }
+
+    public function test_setup_page_displays_qr_code_for_user(): void
+    {
+        $user = User::factory()->create([
+            'email'                   => 'staff@hospital.gov.ph',
+            'role'                    => 'StaffAccountant',
+            'two_factor_confirmed_at' => null,
+            'two_factor_secret'       => null,
+        ]);
+
+        $response = $this->actingAs($user)->get('/two-factor-setup');
+
+        $response->assertStatus(200);
+        $response->assertSee('Set Up Google Authenticator');
+        $response->assertSee('qr-container', false);
+    }
+
+    public function test_setup_confirmation_activates_2fa_with_valid_totp(): void
+    {
+        $user = User::factory()->create([
+            'email'                   => 'staff@hospital.gov.ph',
+            'role'                    => 'StaffAccountant',
+            'two_factor_confirmed_at' => null,
+            'two_factor_secret'       => null,
+        ]);
+
+        // First visit setup page to provision secret
+        $this->actingAs($user)->get('/two-factor-setup');
+
+        $user->refresh();
+        $this->assertNotNull($user->two_factor_secret);
+
+        $secret = Crypt::decryptString($user->two_factor_secret);
+        $validCode = $this->google2fa->getCurrentOtp($secret);
+
+        $response = $this->actingAs($user)->post(route('two-factor.setup.confirm'), [
+            'code' => $validCode,
+        ]);
+
+        $response->assertRedirect(route('accounting.dashboard'));
+        $user->refresh();
+        $this->assertTrue($user->hasTwoFactorEnabled());
+        $this->assertTrue(session('auth.2fa_passed'));
     }
 
     public function test_authenticated_user_is_redirected_away_from_login_page(): void
@@ -158,12 +246,14 @@ final class TwoFactorChallengeTest extends TestCase
 
     public function test_every_login_requires_two_factor_verification_without_device_bypass(): void
     {
+        $secret = $this->google2fa->generateSecretKey(32);
+
         $user = User::factory()->create([
             'email'                   => 'cfo@hospital.gov.ph',
             'role'                    => 'CFO',
-            'password'                => \Illuminate\Support\Facades\Hash::make('SecurePassword123!'),
+            'password'                => Hash::make('SecurePassword123!'),
             'two_factor_confirmed_at' => now(),
-            'two_factor_secret'       => null,
+            'two_factor_secret'       => Crypt::encryptString($secret),
         ]);
 
         // Submit credentials

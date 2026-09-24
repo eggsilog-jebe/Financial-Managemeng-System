@@ -290,12 +290,14 @@
         </button>
         <div class="profile-menu" id="profile-menu" role="menu" hidden>
           <a class="profile-menu-link" href="{{ route('accounting.dashboard') }}" role="menuitem"><i class="ph ph-squares-four" aria-hidden="true"></i>Dashboard</a>
-          <a class="profile-menu-link" href="{{ route('login') }}" role="menuitem"><i class="ph ph-arrows-clockwise" aria-hidden="true"></i>Switch Account</a>
+          @can('access-user-management')
+          <a class="profile-menu-link" href="{{ route('user-security.audit-trail') }}" role="menuitem"><i class="ph ph-shield-check" aria-hidden="true"></i>Security Audit</a>
+          @endcan
           <div class="profile-menu-divider" role="separator"></div>
           <form method="POST" action="{{ route('logout') }}" id="logout-form">
             @csrf
             <button class="profile-menu-link text-danger border-0 bg-transparent w-100 text-start" type="submit" role="menuitem">
-              <i class="ph ph-sign-out text-danger" aria-hidden="true"></i>Logout
+              <i class="ph ph-sign-out text-danger" aria-hidden="true"></i>Sign Out
             </button>
           </form>
         </div>

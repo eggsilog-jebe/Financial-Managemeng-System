@@ -20,8 +20,11 @@ use Illuminate\Notifications\Notifiable;
     'must_change_password',
     'last_login_at',
     'last_login_ip',
+    'two_factor_secret',
+    'two_factor_recovery_codes',
+    'two_factor_confirmed_at',
 ])]
-#[Hidden(['password', 'remember_token'])]
+#[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -35,10 +38,11 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at'    => 'datetime',
-            'last_login_at'        => 'datetime',
-            'password'             => 'hashed',
-            'must_change_password' => 'boolean',
+            'email_verified_at'        => 'datetime',
+            'last_login_at'            => 'datetime',
+            'password'                 => 'hashed',
+            'must_change_password'     => 'boolean',
+            'two_factor_confirmed_at'  => 'datetime',
         ];
     }
 
@@ -52,6 +56,15 @@ class User extends Authenticatable
     public function isSuspended(): bool
     {
         return ($this->status ?? 'active') === 'suspended';
+    }
+
+    /**
+     * Whether 2FA has been fully enrolled and confirmed for this user.
+     * A user with a provisioned secret but not yet confirmed is NOT considered enabled.
+     */
+    public function hasTwoFactorEnabled(): bool
+    {
+        return $this->two_factor_confirmed_at !== null;
     }
 
     /** Human-readable role label for display. */

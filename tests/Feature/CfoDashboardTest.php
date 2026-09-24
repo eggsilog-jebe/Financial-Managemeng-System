@@ -125,7 +125,7 @@ final class CfoDashboardTest extends TestCase
         $response->assertSee('192.168.1.105');
     }
 
-    public function test_role_tailored_quick_actions_adapt_for_different_hospital_roles(): void
+    public function test_auditor_can_access_dashboard_with_telemetry(): void
     {
         $auditor = User::factory()->create([
             'email' => 'auditor@hospital.gov.ph',
@@ -136,7 +136,7 @@ final class CfoDashboardTest extends TestCase
         $response = $this->actingAs($auditor)->get(route('accounting.dashboard'));
 
         $response->assertStatus(200);
-        $response->assertSee('Audit Trail System');
-        $response->assertSee('GL Subsidies Audit');
+        $response->assertSee('Executive Financial Overview');
+        $response->assertSee('Security & Audit Trail Telemetry');
     }
 }

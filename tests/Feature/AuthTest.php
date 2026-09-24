@@ -32,7 +32,7 @@ final class AuthTest extends TestCase
         $response->assertStatus(404);
     }
 
-    public function test_standard_login_cfo_succeeds_and_redirects_to_dashboard(): void
+    public function test_standard_login_cfo_succeeds_and_redirects_to_two_factor_challenge(): void
     {
         User::factory()->create([
             'email'    => 'cfo@hospital.gov.ph',
@@ -45,12 +45,12 @@ final class AuthTest extends TestCase
             'password' => 'EnterpriseSecure123!',
         ]);
 
-        $response->assertRedirect(route('accounting.dashboard'));
+        $response->assertRedirect(route('two-factor.challenge'));
         $this->assertAuthenticated();
         $this->assertSame('CFO', auth()->user()->role);
     }
 
-    public function test_standard_login_cashier_redirects_to_cashier_desk(): void
+    public function test_standard_login_cashier_redirects_to_two_factor_challenge(): void
     {
         User::factory()->create([
             'email'    => 'cashier@hospital.gov.ph',
@@ -63,7 +63,7 @@ final class AuthTest extends TestCase
             'password' => 'EnterpriseSecure123!',
         ]);
 
-        $response->assertRedirect(route('collection.cashier-desk'));
+        $response->assertRedirect(route('two-factor.challenge'));
         $this->assertAuthenticated();
         $this->assertSame('Cashier', auth()->user()->role);
     }

@@ -10,18 +10,11 @@
     </div>
   </div>
   <div class="navbar-right d-flex align-items-center gap-2">
-    <div class="d-none d-md-flex align-items-center gap-2 me-1">
+    <div class="d-none d-md-flex align-items-center gap-2">
       <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">
         <i class="ph ph-user-circle me-1"></i> {{ auth()->user()->role ?? 'CFO' }}
       </span>
-      <small class="text-muted fw-semibold text-truncate" style="max-width: 140px;">{{ auth()->user()->name ?? 'Executive Demo User' }}</small>
+      <small class="text-muted fw-semibold text-truncate" style="max-width: 160px;">{{ auth()->user()->name ?? 'Executive User' }}</small>
     </div>
-    <a href="{{ route('login') }}" class="btn btn-sm btn-outline-secondary py-1 px-2" title="Switch Demo Role" aria-label="Switch Demo Role">
-      <i class="ph ph-arrows-clockwise"></i>
-      <span class="d-none d-sm-inline ms-1">Switch Role</span>
-    </a>
-    <a href="{{ route('logout.get') }}" class="btn btn-sm btn-outline-danger py-1 px-2" title="Logout" aria-label="Logout">
-      <i class="ph ph-sign-out"></i>
-    </a>
   </div>
 </header>

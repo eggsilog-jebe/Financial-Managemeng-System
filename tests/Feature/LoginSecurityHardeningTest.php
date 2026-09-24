@@ -67,7 +67,7 @@ final class LoginSecurityHardeningTest extends TestCase
             'password' => 'CorrectPassword123!',
         ]);
 
-        $response->assertRedirect(route('accounting.dashboard'));
+        $response->assertRedirect(route('two-factor.challenge'));
         $this->assertAuthenticated();
         $this->assertSame('accountant@hospital.gov.ph', auth()->user()->email);
     }

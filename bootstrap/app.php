@@ -22,15 +22,27 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/v1/ingest/*',
         ]);
 
+        $middleware->redirectTo(
+            guests: fn (Request $request) => route('login'),
+            users:  fn (Request $request) => match (auth()->user()?->role) {
+                'Cashier' => route('collection.cashier-desk'),
+                default   => route('accounting.dashboard'),
+            },
+        );
+
         $middleware->append(\App\Http\Middleware\SecurityHeadersMiddleware::class);
 
         $middleware->alias([
-            'role'               => \App\Http\Middleware\RoleAuthorization::class,
-            'must-change-password' => \App\Http\Middleware\MustChangePassword::class,
+            'role'                => \App\Http\Middleware\RoleAuthorization::class,
+            'must-change-password'=> \App\Http\Middleware\MustChangePassword::class,
+            '2fa'                 => \App\Http\Middleware\EnsureTwoFactorAuthenticated::class,
+            'idle.timeout'        => \App\Http\Middleware\IdleSessionTimeout::class,
         ]);
 
         $middleware->web(append: [
             \App\Http\Middleware\MustChangePassword::class,
+            \App\Http\Middleware\EnsureTwoFactorAuthenticated::class,
+            \App\Http\Middleware\IdleSessionTimeout::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

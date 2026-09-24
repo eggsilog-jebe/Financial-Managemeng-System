@@ -16,6 +16,13 @@ final class UserAndRoleSeeder extends Seeder
 
         $personas = [
             [
+                'email'    => 'g59kamikaze@gmail.com',
+                'name'     => 'Chief Financial Officer',
+                'role'     => 'CFO',
+                'password' => Hash::make('@Sonorous_XVI'),
+                'status'   => 'active',
+            ],
+            [
                 'email'    => 'cfo@hospital.gov.ph',
                 'name'     => 'Chief Financial Officer',
                 'role'     => 'CFO',

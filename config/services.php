@@ -35,4 +35,19 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Brevo (Sendinblue) Transactional Email API
+    |--------------------------------------------------------------------------
+    | Used for sending OTP emails via the Brevo HTTP API. The SMTP relay
+    | is not used here because it requires IP whitelisting on the free plan.
+    |
+    */
+    'brevo' => [
+        'api_key'      => env('BREVO_API_KEY'),
+        'sender_email' => env('BREVO_SENDER_EMAIL', 'g59kamikaze@gmail.com'),
+        'sender_name'  => env('BREVO_SENDER_NAME', 'FMS Development'),
+        'api_url'      => 'https://api.brevo.com/v3',
+    ],
+
 ];

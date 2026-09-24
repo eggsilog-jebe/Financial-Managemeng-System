@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light dark">
     <title>@yield('title', 'Financial Management System (FMS)')</title>
@@ -37,6 +38,53 @@
 
     <div id="modal-portal" aria-live="polite"></div>
     <div id="toast-container" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    {{-- ── Idle Session Timeout Warning Modal ─────────────────────────────────── --}}
+    <div class="modal fade" id="idleTimeoutModal" tabindex="-1" aria-labelledby="idleTimeoutModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+          <div class="modal-header border-0 pt-4 px-4 pb-2" style="background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%);">
+            <div class="d-flex align-items-center gap-3">
+              <span class="d-inline-flex align-items-center justify-content-center rounded-3" style="width:42px;height:42px;background:linear-gradient(135deg,#f59e0b,#d97706);box-shadow:0 4px 12px rgba(245,158,11,0.35);">
+                <i class="ph-fill ph-clock-countdown text-white fs-4"></i>
+              </span>
+              <div>
+                <h5 class="modal-title fw-bold mb-0" style="color:#92400e;" id="idleTimeoutModalLabel">Session Expiring Soon</h5>
+                <p class="mb-0" style="font-size:0.72rem;color:#b45309;font-weight:500;">Hospital Security • Inactivity Detected</p>
+              </div>
+            </div>
+          </div>
+          <div class="modal-body px-4 py-3">
+            <p class="text-secondary mb-3" style="font-size:0.875rem;">
+              Your HIMS session will automatically sign out in
+            </p>
+            <div class="d-flex align-items-center justify-content-center gap-3 mb-3">
+              <div class="text-center p-3 rounded-4" style="background:#fef3c7;border:2px solid #fde68a;min-width:90px;">
+                <div class="fw-bold" style="font-size:2.25rem;color:#b45309;line-height:1;font-variant-numeric:tabular-nums;" id="idle-countdown-seconds">300</div>
+                <div style="font-size:0.7rem;color:#92400e;font-weight:600;letter-spacing:0.05em;">SECONDS</div>
+              </div>
+            </div>
+            <p class="text-secondary mb-0" style="font-size:0.8rem;">
+              <i class="ph ph-shield-warning me-1 text-warning align-middle"></i>
+              To protect sensitive patient financial data, inactive sessions are closed automatically per RA 10173 compliance.
+            </p>
+          </div>
+          <div class="modal-footer border-0 px-4 pb-4 pt-0 gap-2">
+            <button type="button" class="btn btn-warning fw-semibold px-4 rounded-3" id="idle-stay-logged-in" style="background:linear-gradient(135deg,#f59e0b,#d97706);border:none;color:#fff;box-shadow:0 2px 8px rgba(245,158,11,0.3);">
+              <i class="ph ph-hand-waving me-1"></i>I'm still here
+            </button>
+            <button type="button" class="btn btn-outline-secondary fw-medium px-3 rounded-3" id="idle-logout-now" style="font-size:0.85rem;">
+              <i class="ph ph-sign-out me-1"></i>Sign out now
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {{-- Hidden form used by idle-monitor.js to POST /logout on timeout --}}
+    <form id="idle-logout-form" method="POST" action="{{ route('logout') }}" style="display:none;">
+      @csrf
+    </form>
 
     <!-- Global Executive System Alert Modal -->
     <div class="modal fade" id="systemAlertModal" tabindex="-1" aria-labelledby="systemAlertModalLabel" aria-hidden="true">
@@ -104,7 +152,15 @@
 
         window.showSystemModal(message, title, icon);
       };
+
+      // Prevent browser bfcache restoration of authenticated pages on back-forward navigation
+      window.addEventListener('pageshow', function (event) {
+        if (event.persisted) {
+          window.location.reload();
+        }
+      });
     </script>
+    <script src="{{ asset('assets/js/auth/idle-monitor.js') }}"></script>
     @stack('scripts')
   </body>
 </html>

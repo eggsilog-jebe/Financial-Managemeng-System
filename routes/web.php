@@ -72,6 +72,36 @@ Route::middleware('guest')->group(function () {
         ->name('login.post');
 });
 
+// 2FA Challenge — accessible after password auth but before 2FA verification
+Route::middleware('auth')->group(function () {
+    Route::get('/two-factor-challenge', [\App\Http\Controllers\Auth\TwoFactorChallengeController::class, 'show'])
+        ->name('two-factor.challenge');
+    Route::post('/two-factor-challenge', [\App\Http\Controllers\Auth\TwoFactorChallengeController::class, 'verify'])
+        ->middleware('throttle:10,1')
+        ->name('two-factor.challenge.verify');
+
+    // Email OTP: generate and dispatch a one-time code to the user's email
+    Route::post('/two-factor-challenge/email-otp/send', [\App\Http\Controllers\Auth\TwoFactorChallengeController::class, 'sendEmailOtp'])
+        ->middleware('throttle:10,1')
+        ->name('two-factor.email-otp.send');
+
+    // 2FA Setup / Enrollment
+    Route::get('/two-factor-setup', [\App\Http\Controllers\Auth\TwoFactorSetupController::class, 'show'])
+        ->name('two-factor.setup');
+    Route::post('/two-factor-setup', [\App\Http\Controllers\Auth\TwoFactorSetupController::class, 'store'])
+        ->name('two-factor.setup.store');
+    Route::post('/two-factor-setup/confirm', [\App\Http\Controllers\Auth\TwoFactorSetupController::class, 'confirm'])
+        ->name('two-factor.setup.confirm');
+    Route::delete('/two-factor-setup', [\App\Http\Controllers\Auth\TwoFactorSetupController::class, 'destroy'])
+        ->name('two-factor.setup.destroy');
+
+    // Session Heartbeat — keeps the server session alive from the client-side idle monitor
+    Route::post('/session/heartbeat', function (\Illuminate\Http\Request $request) {
+        $request->session()->put('auth.last_activity_at', now()->toIso8601String());
+        return response()->json(['status' => 'ok', 'remaining' => 900]);
+    })->name('session.heartbeat');
+});
+
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::get('/logout', [LoginController::class, 'logout'])->name('logout.get');
 

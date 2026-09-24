@@ -114,4 +114,15 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Two-Factor Authentication Validity Lifetime
+    |--------------------------------------------------------------------------
+    |
+    | The number of hours a verified 2FA device/session remains trusted before
+    | requiring a new OTP challenge. Default is 8 hours (standard shift).
+    |
+    */
+    'two_factor_lifetime_hours' => (int) env('TWO_FACTOR_LIFETIME_HOURS', 8),
+
 ];

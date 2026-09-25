@@ -14,11 +14,12 @@ final class PatientAccountService
 {
     public function __construct(
         private readonly CasAuditTrailService $auditTrailService,
+        private readonly \App\Services\Cache\MultiLayerCacheService $cacheService,
     ) {}
 
     public function createPatientAccount(PatientAccountData $dto, ?int $userId = null): PatientAccount
     {
-        return DB::transaction(function () use ($dto, $userId): PatientAccount {
+        $account = DB::transaction(function () use ($dto, $userId): PatientAccount {
             $account = PatientAccount::create($dto->toArray());
 
             $this->auditTrailService->logFinancialEvent(
@@ -33,11 +34,16 @@ final class PatientAccountService
 
             return $account;
         });
+
+        $this->cacheService->invalidateTags(['patients', 'ar']);
+        $this->cacheService->forget('ar:patients:summary_metrics');
+
+        return $account;
     }
 
     public function updatePatientAccount(PatientAccount $account, PatientAccountData $dto, ?int $userId = null): PatientAccount
     {
-        return DB::transaction(function () use ($account, $dto, $userId): PatientAccount {
+        $updated = DB::transaction(function () use ($account, $dto, $userId): PatientAccount {
             $oldValues = $account->toArray();
             $account->update($dto->toArray());
 
@@ -53,6 +59,11 @@ final class PatientAccountService
 
             return $account;
         });
+
+        $this->cacheService->invalidateTags(['patients', 'ar']);
+        $this->cacheService->forget('ar:patients:summary_metrics');
+
+        return $updated;
     }
 
     public function getPatientAccountsList(?string $search = null, bool $outstandingOnly = false, int $perPage = 15): LengthAwarePaginator

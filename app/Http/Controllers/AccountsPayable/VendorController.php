@@ -19,6 +19,7 @@ final class VendorController extends Controller
 {
     public function __construct(
         private readonly VendorService $vendorService,
+        private readonly \App\Services\Cache\MultiLayerCacheService $cacheService,
     ) {}
 
     public function index(Request $request): View
@@ -27,18 +28,23 @@ final class VendorController extends Controller
         $search = $request->query('search');
 
         $vendors = $this->vendorService->getVendorsList($status, $search);
-        $totalActiveVendors = Vendor::where('status', 'Active')->count();
-        $totalApLiability = PurchaseBill::whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE', 'APPROVED'])->sum('total_amount');
-        $totalEwt = \App\Models\Bir2307Certificate::sum('tax_withheld') ?? '0.0000';
 
-        return view('accounts-payable.vendor-management', compact(
-            'vendors',
-            'totalActiveVendors',
-            'totalApLiability',
-            'totalEwt',
-            'search',
-            'status',
-        ));
+        $summary = $this->cacheService->remember('ap:vendors:summary_metrics', 300, function (): array {
+            return [
+                'totalActiveVendors' => Vendor::where('status', 'Active')->count(),
+                'totalApLiability'   => (float) PurchaseBill::whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE', 'APPROVED'])->sum('total_amount'),
+                'totalEwt'           => (string) (\App\Models\Bir2307Certificate::sum('tax_withheld') ?? '0.0000'),
+            ];
+        }, ['vendors', 'ap'], 60);
+
+        return view('accounts-payable.vendor-management', [
+            'vendors'            => $vendors,
+            'totalActiveVendors' => $summary['totalActiveVendors'],
+            'totalApLiability'   => $summary['totalApLiability'],
+            'totalEwt'           => $summary['totalEwt'],
+            'search'             => $search,
+            'status'             => $status,
+        ]);
     }
 
     public function store(StoreVendorRequest $request): RedirectResponse

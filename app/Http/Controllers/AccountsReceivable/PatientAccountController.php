@@ -17,6 +17,7 @@ final class PatientAccountController extends Controller
 {
     public function __construct(
         private readonly PatientAccountService $patientService,
+        private readonly \App\Services\Cache\MultiLayerCacheService $cacheService,
     ) {}
 
     public function index(Request $request): View
@@ -25,18 +26,23 @@ final class PatientAccountController extends Controller
         $outstandingOnly = $request->boolean('outstanding_only');
 
         $accounts = $this->patientService->getPatientAccountsList($search, $outstandingOnly);
-        $totalReceivable = (float) \App\Models\Invoice::whereNotIn('status', ['PAID', 'SETTLED', 'CANCELLED'])->sum('patient_payable');
-        $hmoGuarantees = (float) \App\Models\HmoClaim::whereNotIn('status', ['PAID', 'SETTLED', 'CANCELLED', 'REJECTED'])->sum('claimed_amount');
-        $totalActive = PatientAccount::where('status', 'Active')->count();
 
-        return view('accounts-receivable.patient-accounts', compact(
-            'accounts',
-            'totalReceivable',
-            'hmoGuarantees',
-            'totalActive',
-            'search',
-            'outstandingOnly',
-        ));
+        $summary = $this->cacheService->remember('ar:patients:summary_metrics', 300, function (): array {
+            return [
+                'totalReceivable' => (float) \App\Models\Invoice::whereNotIn('status', ['PAID', 'SETTLED', 'CANCELLED'])->sum('patient_payable'),
+                'hmoGuarantees'   => (float) \App\Models\HmoClaim::whereNotIn('status', ['PAID', 'SETTLED', 'CANCELLED', 'REJECTED'])->sum('claimed_amount'),
+                'totalActive'     => PatientAccount::where('status', 'Active')->count(),
+            ];
+        }, ['patients', 'ar'], 60);
+
+        return view('accounts-receivable.patient-accounts', [
+            'accounts'        => $accounts,
+            'totalReceivable' => $summary['totalReceivable'],
+            'hmoGuarantees'   => $summary['hmoGuarantees'],
+            'totalActive'     => $summary['totalActive'],
+            'search'          => $search,
+            'outstandingOnly' => $outstandingOnly,
+        ]);
     }
 
     public function store(StorePatientAccountRequest $request): RedirectResponse

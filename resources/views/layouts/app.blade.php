@@ -160,7 +160,7 @@
         }
       });
 
-      // Speculative prefetch for navigation links on hover/focus to achieve near-instantaneous page transitions
+      // Speculative prefetch with hover-intent (250ms debounce) to prevent flooding PHP workers
       document.addEventListener('DOMContentLoaded', function () {
         const prefetched = new Set();
         const prefetchLink = function (url) {
@@ -178,7 +178,13 @@
         document.querySelectorAll('.sidebar-nav a[href], .dashboard-header a[href], .module-card a[href]').forEach(function (el) {
           const href = el.getAttribute('href');
           if (href && !href.startsWith('#')) {
-            el.addEventListener('mouseenter', function () { prefetchLink(href); }, { passive: true });
+            let timer = null;
+            el.addEventListener('mouseenter', function () {
+              timer = setTimeout(function () { prefetchLink(href); }, 250);
+            }, { passive: true });
+            el.addEventListener('mouseleave', function () {
+              if (timer) clearTimeout(timer);
+            }, { passive: true });
             el.addEventListener('focus', function () { prefetchLink(href); }, { passive: true });
             el.addEventListener('touchstart', function () { prefetchLink(href); }, { passive: true });
           }

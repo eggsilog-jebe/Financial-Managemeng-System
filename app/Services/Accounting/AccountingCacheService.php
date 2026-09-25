@@ -4,15 +4,17 @@ declare(strict_types=1);
 
 namespace App\Services\Accounting;
 
+use App\Services\Cache\MultiLayerCacheService;
 use Closure;
-use Illuminate\Cache\TaggableStore;
-use Illuminate\Support\Facades\Cache;
 
 /**
- * Enterprise In-Memory Cache Service for Financial Engine & Executive Dashboards.
+ * Enterprise In-Memory & Distributed Cache Service for Financial Engine & Executive Dashboards.
  *
- * Utilizes Redis tags for rapid retrieval and instantaneous invalidation upon ledger mutations.
- * Falls back gracefully to standard keyed cache if taggable store is unavailable.
+ * Built on MultiLayerCacheService:
+ * - Layer 1: Sub-microsecond In-Memory local process cache.
+ * - Layer 2: Distributed Redis/store cache-aside.
+ * - Mutex single-flight locking to prevent database flooding during concurrent lookups.
+ * - Expiration jitter to eliminate thundering herd cache stampedes.
  */
 final class AccountingCacheService
 {
@@ -27,16 +29,21 @@ final class AccountingCacheService
     public const KEY_LEDGER_TOTALS     = 'accounting:ledger:ytd_totals';
     public const KEY_KPI_METRICS       = 'accounting:kpi:metrics';
 
+    public function __construct(
+        private readonly MultiLayerCacheService $multiLayerCache,
+    ) {}
+
     /**
-     * Cache executive dashboard metrics.
+     * Cache executive dashboard metrics using 3-layer caching and single-flight lock.
      */
     public function rememberDashboardMetrics(Closure $callback, int $ttlSeconds = 300): array
     {
-        return $this->rememberTagged(
-            tags: [self::TAG_DASHBOARD],
+        return $this->multiLayerCache->remember(
             key: self::KEY_DASHBOARD_METRICS,
-            ttl: $ttlSeconds,
-            callback: $callback
+            baseTtl: $ttlSeconds,
+            callback: $callback,
+            tags: [self::TAG_DASHBOARD],
+            l1Ttl: 60,
         );
     }
 
@@ -45,11 +52,12 @@ final class AccountingCacheService
      */
     public function rememberCoaTotals(Closure $callback, int $ttlSeconds = 300): array
     {
-        return $this->rememberTagged(
-            tags: [self::TAG_GL, self::TAG_COA],
+        return $this->multiLayerCache->remember(
             key: self::KEY_COA_TOTALS,
-            ttl: $ttlSeconds,
-            callback: $callback
+            baseTtl: $ttlSeconds,
+            callback: $callback,
+            tags: [self::TAG_GL, self::TAG_COA],
+            l1Ttl: 60,
         );
     }
 
@@ -58,11 +66,12 @@ final class AccountingCacheService
      */
     public function rememberLedgerTotals(Closure $callback, int $ttlSeconds = 300): array
     {
-        return $this->rememberTagged(
-            tags: [self::TAG_GL, self::TAG_LEDGER],
+        return $this->multiLayerCache->remember(
             key: self::KEY_LEDGER_TOTALS,
-            ttl: $ttlSeconds,
-            callback: $callback
+            baseTtl: $ttlSeconds,
+            callback: $callback,
+            tags: [self::TAG_GL, self::TAG_LEDGER],
+            l1Ttl: 60,
         );
     }
 
@@ -71,11 +80,12 @@ final class AccountingCacheService
      */
     public function rememberKpiMetrics(Closure $callback, int $ttlSeconds = 300): array
     {
-        return $this->rememberTagged(
-            tags: [self::TAG_REPORTS],
+        return $this->multiLayerCache->remember(
             key: self::KEY_KPI_METRICS,
-            ttl: $ttlSeconds,
-            callback: $callback
+            baseTtl: $ttlSeconds,
+            callback: $callback,
+            tags: [self::TAG_REPORTS],
+            l1Ttl: 60,
         );
     }
 
@@ -85,20 +95,18 @@ final class AccountingCacheService
      */
     public function invalidateFinancialCaches(): void
     {
-        if ($this->supportsTags()) {
-            Cache::tags([
-                self::TAG_DASHBOARD,
-                self::TAG_REPORTS,
-                self::TAG_GL,
-                self::TAG_COA,
-                self::TAG_LEDGER,
-            ])->flush();
-        } else {
-            Cache::forget(self::KEY_DASHBOARD_METRICS);
-            Cache::forget(self::KEY_COA_TOTALS);
-            Cache::forget(self::KEY_LEDGER_TOTALS);
-            Cache::forget(self::KEY_KPI_METRICS);
-        }
+        $this->multiLayerCache->invalidateTags([
+            self::TAG_DASHBOARD,
+            self::TAG_REPORTS,
+            self::TAG_GL,
+            self::TAG_COA,
+            self::TAG_LEDGER,
+        ]);
+
+        $this->multiLayerCache->forget(self::KEY_DASHBOARD_METRICS);
+        $this->multiLayerCache->forget(self::KEY_COA_TOTALS);
+        $this->multiLayerCache->forget(self::KEY_LEDGER_TOTALS);
+        $this->multiLayerCache->forget(self::KEY_KPI_METRICS);
     }
 
     /**
@@ -106,32 +114,15 @@ final class AccountingCacheService
      */
     public function invalidateDashboard(): void
     {
-        if ($this->supportsTags()) {
-            Cache::tags([self::TAG_DASHBOARD])->flush();
-        } else {
-            Cache::forget(self::KEY_DASHBOARD_METRICS);
-        }
+        $this->multiLayerCache->invalidateTags([self::TAG_DASHBOARD]);
+        $this->multiLayerCache->forget(self::KEY_DASHBOARD_METRICS);
     }
 
     /**
-     * Execute tagged cache remember or fallback to key-only remember.
-     *
-     * @param string[] $tags
+     * Expose direct access to underlying multi-layer cache engine.
      */
-    private function rememberTagged(array $tags, string $key, int $ttl, Closure $callback): mixed
+    public function multiLayer(): MultiLayerCacheService
     {
-        if ($this->supportsTags()) {
-            return Cache::tags($tags)->remember($key, $ttl, $callback);
-        }
-
-        return Cache::remember($key, $ttl, $callback);
-    }
-
-    /**
-     * Determine if current active cache store supports tags.
-     */
-    public function supportsTags(): bool
-    {
-        return Cache::getStore() instanceof TaggableStore;
+        return $this->multiLayerCache;
     }
 }

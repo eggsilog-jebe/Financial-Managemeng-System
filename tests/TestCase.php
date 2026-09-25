@@ -6,6 +6,13 @@ use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
 abstract class TestCase extends BaseTestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        \App\Services\Cache\L1InMemoryCache::flushStatic();
+        \Illuminate\Support\Facades\Cache::flush();
+    }
+
     /**
      * Set the currently logged in user for the application and mark 2FA as passed by default.
      *

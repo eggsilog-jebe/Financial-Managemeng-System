@@ -14,11 +14,12 @@ final class VendorService
 {
     public function __construct(
         private readonly CasAuditTrailService $auditTrailService,
+        private readonly \App\Services\Cache\MultiLayerCacheService $cacheService,
     ) {}
 
     public function createVendor(VendorData $dto, ?int $userId = null): Vendor
     {
-        return DB::transaction(function () use ($dto, $userId): Vendor {
+        $vendor = DB::transaction(function () use ($dto, $userId): Vendor {
             $vendor = Vendor::create($dto->toArray());
 
             $this->auditTrailService->logFinancialEvent(
@@ -33,11 +34,16 @@ final class VendorService
 
             return $vendor;
         });
+
+        $this->cacheService->invalidateTags(['vendors', 'ap']);
+        $this->cacheService->forget('ap:vendors:summary_metrics');
+
+        return $vendor;
     }
 
     public function updateVendor(Vendor $vendor, VendorData $dto, ?int $userId = null): Vendor
     {
-        return DB::transaction(function () use ($vendor, $dto, $userId): Vendor {
+        $updated = DB::transaction(function () use ($vendor, $dto, $userId): Vendor {
             $oldValues = $vendor->toArray();
             $vendor->update($dto->toArray());
 
@@ -53,11 +59,16 @@ final class VendorService
 
             return $vendor;
         });
+
+        $this->cacheService->invalidateTags(['vendors', 'ap']);
+        $this->cacheService->forget('ap:vendors:summary_metrics');
+
+        return $updated;
     }
 
     public function toggleVendorStatus(Vendor $vendor, ?int $userId = null): Vendor
     {
-        return DB::transaction(function () use ($vendor, $userId): Vendor {
+        $toggled = DB::transaction(function () use ($vendor, $userId): Vendor {
             $oldStatus = $vendor->status;
             $newStatus = ($oldStatus === 'Active') ? 'Inactive' : 'Active';
 
@@ -75,6 +86,11 @@ final class VendorService
 
             return $vendor;
         });
+
+        $this->cacheService->invalidateTags(['vendors', 'ap']);
+        $this->cacheService->forget('ap:vendors:summary_metrics');
+
+        return $toggled;
     }
 
     /**

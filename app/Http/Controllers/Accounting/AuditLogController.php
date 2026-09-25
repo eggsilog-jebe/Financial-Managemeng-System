@@ -11,6 +11,10 @@ use Illuminate\Http\Request;
 
 final class AuditLogController extends Controller
 {
+    public function __construct(
+        private readonly \App\Services\Cache\MultiLayerCacheService $cacheService,
+    ) {}
+
     /**
      * Display the filterable System Audit Trail log viewer.
      */
@@ -33,19 +37,29 @@ final class AuditLogController extends Controller
 
         $logs = $query->paginate(25)->withQueryString();
 
-        // High-level KPI telemetry for CFO/Auditor summary cards
+        // High-level KPI telemetry cached with multi-layer single-flight lock
         $today = now()->toDateString();
-        $stats = [
-            'total_logs'       => ActivityLog::count(),
-            'logins_today'     => ActivityLog::where('event', 'login')->whereDate('created_at', $today)->count(),
-            'failed_logins'    => ActivityLog::where('event', 'failed_login')->whereDate('created_at', $today)->count(),
-            'mutations_today'  => ActivityLog::whereDate('created_at', $today)->count(),
-        ];
+        $stats = $this->cacheService->remember("audit:kpi_stats:{$today}", 60, function () use ($today): array {
+            return [
+                'total_logs'       => ActivityLog::count(),
+                'logins_today'     => ActivityLog::where('event', 'login')->whereDate('created_at', $today)->count(),
+                'failed_logins'    => ActivityLog::where('event', 'failed_login')->whereDate('created_at', $today)->count(),
+                'mutations_today'  => ActivityLog::whereDate('created_at', $today)->count(),
+            ];
+        }, ['audit'], 30);
 
-        // Unique filter options for the filter bar
-        $modules = ActivityLog::distinct()->whereNotNull('module')->pluck('module')->sort()->values();
-        $events = ActivityLog::distinct()->whereNotNull('event')->pluck('event')->sort()->values();
-        $roles = ActivityLog::distinct()->whereNotNull('user_role')->pluck('user_role')->sort()->values();
+        // Unique filter options for the filter bar cached for 10 minutes
+        $filterOptions = $this->cacheService->remember('audit:filter_options', 600, function (): array {
+            return [
+                'modules' => ActivityLog::distinct()->whereNotNull('module')->pluck('module')->sort()->values(),
+                'events'  => ActivityLog::distinct()->whereNotNull('event')->pluck('event')->sort()->values(),
+                'roles'   => ActivityLog::distinct()->whereNotNull('user_role')->pluck('user_role')->sort()->values(),
+            ];
+        }, ['audit'], 120);
+
+        $modules = $filterOptions['modules'];
+        $events = $filterOptions['events'];
+        $roles = $filterOptions['roles'];
 
         return view('accounting.audit-log', compact(
             'logs',

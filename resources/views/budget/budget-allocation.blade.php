@@ -5,302 +5,361 @@
 @section('page', 'budget-allocation')
 
 @section('content')
-<div class="container-fluid p-4">
-  <!-- Page Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="space-y-6">
+  <!-- Executive Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <div>
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-1 fs-xs">
-          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
-          <li class="breadcrumb-item">Budget Management</li>
-          <li class="breadcrumb-item active">Budget Allocation</li>
-        </ol>
-      </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Budget Category Allocation</h1>
-      <p class="text-muted fs-xs mb-0">Distribute approved annual funds across hospital operating categories (Medical Supplies, Equipment, Personnel Salaries, Utilities).</p>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Budget Category Allocation
+        </h1>
     </div>
-    <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Viewing Allocation Matrix...');"><i class="ph ph-sliders me-1"></i> Allocation Matrix</button>
-      <button id="btnAllocateBudget" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#allocateBudgetModal"><i class="ph ph-plus-circle me-1"></i> Allocate Funds</button>
+
+    <div class="flex items-center gap-2.5">
+      <button 
+        type="button" 
+        onclick="alert('Viewing Allocation Matrix...');" 
+        class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+      >
+        <i class="ph-bold ph-sliders text-blue-600"></i>
+        <span>Allocation Matrix</span>
+      </button>
+      <button 
+        type="button" 
+        id="btnAllocateBudget"
+        @click="$dispatch('open-modal', 'allocateBudgetModal')"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 ring-1 ring-blue-600/20 transition-all cursor-pointer"
+      >
+        <i class="ph-bold ph-plus-circle"></i>
+        <span>Allocate Funds</span>
+      </button>
     </div>
   </div>
 
+  <!-- Session Alerts -->
   @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show mb-4 d-flex align-items-center" role="alert">
-      <i class="ph ph-check-circle fs-4 me-2"></i>
-      <div>{{ session('success') }}</div>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="rounded-xl bg-emerald-50 p-4 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-check-circle text-lg text-emerald-600"></i>
+        <span>{{ session('success') }}</span>
+      </div>
     </div>
   @endif
 
   @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show mb-4 d-flex align-items-center" role="alert">
-      <i class="ph ph-warning-circle fs-4 me-2"></i>
-      <div>{{ session('error') }}</div>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="rounded-xl bg-rose-50 p-4 text-xs font-semibold text-rose-800 ring-1 ring-rose-600/20 dark:bg-rose-950/40 dark:text-rose-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-warning-circle text-lg text-rose-600"></i>
+        <span>{{ session('error') }}</span>
+      </div>
     </div>
   @endif
 
   <!-- Metric Summary Cards -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Fiscal Budget Cap</span>
-          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-vault fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($totalAllocated ?? 0), 2) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Encumbered Commitments (POs)</span>
-          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-lock-key fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-danger">₱{{ number_format((float) ($totalEncumbered ?? 0), 2) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Actual Expended Funds</span>
-          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-calculator fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($totalSpent ?? 0), 2) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Remaining Liquid Capacity</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-hand-coins fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-success">₱{{ number_format((float) (($totalRemaining ?? 0) - ($totalEncumbered ?? 0)), 2) }}</h4>
-      </div>
-    </div>
+  <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+    <x-stat-card 
+      title="Total Fiscal Budget Cap" 
+      :value="$totalAllocated ?? 0" 
+      icon="ph-vault" 
+      color="slate" 
+      subtitle="Total authorized cost center funds"
+    />
+    <x-stat-card 
+      title="Encumbered POs" 
+      :value="$totalEncumbered ?? 0" 
+      icon="ph-lock-key" 
+      color="amber" 
+      subtitle="Committed procurement requisitions"
+    />
+    <x-stat-card 
+      title="Actual Expended Funds" 
+      :value="$totalSpent ?? 0" 
+      icon="ph-calculator" 
+      color="rose" 
+      subtitle="Realized departmental disbursements"
+    />
+    <x-stat-card 
+      title="Remaining Free Capacity" 
+      :value="(($totalRemaining ?? 0) - ($totalEncumbered ?? 0))" 
+      icon="ph-hand-coins" 
+      color="emerald" 
+      subtitle="Unencumbered spendable balance"
+    />
   </div>
 
+  
+  <!-- Sub-Module Category Navigation Bar -->
+  @include('partials.submodule-nav')
+
   <!-- Data Table Card -->
-  <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-transparent border-bottom p-3">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <div class="d-flex align-items-center gap-2">
-          <label for="costCenterSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Cost Center:</label>
-          <select id="costCenterSelect" class="form-select form-select-sm bg-light" style="min-width: 180px;">
+  <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 overflow-hidden dark:bg-slate-900 dark:ring-slate-800">
+    <!-- Filter Toolbar -->
+    <div class="border-b border-slate-200 p-4 dark:border-slate-800">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 flex-wrap">
+        <div class="flex flex-wrap items-center gap-2.5">
+          <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <i class="ph-bold ph-funnel"></i>
+            <span>Cost Center:</span>
+          </div>
+          <select 
+            id="costCenterSelect" 
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-blue-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
             <option value="" selected>All Cost Centers</option>
             <option value="cc-101">CC-101 (Pharmacy)</option>
             <option value="cc-102">CC-102 (ICU Care)</option>
             <option value="cc-104">CC-104 (Facilities)</option>
           </select>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-          <label for="expenditureCatSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap">Category:</label>
-          <select id="expenditureCatSelect" class="form-select form-select-sm bg-light" style="min-width: 200px;">
+
+          <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 ml-2">
+            <span>Category:</span>
+          </div>
+          <select 
+            id="expenditureCatSelect" 
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-blue-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
             <option value="" selected>All Categories</option>
             <option value="medical">Medical Supplies</option>
             <option value="equipment">Equipment Maintenance</option>
             <option value="utilities">Electric &amp; Power</option>
           </select>
         </div>
-        <div class="search-box ms-auto" style="width: 260px;">
-          <i class="ph ph-magnifying-glass"></i>
-          <input type="search" id="allocationSearchInput" class="form-control form-control-sm" placeholder="Search cost center, category...">
+
+        <div class="relative w-full sm:w-72">
+          <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+            <i class="ph ph-magnifying-glass text-sm"></i>
+          </div>
+          <input 
+            type="search" 
+            id="allocationSearchInput" 
+            class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-blue-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700" 
+            placeholder="Search cost center, category..."
+          >
         </div>
       </div>
     </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table id="allocationTable" class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Cost Center</th>
-              <th>Expenditure Category</th>
-              <th class="text-end">Initial Cap (₱)</th>
-              <th class="text-end">Encumbered POs (₱)</th>
-              <th class="text-end">Actual Expended (₱)</th>
-              <th class="text-end">Available Balance (₱)</th>
-              <th class="text-end">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($allocations ?? [] as $a)
-            @php
-              $cc = is_array($a) ? $a['cc'] : $a->cost_center;
-              $cat = is_array($a) ? $a['cat'] : $a->category;
-              $sub = is_array($a) ? $a['sub'] : 'Category';
-              $initial = is_array($a) ? $a['initial'] : ('₱' . number_format($a->allocated_amount, 2));
-              $encumbered = is_array($a) ? $a['encumbered'] : ('₱' . number_format($a->encumbered_amount, 2));
-              $expended = is_array($a) ? $a['expended'] : ('₱' . number_format($a->expended_amount, 2));
-              $available = is_array($a) ? $a['available'] : ('₱' . number_format($a->allocated_amount - $a->expended_amount - $a->encumbered_amount, 2));
-              $aData = [
-                'cc' => $cc,
-                'cat' => $cat,
-                'sub' => $sub,
-                'initial' => $initial,
-                'encumbered' => $encumbered,
-                'expended' => $expended,
-                'available' => $available
-              ];
-            @endphp
-            <tr class="allocation-row" style="cursor: pointer;" onclick="openAllocationDetailsModal({{ json_encode($aData) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $cc }}</span></td>
-              <td>
-                <div class="fw-semibold text-dark">{{ $cat }}</div>
-                <span class="fs-xs text-muted">{{ $sub }}</span>
-              </td>
-              <td class="text-end font-monospace fw-semibold">{{ $initial }}</td>
-              <td class="text-end text-warning font-monospace">{{ $encumbered }}</td>
-              <td class="text-end text-danger font-monospace">{{ $expended }}</td>
-              <td class="text-end text-success fw-bold font-monospace">{{ $available }}</td>
-              <td class="text-end"><button class="btn btn-sm btn-icon btn-outline-secondary" onclick="openAllocationDetailsModal({{ json_encode($aData) }})"><i class="ph ph-eye"></i></button></td>
-            </tr>
-            @empty
-            <tr>
-              <td colspan="7" class="text-center py-4 text-muted">No budget allocations configured in database.</td>
-            </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto custom-scrollbar">
+      <table id="allocationTable" class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+        <thead class="bg-slate-50/75 border-b border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:bg-slate-800/50 dark:border-slate-800 dark:text-slate-400">
+          <tr>
+            <th class="px-4 py-3.5">Cost Center</th>
+            <th class="px-4 py-3.5">Expenditure Category</th>
+            <th class="px-4 py-3.5 text-right">Initial Cap (₱)</th>
+            <th class="px-4 py-3.5 text-right">Encumbered POs (₱)</th>
+            <th class="px-4 py-3.5 text-right">Actual Expended (₱)</th>
+            <th class="px-4 py-3.5 text-right">Available Balance (₱)</th>
+            <th class="px-4 py-3.5 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+          @forelse($allocations ?? [] as $a)
+          @php
+            $cc = is_array($a) ? $a['cc'] : $a->cost_center;
+            $cat = is_array($a) ? $a['cat'] : $a->category;
+            $sub = is_array($a) ? $a['sub'] : 'Category';
+            $initial = is_array($a) ? $a['initial'] : ('₱' . number_format($a->allocated_amount, 2));
+            $encumbered = is_array($a) ? $a['encumbered'] : ('₱' . number_format($a->encumbered_amount, 2));
+            $expended = is_array($a) ? $a['expended'] : ('₱' . number_format($a->expended_amount, 2));
+            $available = is_array($a) ? $a['available'] : ('₱' . number_format($a->allocated_amount - $a->expended_amount - $a->encumbered_amount, 2));
+            $aData = [
+              'cc' => $cc,
+              'cat' => $cat,
+              'sub' => $sub,
+              'initial' => $initial,
+              'encumbered' => $encumbered,
+              'expended' => $expended,
+              'available' => $available
+            ];
+          @endphp
+          <tr 
+            class="allocation-row hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors cursor-pointer" 
+            onclick="openAllocationDetailsModal({{ json_encode($aData) }})"
+          >
+            <td class="px-4 py-3 font-mono font-bold text-blue-600 dark:text-blue-400">{{ $cc }}</td>
+            <td class="px-4 py-3">
+              <div class="font-semibold text-slate-900 dark:text-white">{{ $cat }}</div>
+              <span class="text-[11px] text-slate-400">{{ $sub }}</span>
+            </td>
+            <td class="px-4 py-3 text-right font-mono font-semibold tabular-nums text-slate-900 dark:text-white">{{ $initial }}</td>
+            <td class="px-4 py-3 text-right font-mono font-semibold tabular-nums text-amber-600 dark:text-amber-400">{{ $encumbered }}</td>
+            <td class="px-4 py-3 text-right font-mono font-semibold tabular-nums text-rose-600 dark:text-rose-400">{{ $expended }}</td>
+            <td class="px-4 py-3 text-right font-mono font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{{ $available }}</td>
+            <td class="px-4 py-3 text-right" onclick="event.stopPropagation();">
+              <button 
+                type="button" 
+                class="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer" 
+                onclick="openAllocationDetailsModal({{ json_encode($aData) }})"
+              >
+                <i class="ph-bold ph-eye"></i>
+              </button>
+            </td>
+          </tr>
+          @empty
+          <tr>
+            <td colspan="7" class="px-4 py-12 text-center text-slate-500 dark:text-slate-400">
+              <i class="ph ph-sliders text-3xl mb-2 text-slate-400"></i>
+              <p>No budget allocations configured in database.</p>
+            </td>
+          </tr>
+          @endforelse
+        </tbody>
+      </table>
     </div>
-    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="allocationSummaryText">Showing {{ count($allocations ?? []) }} Budget Allocations</span>
-      <nav aria-label="Allocation Pagination">
-        <ul class="pagination pagination-sm mb-0">
-          <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
-          <li class="page-item active"><a class="page-link" href="#">1</a></li>
-          <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
-        </ul>
-      </nav>
+
+    <!-- Meta Footer -->
+    <div class="flex items-center justify-between border-t border-slate-200 px-4 py-3 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
+      <span id="allocationSummaryText">Showing {{ count($allocations ?? []) }} Budget Allocations</span>
     </div>
   </div>
 </div>
 
 <!-- Modal: In-Depth Allocation Details (Executive Design) -->
-<div class="modal fade" id="allocationDetailsModal" tabindex="-1" aria-labelledby="allocationDetailsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-      <div class="modal-header bg-white border-bottom p-4 pb-3">
-        <div>
-          <div class="d-flex align-items-center gap-2 mb-1">
-            <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1" id="detailAllocCc">CC-101</span>
-            <span class="badge bg-primary-subtle text-primary"><i class="ph ph-sliders me-1"></i> Active Cost Center Allocation</span>
-          </div>
-          <h4 class="modal-title fw-bold text-dark mb-0" id="detailAllocCat">Pharmacy Medical Supplies</h4>
+<x-modal 
+  id="allocationDetailsModal" 
+  title="Cost Center Allocation Details" 
+  subtitle="Commitment control lock, PO encumbrances, and expenditure history." 
+  icon="ph-sliders" 
+  iconVariant="blue" 
+  size="lg" 
+  submitText="Export Allocation Report" 
+  submitIcon="ph-file-text"
+>
+  <div class="space-y-4">
+    <div class="flex items-center justify-between border-b border-slate-200 pb-3 dark:border-slate-700">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span class="rounded-lg bg-slate-100 px-2 py-0.5 text-xs font-mono font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300" id="detailAllocCc">CC-101</span>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+            Active Cost Center
+          </span>
         </div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <h3 class="text-base font-bold text-slate-900 dark:text-white" id="detailAllocCat">Pharmacy Medical Supplies</h3>
       </div>
+    </div>
 
-      <div class="modal-body p-4 bg-light-subtle">
-        <div class="row g-3 mb-4">
-          <div class="col-md-3">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Initial Cap</span>
-              <h5 class="fw-bold text-dark mb-0 font-monospace" id="detailAllocInitial">₱25,000,000.00</h5>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">PO Encumbered</span>
-              <h5 class="fw-bold text-warning mb-0 font-monospace" id="detailAllocEncumbered">₱6,500,000.00</h5>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Actual Expended</span>
-              <h5 class="fw-bold text-danger mb-0 font-monospace" id="detailAllocExpended">₱12,800,000.00</h5>
-            </div>
-          </div>
-          <div class="col-md-3">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Free Balance</span>
-              <h5 class="fw-bold text-success mb-0 font-monospace" id="detailAllocAvailable">₱5,700,000.00</h5>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white border rounded-3 p-3 mb-4">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-sliders me-1 text-primary"></i> Sub-Account Breakdown</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Account Classification</span>
-              <span class="font-monospace fw-bold text-dark" id="detailAllocSub">Medical Supplies &amp; Outpatient Drugs</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">Fiscal Year Assignment</span>
-              <span class="font-monospace fw-bold text-primary">FY 2026 Master Budget</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Audit Trail & Segregation of Duties -->
-        <div class="bg-white border rounded-3 p-3">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-success"></i> Audit Trail &amp; Encumbrance Control</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Commitment Control Lock:</span>
-              <span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> Auto-Encumbrance Active</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">System Audit Log:</span>
-              <span class="font-monospace text-muted">LOG-ALLOC-CC-101 | {{ date('Y-m-d H:i:s') }} PST</span>
-            </div>
-          </div>
-        </div>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div class="rounded-xl bg-slate-50 p-3 text-center ring-1 ring-slate-200/60 dark:bg-slate-800/40 dark:ring-slate-800">
+        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Initial Cap</span>
+        <h5 class="font-mono font-bold text-slate-900 dark:text-white text-xs tabular-nums" id="detailAllocInitial">₱25,000,000.00</h5>
       </div>
+      <div class="rounded-xl bg-slate-50 p-3 text-center ring-1 ring-slate-200/60 dark:bg-slate-800/40 dark:ring-slate-800">
+        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Encumbered</span>
+        <h5 class="font-mono font-bold text-amber-600 dark:text-amber-400 text-xs tabular-nums" id="detailAllocEncumbered">₱6,500,000.00</h5>
+      </div>
+      <div class="rounded-xl bg-slate-50 p-3 text-center ring-1 ring-slate-200/60 dark:bg-slate-800/40 dark:ring-slate-800">
+        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Actual Expended</span>
+        <h5 class="font-mono font-bold text-rose-600 dark:text-rose-400 text-xs tabular-nums" id="detailAllocExpended">₱12,800,000.00</h5>
+      </div>
+      <div class="rounded-xl bg-slate-50 p-3 text-center ring-1 ring-slate-200/60 dark:bg-slate-800/40 dark:ring-slate-800">
+        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Free Balance</span>
+        <h5 class="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-xs tabular-nums" id="detailAllocAvailable">₱5,700,000.00</h5>
+      </div>
+    </div>
 
-      <div class="modal-footer bg-white border-top p-3">
-        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-sm btn-primary" onclick="alert('Generating Encumbrance Audit Report...');"><i class="ph ph-file-text me-1"></i> Export Allocation Report</button>
+    <div class="rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200/60 dark:bg-slate-800/40 dark:ring-slate-800 space-y-2 text-xs">
+      <h5 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1">
+        <i class="ph-bold ph-sliders text-blue-600"></i> Sub-Account Breakdown
+      </h5>
+      <div class="flex justify-between border-b border-slate-200 pb-1.5 dark:border-slate-700">
+        <span class="text-slate-500">Account Classification:</span>
+        <span class="font-mono font-semibold text-slate-900 dark:text-white" id="detailAllocSub">Medical Supplies</span>
+      </div>
+      <div class="flex justify-between pt-0.5">
+        <span class="text-slate-500">Fiscal Year Assignment:</span>
+        <span class="font-mono font-bold text-blue-600 dark:text-blue-400">FY 2026 Master Budget</span>
+      </div>
+    </div>
+
+    <!-- Audit Trail & Segregation of Duties -->
+    <div class="rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200/60 dark:bg-slate-800/40 dark:ring-slate-800 space-y-2 text-xs">
+      <h5 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1">
+        <i class="ph-bold ph-shield-check text-emerald-600"></i> Audit Trail &amp; Encumbrance Control
+      </h5>
+      <div class="flex justify-between border-b border-slate-200 pb-1.5 dark:border-slate-700">
+        <span class="text-slate-500">Commitment Control Lock:</span>
+        <span class="text-emerald-600 font-semibold flex items-center gap-1"><i class="ph-bold ph-check"></i> Auto-Encumbrance Active</span>
+      </div>
+      <div class="flex justify-between pt-0.5">
+        <span class="text-slate-500">System Audit Log:</span>
+        <span class="font-mono text-slate-400 text-[11px]">LOG-ALLOC-CC-101 | {{ date('Y-m-d H:i:s') }} PST</span>
       </div>
     </div>
   </div>
-</div>
+</x-modal>
 
 <!-- Modal: Allocate Category Budget -->
-<div class="modal fade" id="allocateBudgetModal" tabindex="-1" aria-labelledby="allocateBudgetModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title font-weight-bold" id="allocateBudgetModalLabel"><i class="ph ph-plus-circle me-2 text-primary"></i>Allocate Budget to Cost Center</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<x-modal 
+  id="allocateBudgetModal" 
+  title="Allocate Budget to Cost Center" 
+  subtitle="Assign approved expenditure cap from master budget to specific hospital cost center." 
+  icon="ph-plus-circle" 
+  iconVariant="blue" 
+  size="lg" 
+  formId="allocateBudgetForm" 
+  formAction="" 
+  formMethod="POST" 
+  submitText="Post Allocation" 
+  submitIcon="ph-check"
+>
+  <div class="space-y-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Cost Center <span class="text-rose-500">*</span>
+        </label>
+        <select 
+          id="modalAllocCc" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-blue-500 focus:bg-white focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          required
+        >
+          <option value="CC-101">CC-101: Pharmacy &amp; Therapeutics</option>
+          <option value="CC-102">CC-102: Emergency &amp; ICU Care</option>
+          <option value="CC-104">CC-104: Facilities &amp; Utilities</option>
+        </select>
       </div>
-      <div class="modal-body p-4">
-        <form id="allocateBudgetForm">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Cost Center <span class="text-danger">*</span></label>
-              <select id="modalAllocCc" class="form-select form-select-sm" required>
-                <option value="CC-101">CC-101: Pharmacy &amp; Therapeutics</option>
-                <option value="CC-102">CC-102: Emergency &amp; ICU Care</option>
-                <option value="CC-104">CC-104: Facilities &amp; Utilities</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Expenditure Category <span class="text-danger">*</span></label>
-              <input type="text" id="modalAllocCat" class="form-control form-control-sm" placeholder="e.g. Medical Supplies & Consumables" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Allocation Amount (₱) <span class="text-danger">*</span></label>
-              <input type="number" id="modalAllocAmount" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace" placeholder="0.00" value="15000000.00" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Effective Period</label>
-              <select class="form-select form-select-sm">
-                <option value="annual">Full Fiscal Year 2026</option>
-              </select>
-            </div>
-          </div>
-          <div class="d-flex justify-content-end gap-2 mt-4">
-            <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-check me-1"></i> Post Allocation</button>
-          </div>
-        </form>
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Expenditure Category <span class="text-rose-500">*</span>
+        </label>
+        <input 
+          type="text" 
+          id="modalAllocCat" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 shadow-sm focus:border-blue-500 focus:bg-white focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          placeholder="e.g. Medical Supplies &amp; Consumables" 
+          required
+        >
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Allocation Amount (₱) <span class="text-rose-500">*</span>
+        </label>
+        <div class="relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 font-mono font-bold text-slate-400 text-xs">₱</span>
+          <input 
+            type="number" 
+            id="modalAllocAmount" 
+            step="0.01" 
+            min="0" 
+            class="w-full rounded-xl border-slate-200 bg-slate-50 py-2 pl-7 pr-3 text-xs font-mono font-bold text-slate-900 shadow-sm focus:border-blue-500 focus:bg-white focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white" 
+            placeholder="0.00" 
+            value="15000000.00" 
+            required
+          >
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Effective Period</label>
+        <select class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-blue-500 focus:bg-white focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+          <option value="annual">Full Fiscal Year 2026</option>
+        </select>
       </div>
     </div>
   </div>
-</div>
+</x-modal>
 @endsection
 
 @push('scripts')
@@ -308,19 +367,28 @@
 function openAllocationDetailsModal(a) {
   if (!a) return;
 
-  document.getElementById('detailAllocCc').textContent = a.cc || 'CC-000';
-  document.getElementById('detailAllocCat').textContent = a.cat || 'Category';
-  document.getElementById('detailAllocSub').textContent = a.sub || '-';
-  document.getElementById('detailAllocInitial').textContent = a.initial || '₱0.00';
-  document.getElementById('detailAllocEncumbered').textContent = a.encumbered || '₱0.00';
-  document.getElementById('detailAllocExpended').textContent = a.expended || '₱0.00';
-  document.getElementById('detailAllocAvailable').textContent = a.available || '₱0.00';
+  const elCc = document.getElementById('detailAllocCc');
+  if (elCc) elCc.textContent = a.cc || 'CC-000';
 
-  const modalEl = document.getElementById('allocationDetailsModal');
-  if (modalEl && window.bootstrap) {
-    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-    modalInstance.show();
-  }
+  const elCat = document.getElementById('detailAllocCat');
+  if (elCat) elCat.textContent = a.cat || 'Category';
+
+  const elSub = document.getElementById('detailAllocSub');
+  if (elSub) elSub.textContent = a.sub || '-';
+
+  const elInit = document.getElementById('detailAllocInitial');
+  if (elInit) elInit.textContent = a.initial || '₱0.00';
+
+  const elEnc = document.getElementById('detailAllocEncumbered');
+  if (elEnc) elEnc.textContent = a.encumbered || '₱0.00';
+
+  const elExp = document.getElementById('detailAllocExpended');
+  if (elExp) elExp.textContent = a.expended || '₱0.00';
+
+  const elAvail = document.getElementById('detailAllocAvailable');
+  if (elAvail) elAvail.textContent = a.available || '₱0.00';
+
+  window.dispatchEvent(new CustomEvent('open-modal', { detail: 'allocationDetailsModal' }));
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -328,17 +396,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const costCenterSelect = document.getElementById('costCenterSelect');
   const expenditureCatSelect = document.getElementById('expenditureCatSelect');
   const summaryText = document.getElementById('allocationSummaryText');
-  const btnAllocateBudget = document.getElementById('btnAllocateBudget');
-
-  if (btnAllocateBudget) {
-    btnAllocateBudget.addEventListener('click', function() {
-      const modalEl = document.getElementById('allocateBudgetModal');
-      if (modalEl && window.bootstrap) {
-        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-        modalInstance.show();
-      }
-    });
-  }
 
   function filterAllocations() {
     const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
@@ -374,7 +431,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!emptyRow && tbody) {
         emptyRow = document.createElement('tr');
         emptyRow.id = 'noAllocationRow';
-        emptyRow.innerHTML = `<td colspan="7" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No budget allocations found matching the current filter.</td>`;
+        emptyRow.innerHTML = `<td colspan="7" class="text-center py-8 text-slate-400"><i class="ph ph-magnifying-glass text-3xl block mb-2"></i>No budget allocations found matching current filter.</td>`;
         tbody.appendChild(emptyRow);
       }
       if (emptyRow) emptyRow.style.display = '';
@@ -385,7 +442,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
   if (searchInput) {
     searchInput.addEventListener('input', filterAllocations);
-    searchInput.addEventListener('keyup', filterAllocations);
   }
   if (costCenterSelect) costCenterSelect.addEventListener('change', filterAllocations);
   if (expenditureCatSelect) expenditureCatSelect.addEventListener('change', filterAllocations);
@@ -414,29 +470,27 @@ document.addEventListener('DOMContentLoaded', function() {
       const tbody = document.querySelector('#allocationTable tbody');
       if (tbody) {
         const newRow = document.createElement('tr');
-        newRow.className = 'allocation-row';
-        newRow.style.cursor = 'pointer';
+        newRow.className = 'allocation-row hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors cursor-pointer';
         newRow.setAttribute('data-cc', ccVal.toLowerCase());
         newRow.setAttribute('data-cat', catVal.toLowerCase());
-
         newRow.onclick = function() { openAllocationDetailsModal(allocObj); };
 
         newRow.innerHTML = `
-          <td><span class="font-monospace text-primary fw-bold">${ccVal}</span></td>
-          <td>
-            <div class="fw-semibold text-dark">${catVal}</div>
-            <span class="fs-xs text-muted">Operational Expenditure Account</span>
+          <td class="px-4 py-3 font-mono font-bold text-blue-600 dark:text-blue-400">${ccVal}</td>
+          <td class="px-4 py-3">
+            <div class="font-semibold text-slate-900 dark:text-white">${catVal}</div>
+            <span class="text-[11px] text-slate-400">Operational Expenditure Account</span>
           </td>
-          <td class="text-end font-monospace fw-semibold">${formattedInitial}</td>
-          <td class="text-end text-warning font-monospace">${formattedZero}</td>
-          <td class="text-end text-danger font-monospace">${formattedZero}</td>
-          <td class="text-end text-success fw-bold font-monospace">${formattedInitial}</td>
-          <td class="text-end" onclick="event.stopPropagation();">
-            <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Allocation Details"><i class="ph ph-eye"></i></button>
+          <td class="px-4 py-3 text-right font-mono font-semibold tabular-nums text-slate-900 dark:text-white">${formattedInitial}</td>
+          <td class="px-4 py-3 text-right font-mono font-semibold tabular-nums text-amber-600 dark:text-amber-400">${formattedZero}</td>
+          <td class="px-4 py-3 text-right font-mono font-semibold tabular-nums text-rose-600 dark:text-rose-400">${formattedZero}</td>
+          <td class="px-4 py-3 text-right font-mono font-bold tabular-nums text-emerald-600 dark:text-emerald-400">${formattedInitial}</td>
+          <td class="px-4 py-3 text-right" onclick="event.stopPropagation();">
+            <button type="button" class="inline-flex items-center justify-center h-8 w-8 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"><i class="ph-bold ph-eye"></i></button>
           </td>
         `;
 
-        const eyeBtn = newRow.querySelector('button[title="View Allocation Details"]');
+        const eyeBtn = newRow.querySelector('button');
         if (eyeBtn) {
           eyeBtn.onclick = function(ex) {
             ex.stopPropagation();
@@ -447,10 +501,7 @@ document.addEventListener('DOMContentLoaded', function() {
         tbody.insertBefore(newRow, tbody.firstChild);
       }
 
-      const modalEl = document.getElementById('allocateBudgetModal');
-      const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-      if (modalInstance) modalInstance.hide();
-
+      window.dispatchEvent(new CustomEvent('close-modal', { detail: 'allocateBudgetModal' }));
       allocateBudgetForm.reset();
       filterAllocations();
     });

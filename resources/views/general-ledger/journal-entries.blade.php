@@ -5,536 +5,582 @@
 @section('page', 'journal-entries')
 
 @section('content')
-<div class="container-fluid p-4">
+<div class="space-y-6">
+
   <!-- Page Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <div>
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-1 fs-xs">
-          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
-          <li class="breadcrumb-item">General Ledger</li>
-          <li class="breadcrumb-item active">Journal Entries</li>
-        </ol>
-      </nav>
-      <h1 class="h3 mb-0 font-weight-bold text-dark">Double-Entry Journal Entries</h1>
-      <p class="text-muted fs-xs mb-0">Record, verify, post, and reverse GAAP/IFRS balanced transactions in the hospital transaction ledger.</p>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Double-Entry Journal Entries
+        </h1>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <x-integration-badge 
-          type="internal" 
-          :systems="['Subledgers (AP, AR, Cash, Disbursement, Collection)']" 
-          description="Central double-entry posting engine and general journal register." 
-      />
-      <a href="{{ route('gl.ledger-books.export') }}" class="btn btn-outline-secondary btn-sm">
-        <i class="ph ph-file-arrow-down me-1"></i> Export Master GL
+
+    <div class="flex items-center gap-2.5 flex-wrap">
+      <a 
+        href="{{ route('gl.ledger-books.export') }}" 
+        class="inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700 transition-all"
+      >
+        <i class="ph-bold ph-download-simple"></i>
+        <span>Export Master GL</span>
       </a>
-      <button id="btnNewJournal" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#newJournalModal">
-        <i class="ph ph-plus-circle me-1"></i> New Journal Entry
+      <button 
+        type="button" 
+        @click="$dispatch('open-modal', 'newJournalModal')"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20 transition-all"
+      >
+        <i class="ph-bold ph-plus-circle"></i>
+        <span>New Journal Entry</span>
       </button>
     </div>
   </div>
 
+  <!-- Alerts -->
   @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show rounded-3 fs-sm" role="alert">
-      <i class="ph ph-check-circle me-1"></i> {{ session('success') }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="rounded-xl bg-emerald-50 p-4 text-xs font-medium text-emerald-800 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-check-circle text-lg text-emerald-600"></i>
+        <span>{{ session('success') }}</span>
+      </div>
     </div>
   @endif
 
   @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show rounded-3 fs-sm" role="alert">
-      <i class="ph ph-warning-circle me-1"></i> {{ session('error') }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="rounded-xl bg-rose-50 p-4 text-xs font-medium text-rose-800 ring-1 ring-rose-600/20 dark:bg-rose-950/40 dark:text-rose-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-warning-circle text-lg text-rose-600"></i>
+        <span>{{ session('error') }}</span>
+      </div>
     </div>
   @endif
 
   @if($errors->any())
-    <div class="alert alert-danger alert-dismissible fade show rounded-3 fs-sm" role="alert">
-      <ul class="mb-0 ps-3">
+    <div class="rounded-xl bg-rose-50 p-4 text-xs text-rose-800 ring-1 ring-rose-600/20 dark:bg-rose-950/40 dark:text-rose-300">
+      <strong class="font-bold block mb-1">Please correct the following errors:</strong>
+      <ul class="list-disc pl-4 space-y-0.5">
         @foreach($errors->all() as $err)
           <li>{{ $err }}</li>
         @endforeach
       </ul>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   @endif
 
   <!-- Metric Summary Cards -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Monthly Debit Volume</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-arrow-up-right fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($monthlyDebitTotal ?? 0, 2) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Monthly Credit Volume</span>
-          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-arrow-down-left fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($monthlyCreditTotal ?? 0, 2) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Posted to Ledger</span>
-          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ $postedCount ?? 0 }} {{ Str::plural('Entry', $postedCount ?? 0) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Draft / Pending Entries</span>
-          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ $draftCount ?? 0 }} {{ Str::plural('Draft', $draftCount ?? 0) }}</h4>
-      </div>
-    </div>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+    <x-stat-card 
+      title="Monthly Debit Volume" 
+      :value="$monthlyDebitTotal ?? 0" 
+      icon="ph-arrow-up-right" 
+      color="emerald" 
+      subtitle="Total validated debits"
+    />
+
+    <x-stat-card 
+      title="Monthly Credit Volume" 
+      :value="$monthlyCreditTotal ?? 0" 
+      icon="ph-arrow-down-left" 
+      color="blue" 
+      subtitle="Total validated credits"
+    />
+
+    <x-stat-card 
+      title="Posted to Ledger" 
+      :value="$postedCount ?? 0" 
+      :isCurrency="false"
+      icon="ph-check-circle" 
+      color="teal" 
+      subtitle="Immutable posted records"
+    />
+
+    <x-stat-card 
+      title="Draft / Pending Entries" 
+      :value="$draftCount ?? 0" 
+      :isCurrency="false"
+      icon="ph-clock" 
+      color="amber" 
+      subtitle="Awaiting CFO posting"
+    />
   </div>
 
-  <!-- Data Table Card -->
-  <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-transparent border-bottom p-3">
-      <form method="GET" action="{{ route('gl.journal-entries') }}">
-        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-          <div class="d-flex align-items-center gap-2">
-            <label for="journalStatusSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Status:</label>
-            <select name="status" id="journalStatusSelect" class="form-select form-select-sm bg-light" style="min-width: 160px;" onchange="this.form.submit()">
-              <option value="" {{ empty($selectedStatus) ? 'selected' : '' }}>All Statuses</option>
-              <option value="POSTED" {{ ($selectedStatus ?? '') === 'POSTED' ? 'selected' : '' }}>POSTED</option>
-              <option value="DRAFT" {{ ($selectedStatus ?? '') === 'DRAFT' ? 'selected' : '' }}>DRAFT</option>
-              <option value="REVERSED" {{ ($selectedStatus ?? '') === 'REVERSED' ? 'selected' : '' }}>REVERSED</option>
-            </select>
+  
+  <!-- Sub-Module Category Navigation Bar -->
+  @include('partials.submodule-nav')
+
+  <!-- Data Table Card with Expandable Accordions -->
+  <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 overflow-hidden dark:bg-slate-900 dark:ring-slate-800">
+    <!-- Filter Toolbar -->
+    <div class="border-b border-slate-200 p-4 dark:border-slate-800">
+      <form method="GET" action="{{ route('gl.journal-entries') }}" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <div class="flex items-center gap-1.5 text-xs text-slate-500">
+            <i class="ph-bold ph-funnel"></i>
+            <span>Status:</span>
           </div>
-          <div class="d-flex align-items-center gap-2">
-            <label for="journalTypeSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap">Type:</label>
-            <select name="type" id="journalTypeSelect" class="form-select form-select-sm bg-light" style="min-width: 160px;" onchange="this.form.submit()">
-              <option value="" {{ empty($selectedType) ? 'selected' : '' }}>All Types</option>
-              <option value="GENERAL" {{ ($selectedType ?? '') === 'GENERAL' ? 'selected' : '' }}>General Journal</option>
-              <option value="ADJUSTING" {{ ($selectedType ?? '') === 'ADJUSTING' ? 'selected' : '' }}>Adjusting Entry</option>
-              <option value="CLOSING" {{ ($selectedType ?? '') === 'CLOSING' ? 'selected' : '' }}>Closing Entry</option>
-            </select>
+          <select 
+            name="status" 
+            onchange="this.form.submit()" 
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
+            <option value="" {{ empty($selectedStatus) ? 'selected' : '' }}>All Statuses</option>
+            <option value="POSTED" {{ ($selectedStatus ?? '') === 'POSTED' ? 'selected' : '' }}>POSTED</option>
+            <option value="DRAFT" {{ ($selectedStatus ?? '') === 'DRAFT' ? 'selected' : '' }}>DRAFT</option>
+            <option value="REVERSED" {{ ($selectedStatus ?? '') === 'REVERSED' ? 'selected' : '' }}>REVERSED</option>
+          </select>
+
+          <div class="flex items-center gap-1.5 text-xs text-slate-500 ml-2">
+            <span>Type:</span>
           </div>
-          <div class="search-box ms-auto" style="width: 260px;">
-            <i class="ph ph-magnifying-glass"></i>
-            <input type="search" name="q" id="journalSearchInput" class="form-control form-control-sm" placeholder="Search entry ref, description..." value="{{ $search ?? '' }}">
+          <select 
+            name="type" 
+            onchange="this.form.submit()" 
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
+            <option value="" {{ empty($selectedType) ? 'selected' : '' }}>All Types</option>
+            <option value="GENERAL" {{ ($selectedType ?? '') === 'GENERAL' ? 'selected' : '' }}>General Journal</option>
+            <option value="ADJUSTING" {{ ($selectedType ?? '') === 'ADJUSTING' ? 'selected' : '' }}>Adjusting Entry</option>
+            <option value="CLOSING" {{ ($selectedType ?? '') === 'CLOSING' ? 'selected' : '' }}>Closing Entry</option>
+          </select>
+        </div>
+
+        <div class="relative w-full sm:w-72">
+          <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+            <i class="ph ph-magnifying-glass text-sm"></i>
           </div>
+          <input 
+            type="search" 
+            name="q" 
+            value="{{ $search ?? '' }}" 
+            placeholder="Search entry ref, description..." 
+            class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
         </div>
       </form>
     </div>
 
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table id="journalTable" class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th style="width: 40px;"></th>
-              <th>Entry Ref #</th>
-              <th>Date</th>
-              <th>Type</th>
-              <th>Narrative / Description</th>
-              <th class="text-end">Total Debit (₱)</th>
-              <th class="text-end">Total Credit (₱)</th>
-              <th>Status</th>
-              <th>Created By</th>
-              <th class="text-end" style="width: 160px;">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($entries as $entry)
+    <!-- Table -->
+    <div class="overflow-x-auto custom-scrollbar">
+      <table class="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+        <thead class="border-b border-slate-200 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+          <tr>
+            <th class="py-3 px-3 w-10"></th>
+            <th class="py-3 px-4">Ref #</th>
+            <th class="py-3 px-4">Date</th>
+            <th class="py-3 px-4">Type</th>
+            <th class="py-3 px-4">Narrative / Description</th>
+            <th class="py-3 px-4 text-right font-mono">Total Debit</th>
+            <th class="py-3 px-4 text-right font-mono">Total Credit</th>
+            <th class="py-3 px-4 text-center">Status</th>
+            <th class="py-3 px-4">Created By</th>
+            <th class="py-3 px-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800" x-data="{ expandedRow: null }">
+          @forelse($entries as $entry)
             @php
               $totalDebit = (float) $entry->lines->sum('debit');
               $totalCredit = (float) $entry->lines->sum('credit');
-              $statusClass = match($entry->status) {
-                'POSTED'   => 'bg-success-subtle text-success',
-                'DRAFT'    => 'bg-warning-subtle text-warning',
-                'REVERSED' => 'bg-danger-subtle text-danger',
-                default    => 'bg-secondary-subtle text-secondary',
-              };
-              $collapseId = 'linesCollapse-' . $entry->id;
             @endphp
-            <!-- Main Row -->
-            <tr class="align-middle">
-              <td>
-                <button class="btn btn-sm btn-icon btn-light border-0 py-0" type="button" data-bs-toggle="collapse" data-bs-target="#{{ $collapseId }}" aria-expanded="false" aria-controls="{{ $collapseId }}" title="Expand/Collapse Lines">
-                  <i class="ph ph-caret-down"></i>
+            <tr class="transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+              <td class="py-3 px-3 text-center">
+                <button 
+                  type="button" 
+                  @click="expandedRow = (expandedRow === {{ $entry->id }} ? null : {{ $entry->id }})" 
+                  class="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 transition-colors"
+                  title="Expand Lines"
+                >
+                  <i class="ph-bold ph-caret-down text-xs transition-transform" :class="expandedRow === {{ $entry->id }} ? 'rotate-180' : ''"></i>
                 </button>
               </td>
-              <td>
-                <span class="badge bg-secondary-subtle text-dark font-monospace fs-xs px-2 py-1">{{ $entry->reference_number }}</span>
+              <td class="py-3.5 px-4 font-mono font-semibold text-slate-900 dark:text-white">
+                {{ $entry->reference_number }}
               </td>
-              <td><span class="fs-xs font-monospace text-muted">{{ $entry->entry_date->format('Y-m-d') }}</span></td>
-              <td><span class="badge bg-light text-dark border fs-xs">{{ $entry->type }}</span></td>
-              <td>
-                <div class="fw-semibold text-dark fs-sm">{{ $entry->description }}</div>
+              <td class="py-3.5 px-4 font-mono text-xs text-slate-500">
+                {{ $entry->entry_date->format('Y-m-d') }}
+              </td>
+              <td class="py-3.5 px-4 text-xs">
+                <span class="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                  {{ $entry->type }}
+                </span>
+              </td>
+              <td class="py-3.5 px-4">
+                <div class="font-medium text-slate-900 dark:text-white text-xs">{{ $entry->description }}</div>
                 @if($entry->reversed_by_entry_id && $entry->reversedByEntry)
-                  <span class="fs-xs text-danger d-block">
-                    <i class="ph ph-arrow-u-down-left me-1"></i>Reversed by {{ $entry->reversedByEntry->reference_number }}
+                  <span class="text-[11px] text-rose-600 dark:text-rose-400 flex items-center gap-1 mt-0.5">
+                    <i class="ph-bold ph-arrow-u-down-left"></i> Reversed by {{ $entry->reversedByEntry->reference_number }}
                   </span>
                 @endif
               </td>
-              <td class="text-end fw-bold text-dark font-monospace fs-sm">₱{{ number_format($totalDebit, 2) }}</td>
-              <td class="text-end fw-bold text-dark font-monospace fs-sm">₱{{ number_format($totalCredit, 2) }}</td>
-              <td>
-                <span class="badge {{ $statusClass }} font-monospace fs-xs px-2 py-1">
-                  {{ $entry->status }}
-                </span>
+              <td class="py-3.5 px-4 text-right font-mono font-bold text-slate-900 dark:text-white tabular-nums">
+                ₱{{ number_format($totalDebit, 2) }}
               </td>
-              <td><span class="fs-xs text-muted">{{ $entry->creator?->name ?? 'System User' }}</span></td>
-              <td class="text-end">
-                <div class="d-flex justify-content-end gap-1">
+              <td class="py-3.5 px-4 text-right font-mono font-bold text-slate-900 dark:text-white tabular-nums">
+                ₱{{ number_format($totalCredit, 2) }}
+              </td>
+              <td class="py-3.5 px-4 text-center">
+                <x-status-badge :status="$entry->status" />
+              </td>
+              <td class="py-3.5 px-4 text-xs text-slate-500">
+                {{ $entry->creator?->name ?? 'System' }}
+              </td>
+              <td class="py-3.5 px-4 text-right">
+                <div class="flex items-center justify-end gap-1.5">
                   @if($entry->status === 'DRAFT')
-                    <form action="{{ route('gl.journal-entries.post', $entry->id) }}" method="POST" class="d-inline">
+                    <form action="{{ route('gl.journal-entries.post', $entry->id) }}" method="POST" class="inline">
                       @csrf
-                      <button type="submit" class="btn btn-sm btn-success py-1 px-2" title="Post to General Ledger">
-                        <i class="ph ph-check me-1"></i> Post
+                      <button type="submit" class="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700">
+                        <i class="ph-bold ph-check"></i> Post
                       </button>
                     </form>
                   @elseif($entry->status === 'POSTED')
-                    <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2" title="Reverse Journal Entry" onclick="openReverseModal({{ $entry->id }}, '{{ $entry->reference_number }}')">
-                      <i class="ph ph-arrow-u-down-left me-1"></i> Reverse
+                    <button 
+                      type="button" 
+                      @click="$dispatch('open-modal', { id: 'reverseModal', entryId: {{ $entry->id }}, ref: '{{ $entry->reference_number }}' })"
+                      class="inline-flex items-center gap-1 rounded-lg bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 ring-1 ring-rose-600/20 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300"
+                    >
+                      <i class="ph-bold ph-arrow-u-down-left"></i> Reverse
                     </button>
                   @else
-                    <span class="badge bg-secondary-subtle text-secondary fs-xs">VOIDED</span>
+                    <span class="text-xs text-slate-400">VOIDED</span>
                   @endif
                 </div>
               </td>
             </tr>
 
-            <!-- Nested Debit/Credit Lines (Expandable Accordion) -->
-            <tr class="p-0 border-0">
-              <td colspan="10" class="p-0 border-0">
-                <div class="collapse" id="{{ $collapseId }}">
-                  <div class="p-3 bg-light-subtle border-start border-4 border-primary ms-3 me-3 my-2 rounded-2">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                      <span class="fw-bold fs-xs text-uppercase text-secondary">
-                        <i class="ph ph-list-numbers me-1 text-primary"></i> Journal Entry Lines Breakdown (#{{ $entry->reference_number }})
-                      </span>
-                      <span class="fs-xs text-muted">Posted: {{ $entry->posted_at ? $entry->posted_at->format('Y-m-d H:i') : 'Pending Post' }}</span>
-                    </div>
-                    <table class="table table-sm table-bordered bg-white mb-0 fs-xs">
-                      <thead class="table-light">
-                        <tr>
-                          <th style="width: 120px;">Account Code</th>
-                          <th>Account Title</th>
-                          <th>Line Memo</th>
-                          <th class="text-end" style="width: 140px;">Debit (₱)</th>
-                          <th class="text-end" style="width: 140px;">Credit (₱)</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @foreach($entry->lines as $line)
-                        <tr>
-                          <td><span class="badge bg-secondary-subtle text-secondary font-monospace">{{ $line->account->code ?? 'N/A' }}</span></td>
-                          <td class="fw-semibold text-dark">{{ $line->account->name ?? 'Unknown Account' }}</td>
-                          <td class="text-muted">{{ $line->memo ?? '-' }}</td>
-                          <td class="text-end font-monospace {{ (float)$line->debit > 0 ? 'fw-bold text-dark' : 'text-muted' }}">
-                            {{ (float)$line->debit > 0 ? '₱' . number_format((float)$line->debit, 2) : '-' }}
-                          </td>
-                          <td class="text-end font-monospace {{ (float)$line->credit > 0 ? 'fw-bold text-dark' : 'text-muted' }}">
-                            {{ (float)$line->credit > 0 ? '₱' . number_format((float)$line->credit, 2) : '-' }}
-                          </td>
-                        </tr>
-                        @endforeach
-                      </tbody>
-                      <tfoot class="table-light fw-bold">
-                        <tr>
-                          <td colspan="3" class="text-end">Balance Invariance Assertion:</td>
-                          <td class="text-end font-monospace text-success">₱{{ number_format($totalDebit, 2) }}</td>
-                          <td class="text-end font-monospace text-success">₱{{ number_format($totalCredit, 2) }}</td>
-                        </tr>
-                      </tfoot>
-                    </table>
+            <!-- Expandable Line Items Details -->
+            <tr x-show="expandedRow === {{ $entry->id }}" x-cloak class="bg-slate-50/75 dark:bg-slate-800/40">
+              <td colspan="10" class="p-4 pl-12 pr-6">
+                <div class="rounded-xl bg-white p-4 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700">
+                  <div class="flex justify-between items-center mb-3">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Journal Entry Lines Breakdown (#{{ $entry->reference_number }})
+                    </span>
+                    <span class="text-xs text-slate-400">Posted: {{ $entry->posted_at ? $entry->posted_at->format('Y-m-d H:i') : 'Pending Post' }}</span>
                   </div>
+                  <table class="w-full text-xs">
+                    <thead class="border-b border-slate-200 dark:border-slate-800 text-slate-400 font-semibold uppercase">
+                      <tr>
+                        <th class="py-2 px-3 text-left">Account Code</th>
+                        <th class="py-2 px-3 text-left">Account Title</th>
+                        <th class="py-2 px-3 text-left">Memo</th>
+                        <th class="py-2 px-3 text-right font-mono">Debit (₱)</th>
+                        <th class="py-2 px-3 text-right font-mono">Credit (₱)</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                      @foreach($entry->lines as $line)
+                        <tr>
+                          <td class="py-2 px-3 font-bold text-slate-700 dark:text-slate-300">{{ $line->account->code ?? 'N/A' }}</td>
+                          <td class="py-2 px-3 font-sans text-slate-800 dark:text-slate-200">{{ $line->account->name ?? 'Unknown Account' }}</td>
+                          <td class="py-2 px-3 font-sans text-slate-500">{{ $line->memo ?? '—' }}</td>
+                          <td class="py-2 px-3 text-right {{ (float)$line->debit > 0 ? 'font-bold text-slate-900 dark:text-white' : 'text-slate-400' }}">
+                            {{ (float)$line->debit > 0 ? number_format((float)$line->debit, 2) : '—' }}
+                          </td>
+                          <td class="py-2 px-3 text-right {{ (float)$line->credit > 0 ? 'font-bold text-slate-900 dark:text-white' : 'text-slate-400' }}">
+                            {{ (float)$line->credit > 0 ? number_format((float)$line->credit, 2) : '—' }}
+                          </td>
+                        </tr>
+                      @endforeach
+                    </tbody>
+                    <tfoot class="border-t border-slate-200 dark:border-slate-800 font-bold">
+                      <tr>
+                        <td colspan="3" class="py-2 px-3 text-right font-sans text-slate-500">Assertion Total:</td>
+                        <td class="py-2 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400">₱{{ number_format($totalDebit, 2) }}</td>
+                        <td class="py-2 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400">₱{{ number_format($totalCredit, 2) }}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
                 </div>
               </td>
             </tr>
-            @empty
+          @empty
             <tr>
-              <td colspan="10" class="text-center py-5 text-muted">
-                <i class="ph ph-receipt-x fs-2 d-block mb-2 text-secondary"></i>
+              <td colspan="10" class="py-12 text-center text-sm text-slate-400">
+                <i class="ph ph-receipt-x text-3xl mb-2 block mx-auto text-slate-300"></i>
                 No journal entries found matching criteria.
               </td>
             </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
+          @endforelse
+        </tbody>
+      </table>
     </div>
 
-    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs">Showing {{ $entries->count() }} of {{ $entries->total() }} entries</span>
+    <!-- Pagination Footer -->
+    <div class="border-t border-slate-200 p-4 dark:border-slate-800">
       {{ $entries->links() }}
     </div>
   </div>
+
 </div>
 
-<!-- Modal: New Manual Journal Entry Builder (Dynamic Repeater + Real-Time BCMath Invariance Counter) -->
-<div class="modal fade" id="newJournalModal" tabindex="-1" aria-labelledby="newJournalModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-      <div class="modal-header bg-primary text-white p-3 px-4">
-        <h5 class="modal-title fw-bold" id="newJournalModalLabel"><i class="ph ph-receipt me-2"></i>Create Manual Journal Entry</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Modal: New Manual Journal Entry Builder (Interactive Alpine.js Double-Entry Invariance Validator) -->
+<x-modal 
+  id="newJournalModal" 
+  title="Create Manual Journal Entry" 
+  subtitle="Every voucher must strictly satisfy double-entry accounting invariance (Debits == Credits)" 
+  icon="ph-receipt" 
+  iconVariant="emerald" 
+  size="3xl" 
+  formAction="{{ route('gl.journal-entries.store') }}" 
+  formMethod="POST" 
+  formId="journalEntryForm"
+  :showFooter="false"
+>
+  <div 
+    x-data="{
+      lines: [
+        { account_id: '', memo: '', debit: '0.00', credit: '0.00' },
+        { account_id: '', memo: '', debit: '0.00', credit: '0.00' }
+      ],
+      addLine() {
+        this.lines.push({ account_id: '', memo: '', debit: '0.00', credit: '0.00' });
+      },
+      removeLine(index) {
+        if (this.lines.length > 2) {
+          this.lines.splice(index, 1);
+        }
+      },
+      get totalDebit() {
+        return this.lines.reduce((sum, line) => sum + (parseFloat(line.debit) || 0), 0);
+      },
+      get totalCredit() {
+        return this.lines.reduce((sum, line) => sum + (parseFloat(line.credit) || 0), 0);
+      },
+      get isBalanced() {
+        return Math.abs(this.totalDebit - this.totalCredit) < 0.0001 && this.totalDebit > 0;
+      },
+      get difference() {
+        return Math.abs(this.totalDebit - this.totalCredit);
+      }
+    }" 
+    class="space-y-5"
+  >
+    <!-- Header Details -->
+    <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 p-4 rounded-xl bg-slate-50 ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700">
+      <div class="sm:col-span-3">
+        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Entry Date <span class="text-rose-500">*</span></label>
+        <input type="date" name="entry_date" value="{{ date('Y-m-d') }}" required class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+      </div>
+      <div class="sm:col-span-3">
+        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Journal Type <span class="text-rose-500">*</span></label>
+        <select name="type" required class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+          <option value="GENERAL">GENERAL</option>
+          <option value="ADJUSTING">ADJUSTING</option>
+          <option value="CLOSING">CLOSING</option>
+        </select>
+      </div>
+      <div class="sm:col-span-6">
+        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Description / Narrative <span class="text-rose-500">*</span></label>
+        <input type="text" name="description" placeholder="e.g. Monthly Accrual of Biomedical Oxygen Supplies" required class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+      </div>
+    </div>
+
+    <!-- Line Items Header -->
+    <div class="flex items-center justify-between">
+      <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+        <i class="ph-bold ph-list-plus text-emerald-600"></i>
+        <span>Voucher Line Items (Debits &amp; Credits)</span>
+      </span>
+      <button 
+        type="button" 
+        @click="addLine()" 
+        class="inline-flex items-center gap-1 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all"
+      >
+        <i class="ph-bold ph-plus"></i> Add Line
+      </button>
+    </div>
+
+    <!-- Line Items Repeater -->
+    <div class="space-y-2.5 max-h-[360px] overflow-y-auto custom-scrollbar pr-1">
+      <template x-for="(line, index) in lines" :key="index">
+        <div class="grid grid-cols-12 gap-2.5 items-center rounded-xl bg-slate-50/80 p-3 ring-1 ring-slate-200/80 dark:bg-slate-800/40 dark:ring-slate-700/60">
+          <!-- Account Select (Col 5) -->
+          <div class="col-span-12 sm:col-span-5">
+            <label class="block text-[11px] font-semibold text-slate-400 mb-0.5">Account Code &amp; Title</label>
+            <select 
+              :name="'lines[' + index + '][account_id]'" 
+              x-model="line.account_id" 
+              required 
+              class="w-full rounded-lg border-0 bg-white py-1.5 px-2 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600 font-mono"
+            >
+              <option value="" disabled>Select Account...</option>
+              @foreach($accounts as $acc)
+                <option value="{{ $acc->id }}">{{ $acc->code }} — {{ $acc->name }} ({{ $acc->category }})</option>
+              @endforeach
+            </select>
+          </div>
+
+          <!-- Memo (Col 3) -->
+          <div class="col-span-12 sm:col-span-3">
+            <label class="block text-[11px] font-semibold text-slate-400 mb-0.5">Line Memo</label>
+            <input 
+              type="text" 
+              :name="'lines[' + index + '][memo]'" 
+              x-model="line.memo" 
+              placeholder="Memo description..." 
+              class="w-full rounded-lg border-0 bg-white py-1.5 px-2 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600"
+            >
+          </div>
+
+          <!-- Debit (Col 2) -->
+          <div class="col-span-5 sm:col-span-2">
+            <label class="block text-[11px] font-semibold text-slate-400 mb-0.5 text-right">Debit (₱)</label>
+            <input 
+              type="number" 
+              step="0.01" 
+              min="0" 
+              :name="'lines[' + index + '][debit]'" 
+              x-model="line.debit" 
+              @focus="if(line.debit === '0.00') line.debit = ''" 
+              @blur="if(!line.debit) line.debit = '0.00'" 
+              class="w-full rounded-lg border-0 bg-white py-1.5 px-2 text-right font-mono text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600"
+            >
+          </div>
+
+          <!-- Credit (Col 2) -->
+          <div class="col-span-5 sm:col-span-2">
+            <div class="flex items-center justify-between mb-0.5">
+              <label class="block text-[11px] font-semibold text-slate-400 text-right w-full">Credit (₱)</label>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <input 
+                type="number" 
+                step="0.01" 
+                min="0" 
+                :name="'lines[' + index + '][credit]'" 
+                x-model="line.credit" 
+                @focus="if(line.credit === '0.00') line.credit = ''" 
+                @blur="if(!line.credit) line.credit = '0.00'" 
+                class="w-full rounded-lg border-0 bg-white py-1.5 px-2 text-right font-mono text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600"
+              >
+              <button 
+                type="button" 
+                @click="removeLine(index)" 
+                :disabled="lines.length <= 2" 
+                class="text-slate-400 hover:text-rose-600 disabled:opacity-20 disabled:hover:text-slate-400 p-1"
+                title="Remove Line"
+              >
+                <i class="ph-bold ph-trash text-sm"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- Live Invariance Verification Bar -->
+    <div 
+      class="rounded-xl p-4 ring-1 flex flex-col sm:flex-row items-center justify-between gap-3 transition-colors"
+      :class="isBalanced ? 'bg-emerald-50 text-emerald-800 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800' : 'bg-rose-50 text-rose-800 ring-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-800'"
+    >
+      <div class="flex items-center gap-2.5">
+        <i class="ph-bold text-xl" :class="isBalanced ? 'ph-check-circle text-emerald-600' : 'ph-warning-circle text-rose-600'"></i>
+        <div>
+          <span class="font-bold text-xs sm:text-sm block" x-text="isBalanced ? 'Balanced Journal Entry (Debit == Credit)' : 'Out of Balance by ₱' + difference.toFixed(2)"></span>
+          <span class="text-[11px] opacity-80" x-text="isBalanced ? 'Entry strictly asserts double-entry invariance.' : 'Debits must equal credits before posting.'"></span>
+        </div>
       </div>
 
-      <form action="{{ route('gl.journal-entries.store') }}" method="POST" id="journalEntryForm">
-        @csrf
-        <div class="modal-body p-4">
-          <!-- Header Information -->
-          <div class="row g-3 mb-4 p-3 bg-light-subtle rounded-3 border">
-            <div class="col-md-3">
-              <label class="form-label small fw-semibold">Entry Date <span class="text-danger">*</span></label>
-              <input type="date" name="entry_date" id="entryDateInput" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
-              <div class="form-text fs-xs">Must fall in an OPEN fiscal period.</div>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label small fw-semibold">Journal Type <span class="text-danger">*</span></label>
-              <select name="type" class="form-select form-select-sm" required>
-                <option value="GENERAL">GENERAL</option>
-                <option value="ADJUSTING">ADJUSTING</option>
-                <option value="CLOSING">CLOSING</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Description / Narrative <span class="text-danger">*</span></label>
-              <input type="text" name="description" class="form-control form-control-sm" placeholder="e.g. Monthly Accrual of Biomedical Oxygen Supplies" required>
-            </div>
-          </div>
-
-          <!-- Line Items Repeater -->
-          <div class="d-flex justify-content-between align-items-center mb-2">
-            <h6 class="fw-bold mb-0 text-dark fs-sm text-uppercase"><i class="ph ph-list-plus me-1 text-primary"></i> Debit &amp; Credit Line Items</h6>
-            <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddLineBtn" onclick="addJournalLineRow()">
-              <i class="ph ph-plus me-1"></i> Add Line
-            </button>
-          </div>
-
-          <div class="table-responsive mb-3">
-            <table class="table table-sm table-bordered align-middle mb-0" id="linesTable">
-              <thead class="table-light">
-                <tr>
-                  <th style="width: 32%;">General Ledger Account <span class="text-danger">*</span></th>
-                  <th style="width: 28%;">Line Memo / Reference</th>
-                  <th style="width: 18%;" class="text-end">Debit (₱)</th>
-                  <th style="width: 18%;" class="text-end">Credit (₱)</th>
-                  <th style="width: 4%;"></th>
-                </tr>
-              </thead>
-              <tbody id="linesTableBody">
-                <!-- Line Row 1 (Debit default) -->
-                <tr class="line-row">
-                  <td>
-                    <select name="lines[0][account_id]" class="form-select form-select-sm account-selector" required>
-                      <option value="" disabled selected>Select Account...</option>
-                      @foreach($accounts as $acc)
-                        <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }} ({{ $acc->category }})</option>
-                      @endforeach
-                    </select>
-                  </td>
-                  <td><input type="text" name="lines[0][memo]" class="form-control form-control-sm" placeholder="Line memo..."></td>
-                  <td><input type="number" step="0.01" min="0" name="lines[0][debit]" class="form-control form-control-sm text-end debit-input font-monospace" placeholder="0.00" value="0.00" oninput="calculateBalance()"></td>
-                  <td><input type="number" step="0.01" min="0" name="lines[0][credit]" class="form-control form-control-sm text-end credit-input font-monospace" placeholder="0.00" value="0.00" oninput="calculateBalance()"></td>
-                  <td class="text-center"><button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="removeJournalLine(this)"><i class="ph ph-trash"></i></button></td>
-                </tr>
-
-                <!-- Line Row 2 (Credit default) -->
-                <tr class="line-row">
-                  <td>
-                    <select name="lines[1][account_id]" class="form-select form-select-sm account-selector" required>
-                      <option value="" disabled selected>Select Account...</option>
-                      @foreach($accounts as $acc)
-                        <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->name }} ({{ $acc->category }})</option>
-                      @endforeach
-                    </select>
-                  </td>
-                  <td><input type="text" name="lines[1][memo]" class="form-control form-control-sm" placeholder="Line memo..."></td>
-                  <td><input type="number" step="0.01" min="0" name="lines[1][debit]" class="form-control form-control-sm text-end debit-input font-monospace" placeholder="0.00" value="0.00" oninput="calculateBalance()"></td>
-                  <td><input type="number" step="0.01" min="0" name="lines[1][credit]" class="form-control form-control-sm text-end credit-input font-monospace" placeholder="0.00" value="0.00" oninput="calculateBalance()"></td>
-                  <td class="text-center"><button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="removeJournalLine(this)"><i class="ph ph-trash"></i></button></td>
-                </tr>
-              </tbody>
-              <tfoot class="table-light">
-                <tr class="fw-bold">
-                  <td colspan="2" class="text-end">Double-Entry Totals:</td>
-                  <td class="text-end font-monospace" id="totalDebitsDisplay">₱0.00</td>
-                  <td class="text-end font-monospace" id="totalCreditsDisplay">₱0.00</td>
-                  <td></td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-
-          <!-- Real-Time Invariance Status Banner -->
-          <div id="balanceStatusBanner" class="p-3 rounded-3 border d-flex align-items-center justify-content-between bg-danger-subtle text-danger">
-            <div class="d-flex align-items-center gap-2">
-              <i class="ph ph-warning-circle fs-4" id="bannerIcon"></i>
-              <div>
-                <span class="fw-bold d-block" id="bannerStatusTitle">Unbalanced Journal Entry</span>
-                <span class="fs-xs" id="bannerStatusSubtitle">Total debits must strictly equal total credits before posting.</span>
-              </div>
-            </div>
-            <div class="text-end">
-              <span class="fs-xs text-muted d-block">Variance:</span>
-              <span class="fw-bold font-monospace fs-5" id="varianceAmount">₱0.00</span>
-            </div>
-          </div>
+      <div class="flex items-center gap-6 font-mono text-xs sm:text-sm tabular-nums">
+        <div>
+          <span class="text-xs opacity-75 mr-1 font-sans">Debits:</span>
+          <strong class="font-bold">₱<span x-text="totalDebit.toFixed(2)"></span></strong>
         </div>
-
-        <div class="modal-footer bg-light p-3 d-flex justify-content-between">
-          <div>
-            <div class="form-check form-switch">
-              <input class="form-check-input" type="checkbox" name="auto_post" value="1" id="autoPostSwitch" checked>
-              <label class="form-check-label small fw-semibold" for="autoPostSwitch">Immediately Post to General Ledger</label>
-            </div>
-          </div>
-          <div class="d-flex gap-2">
-            <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-sm btn-primary px-4 fw-semibold" id="btnSubmitJournal" disabled>
-              <i class="ph ph-check me-1"></i> Submit Journal Entry
-            </button>
-          </div>
+        <div>
+          <span class="text-xs opacity-75 mr-1 font-sans">Credits:</span>
+          <strong class="font-bold">₱<span x-text="totalCredit.toFixed(2)"></span></strong>
         </div>
-      </form>
-    </div>
-  </div>
-</div>
-
-<!-- Modal: Reverse Journal Entry (Reason justification for CAS audit) -->
-<div class="modal fade" id="reverseModal" tabindex="-1" aria-labelledby="reverseModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-      <div class="modal-header bg-danger text-white p-3 px-4">
-        <h5 class="modal-title fw-bold" id="reverseModalLabel"><i class="ph ph-arrow-u-down-left me-2"></i>Reverse Journal Entry</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <form id="reverseForm" method="POST" action="">
-        @csrf
-        <div class="modal-body p-4">
-          <p class="fs-sm text-muted">
-            You are about to reverse posted journal entry <strong id="reverseEntryRef" class="font-monospace text-dark">JE-0000</strong>. This will generate an automated counter-balancing journal entry swapping all debits and credits, mark the original entry as <strong>REVERSED</strong>, and record an immutable BIR CAS audit trail.
-          </p>
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Justification Reason for Reversal <span class="text-danger">*</span></label>
-            <textarea name="reason" class="form-control form-control-sm" rows="3" placeholder="Provide reason for adjustment / correction..." required></textarea>
-          </div>
-        </div>
-        <div class="modal-footer bg-light p-3">
-          <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-sm btn-danger px-3"><i class="ph ph-arrow-u-down-left me-1"></i> Confirm Reversal</button>
-        </div>
-      </form>
+    </div>
+
+    <!-- Modal Actions -->
+    <div class="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-800">
+      <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 dark:text-slate-300">
+        <input type="checkbox" name="auto_post" value="1" checked class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-600">
+        <span>Immediately Post to General Ledger</span>
+      </label>
+
+      <div class="flex items-center gap-2">
+        <button 
+          type="button" 
+          @click="$dispatch('close-modal', 'newJournalModal')" 
+          class="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+        >
+          Cancel
+        </button>
+        <button 
+          type="submit" 
+          :disabled="!isBalanced" 
+          class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+        >
+          <i class="ph-bold ph-shield-check"></i>
+          <span>Submit Journal Entry</span>
+        </button>
+      </div>
     </div>
   </div>
-</div>
+</x-modal>
+
+<!-- Modal: Reverse Journal Entry (With reason justification for CAS audit) -->
+<x-modal 
+  id="reverseModal" 
+  title="Reverse Journal Entry" 
+  subtitle="Generates an automated counter-balancing journal entry and records an immutable CAS audit trail" 
+  icon="ph-arrow-u-down-left" 
+  iconVariant="rose" 
+  size="md" 
+  :showFooter="false"
+>
+  <div 
+    x-data="{
+      entryId: null,
+      ref: '',
+      init() {
+        window.addEventListener('open-modal', (e) => {
+          if (typeof e.detail === 'object' && e.detail.id === 'reverseModal') {
+            this.entryId = e.detail.entryId;
+            this.ref = e.detail.ref;
+          }
+        });
+      }
+    }"
+  >
+    <form :action="'{{ url('/gl/journal-entries') }}/' + entryId + '/reverse'" method="POST" class="space-y-4">
+      @csrf
+      <p class="text-xs text-slate-600 dark:text-slate-300">
+        You are reversing posted journal entry <strong class="font-mono text-slate-900 dark:text-white" x-text="ref"></strong>. 
+        This will reverse all lines, mark the original entry as <strong>REVERSED</strong>, and record an audit log.
+      </p>
+
+      <div>
+        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+          Reason / Justification for Reversal <span class="text-rose-500">*</span>
+        </label>
+        <textarea 
+          name="reason" 
+          rows="3" 
+          required 
+          placeholder="State reason for reversal/adjustment..." 
+          class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-rose-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+        ></textarea>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+        <button 
+          type="button" 
+          @click="$dispatch('close-modal', 'reverseModal')" 
+          class="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300"
+        >
+          Cancel
+        </button>
+        <button 
+          type="submit" 
+          class="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-rose-700"
+        >
+          <i class="ph-bold ph-arrow-u-down-left"></i>
+          <span>Confirm Reversal</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</x-modal>
+
 @endsection
-
-@push('scripts')
-<script>
-let lineIndex = 2;
-
-const accountsData = {!! json_encode($accounts->map(fn ($a) => ['id' => $a->id, 'code' => $a->code, 'name' => $a->name, 'category' => $a->category])) !!};
-
-function addJournalLineRow() {
-  const tbody = document.getElementById('linesTableBody');
-  const tr = document.createElement('tr');
-  tr.className = 'line-row';
-
-  let optionsHtml = '<option value="" disabled selected>Select Account...</option>';
-  accountsData.forEach(acc => {
-    optionsHtml += `<option value="${acc.id}">${acc.code} - ${acc.name} (${acc.category})</option>`;
-  });
-
-  tr.innerHTML = `
-    <td>
-      <select name="lines[${lineIndex}][account_id]" class="form-select form-select-sm account-selector" required>
-        ${optionsHtml}
-      </select>
-    </td>
-    <td><input type="text" name="lines[${lineIndex}][memo]" class="form-control form-control-sm" placeholder="Line memo..."></td>
-    <td><input type="number" step="0.01" min="0" name="lines[${lineIndex}][debit]" class="form-control form-control-sm text-end debit-input font-monospace" placeholder="0.00" value="0.00" oninput="calculateBalance()"></td>
-    <td><input type="number" step="0.01" min="0" name="lines[${lineIndex}][credit]" class="form-control form-control-sm text-end credit-input font-monospace" placeholder="0.00" value="0.00" oninput="calculateBalance()"></td>
-    <td class="text-center"><button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="removeJournalLine(this)"><i class="ph ph-trash"></i></button></td>
-  `;
-
-  tbody.appendChild(tr);
-  lineIndex++;
-  calculateBalance();
-}
-
-function removeJournalLine(btn) {
-  const rows = document.querySelectorAll('.line-row');
-  if (rows.length <= 2) {
-    alert('A double-entry journal entry requires at least 2 lines (debit and credit).');
-    return;
-  }
-  btn.closest('tr').remove();
-  calculateBalance();
-}
-
-function calculateBalance() {
-  let totalDebit = 0;
-  let totalCredit = 0;
-
-  document.querySelectorAll('.debit-input').forEach(input => {
-    const val = parseFloat(input.value) || 0;
-    totalDebit += val;
-  });
-
-  document.querySelectorAll('.credit-input').forEach(input => {
-    const val = parseFloat(input.value) || 0;
-    totalCredit += val;
-  });
-
-  document.getElementById('totalDebitsDisplay').textContent = '₱' + totalDebit.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  document.getElementById('totalCreditsDisplay').textContent = '₱' + totalCredit.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-  const diff = Math.abs(totalDebit - totalCredit);
-  document.getElementById('varianceAmount').textContent = '₱' + diff.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-  const banner = document.getElementById('balanceStatusBanner');
-  const icon = document.getElementById('bannerIcon');
-  const title = document.getElementById('bannerStatusTitle');
-  const subtitle = document.getElementById('bannerStatusSubtitle');
-  const submitBtn = document.getElementById('btnSubmitJournal');
-
-  const isBalanced = diff < 0.001 && totalDebit > 0;
-
-  if (isBalanced) {
-    banner.className = 'p-3 rounded-3 border d-flex align-items-center justify-content-between bg-success-subtle text-success';
-    icon.className = 'ph ph-check-circle fs-4';
-    title.textContent = 'Double-Entry Invariance Satisfied: BALANCED';
-    subtitle.textContent = 'Total Debits equal Total Credits (₱' + totalDebit.toLocaleString('en-PH', { minimumFractionDigits: 2 }) + '). Ready for posting.';
-    submitBtn.disabled = false;
-  } else {
-    banner.className = 'p-3 rounded-3 border d-flex align-items-center justify-content-between bg-danger-subtle text-danger';
-    icon.className = 'ph ph-warning-circle fs-4';
-    title.textContent = 'Unbalanced Journal Entry';
-    subtitle.textContent = totalDebit === 0 ? 'Enter non-zero debit and credit amounts.' : 'Total debits must strictly equal total credits before posting.';
-    submitBtn.disabled = true;
-  }
-}
-
-function openReverseModal(entryId, refNumber) {
-  document.getElementById('reverseEntryRef').textContent = refNumber;
-  const form = document.getElementById('reverseForm');
-  form.action = "{{ url('/general-ledger/journal-entries') }}/" + entryId + "/reverse";
-
-  const modalEl = document.getElementById('reverseModal');
-  if (modalEl && window.bootstrap) {
-    bootstrap.Modal.getOrCreateInstance(modalEl).show();
-  }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  calculateBalance();
-});
-</script>
-@endpush

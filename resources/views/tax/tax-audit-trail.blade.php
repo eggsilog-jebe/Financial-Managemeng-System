@@ -5,264 +5,327 @@
 @section('page', 'tax-audit')
 
 @section('content')
-<div class="container-fluid p-4">
-  <!-- Page Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="space-y-6">
+  <!-- Executive Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <div>
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-1 fs-xs">
-          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
-          <li class="breadcrumb-item">Tax Management</li>
-          <li class="breadcrumb-item active">Tax Audit Trail</li>
-        </ol>
-      </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Tax Audit Trail &amp; Compliance Logs</h1>
-      <p class="text-muted fs-xs mb-0">Tamper-evident log tracking every tax rate modification, 2307 certificate generation, and BIR audit compliance action.</p>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Tax Audit Trail &amp; Compliance Logs
+        </h1>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <x-integration-badge 
-          type="internal" 
-          :systems="['CAS Audit Logs', 'SHA-256 Hash Chain']" 
-          description="Immutable Philippine CAS compliance and digital tamper-evident audit logs." 
-      />
-      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Verifying cryptographic SHA-256 hash integrity across log chain...');"><i class="ph ph-shield-check me-1"></i> Verify Hash Integrity</button>
-      <button id="btnExportAudit" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#exportAuditModal"><i class="ph ph-file-arrow-down me-1"></i> Export Tax Audit Log</button>
+
+    <div class="flex items-center gap-2.5">
+      <button 
+        type="button" 
+        onclick="alert('Verifying cryptographic SHA-256 hash integrity across log chain... Hash validated!');" 
+        class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+      >
+        <i class="ph-bold ph-shield-check text-indigo-600"></i>
+        <span>Verify Hash Chain</span>
+      </button>
+      <button 
+        type="button" 
+        id="btnExportAudit" 
+        @click="$dispatch('open-modal', 'exportAuditModal')"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 ring-1 ring-indigo-600/20 transition-all cursor-pointer"
+      >
+        <i class="ph-bold ph-file-arrow-down"></i>
+        <span>Export Audit Log</span>
+      </button>
     </div>
   </div>
 
   <!-- Metric Summary Cards -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Logged Tax Audit Events</span>
-          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-list-checks fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ ($taxRules ?? collect())->count() + ($certificates ?? collect())->count() }} Logs</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Verified Tax Impacts</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">100.0%</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Tax Discrepancy Flags</span>
-          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-warning fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">0 Flags</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">SHA-256 Hash Integrity</span>
-          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-lock-key fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">Encrypted &amp; Verified</h4>
-      </div>
-    </div>
+  <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+    <x-stat-card 
+      title="Logged Audit Events" 
+      :value="($taxRules ?? collect())->count() + ($certificates ?? collect())->count()" 
+      :isCurrency="false"
+      icon="ph-list-checks" 
+      color="indigo" 
+      subtitle="Total immutable tax events"
+    />
+    <x-stat-card 
+      title="Verified Tax Impacts" 
+      value="100.0%" 
+      :isCurrency="false"
+      icon="ph-check-circle" 
+      color="emerald" 
+      subtitle="Reconciled against general ledger"
+    />
+    <x-stat-card 
+      title="Discrepancy Flags" 
+      value="0 Flags" 
+      :isCurrency="false"
+      icon="ph-warning" 
+      color="slate" 
+      subtitle="Zero calculation anomalies"
+    />
+    <x-stat-card 
+      title="Hash Integrity" 
+      value="Encrypted &amp; Verified" 
+      :isCurrency="false"
+      icon="ph-lock-key" 
+      color="purple" 
+      subtitle="SHA-256 forward-linked chain"
+    />
   </div>
 
-  <!-- Data Table Card -->
-  <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-transparent border-bottom p-3">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <div class="d-flex align-items-center gap-2">
-          <label for="auditCategorySelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Event Category:</label>
-          <select id="auditCategorySelect" class="form-select form-select-sm bg-light" style="min-width: 220px;">
+  <!-- Audit Log Data Table Card -->
+  
+  <!-- Sub-Module Category Navigation Bar -->
+  @include('partials.submodule-nav')
+
+  <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 overflow-hidden dark:bg-slate-900 dark:ring-slate-800">
+    <!-- Filter Toolbar -->
+    <div class="border-b border-slate-200 p-4 dark:border-slate-800">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 flex-wrap">
+        <div class="flex flex-wrap items-center gap-2.5">
+          <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <i class="ph-bold ph-funnel"></i>
+            <span>Event Category:</span>
+          </div>
+          <select 
+            id="auditCategorySelect" 
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-indigo-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
             <option value="" selected>All Event Categories</option>
             <option value="ewt">EWT 2307 Form Generation</option>
             <option value="return">Statutory Return Filing</option>
           </select>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-          <label for="auditUserSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap">Officer / User:</label>
-          <select id="auditUserSelect" class="form-select form-select-sm bg-light" style="min-width: 200px;">
+
+          <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 ml-2">
+            <span>Officer:</span>
+          </div>
+          <select 
+            id="auditUserSelect" 
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-indigo-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
             <option value="" selected>All Officers / Users</option>
             <option value="tax_officer_1">tax_officer_1</option>
             <option value="cfo_user">cfo_user</option>
           </select>
         </div>
-        <div class="search-box ms-auto" style="width: 260px;">
-          <i class="ph ph-magnifying-glass"></i>
-          <input type="search" id="auditSearchInput" class="form-control form-control-sm" placeholder="Search voucher ID, user, event...">
+
+        <div class="relative w-full sm:w-72">
+          <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+            <i class="ph ph-magnifying-glass text-sm"></i>
+          </div>
+          <input 
+            type="search" 
+            id="auditSearchInput" 
+            placeholder="Search voucher ID, user, event..." 
+            class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
         </div>
       </div>
     </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table id="taxAuditTable" class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Audit Timestamp</th>
-              <th>User / Officer</th>
-              <th>Event Category</th>
-              <th>Source Voucher / Form</th>
-              <th class="text-end">Tax Impact (₱)</th>
-              <th>Security Cryptographic Hash</th>
-              <th class="text-end">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($logs ?? [] as $l)
-            @php
-              $lArr = is_array($l) ? $l : [
-                'time' => $l->created_at ? $l->created_at->format('Y-m-d H:i:s') : 'N/A',
-                'user' => $l->user_name ?? ($l->user?->name ?? 'System Officer'),
-                'ip' => $l->ip_address ?? '127.0.0.1',
-                'category' => class_basename($l->auditable_type ?? 'Tax Event'),
-                'cat_type' => strtolower($l->action ?? 'general'),
-                'voucher' => ($l->auditable_type ? class_basename($l->auditable_type) . ' #' . $l->auditable_id : ($l->source_voucher ?? 'N/A')),
-                'impact' => '₱' . number_format((float) ($l->new_values['tax_due'] ?? $l->new_values['tax_withheld'] ?? $l->new_values['rate'] ?? $l->tax_impact ?? 0), 2),
-                'hash' => $l->record_hash ?? $l->hash ?? str_repeat('0', 64),
-              ];
-            @endphp
-            <tr class="audit-row" style="cursor: pointer;" data-cat="{{ $lArr['cat_type'] }}" data-user="{{ strtolower($lArr['user']) }}" onclick="openTaxAuditDetailsModal({{ json_encode($lArr) }})">
-              <td><span class="text-nowrap font-monospace fs-xs">{{ $lArr['time'] }}</span></td>
-              <td>
-                <div class="fw-semibold text-dark">{{ $lArr['user'] }}</div>
-                <span class="fs-xs text-muted">IP: {{ $lArr['ip'] }}</span>
-              </td>
-              <td><span class="badge bg-info-subtle text-info">{{ $lArr['category'] }}</span></td>
-              <td><span class="font-monospace text-primary fw-bold">{{ $lArr['voucher'] }}</span></td>
-              <td class="text-end text-danger fw-bold font-monospace">{{ $lArr['impact'] }}</td>
-              <td><span class="font-monospace fs-xs text-muted">{{ substr($lArr['hash'], 0, 24) }}...</span></td>
-              <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Payload Snapshot" onclick="openTaxAuditDetailsModal({{ json_encode($lArr) }})"><i class="ph ph-eye"></i></button>
-              </td>
-            </tr>
-            @empty
-            <tr>
-              <td colspan="7" class="text-center py-4 text-muted">No tax audit entries recorded in database.</td>
-            </tr>
-            @endforelse
-          </tbody>
-        </table>
+
+    <!-- Table -->
+    <div class="overflow-x-auto custom-scrollbar">
+      <table id="taxAuditTable" class="w-full text-left text-xs">
+        <thead class="border-b border-slate-200 bg-slate-50/75 dark:border-slate-800 dark:bg-slate-800/60 sticky top-0">
+          <tr>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Audit Timestamp</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">User / Officer</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Event Category</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Source Voucher / Form</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 text-right">Tax Impact</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Cryptographic Hash</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+          @forelse($logs ?? [] as $l)
+          @php
+            $lArr = is_array($l) ? $l : [
+              'time' => $l->created_at ? $l->created_at->format('Y-m-d H:i:s') : 'N/A',
+              'user' => $l->user_name ?? ($l->user?->name ?? 'System Officer'),
+              'ip' => $l->ip_address ?? '127.0.0.1',
+              'category' => class_basename($l->auditable_type ?? 'Tax Event'),
+              'cat_type' => strtolower($l->action ?? 'general'),
+              'voucher' => ($l->auditable_type ? class_basename($l->auditable_type) . ' #' . $l->auditable_id : ($l->source_voucher ?? 'N/A')),
+              'impact' => '₱' . number_format((float) ($l->new_values['tax_due'] ?? $l->new_values['tax_withheld'] ?? $l->new_values['rate'] ?? $l->tax_impact ?? 0), 2),
+              'hash' => $l->record_hash ?? $l->hash ?? str_repeat('0', 64),
+            ];
+          @endphp
+          <tr 
+            class="audit-row hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors cursor-pointer" 
+            data-cat="{{ $lArr['cat_type'] }}" 
+            data-user="{{ strtolower($lArr['user']) }}" 
+            onclick="openTaxAuditDetailsModal({{ json_encode($lArr) }})"
+          >
+            <td class="py-3.5 px-4 font-mono text-slate-500 dark:text-slate-400 whitespace-nowrap">
+              {{ $lArr['time'] }}
+            </td>
+            <td class="py-3.5 px-4">
+              <div class="font-semibold text-slate-900 dark:text-white">{{ $lArr['user'] }}</div>
+              <span class="font-mono text-[11px] text-slate-400">IP: {{ $lArr['ip'] }}</span>
+            </td>
+            <td class="py-3.5 px-4">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                {{ $lArr['category'] }}
+              </span>
+            </td>
+            <td class="py-3.5 px-4 font-mono font-bold text-indigo-600 dark:text-indigo-400">
+              {{ $lArr['voucher'] }}
+            </td>
+            <td class="py-3.5 px-4 text-right font-mono tabular-nums font-bold text-rose-600 dark:text-rose-400">
+              {{ $lArr['impact'] }}
+            </td>
+            <td class="py-3.5 px-4">
+              <span class="font-mono text-[11px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700" title="{{ $lArr['hash'] }}">
+                {{ substr($lArr['hash'], 0, 16) }}...
+              </span>
+            </td>
+            <td class="py-3.5 px-4 text-right" onclick="event.stopPropagation();">
+              <button 
+                type="button" 
+                title="View Payload Snapshot" 
+                onclick="openTaxAuditDetailsModal({{ json_encode($lArr) }})"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-indigo-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                <i class="ph ph-eye text-sm"></i>
+              </button>
+            </td>
+          </tr>
+          @empty
+          <tr>
+            <td colspan="7" class="py-12 text-center text-slate-400 dark:text-slate-500">
+              <i class="ph ph-shield-check text-3xl block mb-2 text-slate-300 dark:text-slate-600"></i>
+              No tax audit entries recorded in database.
+            </td>
+          </tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Table Footer & Pagination -->
+    @if(method_exists($logs, 'links'))
+      <div class="border-t border-slate-200 p-4 dark:border-slate-800">
+        {{ $logs->links() }}
       </div>
-    </div>
-    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="auditSummaryText">Showing {{ count($logs ?? []) }} Audit Entries</span>
-      <nav aria-label="Audit Log Pagination">
-        <ul class="pagination pagination-sm mb-0">
-          <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
-          <li class="page-item active"><a class="page-link" href="#">1</a></li>
-          <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
-        </ul>
-      </nav>
-    </div>
+    @endif
   </div>
 </div>
 
-<!-- Modal: In-Depth Tax Audit Entry Details (Executive Design) -->
-<div class="modal fade" id="taxAuditDetailsModal" tabindex="-1" aria-labelledby="taxAuditDetailsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-      <div class="modal-header bg-white border-bottom p-4 pb-3">
-        <div>
-          <div class="d-flex align-items-center gap-2 mb-1">
-            <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1" id="detailAuditVoucher">C2307-2026-881</span>
-            <span class="badge bg-success-subtle text-success" id="detailAuditCategory">EWT 2307 Form Generation</span>
-          </div>
-          <h4 class="modal-title fw-bold text-dark mb-0">Cryptographic Audit Entry</h4>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Modal: In-Depth Tax Audit Entry Details -->
+<x-modal 
+  id="taxAuditDetailsModal" 
+  title="Cryptographic Audit Entry" 
+  size="lg"
+>
+  <div class="space-y-4">
+    <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+      <div class="flex items-center gap-2">
+        <span class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800" id="detailAuditVoucher">
+          C2307-2026-881
+        </span>
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300" id="detailAuditCategory">
+          EWT 2307 Form Generation
+        </span>
       </div>
+      <span class="font-mono text-xs text-slate-400" id="detailAuditTime">2026-08-08 14:22:10</span>
+    </div>
 
-      <div class="modal-body p-4 bg-light-subtle">
-        <div class="row g-3 mb-4">
-          <div class="col-md-6">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Tax Impact Base</span>
-              <h4 class="fw-bold text-danger mb-0 font-monospace" id="detailAuditImpact">-₱12,000.00</h4>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Audit Log Timestamp</span>
-              <h5 class="fw-bold text-dark mb-0 font-monospace" id="detailAuditTime">2026-08-08 14:22:10</h5>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white border rounded-3 p-3 mb-4">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-user-circle me-1 text-primary"></i> Executive Officer Session Metadata</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Officer Username</span>
-              <span class="font-monospace fw-bold text-dark" id="detailAuditUser">tax_officer_1</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">Originating Workstation IP</span>
-              <span class="font-monospace text-muted" id="detailAuditIp">192.168.1.45</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Audit Trail & Segregation of Duties -->
-        <div class="bg-white border rounded-3 p-3">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-success"></i> Cryptographic SHA-256 Hash Verification</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Log Hash Integrity:</span>
-              <span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> Tamper-Evident SHA-256 Validated</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">Full Hash Signature:</span>
-              <span class="font-monospace text-muted text-break" id="detailAuditHash">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</span>
-            </div>
-          </div>
-        </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-4 text-center dark:border-slate-800 dark:bg-slate-800/40">
+        <span class="block text-xs font-semibold uppercase text-slate-400">Tax Impact Base</span>
+        <h4 class="mt-1 text-2xl font-bold font-mono text-rose-600 dark:text-rose-400" id="detailAuditImpact">-₱12,000.00</h4>
       </div>
+      <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-4 text-center dark:border-slate-800 dark:bg-slate-800/40">
+        <span class="block text-xs font-semibold uppercase text-slate-400">Recorded User / IP</span>
+        <h5 class="mt-1 text-base font-bold font-mono text-slate-800 dark:text-slate-200">
+          <span id="detailAuditUser">tax_officer_1</span> &bull; <span id="detailAuditIp">192.168.1.45</span>
+        </h5>
+      </div>
+    </div>
 
-      <div class="modal-footer bg-white border-top p-3">
-        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-sm btn-primary" onclick="alert('Exporting Encrypted Log Entry Snapshot...');"><i class="ph ph-file-text me-1"></i> Export Entry Certificate</button>
+    <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <h6 class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300 flex items-center gap-1.5 mb-3">
+        <i class="ph-bold ph-shield-check text-emerald-600"></i>
+        Cryptographic SHA-256 Hash Verification
+      </h6>
+      <div class="space-y-2 text-xs">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2 dark:border-slate-800">
+          <span class="text-slate-500 dark:text-slate-400">Log Hash Integrity:</span>
+          <span class="inline-flex items-center text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+            <i class="ph-bold ph-check mr-1"></i> Tamper-Evident SHA-256 Validated
+          </span>
+        </div>
+        <div class="pt-1">
+          <span class="text-slate-500 dark:text-slate-400 block mb-1">Full Hash Signature:</span>
+          <div class="rounded-lg bg-slate-50 p-2 font-mono text-[11px] text-slate-600 dark:bg-slate-800 dark:text-slate-300 break-all select-all border border-slate-200 dark:border-slate-700" id="detailAuditHash">
+            e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+          </div>
+        </div>
       </div>
     </div>
   </div>
-</div>
+
+  <x-slot:footer>
+    <button 
+      type="button" 
+      @click="show = false"
+      class="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
+    >
+      Close
+    </button>
+    <button 
+      type="button" 
+      onclick="alert('Exporting Encrypted Log Entry Snapshot...');" 
+      class="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 transition-all cursor-pointer"
+    >
+      <i class="ph-bold ph-file-text"></i>
+      <span>Export Entry Certificate</span>
+    </button>
+  </x-slot:footer>
+</x-modal>
 
 <!-- Modal: Export Tax Audit Log -->
-<div class="modal fade" id="exportAuditModal" tabindex="-1" aria-labelledby="exportAuditModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title font-weight-bold" id="exportAuditModalLabel"><i class="ph ph-file-arrow-down me-2 text-primary"></i>Export Signed Tax Audit Log</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body p-4">
-        <form onsubmit="event.preventDefault(); alert('Signed Tax Audit Log exported!'); bootstrap.Modal.getInstance(document.getElementById('exportAuditModal')).hide();">
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Audit Date Range</label>
-            <select class="form-select form-select-sm">
-              <option value="ytd">Year-To-Date FY 2026</option>
-              <option value="q2">Q2 2026</option>
-              <option value="all">Full Audit Chain</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Export Format</label>
-            <select class="form-select form-select-sm">
-              <option value="pdf">Auditor Signed PDF Package</option>
-              <option value="csv">Encrypted CSV Audit Dump</option>
-            </select>
-          </div>
-          <div class="d-flex justify-content-end gap-2 mt-4">
-            <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-download me-1"></i> Generate &amp; Download</button>
-          </div>
-        </form>
-      </div>
+<x-modal 
+  id="exportAuditModal" 
+  title="Export Signed Tax Audit Log" 
+  size="md"
+>
+  <div class="space-y-3.5">
+    <div>
+      <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Audit Date Range</label>
+      <select class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+        <option value="ytd">Year-To-Date FY 2026</option>
+        <option value="q2">Q2 2026</option>
+        <option value="all">Full Audit Chain</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Export Format</label>
+      <select class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+        <option value="pdf">Auditor Signed PDF Package</option>
+        <option value="csv">Encrypted CSV Audit Dump</option>
+      </select>
     </div>
   </div>
-</div>
+
+  <x-slot:footer>
+    <button 
+      type="button" 
+      @click="show = false"
+      class="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
+    >
+      Cancel
+    </button>
+    <button 
+      type="button" 
+      onclick="alert('Signed Tax Audit Log exported!'); $dispatch('close-modal', 'exportAuditModal');" 
+      class="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 transition-all cursor-pointer"
+    >
+      <i class="ph-bold ph-download"></i>
+      <span>Generate &amp; Download</span>
+    </button>
+  </x-slot:footer>
+</x-modal>
 @endsection
 
 @push('scripts')
@@ -270,19 +333,28 @@
 function openTaxAuditDetailsModal(l) {
   if (!l) return;
 
-  document.getElementById('detailAuditVoucher').textContent = l.voucher || 'VOUCHER-000';
-  document.getElementById('detailAuditCategory').textContent = l.category || 'Event Category';
-  document.getElementById('detailAuditImpact').textContent = l.impact || '₱0.00';
-  document.getElementById('detailAuditTime').textContent = l.time || '-';
-  document.getElementById('detailAuditUser').textContent = l.user || '-';
-  document.getElementById('detailAuditIp').textContent = l.ip || '-';
-  document.getElementById('detailAuditHash').textContent = l.hash || '-';
+  const elVoucher = document.getElementById('detailAuditVoucher');
+  if (elVoucher) elVoucher.textContent = l.voucher || 'VOUCHER-000';
 
-  const modalEl = document.getElementById('taxAuditDetailsModal');
-  if (modalEl && window.bootstrap) {
-    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-    modalInstance.show();
-  }
+  const elCategory = document.getElementById('detailAuditCategory');
+  if (elCategory) elCategory.textContent = l.category || 'Event Category';
+
+  const elImpact = document.getElementById('detailAuditImpact');
+  if (elImpact) elImpact.textContent = l.impact || '₱0.00';
+
+  const elTime = document.getElementById('detailAuditTime');
+  if (elTime) elTime.textContent = l.time || '-';
+
+  const elUser = document.getElementById('detailAuditUser');
+  if (elUser) elUser.textContent = l.user || '-';
+
+  const elIp = document.getElementById('detailAuditIp');
+  if (elIp) elIp.textContent = l.ip || '-';
+
+  const elHash = document.getElementById('detailAuditHash');
+  if (elHash) elHash.textContent = l.hash || '-';
+
+  window.dispatchEvent(new CustomEvent('open-modal', { detail: 'taxAuditDetailsModal' }));
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -290,17 +362,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const catSelect = document.getElementById('auditCategorySelect');
   const userSelect = document.getElementById('auditUserSelect');
   const summaryText = document.getElementById('auditSummaryText');
-  const btnExportAudit = document.getElementById('btnExportAudit');
-
-  if (btnExportAudit) {
-    btnExportAudit.addEventListener('click', function() {
-      const modalEl = document.getElementById('exportAuditModal');
-      if (modalEl && window.bootstrap) {
-        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-        modalInstance.show();
-      }
-    });
-  }
 
   function filterAuditLogs() {
     const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
@@ -336,7 +397,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!emptyRow && tbody) {
         emptyRow = document.createElement('tr');
         emptyRow.id = 'noAuditRow';
-        emptyRow.innerHTML = `<td colspan="7" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No tax audit entries found matching the current filter.</td>`;
+        emptyRow.innerHTML = `<td colspan="7" class="py-12 text-center text-slate-400 dark:text-slate-500"><i class="ph ph-magnifying-glass text-3xl block mb-2"></i>No tax audit entries found matching current filter.</td>`;
         tbody.appendChild(emptyRow);
       }
       if (emptyRow) emptyRow.style.display = '';

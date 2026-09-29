@@ -36,6 +36,7 @@ final class PatientAccountController extends Controller
         }, ['patients', 'ar'], 60);
 
         return view('accounts-receivable.patient-accounts', [
+            'patientAccounts' => $accounts,
             'accounts'        => $accounts,
             'totalReceivable' => $summary['totalReceivable'],
             'hmoGuarantees'   => $summary['hmoGuarantees'],

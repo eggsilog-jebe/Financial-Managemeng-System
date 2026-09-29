@@ -5,69 +5,88 @@
 @section('page', 'bank-reconciliation')
 
 @section('content')
-<div class="container-fluid p-4">
-  <!-- Page Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="space-y-6">
+  <!-- Executive Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <div>
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-1 fs-xs">
-          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
-          <li class="breadcrumb-item">Cash Management</li>
-          <li class="breadcrumb-item active">Bank Reconciliation</li>
-        </ol>
-      </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Bank Statement Reconciliation Workstation</h1>
-      <p class="text-muted fs-xs mb-0">Match internal general ledger records against official bank statement balances, clear outstanding checks, and resolve in-transit variances.</p>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Bank Statement Reconciliation Workstation
+        </h1>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <x-integration-badge 
-          type="external" 
-          :systems="['Electronic Bank Statements (CSV/MT940)']" 
-          description="Matches internal cash books with external bank statements." 
-      />
-      <a href="{{ route('cash.bank-accounts') }}" class="btn btn-outline-secondary btn-sm"><i class="ph ph-bank me-1"></i> Bank Accounts</a>
+
+    <div class="flex items-center gap-2.5">
+      <a 
+        href="{{ route('cash.bank-accounts') }}" 
+        class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+      >
+        <i class="ph-bold ph-bank text-emerald-600"></i>
+        <span>Bank Accounts</span>
+      </a>
     </div>
   </div>
 
+  <!-- Session Alerts -->
   @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show mb-4 d-flex align-items-center" role="alert">
-      <i class="ph ph-check-circle fs-4 me-2"></i>
-      <div>{{ session('success') }}</div>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="rounded-xl bg-emerald-50 p-4 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-check-circle text-lg text-emerald-600"></i>
+        <span>{{ session('success') }}</span>
+      </div>
     </div>
   @endif
 
   @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show mb-4 d-flex align-items-center" role="alert">
-      <i class="ph ph-warning-circle fs-4 me-2"></i>
-      <div>{{ session('error') }}</div>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="rounded-xl bg-rose-50 p-4 text-xs font-semibold text-rose-800 ring-1 ring-rose-600/20 dark:bg-rose-950/40 dark:text-rose-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-warning-circle text-lg text-rose-600"></i>
+        <span>{{ session('error') }}</span>
+      </div>
     </div>
   @endif
 
   <!-- Bank Account & Cutoff Selector -->
-  <div class="card border-0 shadow-sm rounded-3 mb-4">
-    <div class="card-body p-3">
-      <form method="GET" action="{{ route('cash.bank-reconciliation') }}" class="row g-2 align-items-center">
-        <div class="col-md-5">
-          <label class="form-label mb-0 fs-xs text-muted fw-semibold">Select Bank Account to Reconcile:</label>
-          <select name="bank_account_id" class="form-select form-select-sm" onchange="this.form.submit()">
-            @foreach($bankAccounts as $ba)
-              <option value="{{ $ba->id }}" {{ $selectedBankId === $ba->id ? 'selected' : '' }}>
-                {{ $ba->bank_name }} - {{ $ba->name }} ({{ $ba->account_number }}) &bull; GL: ₱{{ number_format((float) $ba->balance, 2) }}
-              </option>
-            @endforeach
-          </select>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label mb-0 fs-xs text-muted fw-semibold">Statement Cutoff Date:</label>
-          <input type="date" name="cutoff_date" value="{{ $cutoffDate }}" class="form-control form-control-sm" onchange="this.form.submit()">
-        </div>
-        <div class="col-md-4 d-flex gap-2 align-items-end">
-          <button type="submit" class="btn btn-primary btn-sm flex-grow-1"><i class="ph ph-arrows-clockwise me-1"></i> Refresh Workspace</button>
-        </div>
-      </form>
-    </div>
+  <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+    <form method="GET" action="{{ route('cash.bank-reconciliation') }}" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+      <div class="sm:col-span-6">
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Select Bank Account to Reconcile:
+        </label>
+        <select 
+          name="bank_account_id" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          onchange="this.form.submit()"
+        >
+          @foreach($bankAccounts as $ba)
+            <option value="{{ $ba->id }}" {{ $selectedBankId === $ba->id ? 'selected' : '' }}>
+              {{ $ba->bank_name }} - {{ $ba->name }} ({{ $ba->account_number }}) &bull; GL: ₱{{ number_format((float) $ba->balance, 2) }}
+            </option>
+          @endforeach
+        </select>
+      </div>
+
+      <div class="sm:col-span-4">
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Statement Cutoff Date:
+        </label>
+        <input 
+          type="date" 
+          name="cutoff_date" 
+          value="{{ $cutoffDate }}" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          onchange="this.form.submit()"
+        >
+      </div>
+
+      <div class="sm:col-span-2">
+        <button 
+          type="submit" 
+          class="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-slate-800 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 transition-all cursor-pointer"
+        >
+          <i class="ph-bold ph-arrows-clockwise"></i>
+          <span>Refresh</span>
+        </button>
+      </div>
+    </form>
   </div>
 
   @php
@@ -80,36 +99,37 @@
   @endphp
 
   <!-- Real-Time Reconciliation Calculator Cards -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted fs-xs text-uppercase fw-semibold mb-1">GL Ledger Book Balance</span>
-        <h4 class="fw-bold mb-0 font-monospace text-dark" id="displayBookBalance">₱{{ number_format($bookBal, 2) }}</h4>
-        <input type="hidden" id="rawBookBalance" value="{{ $bookBal }}">
-      </div>
+  <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+    <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+      <span class="block text-xs font-semibold uppercase tracking-wider text-slate-400">GL Ledger Book Balance</span>
+      <h4 class="mt-2 text-2xl font-bold font-mono text-slate-900 dark:text-white" id="displayBookBalance">₱{{ number_format($bookBal, 2) }}</h4>
+      <input type="hidden" id="rawBookBalance" value="{{ $bookBal }}">
+      <span class="mt-1 block text-xs text-slate-400">Hospital general ledger record</span>
     </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted fs-xs text-uppercase fw-semibold mb-1">Uncleared Deposits in Transit</span>
-        <h4 class="fw-bold mb-0 font-monospace text-success" id="displayTransitDeposits">+₱{{ number_format($totDepTransit, 2) }}</h4>
-        <input type="hidden" id="rawTransitDeposits" value="{{ $totDepTransit }}">
-      </div>
+
+    <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+      <span class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Uncleared Deposits</span>
+      <h4 class="mt-2 text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400" id="displayTransitDeposits">+₱{{ number_format($totDepTransit, 2) }}</h4>
+      <input type="hidden" id="rawTransitDeposits" value="{{ $totDepTransit }}">
+      <span class="mt-1 block text-xs text-slate-400">Deposits in transit to bank</span>
     </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted fs-xs text-uppercase fw-semibold mb-1">Uncleared Checks / Outflows</span>
-        <h4 class="fw-bold mb-0 font-monospace text-danger" id="displayOutstandingChecks">-₱{{ number_format($totOutChecks, 2) }}</h4>
-        <input type="hidden" id="rawOutstandingChecks" value="{{ $totOutChecks }}">
-      </div>
+
+    <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+      <span class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Uncleared Checks / Outflows</span>
+      <h4 class="mt-2 text-2xl font-bold font-mono text-rose-600 dark:text-rose-400" id="displayOutstandingChecks">-₱{{ number_format($totOutChecks, 2) }}</h4>
+      <input type="hidden" id="rawOutstandingChecks" value="{{ $totOutChecks }}">
+      <span class="mt-1 block text-xs text-slate-400">Outstanding issued checks</span>
     </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <span class="text-muted fs-xs text-uppercase fw-semibold mb-1">Calculated Variance</span>
-        <h4 class="fw-bold mb-0 font-monospace text-success" id="displayVariance">₱0.00</h4>
-        <span class="fs-xs text-muted" id="varianceStatusText">Balanced &amp; Ready</span>
-      </div>
+
+    <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+      <span class="block text-xs font-semibold uppercase tracking-wider text-slate-400">Calculated Variance</span>
+      <h4 class="mt-2 text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400" id="displayVariance">₱0.00</h4>
+      <span class="mt-1 block text-xs font-semibold text-emerald-600 dark:text-emerald-400" id="varianceStatusText">Balanced &amp; Ready</span>
     </div>
   </div>
+
+  <!-- Sub-Module Category Navigation Bar -->
+  @include('partials.submodule-nav')
 
   <!-- Main Matching Terminal Form -->
   <form method="POST" action="{{ route('cash.bank-reconciliation.post') }}" id="reconciliationForm">
@@ -118,123 +138,203 @@
     <input type="hidden" name="cutoff_date" value="{{ $cutoffDate }}">
     <input type="hidden" name="book_balance" value="{{ $bookBal }}">
 
-    <div class="row g-4 mb-4">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
       <!-- Left: Uncleared Checks / Disbursements Register -->
-      <div class="col-lg-6">
-        <div class="card border-0 shadow-sm rounded-3 h-100">
-          <div class="card-header bg-transparent border-bottom p-3 d-flex justify-content-between align-items-center">
-            <h6 class="fw-bold mb-0 text-dark"><i class="ph ph-check-square-offset me-2 text-danger"></i>Outstanding Checks &amp; Disbursements</h6>
-            <span class="badge bg-danger-subtle text-danger">{{ count($outChecks) }} Items</span>
+      <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 flex flex-col">
+        <div class="flex items-center justify-between border-b border-slate-200 p-4 dark:border-slate-800">
+          <div class="flex items-center gap-2">
+            <i class="ph-bold ph-check-square-offset text-rose-600"></i>
+            <h6 class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">
+              Outstanding Checks &amp; Disbursements
+            </h6>
           </div>
-          <div class="card-body p-0">
-            <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
-              <table class="table table-hover align-middle mb-0 fs-xs">
-                <thead class="table-light sticky-top">
-                  <tr>
-                    <th style="width: 40px;"><input type="checkbox" class="form-check-input" id="toggleAllChecks" onclick="toggleAll('clearedChecksGroup', this.checked)"></th>
-                    <th>Check / Voucher #</th>
-                    <th>Payee</th>
-                    <th>Date</th>
-                    <th class="text-end">Amount (₱)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @forelse($outChecks as $chk)
-                  <tr>
-                    <td>
-                      <input type="checkbox" name="cleared_check_ids[]" value="{{ $chk->id }}" 
-                             data-amount="{{ (float) $chk->amount }}" 
-                             class="form-check-input clearedChecksGroup" onchange="recalculateReconciliation()">
-                    </td>
-                    <td>
-                      <strong class="font-monospace text-primary">{{ $chk->check_number }}</strong>
-                      <span class="d-block text-muted">{{ $chk->disbursementVoucher?->voucher_number ?? 'DV-DIRECT' }}</span>
-                    </td>
-                    <td>{{ $chk->payee_name }}</td>
-                    <td class="font-monospace">{{ $chk->check_date ? $chk->check_date->format('M d, Y') : '-' }}</td>
-                    <td class="text-end font-monospace fw-bold text-danger">₱{{ number_format((float) $chk->amount, 2) }}</td>
-                  </tr>
-                  @empty
-                  <tr>
-                    <td colspan="5" class="text-center py-4 text-muted">No outstanding checks awaiting clearance.</td>
-                  </tr>
-                  @endforelse
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+            {{ count($outChecks) }} Items
+          </span>
+        </div>
+
+        <div class="overflow-x-auto flex-1 max-h-96 overflow-y-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="border-b border-slate-200 bg-slate-50/75 dark:border-slate-800 dark:bg-slate-800/60 sticky top-0">
+              <tr>
+                <th class="py-2.5 px-3 w-10">
+                  <input type="checkbox" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" id="toggleAllChecks" onclick="toggleAll('clearedChecksGroup', this.checked)">
+                </th>
+                <th class="py-2.5 px-3 font-semibold text-slate-700 dark:text-slate-300">Check / Voucher #</th>
+                <th class="py-2.5 px-3 font-semibold text-slate-700 dark:text-slate-300">Payee</th>
+                <th class="py-2.5 px-3 font-semibold text-slate-700 dark:text-slate-300">Date</th>
+                <th class="py-2.5 px-3 font-semibold text-slate-700 dark:text-slate-300 text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+              @forelse($outChecks as $chk)
+              <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                <td class="py-2.5 px-3">
+                  <input 
+                    type="checkbox" 
+                    name="cleared_check_ids[]" 
+                    value="{{ $chk->id }}" 
+                    data-amount="{{ (float) $chk->amount }}" 
+                    class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 clearedChecksGroup cursor-pointer" 
+                    onchange="recalculateReconciliation()"
+                  >
+                </td>
+                <td class="py-2.5 px-3">
+                  <span class="font-mono font-bold text-blue-600 dark:text-blue-400">{{ $chk->check_number }}</span>
+                  <span class="block text-[11px] text-slate-400">{{ $chk->disbursementVoucher?->voucher_number ?? 'DV-DIRECT' }}</span>
+                </td>
+                <td class="py-2.5 px-3 text-slate-700 dark:text-slate-300">{{ $chk->payee_name }}</td>
+                <td class="py-2.5 px-3 font-mono text-slate-500 dark:text-slate-400">
+                  {{ $chk->check_date ? $chk->check_date->format('M d, Y') : '-' }}
+                </td>
+                <td class="py-2.5 px-3 text-right font-mono tabular-nums font-semibold text-rose-600 dark:text-rose-400">
+                  ₱{{ number_format((float) $chk->amount, 2) }}
+                </td>
+              </tr>
+              @empty
+              <tr>
+                <td colspan="5" class="py-8 text-center text-slate-400 dark:text-slate-500">
+                  No outstanding checks awaiting clearance.
+                </td>
+              </tr>
+              @endforelse
+            </tbody>
+          </table>
         </div>
       </div>
 
       <!-- Right: Deposits in Transit & Statement Inputs -->
-      <div class="col-lg-6">
-        <div class="card border-0 shadow-sm rounded-3 mb-4">
-          <div class="card-header bg-transparent border-bottom p-3 d-flex justify-content-between align-items-center">
-            <h6 class="fw-bold mb-0 text-dark"><i class="ph ph-receipt me-2 text-success"></i>Uncleared Deposits in Transit</h6>
-            <span class="badge bg-success-subtle text-success">{{ count($depTransit) }} Deposits</span>
-          </div>
-          <div class="card-body p-0">
-            <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
-              <table class="table table-hover align-middle mb-0 fs-xs">
-                <thead class="table-light sticky-top">
-                  <tr>
-                    <th style="width: 40px;"><input type="checkbox" class="form-check-input" id="toggleAllDeposits" onclick="toggleAll('clearedDepositsGroup', this.checked)"></th>
-                    <th>Deposit Ref #</th>
-                    <th>Shift Code</th>
-                    <th>Date</th>
-                    <th class="text-end">Amount (₱)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @forelse($depTransit as $dep)
-                  <tr>
-                    <td>
-                      <input type="checkbox" name="cleared_deposit_ids[]" value="{{ $dep->id }}" 
-                             data-amount="{{ (float) $dep->total_deposited }}" 
-                             class="form-check-input clearedDepositsGroup" onchange="recalculateReconciliation()">
-                    </td>
-                    <td><strong class="font-monospace text-primary">{{ $dep->deposit_reference }}</strong></td>
-                    <td>{{ $dep->cashierShift?->shift_code ?? 'Manual' }}</td>
-                    <td class="font-monospace">{{ $dep->deposit_date ? $dep->deposit_date->format('M d, Y') : '-' }}</td>
-                    <td class="text-end font-monospace fw-bold text-success">₱{{ number_format((float) $dep->total_deposited, 2) }}</td>
-                  </tr>
-                  @empty
-                  <tr>
-                    <td colspan="5" class="text-center py-3 text-muted">No deposits in transit.</td>
-                  </tr>
-                  @endforelse
-                </tbody>
-              </table>
+      <div class="space-y-6">
+        <!-- Deposits in Transit Table -->
+        <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+          <div class="flex items-center justify-between border-b border-slate-200 p-4 dark:border-slate-800">
+            <div class="flex items-center gap-2">
+              <i class="ph-bold ph-receipt text-emerald-600"></i>
+              <h6 class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">
+                Uncleared Deposits in Transit
+              </h6>
             </div>
+            <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+              {{ count($depTransit) }} Deposits
+            </span>
+          </div>
+
+          <div class="overflow-x-auto max-h-52 overflow-y-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="border-b border-slate-200 bg-slate-50/75 dark:border-slate-800 dark:bg-slate-800/60 sticky top-0">
+                <tr>
+                  <th class="py-2.5 px-3 w-10">
+                    <input type="checkbox" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500" id="toggleAllDeposits" onclick="toggleAll('clearedDepositsGroup', this.checked)">
+                  </th>
+                  <th class="py-2.5 px-3 font-semibold text-slate-700 dark:text-slate-300">Deposit Ref #</th>
+                  <th class="py-2.5 px-3 font-semibold text-slate-700 dark:text-slate-300">Shift Code</th>
+                  <th class="py-2.5 px-3 font-semibold text-slate-700 dark:text-slate-300">Date</th>
+                  <th class="py-2.5 px-3 font-semibold text-slate-700 dark:text-slate-300 text-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+                @forelse($depTransit as $dep)
+                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                  <td class="py-2.5 px-3">
+                    <input 
+                      type="checkbox" 
+                      name="cleared_deposit_ids[]" 
+                      value="{{ $dep->id }}" 
+                      data-amount="{{ (float) $dep->total_deposited }}" 
+                      class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 clearedDepositsGroup cursor-pointer" 
+                      onchange="recalculateReconciliation()"
+                    >
+                  </td>
+                  <td class="py-2.5 px-3 font-mono font-bold text-blue-600 dark:text-blue-400">
+                    {{ $dep->deposit_reference }}
+                  </td>
+                  <td class="py-2.5 px-3 text-slate-600 dark:text-slate-300">
+                    {{ $dep->cashierShift?->shift_code ?? 'Manual' }}
+                  </td>
+                  <td class="py-2.5 px-3 font-mono text-slate-500 dark:text-slate-400">
+                    {{ $dep->deposit_date ? $dep->deposit_date->format('M d, Y') : '-' }}
+                  </td>
+                  <td class="py-2.5 px-3 text-right font-mono tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
+                    ₱{{ number_format((float) $dep->total_deposited, 2) }}
+                  </td>
+                </tr>
+                @empty
+                <tr>
+                  <td colspan="5" class="py-6 text-center text-slate-400 dark:text-slate-500">
+                    No deposits in transit.
+                  </td>
+                </tr>
+                @endforelse
+              </tbody>
+            </table>
           </div>
         </div>
 
         <!-- Bank Statement Entry Card -->
-        <div class="card border-0 shadow-sm rounded-3">
-          <div class="card-header bg-transparent border-bottom p-3">
-            <h6 class="fw-bold mb-0 text-dark"><i class="ph ph-bank me-2 text-primary"></i>Bank Statement Entry &amp; Sign-Off</h6>
+        <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+          <div class="flex items-center gap-2 border-b border-slate-100 pb-3 mb-4 dark:border-slate-800">
+            <i class="ph-bold ph-bank text-blue-600"></i>
+            <h6 class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">
+              Bank Statement Entry &amp; Sign-Off
+            </h6>
           </div>
-          <div class="card-body p-3">
-            <div class="row g-2 mb-3">
-              <div class="col-md-6">
-                <label class="form-label small fw-semibold">Statement Ending Date <span class="text-danger">*</span></label>
-                <input type="date" name="statement_date" id="inputStatementDate" value="{{ $cutoffDate }}" class="form-control form-control-sm" required>
+
+          <div class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Statement Ending Date <span class="text-rose-500">*</span>
+                </label>
+                <input 
+                  type="date" 
+                  name="statement_date" 
+                  id="inputStatementDate" 
+                  value="{{ $cutoffDate }}" 
+                  class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+                  required
+                >
               </div>
-              <div class="col-md-6">
-                <label class="form-label small fw-semibold">Ending Statement Balance (₱) <span class="text-danger">*</span></label>
-                <input type="number" step="0.01" name="statement_balance" id="inputStatementBalance" class="form-control form-control-sm font-monospace fw-bold text-end" 
-                       value="{{ $bookBal }}" required oninput="recalculateReconciliation()">
+
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Ending Statement Balance (₱) <span class="text-rose-500">*</span>
+                </label>
+                <div class="relative">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 font-mono font-bold text-slate-400 text-xs">₱</span>
+                  <input 
+                    type="number" 
+                    step="0.01" 
+                    name="statement_balance" 
+                    id="inputStatementBalance" 
+                    class="w-full rounded-xl border-slate-200 bg-slate-50 py-2 pl-7 pr-3 text-xs font-mono font-bold text-slate-900 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white" 
+                    value="{{ $bookBal }}" 
+                    required 
+                    oninput="recalculateReconciliation()"
+                  >
+                </div>
               </div>
             </div>
 
-            <div class="mb-3">
-              <label class="form-label small fw-semibold">Reconciliation Notes &amp; Audit Comments</label>
-              <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Audit remarks, statement discrepancies noted..."></textarea>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Reconciliation Notes &amp; Audit Comments
+              </label>
+              <textarea 
+                name="notes" 
+                rows="2" 
+                class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+                placeholder="Audit remarks, statement discrepancies noted..."
+              ></textarea>
             </div>
 
-            <div class="d-flex justify-content-end">
-              <button type="submit" id="btnPostReconciliation" class="btn btn-success btn-sm px-4 fw-bold">
-                <i class="ph ph-shield-check me-1"></i> Post Bank Reconciliation
+            <div class="flex justify-end pt-2">
+              <button 
+                type="submit" 
+                id="btnPostReconciliation" 
+                class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20 transition-all cursor-pointer"
+              >
+                <i class="ph-bold ph-shield-check text-base"></i>
+                <span>Post Bank Reconciliation</span>
               </button>
             </div>
           </div>
@@ -244,43 +344,62 @@
   </form>
 
   <!-- Section: Past Reconciliation History Register -->
-  <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-transparent border-bottom p-3">
-      <h6 class="fw-bold mb-0 text-dark"><i class="ph ph-clock-counter-clockwise me-2 text-primary"></i>Bank Reconciliation History Log</h6>
+  <div class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+    <div class="flex items-center gap-2 border-b border-slate-200 p-4 dark:border-slate-800">
+      <i class="ph-bold ph-clock-counter-clockwise text-blue-600"></i>
+      <h6 class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">
+        Bank Reconciliation History Log
+      </h6>
     </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Statement Date</th>
-              <th>Cutoff Date</th>
-              <th class="text-end">Statement Balance (₱)</th>
-              <th class="text-end">Book Balance (₱)</th>
-              <th class="text-end">Variance (₱)</th>
-              <th>Reconciler</th>
-              <th class="text-center">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($reconciliations ?? [] as $r)
-            <tr>
-              <td class="font-monospace fs-xs">{{ $r->statement_date ? $r->statement_date->format('M d, Y') : '-' }}</td>
-              <td class="font-monospace fs-xs">{{ $r->cutoff_date ? $r->cutoff_date->format('M d, Y') : '-' }}</td>
-              <td class="text-end font-monospace">₱{{ number_format((float) $r->statement_balance, 2) }}</td>
-              <td class="text-end font-monospace">₱{{ number_format((float) $r->book_balance, 2) }}</td>
-              <td class="text-end font-monospace text-success fw-bold">₱{{ number_format((float) $r->variance, 2) }}</td>
-              <td>{{ $r->reconciler?->name ?? 'Treasury Staff' }}</td>
-              <td class="text-center"><span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> {{ $r->status }}</span></td>
-            </tr>
-            @empty
-            <tr>
-              <td colspan="7" class="text-center py-4 text-muted">No historical bank reconciliations logged.</td>
-            </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="border-b border-slate-200 bg-slate-50/75 dark:border-slate-800 dark:bg-slate-800/60 sticky top-0">
+          <tr>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Statement Date</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Cutoff Date</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 text-right">Statement Balance</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 text-right">Book Balance</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 text-right">Variance</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Reconciler</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 text-center">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+          @forelse($reconciliations ?? [] as $r)
+          <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+            <td class="py-3 px-4 font-mono text-slate-600 dark:text-slate-300">
+              {{ $r->statement_date ? $r->statement_date->format('M d, Y') : '-' }}
+            </td>
+            <td class="py-3 px-4 font-mono text-slate-600 dark:text-slate-300">
+              {{ $r->cutoff_date ? $r->cutoff_date->format('M d, Y') : '-' }}
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-700 dark:text-slate-200">
+              ₱{{ number_format((float) $r->statement_balance, 2) }}
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-700 dark:text-slate-200">
+              ₱{{ number_format((float) $r->book_balance, 2) }}
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
+              ₱{{ number_format((float) $r->variance, 2) }}
+            </td>
+            <td class="py-3 px-4 text-slate-700 dark:text-slate-300">
+              {{ $r->reconciler?->name ?? 'Treasury Staff' }}
+            </td>
+            <td class="py-3 px-4 text-center">
+              <x-status-badge :status="$r->status" color="emerald" />
+            </td>
+          </tr>
+          @empty
+          <tr>
+            <td colspan="7" class="py-12 text-center text-slate-400 dark:text-slate-500">
+              <i class="ph ph-scales text-3xl block mb-2 text-slate-300 dark:text-slate-600"></i>
+              No historical bank reconciliations logged.
+            </td>
+          </tr>
+          @endforelse
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
@@ -338,15 +457,19 @@ function recalculateReconciliation() {
   if (dispVar) {
     dispVar.textContent = (variance >= 0 ? '' : '-') + '₱' + Math.abs(variance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     if (Math.abs(variance) < 0.005) {
-      dispVar.className = 'fw-bold mb-0 font-monospace text-success';
-      statText.textContent = 'Balanced with Zero Variance (₱0.00)';
-      statText.className = 'fs-xs text-success fw-bold';
-      btnPost.disabled = false;
+      dispVar.className = 'mt-2 text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400';
+      if (statText) {
+        statText.textContent = 'Balanced with Zero Variance (₱0.00)';
+        statText.className = 'mt-1 block text-xs font-semibold text-emerald-600 dark:text-emerald-400';
+      }
+      if (btnPost) btnPost.disabled = false;
     } else {
-      dispVar.className = 'fw-bold mb-0 font-monospace text-danger';
-      statText.textContent = 'Unresolved Variance: ₱' + Math.abs(variance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      statText.className = 'fs-xs text-danger fw-bold';
-      btnPost.disabled = false;
+      dispVar.className = 'mt-2 text-2xl font-bold font-mono text-rose-600 dark:text-rose-400';
+      if (statText) {
+        statText.textContent = 'Unresolved Variance: ₱' + Math.abs(variance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        statText.className = 'mt-1 block text-xs font-semibold text-rose-600 dark:text-rose-400';
+      }
+      if (btnPost) btnPost.disabled = false;
     }
   }
 }

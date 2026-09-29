@@ -13,7 +13,12 @@ use Illuminate\Notifications\Notifiable;
 
 #[Fillable([
     'name',
+    'first_name',
+    'middle_name',
+    'last_name',
     'email',
+    'avatar_path',
+    'theme_preference',
     'password',
     'role',
     'status',
@@ -44,6 +49,16 @@ class User extends Authenticatable
             'must_change_password'     => 'boolean',
             'two_factor_confirmed_at'  => 'datetime',
         ];
+    }
+
+    /** URL to user's uploaded avatar image, or null if no custom photo uploaded. */
+    public function avatarUrl(): ?string
+    {
+        if (!empty($this->avatar_path) && \Illuminate\Support\Facades\Storage::disk('public')->exists($this->avatar_path)) {
+            return \Illuminate\Support\Facades\Storage::url($this->avatar_path);
+        }
+
+        return null;
     }
 
     /** Whether this user account is active and allowed to log in. */

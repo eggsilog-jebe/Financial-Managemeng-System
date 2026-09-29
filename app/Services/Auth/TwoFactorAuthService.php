@@ -47,6 +47,20 @@ final class TwoFactorAuthService
     }
 
     /**
+     * Get the current 6-digit TOTP code for a user (testing & diagnostics).
+     */
+    public function getCurrentOtp(User $user): ?string
+    {
+        $secret = $this->getDecryptedSecret($user);
+
+        if (! $secret) {
+            return null;
+        }
+
+        return $this->google2fa->getCurrentOtp($secret);
+    }
+
+    /**
      * Build and return an inline SVG QR code for the TOTP enrollment.
      */
     public function getQrCodeSvg(User $user): string

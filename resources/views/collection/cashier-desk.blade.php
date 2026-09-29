@@ -5,517 +5,364 @@
 @section('page', 'cashier-desk')
 
 @section('content')
-<div class="container-fluid p-4">
+<div class="space-y-6">
+
   <!-- Page Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <div>
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-1 fs-xs">
-          <li class="breadcrumb-item"><a href="{{ route('accounting.dashboard') }}">Overview</a></li>
-          <li class="breadcrumb-item"><a href="{{ route('collection.receipts') }}">Collection Management</a></li>
-          <li class="breadcrumb-item active">Cashier Desk</li>
-        </ol>
-      </nav>
-      <h1 class="h3 mb-1 font-weight-bold">Cashier POS Desk &amp; Payment Counter</h1>
-      <p class="text-muted mb-0 fs-xs">Accept patient payments, calculate change, issue BIR Official Receipts (OR), and balance daily shift cash drawers.</p>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Cashier POS Desk &amp; Payment Counter
+        </h1>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <x-integration-badge 
-          type="external" 
-          :systems="['BDMS (Billing)', 'IBMS (Inpatient Beds)', 'TOCS (Outpatient)']" 
-          :internalModules="['Collection Management', 'General Ledger']"
-          :tables="['cashier_shifts', 'payments', 'official_receipts', 'journal_entries']"
-          glImpact="DR 1011 (Cashier Float) / CR 1110/1120 (AR Patient Copay)"
-          description="Ingests finalized copay invoices from billing and settles patient balances."
-      />
-      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="location.reload()"><i class="ph ph-arrow-counter-clockwise me-1"></i> Refresh</button>
+
+    <div class="flex items-center gap-2.5 flex-wrap">
+
+      <button 
+        type="button" 
+        onclick="location.reload()" 
+        class="inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700 transition-all"
+      >
+        <i class="ph-bold ph-arrow-counter-clockwise"></i>
+        <span>Refresh</span>
+      </button>
+
       @if($activeShift)
-        <div class="bg-success-subtle border border-success-subtle text-success px-3 py-1 rounded-pill small fw-semibold">
-          <i class="ph ph-circle-wavy-check me-1"></i> Shift: <span class="font-monospace">{{ $activeShift->shift_code }}</span> (OPEN)
-        </div>
-        <button type="button" class="btn btn-warning btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#closeShiftModal">
-          <i class="ph ph-scales me-1"></i> Close Shift &amp; Turnover
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300">
+          <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>Shift: <strong class="font-mono">{{ $activeShift->shift_code }}</strong> (OPEN)</span>
+        </span>
+        <button 
+          type="button" 
+          @click="$dispatch('open-modal', 'closeShiftModal')"
+          class="inline-flex items-center gap-1.5 rounded-xl bg-amber-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-amber-700 ring-1 ring-amber-600/20 transition-all"
+        >
+          <i class="ph-bold ph-scales"></i>
+          <span>Close Shift &amp; Turnover</span>
         </button>
       @else
-        <div class="bg-warning-subtle border border-warning-subtle text-warning px-3 py-1 rounded-pill small fw-semibold">
-          <i class="ph ph-warning me-1"></i> No Active Shift Opened
-        </div>
-        <button type="button" class="btn btn-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#openShiftModal">
-          <i class="ph ph-play-circle me-1"></i> Open Terminal Shift
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 ring-1 ring-amber-600/20 dark:bg-amber-950/40 dark:text-amber-300">
+          <i class="ph-bold ph-warning"></i>
+          <span>No Active Shift</span>
+        </span>
+        <button 
+          type="button" 
+          @click="$dispatch('open-modal', 'openShiftModal')"
+          class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20 transition-all"
+        >
+          <i class="ph-bold ph-play-circle"></i>
+          <span>Open Shift</span>
         </button>
       @endif
     </div>
   </div>
 
+  <!-- Alerts -->
   @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show rounded-3 shadow-sm border-0 mb-4" role="alert">
-      <i class="ph ph-check-circle fs-5 me-2 align-middle"></i>
-      {{ session('success') }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="rounded-xl bg-emerald-50 p-4 text-xs font-medium text-emerald-800 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-check-circle text-lg text-emerald-600"></i>
+        <span>{{ session('success') }}</span>
+      </div>
     </div>
   @endif
 
   @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show rounded-3 shadow-sm border-0 mb-4" role="alert">
-      <i class="ph ph-warning-circle fs-5 me-2 align-middle"></i>
-      {{ session('error') }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="rounded-xl bg-rose-50 p-4 text-xs font-medium text-rose-800 ring-1 ring-rose-600/20 dark:bg-rose-950/40 dark:text-rose-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-warning-circle text-lg text-rose-600"></i>
+        <span>{{ session('error') }}</span>
+      </div>
     </div>
   @endif
 
   <!-- Active Shift Drawer Metrics Summary Cards -->
   @if($activeShift)
-    <div class="row g-3 mb-4">
-      <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-3 p-3">
-          <span class="text-muted fs-xs text-uppercase fw-semibold mb-1">Assigned Station / Terminal</span>
-          <h5 class="fw-bold mb-0 text-dark">{{ $activeShift->terminal_name }}</h5>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-3 p-3">
-          <span class="text-muted fs-xs text-uppercase fw-semibold mb-1">Opening Cash Float</span>
-          <h5 class="fw-bold mb-0 font-monospace text-secondary">₱{{ number_format((float) $activeShift->opening_cash_float, 2) }}</h5>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-3 p-3">
-          <span class="text-muted fs-xs text-uppercase fw-semibold mb-1">Expected Cash in Drawer</span>
-          <h5 class="fw-bold mb-0 font-monospace text-success">₱{{ number_format((float) $activeShift->expected_cash, 2) }}</h5>
-        </div>
-      </div>
-      <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-3 p-3">
-          <span class="text-muted fs-xs text-uppercase fw-semibold mb-1">Digital Inflows (Card/QR)</span>
-          <h5 class="fw-bold mb-0 font-monospace text-primary">₱{{ number_format((float) $activeShift->total_digital_collections, 2) }}</h5>
-        </div>
-      </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+      <x-stat-card 
+        title="Assigned POS Terminal" 
+        :value="$activeShift->terminal_name" 
+        :isCurrency="false"
+        icon="ph-desktop" 
+        color="emerald" 
+        subtitle="Active Hospital Station"
+      />
+
+      <x-stat-card 
+        title="Opening Cash Float" 
+        :value="$activeShift->opening_cash_float" 
+        icon="ph-coins" 
+        color="slate" 
+        subtitle="Drawer start balance"
+      />
+
+      <x-stat-card 
+        title="Expected Cash in Drawer" 
+        :value="$activeShift->expected_cash" 
+        icon="ph-vault" 
+        color="emerald" 
+        subtitle="Opening float + Cash collections"
+      />
+
+      <x-stat-card 
+        title="Digital Inflows (Card/QR)" 
+        :value="$activeShift->total_digital_collections" 
+        icon="ph-credit-card" 
+        color="blue" 
+        subtitle="GCash, Maya, Card POS"
+      />
     </div>
   @endif
 
   <!-- Main POS Counter Interface: 2-Column Responsive Layout -->
-  <div class="row g-4 mb-4">
-    <!-- Left Column: Outstanding Patient Copays Queue -->
-    <div class="col-lg-7">
-      <div class="card border-0 shadow-sm rounded-3 bg-white h-100">
-        <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold mb-0 text-dark"><i class="ph ph-receipt text-primary me-2"></i>Outstanding Patient Copays</h5>
-            <span class="badge bg-primary-subtle text-primary">{{ $pendingInvoices->total() }} Records</span>
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    <!-- Left Column: Outstanding Patient Copays Queue (Col 7) -->
+    <div class="lg:col-span-7 rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 overflow-hidden dark:bg-slate-900 dark:ring-slate-800">
+      <div class="p-5 border-b border-slate-200 dark:border-slate-800 space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <i class="ph-bold ph-receipt text-emerald-600 dark:text-emerald-400"></i>
+            Outstanding Patient Copays
+          </h2>
+          <span class="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300">
+            {{ $pendingInvoices->total() }} Records
+          </span>
+        </div>
+
+        <!-- Filter and Search Toolbar -->
+        <form method="GET" action="{{ route('collection.cashier-desk') }}" class="space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <!-- Admission Type Filter Tabs -->
+            <div class="inline-flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+              <a 
+                href="{{ route('collection.cashier-desk', array_merge(request()->query(), ['admission_type' => ''])) }}" 
+                class="px-3 py-1 rounded-lg text-xs font-semibold transition-all {{ empty($admissionType) ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400' }}"
+              >
+                All
+              </a>
+              <a 
+                href="{{ route('collection.cashier-desk', array_merge(request()->query(), ['admission_type' => 'Inpatient'])) }}" 
+                class="px-3 py-1 rounded-lg text-xs font-semibold transition-all {{ $admissionType === 'Inpatient' ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400' }}"
+              >
+                Inpatient
+              </a>
+              <a 
+                href="{{ route('collection.cashier-desk', array_merge(request()->query(), ['admission_type' => 'Outpatient'])) }}" 
+                class="px-3 py-1 rounded-lg text-xs font-semibold transition-all {{ $admissionType === 'Outpatient' ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-700 dark:text-white' : 'text-slate-600 hover:text-slate-900 dark:text-slate-400' }}"
+              >
+                Outpatient
+              </a>
+            </div>
+
+            <!-- Hide Zero-Balance Toggle -->
+            <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-600 dark:text-slate-400">
+              <input 
+                type="checkbox" 
+                name="hide_zero" 
+                value="1" 
+                {{ ($hideZero ?? true) ? 'checked' : '' }} 
+                onchange="this.form.submit()" 
+                class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-600 dark:border-slate-700 dark:bg-slate-800"
+              >
+              <span>Hide Zero-Balance Bills</span>
+            </label>
           </div>
 
-          <!-- Filters & Search Bar -->
-          <form method="GET" action="{{ route('collection.cashier-desk') }}" class="d-flex flex-column gap-2 mb-2">
-            <div class="d-flex justify-content-between align-items-center gap-2">
-              <!-- Admission Type Pill Filters -->
-              <div class="btn-group btn-group-sm" role="group" aria-label="Admission Type Filter">
-                <a href="{{ route('collection.cashier-desk', array_merge(request()->query(), ['admission_type' => ''])) }}" 
-                   class="btn {{ empty($admissionType) ? 'btn-primary' : 'btn-outline-secondary' }}">
-                  All
-                </a>
-                <a href="{{ route('collection.cashier-desk', array_merge(request()->query(), ['admission_type' => 'Inpatient'])) }}" 
-                   class="btn {{ $admissionType === 'Inpatient' ? 'btn-primary' : 'btn-outline-secondary' }}">
-                  Inpatient
-                </a>
-                <a href="{{ route('collection.cashier-desk', array_merge(request()->query(), ['admission_type' => 'Outpatient'])) }}" 
-                   class="btn {{ $admissionType === 'Outpatient' ? 'btn-primary' : 'btn-outline-secondary' }}">
-                  Outpatient
-                </a>
-              </div>
-
-              <!-- Hide Zero-Balance Bills Toggle -->
-              <div class="form-check form-switch mb-0">
-                <input class="form-check-input" type="checkbox" role="switch" id="hideZeroToggle" name="hide_zero" value="1" 
-                       {{ ($hideZero ?? true) ? 'checked' : '' }} onchange="this.form.submit()">
-                <label class="form-check-label fs-xs fw-semibold text-muted" for="hideZeroToggle">Hide Zero-Balance Bills</label>
-              </div>
+          <!-- Search Input -->
+          <div class="relative w-full">
+            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+              <i class="ph ph-magnifying-glass text-base"></i>
             </div>
-
-            <!-- Search Input -->
-            <div class="input-group">
-              <span class="input-group-text bg-light border-end-0"><i class="ph ph-magnifying-glass"></i></span>
-              <input type="text" name="q" value="{{ $search }}" class="form-control bg-light border-start-0" placeholder="Search by Patient Name, MRN #, or Invoice #...">
-              <button type="submit" class="btn btn-primary px-3">Search</button>
+            <input 
+              type="text" 
+              name="q" 
+              value="{{ $search }}" 
+              placeholder="Search by Patient Name, MRN #, or Invoice #..." 
+              class="w-full rounded-xl border-0 bg-slate-50 py-2 pl-10 pr-20 text-xs sm:text-sm text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-inset focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700 transition-all"
+            >
+            <div class="absolute inset-y-0 right-1 flex items-center gap-1">
+              <button type="submit" class="rounded-lg bg-emerald-600 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-all">
+                Search
+              </button>
               @if($search || $admissionType)
-                <a href="{{ route('collection.cashier-desk') }}" class="btn btn-outline-secondary">Reset</a>
+                <a href="{{ route('collection.cashier-desk') }}" class="rounded-lg px-2 py-1 text-xs font-semibold text-slate-500 hover:text-slate-700 dark:hover:text-white">
+                  Reset
+                </a>
               @endif
             </div>
-          </form>
-        </div>
+          </div>
+        </form>
+      </div>
 
-        <div class="table-responsive p-3">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-              <tr class="fs-xs text-muted text-uppercase">
-                <th>Invoice #</th>
-                <th>Patient Details</th>
-                <th>Admission</th>
-                <th class="text-end">Patient Copay</th>
-                <th class="text-center">Action</th>
+      <!-- Table of Invoices -->
+      <div class="overflow-x-auto custom-scrollbar">
+        <table class="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+          <thead class="border-b border-slate-200 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+            <tr>
+              <th class="py-3 px-4">Invoice #</th>
+              <th class="py-3 px-4">Patient / Guarantor</th>
+              <th class="py-3 px-4">Type</th>
+              <th class="py-3 px-4 text-right font-mono">Net Copay Due</th>
+              <th class="py-3 px-4 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            @forelse($pendingInvoices as $inv)
+              @php
+                $copayFormatted = number_format((float) $inv->patient_payable, 2, '.', '');
+                $copayVal = (float) $copayFormatted;
+                $isZeroCopay = ($copayVal <= 0.00);
+              @endphp
+              <tr class="transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/40 {{ $isZeroCopay ? 'opacity-60' : '' }}">
+                <td class="py-3.5 px-4">
+                  <span class="font-mono font-semibold text-slate-900 dark:text-white">{{ $inv->invoice_number }}</span>
+                  <div class="text-[11px] text-slate-400 font-mono">{{ $inv->invoice_date ? $inv->invoice_date->format('M d, Y') : '-' }}</div>
+                </td>
+                <td class="py-3.5 px-4">
+                  <div class="font-semibold text-slate-900 dark:text-white">{{ $inv->patientAccount?->full_name ?? 'Patient' }}</div>
+                  <div class="font-mono text-xs text-slate-400">{{ $inv->patientAccount?->patient_id_number ?? 'MRN-N/A' }}</div>
+                </td>
+                <td class="py-3.5 px-4 text-xs">
+                  <span class="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                    {{ $inv->patientAccount?->admission_type ?? 'Outpatient' }}
+                  </span>
+                </td>
+                <td class="py-3.5 px-4 text-right font-mono tabular-nums font-bold text-base {{ $isZeroCopay ? 'text-slate-400' : 'text-emerald-600 dark:text-emerald-400' }}">
+                  ₱{{ number_format($copayVal, 2) }}
+                </td>
+                <td class="py-3.5 px-4 text-center">
+                  @if($isZeroCopay)
+                    <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                      <i class="ph-bold ph-check"></i> Cleared
+                    </span>
+                  @else
+                    <button 
+                      type="button" 
+                      @click="$dispatch('open-modal', 'payModal{{ $inv->id }}')"
+                      class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20 transition-all"
+                    >
+                      <i class="ph-bold ph-coins"></i>
+                      <span>Settle</span>
+                    </button>
+                  @endif
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              @forelse($pendingInvoices as $inv)
-                @php
-                  $copayFormatted = number_format((float) $inv->patient_payable, 2, '.', '');
-                  $copayVal = (float) $copayFormatted;
-                  $isZeroCopay = ($copayVal <= 0.00);
-                @endphp
-                <tr class="{{ $isZeroCopay ? 'table-light text-muted' : '' }}">
-                  <td>
-                    <span class="badge bg-light text-dark font-monospace border">{{ $inv->invoice_number }}</span>
-                    <small class="d-block text-muted">{{ $inv->invoice_date ? $inv->invoice_date->format('M d, Y') : '-' }}</small>
-                  </td>
-                  <td>
-                    <strong class="d-block {{ $isZeroCopay ? 'text-muted' : 'text-dark' }}">{{ $inv->patientAccount?->full_name ?? 'Patient' }}</strong>
-                    <span class="fs-xs text-muted font-monospace">{{ $inv->patientAccount?->patient_id_number ?? 'MRN-N/A' }}</span>
-                  </td>
-                  <td>
-                    <span class="badge bg-secondary-subtle text-secondary">{{ $inv->patientAccount?->admission_type ?? 'Outpatient' }}</span>
-                  </td>
-                  <td class="text-end font-monospace fw-bold {{ $isZeroCopay ? 'text-success' : 'text-primary' }}">
-                    ₱{{ number_format($copayVal, 2) }}
-                  </td>
-                  <td class="text-center">
-                    @if($isZeroCopay)
-                      <span class="badge bg-success-subtle text-success border border-success-subtle py-1 px-2 fs-xs">
-                        <i class="ph ph-check-circle me-1"></i> Cleared / ₱0.00
-                      </span>
-                    @else
-                      <button type="button" class="btn btn-sm btn-primary px-3 fw-semibold" 
-                              data-bs-toggle="modal" data-bs-target="#payModal{{ $inv->id }}">
-                        <i class="ph ph-coins me-1"></i> Settle
-                      </button>
-                    @endif
-                  </td>
-                </tr>
+            @empty
+              <tr>
+                <td colspan="5" class="py-12 text-center text-sm text-slate-400">
+                  <i class="ph ph-receipt text-3xl mb-2 block mx-auto text-slate-300"></i>
+                  No outstanding patient copays found matching criteria.
+                </td>
+              </tr>
+            @endforelse
+          </tbody>
+        </table>
+      </div>
 
-                @if(! $isZeroCopay)
-                  <!-- Settle Payment Modal (Minimalist Fintech Design) -->
-                  <div class="modal fade" id="payModal{{ $inv->id }}" tabindex="-1" aria-labelledby="payModal{{ $inv->id }}Label" aria-hidden="true"
-                       x-data="{
-                           settlementAmount: '{{ $copayFormatted }}',
-                           paymentMethod: 'CASH',
-                           amountTendered: '{{ $copayFormatted }}',
-                           splitCashAmount: '0.00',
-                           splitCashTendered: '0.00',
-                           splitDigitalAmount: '0.00',
-                           splitDigitalChannel: 'CREDIT_CARD',
-                           get changeAmount() {
-                               if (this.paymentMethod === 'SPLIT_PAYMENT') {
-                                   const c = parseFloat(this.splitCashAmount) || 0;
-                                   const t = parseFloat(this.splitCashTendered) || 0;
-                                   return (t >= c ? (t - c) : 0).toFixed(2);
-                               }
-                               if (this.paymentMethod !== 'CASH') return '0.00';
-                               const s = parseFloat(this.settlementAmount) || 0;
-                               const t = parseFloat(this.amountTendered) || 0;
-                               return (t >= s ? (t - s) : 0).toFixed(2);
-                           },
-                           get splitTotalSum() {
-                               const c = parseFloat(this.splitCashAmount) || 0;
-                               const d = parseFloat(this.splitDigitalAmount) || 0;
-                               return c + d;
-                           },
-                           get isSplitValid() {
-                               if (this.paymentMethod !== 'SPLIT_PAYMENT') return true;
-                               const s = parseFloat(this.settlementAmount) || 0;
-                               const sum = this.splitTotalSum;
-                               return Math.abs(sum - s) < 0.01 && sum > 0;
-                           },
-                           get isUnderTendered() {
-                               if (this.paymentMethod === 'SPLIT_PAYMENT') {
-                                   return ! this.isSplitValid;
-                               }
-                               if (this.paymentMethod !== 'CASH') return false;
-                               const s = parseFloat(this.settlementAmount) || 0;
-                               const t = parseFloat(this.amountTendered) || 0;
-                               return t < s;
-                           },
-                           get formattedChange() {
-                               const c = parseFloat(this.changeAmount) || 0;
-                               return '₱ ' + c.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                           },
-                           onChannelChange() {
-                               if (this.paymentMethod === 'SPLIT_PAYMENT') {
-                                   const s = parseFloat(this.settlementAmount) || 0;
-                                   const half = (s / 2).toFixed(2);
-                                   this.splitCashAmount = half;
-                                   this.splitDigitalAmount = (s - parseFloat(half)).toFixed(2);
-                                   this.splitCashTendered = half;
-                               } else if (this.paymentMethod !== 'CASH') {
-                                   this.amountTendered = this.settlementAmount;
-                               }
-                           }
-                       }">
-                    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-                      <div class="modal-content border-0 shadow-lg hims-modal__content">
-                        <form method="POST" action="{{ route('collection.cashier-desk.collect') }}">
-                          @csrf
-                          <input type="hidden" name="invoice_id" value="{{ $inv->id }}">
-                          @if($activeShift)
-                            <input type="hidden" name="cashier_shift_id" value="{{ $activeShift->id }}">
-                          @endif
-                          
-                          <!-- Modal Header -->
-                          <div class="modal-header hims-modal__header bg-light-subtle border-bottom px-4 py-3 align-items-center">
-                            <div class="d-flex align-items-center gap-2 flex-grow-1 overflow-hidden">
-                              <span class="hims-modal__icon-badge p-2 rounded-3 border d-inline-flex align-items-center justify-content-center flex-shrink-0 bg-primary-subtle text-primary border-primary-subtle">
-                                <i class="ph ph-receipt fs-4"></i>
-                              </span>
-                              <div class="text-truncate">
-                                <h5 class="modal-title fw-bold text-dark mb-0 fs-5 lh-sm text-truncate" id="payModal{{ $inv->id }}Label">
-                                  Counter Settlement
-                                </h5>
-                                <p class="text-muted fs-xs mb-0 mt-1 lh-sm text-truncate">
-                                  Process patient copay collection &amp; issue BIR receipt
-                                </p>
-                              </div>
-                            </div>
-                            <button type="button" class="btn-close ms-2" data-bs-dismiss="modal" aria-label="Close"></button>
-                          </div>
-
-                          <div class="modal-body hims-modal__body p-4">
-                            <!-- Patient Summary Card -->
-                            <div class="p-3 bg-light border border-light-subtle rounded-3 mb-3">
-                              <div class="d-flex justify-content-between text-muted fs-xs mb-1">
-                                <span>Patient:</span>
-                                <strong class="text-dark">{{ $inv->patientAccount?->full_name ?? 'Patient' }}</strong>
-                              </div>
-                              <div class="d-flex justify-content-between text-muted fs-xs mb-2">
-                                <span>Invoice Reference:</span>
-                                <span class="font-monospace text-secondary fw-semibold">{{ $inv->invoice_number }}</span>
-                              </div>
-                              <div class="d-flex justify-content-between align-items-baseline pt-2 border-top border-light-subtle">
-                                <span class="fs-xs fw-semibold text-muted text-uppercase">Net Copay Due</span>
-                                <span class="fs-4 font-monospace fw-bold text-dark">₱ {{ number_format($copayVal, 2) }}</span>
-                              </div>
-                            </div>
-
-                            <div class="mb-3">
-                              <div class="d-flex justify-content-between align-items-center mb-1">
-                                <label class="form-label fs-xs fw-semibold text-muted text-uppercase mb-0">Settlement Amount (₱) <span class="text-danger">*</span></label>
-                                <span class="badge bg-light text-secondary border font-monospace fs-xs fw-normal">Partial Allowed</span>
-                              </div>
-                              <input type="number" step="0.01" min="0.01" max="{{ $copayFormatted }}" name="amount" id="payAmount{{ $inv->id }}" class="form-control form-control-sm font-monospace fw-bold" 
-                                     x-model="settlementAmount" required>
-                              <small class="text-primary fs-xs mt-1 d-block" x-show="parseFloat(settlementAmount || 0) < {{ $copayFormatted }} && parseFloat(settlementAmount || 0) > 0">
-                                <i class="ph ph-info me-1"></i>Partial payment of ₱<span x-text="parseFloat(settlementAmount || 0).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"></span>. Remaining balance will be ₱<span x-text="({{ $copayFormatted }} - parseFloat(settlementAmount || 0)).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})"></span>.
-                              </small>
-                            </div>
-
-                            <div class="mb-3">
-                              <label class="form-label fs-xs fw-semibold text-muted text-uppercase mb-1">Payment Channel <span class="text-danger">*</span></label>
-                              <select name="payment_method" id="payMethod{{ $inv->id }}" class="form-select form-select-sm fw-medium" required x-model="paymentMethod" @change="onChannelChange()">
-                                <option value="CASH">Cash (Cash Drawer)</option>
-                                <option value="GCASH">GCash E-Wallet</option>
-                                <option value="MAYA">Maya Digital Wallet</option>
-                                <option value="QR_PH">QR Ph Interoperable</option>
-                                <option value="CREDIT_CARD">Credit Card (POS Terminal)</option>
-                                <option value="DEBIT_CARD">Debit Card (POS Terminal)</option>
-                                <option value="BANK_TRANSFER">Bank Transfer / EFT</option>
-                                <option value="CHECK">Bank Manager's Check</option>
-                                <option value="SPLIT_PAYMENT">Split / Multiple Tender (Cash + Card/Digital)</option>
-                              </select>
-                            </div>
-
-                            <!-- Single Cash Channel Row -->
-                            <div class="row g-2 mb-3" x-show="paymentMethod === 'CASH'">
-                              <div class="col-md-6">
-                                <label class="form-label fs-xs fw-semibold text-muted text-uppercase mb-1">Amount Tendered (₱) <span class="text-danger">*</span></label>
-                                <input type="number" step="0.01" min="0" name="tendered_amount" id="tendered{{ $inv->id }}" class="form-control form-control-sm font-monospace" placeholder="0.00" x-model="amountTendered">
-                                <template x-if="isUnderTendered && paymentMethod === 'CASH'">
-                                  <div class="mt-2">
-                                    <small class="text-danger fw-semibold d-block mb-1 fs-xs">
-                                      <i class="ph ph-warning-circle me-1"></i>Tendered (₱<span x-text="parseFloat(amountTendered || 0).toLocaleString('en-US', {minimumFractionDigits: 2})"></span>) is less than settlement (₱<span x-text="parseFloat(settlementAmount || 0).toLocaleString('en-US', {minimumFractionDigits: 2})"></span>).
-                                    </small>
-                                    <button type="button" @click="settlementAmount = amountTendered" class="btn btn-outline-danger btn-xs py-1 px-2 fs-xs">
-                                      <i class="ph ph-check me-1"></i>Set Settlement to ₱<span x-text="parseFloat(amountTendered || 0).toLocaleString('en-US', {minimumFractionDigits: 2})"></span>
-                                    </button>
-                                  </div>
-                                </template>
-                              </div>
-                              <div class="col-md-6">
-                                <label class="form-label fs-xs fw-semibold text-muted text-uppercase mb-1">Change (₱)</label>
-                                <input type="text" id="change{{ $inv->id }}" class="form-control form-control-sm bg-light font-monospace text-success fw-bold" :value="formattedChange" readonly>
-                              </div>
-                            </div>
-
-                            <!-- Multi-Tender / Split Payment Breakdown Card -->
-                            <div class="border border-light-subtle bg-light-subtle rounded-3 p-3 mb-3" x-show="paymentMethod === 'SPLIT_PAYMENT'">
-                              <div class="fw-semibold text-secondary fs-xs text-uppercase mb-2 d-flex align-items-center gap-1">
-                                <i class="ph ph-arrows-split"></i> Multi-Tender Breakdown
-                              </div>
-                              
-                              <!-- Tender 1: Cash Portion -->
-                              <div class="row g-2 mb-2 pb-2 border-bottom border-light-subtle">
-                                <div class="col-md-5">
-                                  <label class="form-label fs-xs text-muted mb-1">Tender 1 (Cash)</label>
-                                  <input type="text" class="form-control form-control-sm bg-white" value="Cash (Cash Drawer)" readonly>
-                                </div>
-                                <div class="col-md-3">
-                                  <label class="form-label fs-xs text-muted mb-1">Amount (₱)</label>
-                                  <input type="number" step="0.01" min="0" name="split_cash_amount" class="form-control form-control-sm font-monospace" placeholder="0.00" x-model="splitCashAmount">
-                                </div>
-                                <div class="col-md-4">
-                                  <label class="form-label fs-xs text-muted mb-1">Tendered (₱)</label>
-                                  <input type="number" step="0.01" min="0" class="form-control form-control-sm font-monospace" placeholder="0.00" x-model="splitCashTendered">
-                                </div>
-                              </div>
-
-                              <!-- Tender 2: Digital / Card Portion -->
-                              <div class="row g-2 mb-2">
-                                <div class="col-md-5">
-                                  <label class="form-label fs-xs text-muted mb-1">Tender 2 (Digital/Card)</label>
-                                  <select name="split_digital_channel" class="form-select form-select-sm fw-medium" x-model="splitDigitalChannel">
-                                    <option value="CREDIT_CARD">Credit Card POS</option>
-                                    <option value="DEBIT_CARD">Debit Card POS</option>
-                                    <option value="GCASH">GCash E-Wallet</option>
-                                    <option value="MAYA">Maya Digital Wallet</option>
-                                    <option value="BANK_TRANSFER">Bank Transfer / EFT</option>
-                                  </select>
-                                </div>
-                                <div class="col-md-3">
-                                  <label class="form-label fs-xs text-muted mb-1">Amount (₱)</label>
-                                  <input type="number" step="0.01" min="0" name="split_digital_amount" class="form-control form-control-sm font-monospace" placeholder="0.00" x-model="splitDigitalAmount">
-                                </div>
-                                <div class="col-md-4">
-                                  <label class="form-label fs-xs text-muted mb-1">Auth / Ref #</label>
-                                  <input type="text" name="split_digital_ref" class="form-control form-control-sm font-monospace" placeholder="Ref #">
-                                </div>
-                              </div>
-
-                              <!-- Cash Change display for Split Cash portion -->
-                              <div class="d-flex justify-content-between align-items-center pt-2 border-top border-light-subtle fs-xs">
-                                <span class="text-muted">Cash Change: <strong class="text-success font-monospace" x-text="formattedChange"></strong></span>
-                                <span :class="isSplitValid ? 'text-success fw-semibold' : 'text-danger fw-semibold'">
-                                  <i :class="isSplitValid ? 'ph ph-check-circle me-1' : 'ph ph-warning-circle me-1'"></i>
-                                  <span x-text="isSplitValid ? 'Split Sum Matches' : 'Sum (₱' + splitTotalSum.toFixed(2) + ') ≠ Settlement (₱' + (parseFloat(settlementAmount)||0).toFixed(2) + ')'"></span>
-                                </span>
-                              </div>
-                            </div>
-
-                            <div class="mb-3" x-show="paymentMethod !== 'CASH' && paymentMethod !== 'SPLIT_PAYMENT'">
-                              <label class="form-label fs-xs fw-semibold text-muted text-uppercase mb-1">Transaction / Auth Code</label>
-                              <input type="text" name="gateway_transaction_id" class="form-control form-control-sm font-monospace" placeholder="e.g. GCash Ref # or POS Auth Code">
-                            </div>
-
-                            <div class="mb-3">
-                              <label class="form-label fs-xs fw-semibold text-muted text-uppercase mb-1">Payor Name (for BIR Receipt)</label>
-                              <input type="text" name="payor_name" class="form-control form-control-sm" value="{{ $inv->patientAccount?->full_name }}" placeholder="e.g. Payor Full Name">
-                            </div>
-
-                            <div class="mb-0">
-                              <label class="form-label fs-xs fw-semibold text-muted text-uppercase mb-1">Receipt Remarks</label>
-                              <input type="text" name="notes" class="form-control form-control-sm" placeholder="Settlement memo...">
-                            </div>
-                          </div>
-
-                          <div class="modal-footer hims-modal__footer bg-light-subtle border-top px-4 py-3 d-flex align-items-center justify-content-between">
-                            <button type="button" class="btn btn-sm btn-light border px-3" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-sm btn-primary px-3 d-inline-flex align-items-center gap-1 hims-btn-submit" :disabled="isUnderTendered">
-                              <i class="ph ph-check-circle"></i>
-                              <span>Post &amp; Issue BIR Receipt</span>
-                            </button>
-                          </div>
-                        </form>
-                      </div>
-                    </div>
-                  </div>
-                @endif
-              @empty
-                <tr>
-                  <td colspan="5" class="text-center py-4 text-muted">No outstanding patient copays found.</td>
-                </tr>
-              @endforelse
-            </tbody>
-          </table>
-        </div>
-        <div class="p-3 border-top">
-          {{ $pendingInvoices->links() }}
-        </div>
+      <div class="border-t border-slate-200 p-4 dark:border-slate-800">
+        {{ $pendingInvoices->links() }}
       </div>
     </div>
 
-    <!-- Right Column: Recent Official Receipts -->
-    <div class="col-lg-5">
-      <div class="card border-0 shadow-sm rounded-3 bg-white h-100">
-        <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
-          <h5 class="fw-bold mb-0 text-dark"><i class="ph ph-check-circle text-success me-2"></i>Issued Official Receipts (OR)</h5>
-          <small class="text-muted">Real-time BIR EOPT Official Receipt series register</small>
+    <!-- Right Column: Recent Official Receipts Register (Col 5) -->
+    <div class="lg:col-span-5 rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 overflow-hidden dark:bg-slate-900 dark:ring-slate-800">
+      <div class="p-5 border-b border-slate-200 dark:border-slate-800">
+        <div class="flex items-center justify-between">
+          <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <i class="ph-bold ph-check-circle text-emerald-600 dark:text-emerald-400"></i>
+            Issued Official Receipts (OR)
+          </h2>
+          <span class="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300">
+            Today: {{ count($todayPayments) }}
+          </span>
         </div>
+        <p class="mt-1 text-xs text-slate-500">Real-time BIR EOPT sequential official receipt register</p>
+      </div>
 
-        <div class="table-responsive p-3">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-              <tr class="fs-xs text-muted text-uppercase">
-                <th>OR Number</th>
-                <th>Patient / Payor</th>
-                <th>Channel</th>
-                <th class="text-end">Amount</th>
-                <th class="text-center">Action</th>
+      <div class="overflow-x-auto custom-scrollbar">
+        <table class="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+          <thead class="border-b border-slate-200 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+            <tr>
+              <th class="py-3 px-4">OR #</th>
+              <th class="py-3 px-4">Payor / Patient</th>
+              <th class="py-3 px-4 text-right font-mono">Amount</th>
+              <th class="py-3 px-4 text-center">Print</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            @forelse($todayPayments as $pay)
+              <tr class="transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="py-3 px-4">
+                  <span class="font-mono font-semibold text-emerald-700 dark:text-emerald-400 text-xs">
+                    {{ $pay->officialReceipt?->or_number ?? 'OR-PENDING' }}
+                  </span>
+                  <div class="text-[11px] text-slate-400">{{ $pay->payment_method }}</div>
+                </td>
+                <td class="py-3 px-4">
+                  <div class="font-medium text-xs text-slate-900 dark:text-white truncate max-w-[140px]">
+                    {{ $pay->officialReceipt?->payor_name ?: ($pay->patientAccount?->full_name ?? 'Patient') }}
+                  </div>
+                  <div class="font-mono text-[10px] text-slate-400 truncate">{{ $pay->payment_reference }}</div>
+                </td>
+                <td class="py-3 px-4 text-right font-mono tabular-nums font-bold text-slate-900 dark:text-white">
+                  ₱{{ number_format((float) $pay->amount, 2) }}
+                </td>
+                <td class="py-3 px-4 text-center">
+                  <a 
+                    href="{{ route('collection.receipts.print', $pay->id) }}" 
+                    target="_blank" 
+                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 text-slate-600 hover:bg-emerald-50 hover:text-emerald-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors" 
+                    title="Print BIR Official Receipt"
+                  >
+                    <i class="ph-bold ph-printer text-base"></i>
+                  </a>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              @forelse($todayPayments as $pay)
-                <tr>
-                  <td>
-                    <span class="badge bg-success-subtle text-success font-monospace border border-success-subtle">
-                      {{ $pay->officialReceipt?->or_number ?? 'OR-PENDING' }}
-                    </span>
-                    <small class="d-block text-muted">{{ $pay->payment_date ? $pay->payment_date->format('M d, Y') : '-' }}</small>
-                  </td>
-                  <td>
-                    <strong class="d-block text-dark">{{ $pay->officialReceipt?->payor_name ?: ($pay->patientAccount?->full_name ?? 'Patient') }}</strong>
-                    <span class="fs-xs text-muted font-monospace">{{ $pay->payment_reference }}</span>
-                  </td>
-                  <td>
-                    <span class="badge bg-light text-dark border">{{ $pay->payment_method }}</span>
-                  </td>
-                  <td class="text-end font-monospace fw-bold text-success">
-                    ₱{{ number_format((float) $pay->amount, 2) }}
-                  </td>
-                  <td class="text-center">
-                    <a href="{{ route('collection.receipts.print', $pay->id) }}" target="_blank" class="btn btn-sm btn-outline-primary p-1 px-2" title="Print BIR EOPT Official Receipt">
-                      <i class="ph ph-printer"></i>
-                    </a>
-                  </td>
-                </tr>
-              @empty
-                <tr>
-                  <td colspan="5" class="text-center py-4 text-muted">No payments recorded today.</td>
-                </tr>
-              @endforelse
-            </tbody>
-          </table>
-        </div>
+            @empty
+              <tr>
+                <td colspan="4" class="py-8 text-center text-xs text-slate-400">No collections posted today.</td>
+              </tr>
+            @endforelse
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
 
-  <!-- Bottom Section: All Terminal Shifts Supervision -->
-  <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-transparent border-bottom p-3 d-flex justify-content-between align-items-center">
-      <h6 class="fw-bold mb-0 text-dark"><i class="ph ph-desktop me-2 text-primary"></i>All Hospital POS Stations &amp; Terminal Shifts</h6>
-      <span class="badge bg-primary-subtle text-primary">{{ count($shifts ?? []) }} Stations</span>
+  <!-- Bottom: POS Terminal Stations & Supervision Table -->
+  
+  <!-- Sub-Module Category Navigation Bar -->
+  @include('partials.submodule-nav')
+
+  <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 overflow-hidden dark:bg-slate-900 dark:ring-slate-800">
+    <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+      <div>
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <i class="ph-bold ph-desktop text-emerald-600 dark:text-emerald-400"></i>
+          All Hospital POS Stations &amp; Terminal Shifts
+        </h3>
+        <p class="text-xs text-slate-500">Live drawer balances, cashier custody handovers, and supervisory reconciliations</p>
+      </div>
+      <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+        {{ count($shifts ?? []) }} Stations
+      </span>
     </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Shift Code</th>
-              <th>Station / Terminal</th>
-              <th>Cashier Officer</th>
-              <th class="text-end">Opening Float (₱)</th>
-              <th class="text-end">Drawer Expected / Counted</th>
-              <th>Shift Start</th>
-              <th>Status</th>
-              <th class="text-end">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($shifts ?? [] as $t)
+
+    <div class="overflow-x-auto custom-scrollbar">
+      <table class="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+        <thead class="border-b border-slate-200 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+          <tr>
+            <th class="py-3.5 px-4">Shift Code</th>
+            <th class="py-3.5 px-4">Station / Terminal</th>
+            <th class="py-3.5 px-4">Cashier Officer</th>
+            <th class="py-3.5 px-4 text-right font-mono">Opening Float (₱)</th>
+            <th class="py-3.5 px-4 text-right font-mono">Drawer Expected / Counted</th>
+            <th class="py-3.5 px-4">Shift Start</th>
+            <th class="py-3.5 px-4 text-center">Status</th>
+            <th class="py-3.5 px-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          @forelse($shifts ?? [] as $t)
             @php
               $tId = $t->shift_code;
               $loc = $t->terminal_name;
@@ -526,48 +373,268 @@
                   : '₱' . number_format((float) $t->actual_cash_counted, 2);
               $start = $t->opened_at ? $t->opened_at->format('M d, h:i A') : '-';
               $status = $t->status;
-              $badge = match($status) {
-                  'OPEN' => 'bg-success-subtle text-success',
-                  'CLOSED' => 'bg-secondary-subtle text-secondary',
-                  'RECONCILED' => 'bg-primary-subtle text-primary',
-                  default => 'bg-light text-dark'
-              };
             @endphp
-            <tr>
-              <td><span class="font-monospace text-primary fw-bold">{{ $tId }}</span></td>
-              <td>
-                <div class="fw-semibold text-dark">{{ $loc }}</div>
-                <span class="fs-xs text-muted">Hospital POS Counter</span>
+            <tr class="transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+              <td class="py-3.5 px-4 font-mono font-bold text-slate-900 dark:text-white">{{ $tId }}</td>
+              <td class="py-3.5 px-4">
+                <div class="font-semibold text-slate-900 dark:text-white">{{ $loc }}</div>
+                <span class="text-xs text-slate-400">Hospital POS Counter</span>
               </td>
-              <td class="fw-semibold text-dark">{{ $cashier }}</td>
-              <td class="text-end text-muted font-monospace">{{ $float }}</td>
-              <td class="text-end text-success fw-bold font-monospace">{{ $cash }}</td>
-              <td><span class="text-nowrap font-monospace fs-xs">{{ $start }}</span></td>
-              <td><span class="badge {{ $badge }}">{{ $status }}</span></td>
-              <td class="text-end">
+              <td class="py-3.5 px-4 font-medium text-slate-800 dark:text-slate-200">{{ $cashier }}</td>
+              <td class="py-3.5 px-4 text-right font-mono text-slate-600 dark:text-slate-400">{{ $float }}</td>
+              <td class="py-3.5 px-4 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">{{ $cash }}</td>
+              <td class="py-3.5 px-4 font-mono text-xs text-slate-500">{{ $start }}</td>
+              <td class="py-3.5 px-4 text-center">
+                <x-status-badge :status="$status" />
+              </td>
+              <td class="py-3.5 px-4 text-right">
                 @if($status === 'CLOSED')
-                  <form method="POST" action="{{ route('collection.shifts.reconcile', $t->id) }}" class="d-inline">
+                  <form method="POST" action="{{ route('collection.shifts.reconcile', $t->id) }}" class="inline">
                     @csrf
-                    <button class="btn btn-outline-primary btn-xs" type="submit" title="Reconcile as Supervisor"><i class="ph ph-shield-check me-1"></i> Reconcile</button>
+                    <button type="submit" class="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-600/20 hover:bg-emerald-100 transition-all">
+                      <i class="ph-bold ph-shield-check"></i>
+                      <span>Reconcile</span>
+                    </button>
                   </form>
                 @elseif($status === 'RECONCILED')
-                  <span class="badge bg-light text-muted border py-1 px-2"><i class="ph ph-lock me-1"></i> Reconciled</span>
+                  <span class="inline-flex items-center gap-1 text-xs text-slate-400">
+                    <i class="ph-bold ph-lock"></i> Reconciled
+                  </span>
                 @else
-                  <span class="badge bg-success-subtle text-success py-1 px-2"><i class="ph ph-activity me-1"></i> Active</span>
+                  <span class="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
+                    <i class="ph-bold ph-activity"></i> Active
+                  </span>
                 @endif
               </td>
             </tr>
-            @empty
+          @empty
             <tr>
-              <td colspan="8" class="text-center py-4 text-muted">No cashier shift records available.</td>
+              <td colspan="8" class="py-8 text-center text-sm text-slate-400">No cashier shift records available.</td>
             </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
+          @endforelse
+        </tbody>
+      </table>
     </div>
   </div>
+
 </div>
+
+<!-- Payment Settle Modals for Invoices (One per open invoice) -->
+@foreach($pendingInvoices as $inv)
+  @php
+    $copayFormatted = number_format((float) $inv->patient_payable, 2, '.', '');
+    $copayVal = (float) $copayFormatted;
+  @endphp
+  @if($copayVal > 0)
+    <x-modal 
+      id="payModal{{ $inv->id }}" 
+      title="Counter Settlement & Official Receipt" 
+      subtitle="Process patient copay collection & issue BIR compliant receipt" 
+      icon="ph-receipt" 
+      iconVariant="emerald" 
+      size="lg" 
+      formAction="{{ route('collection.cashier-desk.collect') }}" 
+      formMethod="POST" 
+      submitText="Post & Issue BIR Receipt" 
+      submitIcon="ph-check-circle"
+      submitVariant="emerald"
+    >
+      <input type="hidden" name="invoice_id" value="{{ $inv->id }}">
+      @if($activeShift)
+        <input type="hidden" name="cashier_shift_id" value="{{ $activeShift->id }}">
+      @endif
+
+      <div 
+        x-data="{
+          settlementAmount: '{{ $copayFormatted }}',
+          paymentMethod: 'CASH',
+          amountTendered: '{{ $copayFormatted }}',
+          splitCashAmount: '0.00',
+          splitCashTendered: '0.00',
+          splitDigitalAmount: '0.00',
+          splitDigitalChannel: 'CREDIT_CARD',
+          get changeAmount() {
+            if (this.paymentMethod === 'SPLIT_PAYMENT') {
+              const c = parseFloat(this.splitCashAmount) || 0;
+              const t = parseFloat(this.splitCashTendered) || 0;
+              return Math.max(0, t - c).toFixed(2);
+            }
+            if (this.paymentMethod !== 'CASH') return '0.00';
+            const s = parseFloat(this.settlementAmount) || 0;
+            const t = parseFloat(this.amountTendered) || 0;
+            return Math.max(0, t - s).toFixed(2);
+          },
+          get splitTotalSum() {
+            const c = parseFloat(this.splitCashAmount) || 0;
+            const d = parseFloat(this.splitDigitalAmount) || 0;
+            return c + d;
+          },
+          get isSplitValid() {
+            if (this.paymentMethod !== 'SPLIT_PAYMENT') return true;
+            const s = parseFloat(this.settlementAmount) || 0;
+            return Math.abs(this.splitTotalSum - s) < 0.01 && this.splitTotalSum > 0;
+          },
+          get isUnderTendered() {
+            if (this.paymentMethod === 'SPLIT_PAYMENT') return !this.isSplitValid;
+            if (this.paymentMethod !== 'CASH') return false;
+            const s = parseFloat(this.settlementAmount) || 0;
+            const t = parseFloat(this.amountTendered) || 0;
+            return t < s;
+          },
+          onChannelChange() {
+            if (this.paymentMethod === 'SPLIT_PAYMENT') {
+              const s = parseFloat(this.settlementAmount) || 0;
+              const half = (s / 2).toFixed(2);
+              this.splitCashAmount = half;
+              this.splitDigitalAmount = (s - parseFloat(half)).toFixed(2);
+              this.splitCashTendered = half;
+            } else if (this.paymentMethod !== 'CASH') {
+              this.amountTendered = this.settlementAmount;
+            }
+          }
+        }" 
+        class="space-y-4"
+      >
+        <!-- Patient Summary Card -->
+        <div class="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700">
+          <div class="flex justify-between items-center text-xs text-slate-500 mb-1">
+            <span>Patient:</span>
+            <strong class="text-slate-900 dark:text-white text-sm">{{ $inv->patientAccount?->full_name ?? 'Patient' }}</strong>
+          </div>
+          <div class="flex justify-between items-center text-xs text-slate-500 mb-2">
+            <span>Invoice Reference:</span>
+            <span class="font-mono text-slate-700 dark:text-slate-300 font-semibold">{{ $inv->invoice_number }}</span>
+          </div>
+          <div class="flex justify-between items-center pt-2 border-t border-slate-200 dark:border-slate-700">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Net Copay Due:</span>
+            <span class="font-mono text-xl font-bold text-emerald-600 dark:text-emerald-400">₱{{ number_format($copayVal, 2) }}</span>
+          </div>
+        </div>
+
+        <!-- Settlement Amount -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+            Settlement Amount (₱) <span class="text-rose-500">*</span>
+          </label>
+          <input 
+            type="number" 
+            step="0.01" 
+            min="0.01" 
+            max="{{ $copayFormatted }}" 
+            name="amount" 
+            x-model="settlementAmount" 
+            required 
+            class="w-full rounded-xl border-0 bg-slate-50 py-2.5 px-3 font-mono text-base font-bold text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
+        </div>
+
+        <!-- Payment Method -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+            Payment Channel <span class="text-rose-500">*</span>
+          </label>
+          <select 
+            name="payment_method" 
+            x-model="paymentMethod" 
+            @change="onChannelChange()" 
+            required 
+            class="w-full rounded-xl border-0 bg-slate-50 py-2.5 px-3 text-sm font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
+            <option value="CASH">Cash (Cash Drawer)</option>
+            <option value="GCASH">GCash E-Wallet</option>
+            <option value="MAYA">Maya Digital Wallet</option>
+            <option value="QR_PH">QR Ph Interoperable</option>
+            <option value="CREDIT_CARD">Credit Card (POS Terminal)</option>
+            <option value="DEBIT_CARD">Debit Card (POS Terminal)</option>
+            <option value="BANK_TRANSFER">Bank Transfer / EFT</option>
+            <option value="CHECK">Bank Manager's Check</option>
+            <option value="SPLIT_PAYMENT">Split / Multiple Tender (Cash + Card/Digital)</option>
+          </select>
+        </div>
+
+        <!-- Single Cash Inputs -->
+        <div class="grid grid-cols-2 gap-3" x-show="paymentMethod === 'CASH'">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+              Amount Tendered (₱) <span class="text-rose-500">*</span>
+            </label>
+            <input 
+              type="number" 
+              step="0.01" 
+              min="0" 
+              name="tendered_amount" 
+              x-model="amountTendered" 
+              class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 font-mono text-sm font-bold text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700 text-right"
+            >
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+              Change Due (₱)
+            </label>
+            <div class="w-full rounded-xl bg-slate-100 py-2 px-3 font-mono text-sm font-bold text-emerald-600 dark:bg-slate-800 dark:text-emerald-400 text-right ring-1 ring-slate-200 dark:ring-slate-700">
+              ₱<span x-text="changeAmount"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Split Payment Breakdown -->
+        <div x-show="paymentMethod === 'SPLIT_PAYMENT'" class="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700 space-y-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-500 block">Split Tender Allocation</span>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Tender 1: Cash Amount</label>
+              <input type="number" step="0.01" name="split_cash_amount" x-model="splitCashAmount" class="w-full rounded-lg border-0 bg-white py-1.5 px-2 text-right font-mono text-xs ring-1 ring-slate-300 dark:bg-slate-800 dark:text-white">
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Cash Tendered</label>
+              <input type="number" step="0.01" x-model="splitCashTendered" class="w-full rounded-lg border-0 bg-white py-1.5 px-2 text-right font-mono text-xs ring-1 ring-slate-300 dark:bg-slate-800 dark:text-white">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Tender 2: Digital Channel</label>
+              <select name="split_digital_channel" x-model="splitDigitalChannel" class="w-full rounded-lg border-0 bg-white py-1.5 px-2 text-xs ring-1 ring-slate-300 dark:bg-slate-800 dark:text-white">
+                <option value="CREDIT_CARD">Credit Card POS</option>
+                <option value="DEBIT_CARD">Debit Card POS</option>
+                <option value="GCASH">GCash E-Wallet</option>
+                <option value="MAYA">Maya Wallet</option>
+                <option value="BANK_TRANSFER">Bank Transfer</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Digital Amount</label>
+              <input type="number" step="0.01" name="split_digital_amount" x-model="splitDigitalAmount" class="w-full rounded-lg border-0 bg-white py-1.5 px-2 text-right font-mono text-xs ring-1 ring-slate-300 dark:bg-slate-800 dark:text-white">
+            </div>
+          </div>
+          <div class="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between text-xs">
+            <span>Cash Change: <strong class="font-mono text-emerald-600">₱<span x-text="changeAmount"></span></strong></span>
+            <span :class="isSplitValid ? 'text-emerald-600 font-semibold' : 'text-rose-600 font-semibold'">
+              <span x-text="isSplitValid ? '✓ Split Sum Matches' : '⚠️ Allocation Mismatch'"></span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Gateway Ref -->
+        <div x-show="paymentMethod !== 'CASH' && paymentMethod !== 'SPLIT_PAYMENT'">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Transaction / Auth Code</label>
+          <input type="text" name="gateway_transaction_id" placeholder="e.g. GCash Ref # or POS Auth Code" class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 font-mono text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700">
+        </div>
+
+        <!-- Payor Name -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Payor Legal Name (for BIR OR)</label>
+          <input type="text" name="payor_name" value="{{ $inv->patientAccount?->full_name }}" placeholder="Payor full name" class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700">
+        </div>
+
+        <!-- Notes -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Receipt Remarks (Optional)</label>
+          <input type="text" name="notes" placeholder="Settlement memo..." class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700">
+        </div>
+      </div>
+    </x-modal>
+  @endif
+@endforeach
 
 <!-- Modal: Open Terminal Shift -->
 <x-modal 
@@ -575,186 +642,164 @@
   title="Open Cashier Terminal Shift" 
   subtitle="Assign station and opening cash drawer float" 
   icon="ph-play-circle" 
-  iconVariant="primary" 
+  iconVariant="emerald" 
   size="md" 
   formAction="{{ route('collection.shifts.open') }}" 
   formMethod="POST" 
   submitText="Start Shift Now" 
   submitIcon="ph-check"
+  submitVariant="emerald"
 >
-  <div class="mb-3">
-    <label class="form-label small fw-semibold">Select POS Station <span class="text-danger">*</span></label>
-    <select name="terminal_name" class="form-select form-select-sm" required>
-      <option value="POS-MAIN-01 (Main Lobby)">POS-MAIN-01 (Main Lobby)</option>
-      <option value="POS-ER-01 (Emergency Room)">POS-ER-01 (Emergency Room)</option>
-      <option value="POS-PHARM-01 (Pharmacy Central)">POS-PHARM-01 (Pharmacy Central)</option>
-      <option value="POS-OPD-01 (Outpatient Consultation)">POS-OPD-01 (Outpatient Consultation)</option>
-    </select>
-  </div>
-  <div class="mb-0">
-    <label class="form-label small fw-semibold">Opening Cash Float (₱) <span class="text-danger">*</span></label>
-    <input type="number" step="0.01" min="0" name="opening_cash_float" class="form-control form-control-sm text-end font-monospace" value="5000.00" required>
-    <span class="fs-xs text-muted">Amount of physical petty cash drawer assigned at start of shift.</span>
+  <div class="space-y-4">
+    <div>
+      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Select POS Station <span class="text-rose-500">*</span></label>
+      <select name="terminal_name" required class="w-full rounded-xl border-0 bg-slate-50 py-2.5 px-3 text-sm font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700">
+        <option value="POS-MAIN-01 (Main Lobby)">POS-MAIN-01 (Main Lobby)</option>
+        <option value="POS-ER-01 (Emergency Room)">POS-ER-01 (Emergency Room)</option>
+        <option value="POS-PHARM-01 (Pharmacy Central)">POS-PHARM-01 (Pharmacy Central)</option>
+        <option value="POS-OPD-01 (Outpatient Consultation)">POS-OPD-01 (Outpatient Consultation)</option>
+      </select>
+    </div>
+    <div>
+      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Opening Cash Float (₱) <span class="text-rose-500">*</span></label>
+      <input type="number" step="0.01" min="0" name="opening_cash_float" value="5000.00" required class="w-full rounded-xl border-0 bg-slate-50 py-2.5 px-3 font-mono text-base font-bold text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700 text-right">
+      <span class="text-xs text-slate-400 mt-1 block">Physical petty cash drawer assigned at start of shift.</span>
+    </div>
   </div>
 </x-modal>
 
-<!-- Modal: Close Shift & Turnover (Real-Time Variance Calculator) -->
+<!-- Modal: Close Shift & Turnover -->
 @if($activeShift)
 <x-modal 
   id="closeShiftModal" 
-  title="Close Shift & Drawer Turnover" 
-  subtitle="Reconcile collected cash with system expected balance" 
+  title="Close Shift &amp; Drawer Turnover" 
+  subtitle="Reconcile physical cash drawer with system expected balance" 
   icon="ph-scales" 
-  iconVariant="warning" 
+  iconVariant="amber" 
   size="md" 
   formAction="{{ route('collection.shifts.close') }}" 
   formMethod="POST" 
-  submitText="Close & Generate Turnover" 
+  submitText="Close &amp; Generate Turnover" 
   submitIcon="ph-lock" 
-  submitVariant="btn-warning"
+  submitVariant="amber"
 >
   <input type="hidden" name="shift_id" value="{{ $activeShift->id }}">
 
-  <!-- Shift Metrics Breakdown -->
-  <div class="p-3 bg-light rounded-3 mb-3 fs-xs border border-light-subtle">
-    <div class="d-flex justify-content-between mb-1">
-      <span class="text-muted">Terminal Station:</span>
-      <strong class="text-dark">{{ $activeShift->terminal_name }}</strong>
+  <div 
+    x-data="{
+      expected: {{ (float) $activeShift->expected_cash }},
+      actual: 0.00,
+      get variance() {
+        return (parseFloat(this.actual) || 0) - this.expected;
+      }
+    }" 
+    class="space-y-4"
+  >
+    <!-- Shift Breakdown Card -->
+    <div class="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700 space-y-2 text-xs">
+      <div class="flex justify-between"><span class="text-slate-500">Terminal:</span><strong class="text-slate-900 dark:text-white">{{ $activeShift->terminal_name }}</strong></div>
+      <div class="flex justify-between"><span class="text-slate-500">Shift Code:</span><span class="font-mono font-bold text-emerald-600">{{ $activeShift->shift_code }}</span></div>
+      <div class="flex justify-between"><span class="text-slate-500">Opening Cash Float:</span><span class="font-mono">₱{{ number_format((float) $activeShift->opening_cash_float, 2) }}</span></div>
+      <div class="flex justify-between"><span class="text-slate-500">Digital / Card Collections:</span><span class="font-mono">₱{{ number_format((float) $activeShift->total_digital_collections, 2) }}</span></div>
+      <div class="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between font-bold text-sm">
+        <span>System Expected Cash:</span>
+        <span class="font-mono text-emerald-600 dark:text-emerald-400">₱{{ number_format((float) $activeShift->expected_cash, 2) }}</span>
+      </div>
     </div>
-    <div class="d-flex justify-content-between mb-1">
-      <span class="text-muted">Shift Code:</span>
-      <span class="font-monospace text-primary fw-bold">{{ $activeShift->shift_code }}</span>
-    </div>
-    <div class="d-flex justify-content-between mb-1">
-      <span class="text-muted">Opening Cash Float:</span>
-      <span class="font-monospace">₱{{ number_format((float) $activeShift->opening_cash_float, 2) }}</span>
-    </div>
-    <div class="d-flex justify-content-between mb-1">
-      <span class="text-muted">Digital / Card Collections:</span>
-      <span class="font-monospace">₱{{ number_format((float) $activeShift->total_digital_collections, 2) }}</span>
-    </div>
-    <hr class="my-2">
-    <div class="d-flex justify-content-between fs-sm fw-bold">
-      <span>System Expected Cash:</span>
-      <span class="text-success font-monospace">₱{{ number_format((float) $activeShift->expected_cash, 2) }}</span>
-      <input type="hidden" id="modalExpectedCash" value="{{ (float) $activeShift->expected_cash }}">
-    </div>
-  </div>
 
-  <div class="mb-3">
-    <label class="form-label small fw-semibold">Actual Physical Cash Counted (₱) <span class="text-danger">*</span></label>
-    <input type="number" step="0.01" min="0" name="actual_cash_counted" id="modalActualCash" class="form-control form-control-sm text-end font-monospace fw-bold" required oninput="calcShiftVariance()">
-  </div>
+    <div>
+      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+        Actual Physical Cash Counted (₱) <span class="text-rose-500">*</span>
+      </label>
+      <input 
+        type="number" 
+        step="0.01" 
+        min="0" 
+        name="actual_cash_counted" 
+        x-model.number="actual" 
+        required 
+        class="w-full rounded-xl border-0 bg-slate-50 py-2.5 px-3 font-mono text-base font-bold text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700 text-right"
+      >
+    </div>
 
-  <div class="mb-3">
-    <label class="form-label small fw-semibold">Calculated Drawer Variance</label>
-    <input type="text" id="modalVarianceDisplay" class="form-control form-control-sm bg-light text-end font-monospace fw-bold" value="₱0.00" readonly>
-  </div>
+    <div>
+      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Drawer Variance</label>
+      <div 
+        class="w-full rounded-xl py-2 px-3 font-mono text-base font-bold text-right ring-1"
+        :class="variance === 0 ? 'bg-emerald-50 text-emerald-700 ring-emerald-200' : (variance < 0 ? 'bg-rose-50 text-rose-700 ring-rose-200' : 'bg-blue-50 text-blue-700 ring-blue-200')"
+      >
+        <span x-text="(variance >= 0 ? '+' : '') + '₱' + variance.toFixed(2)"></span>
+      </div>
+    </div>
 
-  <div class="mb-0">
-    <label class="form-label small fw-semibold">Variance Reason / Explanation (Optional)</label>
-    <textarea name="variance_reason" rows="2" class="form-control form-control-sm" placeholder="Explain any cash overage or shortage..."></textarea>
+    <div>
+      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Variance Reason (Optional)</label>
+      <textarea name="variance_reason" rows="2" placeholder="Explain any cash overage or shortage..." class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"></textarea>
+    </div>
   </div>
 </x-modal>
 @endif
 
-<!-- Printable Shift Turnover / Bag Tag Summary Modal -->
+<!-- Printable Shift Turnover Bag Tag Summary Modal -->
 @if(session('turnover_summary'))
-@php $t = session('turnover_summary'); @endphp
-<div class="modal fade show d-block" id="turnoverPrintModal" tabindex="-1" style="background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(6px);">
-  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content border-0 shadow-lg hims-modal__content">
-      <div class="modal-header hims-modal__header bg-dark text-white border-0 py-3 px-4">
-        <div class="d-flex align-items-center gap-2">
-          <span class="p-2 rounded-3 bg-secondary-subtle text-white border border-secondary d-inline-flex align-items-center justify-content-center">
-            <i class="ph ph-tag fs-4"></i>
-          </span>
-          <div>
-            <h5 class="modal-title fw-bold mb-0">Physical Cash Turnover Bag Tag</h5>
-            <small class="text-light-subtle fs-xs">Shift reconciliation and custody turnover slip</small>
-          </div>
-        </div>
-        <a href="{{ route('collection.cashier-desk') }}" class="btn-close btn-close-white" aria-label="Close"></a>
+  @php $t = session('turnover_summary'); @endphp
+  <x-modal 
+    id="turnoverPrintModal" 
+    title="Physical Cash Turnover Bag Tag" 
+    subtitle="Shift custody reconciliation tag • BIR CAS Audited" 
+    icon="ph-tag" 
+    iconVariant="emerald" 
+    size="md" 
+    :showFooter="true"
+  >
+    <div id="printableTurnoverArea" class="space-y-4 text-xs font-mono">
+      <div class="text-center border-b border-slate-200 pb-3">
+        <h4 class="font-bold text-sm uppercase text-slate-900 dark:text-white">St. Jude Metropolitan Medical Center</h4>
+        <span class="text-slate-500 text-[11px]">Cashier Shift Custody Turnover Slip &bull; BIR CAS Audited</span>
       </div>
-      <div class="modal-body hims-modal__body p-4" id="printableTurnoverArea">
-        <div class="text-center border-bottom pb-2 mb-3">
-          <h6 class="fw-bold mb-0 text-uppercase">St. Jude Metropolitan Medical Center</h6>
-          <small class="text-muted fs-xs">Cashier Shift Custody Turnover Slip &bull; BIR CAS Audited</small>
-        </div>
-        <div class="fs-xs d-flex flex-column gap-1 mb-3">
-          <div class="d-flex justify-content-between"><span class="text-muted">Shift Code:</span><strong class="font-monospace">{{ $t['shift_code'] }}</strong></div>
-          <div class="d-flex justify-content-between"><span class="text-muted">Terminal:</span><strong>{{ $t['terminal_name'] }}</strong></div>
-          <div class="d-flex justify-content-between"><span class="text-muted">Cashier Officer:</span><strong>{{ $t['cashier_name'] }}</strong></div>
-          <div class="d-flex justify-content-between"><span class="text-muted">Closed Timestamp:</span><span>{{ $t['closed_at'] }}</span></div>
-        </div>
-        <table class="table table-sm table-bordered fs-xs mb-3">
-          <tbody>
-            <tr><td>Opening Cash Float</td><td class="text-end font-monospace">₱{{ $t['opening_float'] }}</td></tr>
-            <tr><td>Expected Cash in Drawer</td><td class="text-end font-monospace">₱{{ $t['expected_cash'] }}</td></tr>
-            <tr class="table-light fw-bold"><td>Physical Cash Counted</td><td class="text-end font-monospace text-success">₱{{ $t['actual_cash'] }}</td></tr>
-            <tr><td>Drawer Cash Variance</td><td class="text-end font-monospace fw-bold {{ (float) str_replace(',', '', $t['cash_variance']) == 0 ? 'text-success' : 'text-danger' }}">₱{{ $t['cash_variance'] }}</td></tr>
-            <tr><td>Total Digital Collections</td><td class="text-end font-monospace">₱{{ $t['digital_collections'] }}</td></tr>
-            <tr class="table-primary fw-bold"><td>Total Shift Revenue</td><td class="text-end font-monospace">₱{{ $t['total_collections'] }}</td></tr>
-          </tbody>
-        </table>
-        <div class="border p-2 rounded text-muted fs-xs mb-3">
+
+      <div class="space-y-1.5 text-slate-700 dark:text-slate-300">
+        <div class="flex justify-between"><span>Shift Code:</span><strong class="text-emerald-600">{{ $t['shift_code'] }}</strong></div>
+        <div class="flex justify-between"><span>Terminal:</span><strong>{{ $t['terminal_name'] }}</strong></div>
+        <div class="flex justify-between"><span>Cashier Officer:</span><strong>{{ $t['cashier_name'] }}</strong></div>
+        <div class="flex justify-between"><span>Closed Timestamp:</span><span>{{ $t['closed_at'] }}</span></div>
+      </div>
+
+      <table class="w-full border-collapse border border-slate-200 text-xs">
+        <tr class="border-b border-slate-200"><td class="p-2">Opening Cash Float</td><td class="p-2 text-right">₱{{ $t['opening_float'] }}</td></tr>
+        <tr class="border-b border-slate-200"><td class="p-2">Expected Cash in Drawer</td><td class="p-2 text-right">₱{{ $t['expected_cash'] }}</td></tr>
+        <tr class="border-b border-slate-200 bg-slate-50 font-bold"><td class="p-2">Physical Cash Counted</td><td class="p-2 text-right text-emerald-600">₱{{ $t['actual_cash'] }}</td></tr>
+        <tr class="border-b border-slate-200"><td class="p-2">Drawer Cash Variance</td><td class="p-2 text-right font-bold {{ (float) str_replace(',', '', $t['cash_variance']) == 0 ? 'text-emerald-600' : 'text-rose-600' }}">₱{{ $t['cash_variance'] }}</td></tr>
+        <tr class="border-b border-slate-200"><td class="p-2">Digital Collections</td><td class="p-2 text-right">₱{{ $t['digital_collections'] }}</td></tr>
+        <tr class="bg-emerald-50 font-bold text-emerald-900"><td class="p-2">Total Shift Revenue</td><td class="p-2 text-right">₱{{ $t['total_collections'] }}</td></tr>
+      </table>
+
+      @if(!empty($t['variance_reason']))
+        <div class="rounded-lg bg-slate-50 p-2.5 ring-1 ring-slate-200 text-[11px]">
           <strong>Variance Reason:</strong> {{ $t['variance_reason'] }}
         </div>
-        <div class="row text-center fs-xs pt-3 border-top">
-          <div class="col-6">
-            <div class="border-bottom pb-3 mb-1"></div>
-            <span>Remitting Cashier Signature</span>
-          </div>
-          <div class="col-6">
-            <div class="border-bottom pb-3 mb-1"></div>
-            <span>Vault / Treasury Receiver</span>
-          </div>
+      @endif
+
+      <div class="grid grid-cols-2 gap-4 text-center pt-4 border-t border-slate-200 text-[11px]">
+        <div>
+          <div class="border-b border-slate-300 pb-8 mb-1"></div>
+          <span>Remitting Cashier</span>
+        </div>
+        <div>
+          <div class="border-b border-slate-300 pb-8 mb-1"></div>
+          <span>Vault Receiver</span>
         </div>
       </div>
-      <div class="modal-footer hims-modal__footer bg-light-subtle border-top py-3 px-4 d-flex align-items-center justify-content-between">
-        <a href="{{ route('collection.cashier-desk') }}" class="btn btn-sm btn-light border px-3">Close</a>
-        <button type="button" class="btn btn-sm btn-dark px-3 d-inline-flex align-items-center gap-1" onclick="window.print()"><i class="ph ph-printer"></i> <span>Print Turnover Tag</span></button>
-      </div>
     </div>
-  </div>
-</div>
+
+    <x-slot:footer>
+      <button type="button" @click="$dispatch('close-modal', 'turnoverPrintModal')" class="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100">Close</button>
+      <button type="button" onclick="window.print()" class="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-slate-800">
+        <i class="ph-bold ph-printer"></i>
+        <span>Print Turnover Tag</span>
+      </button>
+    </x-slot:footer>
+  </x-modal>
 @endif
+
 @endsection
-
-@push('scripts')
-<script>
-function toggleChannelFields(id) {
-  const method = document.getElementById('payMethod' + id)?.value;
-  const cashGroup = document.getElementById('cashInputs' + id);
-  const transGroup = document.getElementById('transRefGroup' + id);
-
-  if (method === 'CASH') {
-    if (cashGroup) cashGroup.style.display = '';
-    if (transGroup) transGroup.style.display = 'none';
-  } else {
-    if (cashGroup) cashGroup.style.display = 'none';
-    if (transGroup) transGroup.style.display = '';
-  }
-}
-
-function calcChange(id) {
-  const amt = parseFloat(document.getElementById('payAmount' + id)?.value || 0);
-  const tendered = parseFloat(document.getElementById('tendered' + id)?.value || 0);
-  const change = Math.max(0, tendered - amt);
-  const disp = document.getElementById('change' + id);
-  if (disp) disp.value = '₱' + change.toFixed(2);
-}
-
-function calcShiftVariance() {
-  const expected = parseFloat(document.getElementById('modalExpectedCash')?.value || 0);
-  const actual = parseFloat(document.getElementById('modalActualCash')?.value || 0);
-  const variance = actual - expected;
-  const disp = document.getElementById('modalVarianceDisplay');
-  if (disp) {
-    disp.value = (variance >= 0 ? '+' : '') + '₱' + variance.toFixed(2);
-    disp.className = 'form-control form-control-sm bg-light text-end font-monospace fw-bold ' + 
-                     (variance === 0 ? 'text-success' : (variance < 0 ? 'text-danger' : 'text-primary'));
-  }
-}
-</script>
-@endpush

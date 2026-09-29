@@ -5,319 +5,458 @@
 @section('page', 'tax-config')
 
 @section('content')
-<div class="container-fluid p-4">
-  <!-- Page Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="space-y-6">
+  <!-- Executive Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <div>
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-1 fs-xs">
-          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
-          <li class="breadcrumb-item">Tax Management</li>
-          <li class="breadcrumb-item active">Tax Configuration</li>
-        </ol>
-      </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Tax Rates &amp; Statutory Configuration</h1>
-      <p class="text-muted fs-xs mb-0">Configure BIR tax categories: Expanded Withholding Tax (EWT) on doctor fees and supplier goods, 12% Value Added Tax (VAT), and Zero-rated medical items.</p>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Tax Rates &amp; Statutory Configuration
+        </h1>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <x-integration-badge 
-          type="standalone" 
-          description="Master system accounting and statutory tax setup." 
-      />
-      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Syncing tax rates with BIR online portal...');"><i class="ph ph-arrow-counter-clockwise me-1"></i> Sync Tax Rates</button>
-      <button id="btnAddTaxRule" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#addTaxRuleModal"><i class="ph ph-plus-circle me-1"></i> Add Tax Rate Rule</button>
+
+    <div class="flex items-center gap-2.5">
+      <button 
+        type="button" 
+        onclick="alert('Syncing tax rates with BIR online portal...');" 
+        class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+      >
+        <i class="ph-bold ph-arrow-counter-clockwise text-indigo-600"></i>
+        <span>Sync Tax Rates</span>
+      </button>
+      <button 
+        type="button" 
+        id="btnAddTaxRule" 
+        @click="$dispatch('open-modal', 'addTaxRuleModal')"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 ring-1 ring-indigo-600/20 transition-all cursor-pointer"
+      >
+        <i class="ph-bold ph-plus-circle"></i>
+        <span>Add Tax Rate Rule</span>
+      </button>
     </div>
   </div>
 
+  <!-- Session Alerts -->
   @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-      <i class="ph ph-check-circle me-1"></i> {{ session('success') }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="rounded-xl bg-emerald-50 p-4 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-check-circle text-lg text-emerald-600"></i>
+        <span>{{ session('success') }}</span>
+      </div>
     </div>
   @endif
+
   @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-      <i class="ph ph-warning-circle me-1"></i> {{ session('error') }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="rounded-xl bg-rose-50 p-4 text-xs font-semibold text-rose-800 ring-1 ring-rose-600/20 dark:bg-rose-950/40 dark:text-rose-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-warning-circle text-lg text-rose-600"></i>
+        <span>{{ session('error') }}</span>
+      </div>
     </div>
   @endif
+
   @if($errors->any())
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-      <ul class="mb-0">
+    <div class="rounded-xl bg-rose-50 p-4 text-xs font-semibold text-rose-800 ring-1 ring-rose-600/20 dark:bg-rose-950/40 dark:text-rose-300">
+      <ul class="list-disc pl-5 space-y-1">
         @foreach($errors->all() as $error)
           <li>{{ $error }}</li>
         @endforeach
       </ul>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   @endif
 
   <!-- Metric Summary Cards -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Configured Tax Rules</span>
-          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-percent fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ ($taxRules ?? collect())->count() }} Active Rules</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Active Tax Categories</span>
-          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-user-stethoscope fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ ($taxRules ?? collect())->pluck('tax_type')->unique()->count() }} Categories</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Statutory Compliance</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-receipt fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">BIR Compliant</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Tax Engine Status</span>
-          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-buildings fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">Active &amp; Ready</h4>
-      </div>
-    </div>
+  <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+    <x-stat-card 
+      title="Configured Tax Rules" 
+      :value="($taxRules ?? collect())->count()" 
+      :isCurrency="false"
+      icon="ph-percent" 
+      color="indigo" 
+      subtitle="Active statutory computation rules"
+    />
+    <x-stat-card 
+      title="Tax Categories" 
+      :value="($taxRules ?? collect())->pluck('tax_type')->unique()->count()" 
+      :isCurrency="false"
+      icon="ph-user-stethoscope" 
+      color="blue" 
+      subtitle="EWT, VAT, and Income Tax groups"
+    />
+    <x-stat-card 
+      title="Statutory Compliance" 
+      value="BIR Compliant" 
+      :isCurrency="false"
+      icon="ph-receipt" 
+      color="emerald" 
+      subtitle="RR 11-2018 / TRAIN Law rates"
+    />
+    <x-stat-card 
+      title="Tax Engine Status" 
+      value="Active &amp; Ready" 
+      :isCurrency="false"
+      icon="ph-shield-check" 
+      color="purple" 
+      subtitle="Automated withholding computation"
+    />
   </div>
 
-  <!-- Data Table Card -->
-  <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-transparent border-bottom p-3">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <div class="d-flex align-items-center gap-2">
-          <label for="taxCatSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Tax Category:</label>
-          <select id="taxCatSelect" class="form-select form-select-sm bg-light" style="min-width: 220px;">
+  <!-- Tax Rules Data Table Card -->
+  
+  <!-- Sub-Module Category Navigation Bar -->
+  @include('partials.submodule-nav')
+
+  <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 overflow-hidden dark:bg-slate-900 dark:ring-slate-800">
+    <!-- Filter Toolbar -->
+    <div class="border-b border-slate-200 p-4 dark:border-slate-800">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 flex-wrap">
+        <div class="flex flex-wrap items-center gap-2.5">
+          <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <i class="ph-bold ph-funnel"></i>
+            <span>Category:</span>
+          </div>
+          <select 
+            id="taxCatSelect" 
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-indigo-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
             <option value="" selected>All Tax Categories</option>
             <option value="ewt">Expanded Withholding Tax (EWT)</option>
             <option value="vat">Value Added Tax (VAT)</option>
             <option value="cit">Corporate Income Tax (CIT)</option>
           </select>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-          <label for="taxStatusSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap">Status:</label>
-          <select id="taxStatusSelect" class="form-select form-select-sm bg-light" style="min-width: 180px;">
+
+          <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 ml-2">
+            <span>Status:</span>
+          </div>
+          <select 
+            id="taxStatusSelect" 
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-indigo-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
             <option value="" selected>All Statuses</option>
             <option value="active">Active Rules</option>
             <option value="inactive">Inactive Rules</option>
           </select>
         </div>
-        <div class="search-box ms-auto" style="width: 260px;">
-          <i class="ph ph-magnifying-glass"></i>
-          <input type="search" id="taxSearchInput" class="form-control form-control-sm" placeholder="Search tax code, ATC, scope...">
+
+        <div class="relative w-full sm:w-72">
+          <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+            <i class="ph ph-magnifying-glass text-sm"></i>
+          </div>
+          <input 
+            type="search" 
+            id="taxSearchInput" 
+            placeholder="Search tax code, ATC, scope..." 
+            class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
         </div>
       </div>
     </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table id="taxRuleTable" class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Tax Code &amp; Name</th>
-              <th>ATC Code</th>
-              <th>Category</th>
-              <th class="text-end">Tax Rate (%)</th>
-              <th>Applicable Scope</th>
-              <th>Status</th>
-              <th class="text-end">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($taxRules ?? [] as $r)
-            @php
-              $code = is_array($r) ? $r['code'] : $r->tax_code;
-              $name = is_array($r) ? $r['name'] : $r->name;
-              $atc = is_array($r) ? $r['atc'] : $r->atc_code;
-              $category = is_array($r) ? $r['category'] : $r->category;
-              $catType = is_array($r) ? $r['cat_type'] : $r->cat_type;
-              $rate = is_array($r) ? $r['rate'] : number_format($r->rate, 1) . '%';
-              $scope = is_array($r) ? $r['scope'] : $r->scope;
-              $status = is_array($r) ? $r['status'] : $r->status;
-              $rData = [
-                'code' => $code,
-                'name' => $name,
-                'atc' => $atc,
-                'category' => $category,
-                'cat_type' => $catType,
-                'rate' => $rate,
-                'scope' => $scope,
-                'status' => $status,
-                'status_badge' => 'bg-success-subtle text-success'
-              ];
-            @endphp
-            <tr class="tax-row" style="cursor: pointer;" onclick="openTaxRuleDetailsModal({{ json_encode($rData) }})">
-              <td>
-                <div class="fw-bold text-dark">{{ $name }}</div>
-                <span class="fs-xs font-monospace text-muted">{{ $code }}</span>
-              </td>
-              <td><span class="font-monospace text-primary fw-bold">{{ $atc }}</span></td>
-              <td><span class="badge bg-info-subtle text-info">{{ $category }}</span></td>
-              <td class="text-end font-monospace fw-bold text-danger">{{ $rate }}</td>
-              <td class="fs-xs text-muted">{{ $scope }}</td>
-              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> {{ $status }}</span></td>
-              <td class="text-end" onclick="event.stopPropagation();">
-                <form action="{{ route('tax.tax-rules.toggle', is_array($r) ? $r['id'] : $r->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Toggle status for this tax rule?');">
+
+    <!-- Table -->
+    <div class="overflow-x-auto custom-scrollbar">
+      <table id="taxRuleTable" class="w-full text-left text-xs">
+        <thead class="border-b border-slate-200 bg-slate-50/75 dark:border-slate-800 dark:bg-slate-800/60 sticky top-0">
+          <tr>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Tax Code &amp; Name</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">ATC Code</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Category</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 text-right">Tax Rate (%)</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Applicable Scope</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 text-center">Status</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+          @forelse($taxRules ?? [] as $r)
+          @php
+            $code = is_array($r) ? $r['code'] : $r->tax_code;
+            $name = is_array($r) ? $r['name'] : $r->name;
+            $atc = is_array($r) ? $r['atc'] : $r->atc_code;
+            $category = is_array($r) ? $r['category'] : $r->category;
+            $catType = is_array($r) ? $r['cat_type'] : $r->cat_type;
+            $rate = is_array($r) ? $r['rate'] : number_format((float) $r->rate, 1) . '%';
+            $scope = is_array($r) ? $r['scope'] : $r->scope;
+            $status = is_array($r) ? $r['status'] : $r->status;
+            $rData = [
+              'code' => $code,
+              'name' => $name,
+              'atc' => $atc,
+              'category' => $category,
+              'cat_type' => $catType,
+              'rate' => $rate,
+              'scope' => $scope,
+              'status' => $status,
+              'status_badge' => 'bg-emerald-50 text-emerald-700'
+            ];
+          @endphp
+          <tr 
+            class="tax-row hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors cursor-pointer" 
+            onclick="openTaxRuleDetailsModal({{ json_encode($rData) }})"
+          >
+            <td class="py-3.5 px-4">
+              <div class="font-bold text-slate-900 dark:text-white">{{ $name }}</div>
+              <span class="font-mono text-xs text-slate-400">{{ $code }}</span>
+            </td>
+            <td class="py-3.5 px-4 font-mono font-bold text-indigo-600 dark:text-indigo-400">
+              {{ $atc }}
+            </td>
+            <td class="py-3.5 px-4">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                {{ $category }}
+              </span>
+            </td>
+            <td class="py-3.5 px-4 text-right font-mono tabular-nums font-bold text-rose-600 dark:text-rose-400">
+              {{ $rate }}
+            </td>
+            <td class="py-3.5 px-4 text-slate-500 dark:text-slate-400 max-w-xs truncate">
+              {{ $scope }}
+            </td>
+            <td class="py-3.5 px-4 text-center">
+              <x-status-badge :status="$status" color="{{ $status === 'Active' ? 'emerald' : 'slate' }}" />
+            </td>
+            <td class="py-3.5 px-4 text-right" onclick="event.stopPropagation();">
+              <div class="inline-flex items-center justify-end gap-1.5">
+                <form action="{{ route('tax.tax-rules.toggle', is_array($r) ? $r['id'] : $r->id) }}" method="POST" class="inline" onsubmit="return confirm('Toggle status for this tax rule?');">
                   @csrf
-                  <button type="submit" class="btn btn-sm btn-icon {{ $status === 'Active' ? 'btn-outline-warning' : 'btn-outline-success' }}" title="Toggle Status (Active/Inactive)">
-                    <i class="ph {{ $status === 'Active' ? 'ph-pause' : 'ph-play' }}"></i>
+                  <button 
+                    type="submit" 
+                    title="Toggle Status (Active/Inactive)"
+                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 {{ $status === 'Active' ? 'text-amber-600 hover:bg-amber-50 hover:border-amber-200 dark:border-slate-700 dark:hover:bg-amber-950/30' : 'text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 dark:border-slate-700 dark:hover:bg-emerald-950/30' }} cursor-pointer"
+                  >
+                    <i class="ph {{ $status === 'Active' ? 'ph-pause' : 'ph-play' }} text-sm"></i>
                   </button>
                 </form>
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Tax Rule Details" onclick="openTaxRuleDetailsModal({{ json_encode($rData) }})"><i class="ph ph-eye"></i></button>
-              </td>
-            </tr>
-            @empty
-            <tr>
-              <td colspan="7" class="text-center py-4 text-muted">No tax rules configured in database.</td>
-            </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
+                <button 
+                  type="button" 
+                  title="View Tax Rule Details" 
+                  onclick="openTaxRuleDetailsModal({{ json_encode($rData) }})"
+                  class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-indigo-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
+                >
+                  <i class="ph ph-eye text-sm"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          @empty
+          <tr>
+            <td colspan="7" class="py-12 text-center text-slate-400 dark:text-slate-500">
+              <i class="ph ph-percent text-3xl block mb-2 text-slate-300 dark:text-slate-600"></i>
+              No tax rules configured in database.
+            </td>
+          </tr>
+          @endforelse
+        </tbody>
+      </table>
     </div>
-    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="taxSummaryText">Showing {{ count($taxRules ?? []) }} Tax Rules</span>
-      <nav aria-label="Tax Rule Pagination">
-        <ul class="pagination pagination-sm mb-0">
-          <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
-          <li class="page-item active"><a class="page-link" href="#">1</a></li>
-          <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
-        </ul>
+
+    <!-- Table Footer -->
+    <div class="flex items-center justify-between border-t border-slate-200 px-4 py-3 dark:border-slate-800">
+      <span class="text-xs text-slate-500 dark:text-slate-400" id="taxSummaryText">
+        Showing {{ count($taxRules ?? []) }} Tax Rules
+      </span>
+      <nav class="flex items-center gap-1">
+        <button class="inline-flex items-center justify-center px-2 py-1 rounded text-xs text-slate-400 cursor-not-allowed">Previous</button>
+        <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-600 text-white">1</span>
+        <button class="inline-flex items-center justify-center px-2 py-1 rounded text-xs text-slate-400 cursor-not-allowed">Next</button>
       </nav>
     </div>
   </div>
 </div>
 
-<!-- Modal: In-Depth Tax Rule Details (Executive Design) -->
-<div class="modal fade" id="taxRuleDetailsModal" tabindex="-1" aria-labelledby="taxRuleDetailsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-      <div class="modal-header bg-white border-bottom p-4 pb-3">
-        <div>
-          <div class="d-flex align-items-center gap-2 mb-1">
-            <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1" id="detailTaxCode">TAX-EWT-DOC10</span>
-            <span class="badge bg-success-subtle text-success" id="detailTaxStatus"><i class="ph ph-check-circle me-1"></i> Active Statutory Rule</span>
-          </div>
-          <h4 class="modal-title fw-bold text-dark mb-0" id="detailTaxName">EWT - Professional Fees (Medical Consultants)</h4>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Modal: In-Depth Tax Rule Details -->
+<x-modal 
+  id="taxRuleDetailsModal" 
+  title="Statutory Tax Rule Details" 
+  size="lg"
+>
+  <div class="space-y-4">
+    <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+      <div class="flex items-center gap-2">
+        <span class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800" id="detailTaxCode">
+          TAX-EWT-DOC10
+        </span>
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300" id="detailTaxStatus">
+          <i class="ph ph-check-circle mr-1"></i> Active Statutory Rule
+        </span>
       </div>
+      <span class="text-xs text-slate-400" id="detailTaxName">Tax Rule</span>
+    </div>
 
-      <div class="modal-body p-4 bg-light-subtle">
-        <div class="row g-3 mb-4">
-          <div class="col-md-6">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">BIR ATC Code</span>
-              <h4 class="fw-bold text-primary mb-0 font-monospace" id="detailTaxAtc">WI010</h4>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Configured Tax Rate</span>
-              <h4 class="fw-bold text-danger mb-0 font-monospace" id="detailTaxRate">10.0%</h4>
-            </div>
-          </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-4 text-center dark:border-slate-800 dark:bg-slate-800/40">
+        <span class="block text-xs font-semibold uppercase text-slate-400">BIR ATC Code</span>
+        <h4 class="mt-1 text-2xl font-bold font-mono text-indigo-600 dark:text-indigo-400" id="detailTaxAtc">WI010</h4>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-4 text-center dark:border-slate-800 dark:bg-slate-800/40">
+        <span class="block text-xs font-semibold uppercase text-slate-400">Configured Tax Rate</span>
+        <h4 class="mt-1 text-2xl font-bold font-mono text-rose-600 dark:text-rose-400" id="detailTaxRate">10.0%</h4>
+      </div>
+    </div>
+
+    <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <h6 class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300 flex items-center gap-1.5 mb-3">
+        <i class="ph-bold ph-percent text-indigo-600"></i>
+        Category &amp; Regulatory Scope
+      </h6>
+      <div class="space-y-2 text-xs">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2 dark:border-slate-800">
+          <span class="text-slate-500 dark:text-slate-400">Tax Category</span>
+          <span class="font-semibold text-slate-800 dark:text-slate-200" id="detailTaxCategory">Expanded Withholding Tax</span>
         </div>
-
-        <div class="bg-white border rounded-3 p-3 mb-4">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-percent me-1 text-primary"></i> Category &amp; Regulatory Scope</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Tax Category</span>
-              <span class="badge bg-info-subtle text-info" id="detailTaxCategory">Expanded Withholding Tax</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">Applicable Statutory Scope</span>
-              <span class="fw-semibold text-dark" id="detailTaxScope">Visiting Doctors &amp; Medical Consultants</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Audit Trail & Segregation of Duties -->
-        <div class="bg-white border rounded-3 p-3">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-success"></i> Audit Trail &amp; BIR Regulations Compliance</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Bureau of Internal Revenue Status:</span>
-              <span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> BIR Revenue Regulations RR 11-2018 Compliant</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">System Audit Stamp:</span>
-              <span class="font-monospace text-muted">LOG-TAX-2026-001 | {{ date('Y-m-d H:i:s') }} PST</span>
-            </div>
-          </div>
+        <div class="flex items-center justify-between pt-1">
+          <span class="text-slate-500 dark:text-slate-400">Applicable Statutory Scope</span>
+          <span class="font-medium text-slate-800 dark:text-slate-200" id="detailTaxScope">Visiting Doctors &amp; Medical Consultants</span>
         </div>
       </div>
+    </div>
 
-      <div class="modal-footer bg-white border-top p-3">
-        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-sm btn-primary" onclick="alert('Exporting Tax Rule Configuration Schedule...');"><i class="ph ph-file-text me-1"></i> Export Rule Audit</button>
+    <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <h6 class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300 flex items-center gap-1.5 mb-3">
+        <i class="ph-bold ph-shield-check text-emerald-600"></i>
+        Audit Trail &amp; BIR Regulations Compliance
+      </h6>
+      <div class="space-y-2 text-xs">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2 dark:border-slate-800">
+          <span class="text-slate-500 dark:text-slate-400">Bureau of Internal Revenue Status:</span>
+          <span class="inline-flex items-center text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+            <i class="ph-bold ph-check mr-1"></i> BIR Revenue Regulations RR 11-2018 Compliant
+          </span>
+        </div>
+        <div class="flex items-center justify-between pt-1">
+          <span class="text-slate-500 dark:text-slate-400">System Audit Stamp:</span>
+          <span class="font-mono text-slate-400">LOG-TAX-2026-001 | {{ date('Y-m-d H:i:s') }} PST</span>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Modal: Add Tax Rate Rule -->
-<div class="modal fade" id="addTaxRuleModal" tabindex="-1" aria-labelledby="addTaxRuleModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title font-weight-bold" id="addTaxRuleModalLabel"><i class="ph ph-plus-circle me-2 text-primary"></i>Add Statutory Tax Rate Rule</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+  <x-slot:footer>
+    <button 
+      type="button" 
+      @click="show = false"
+      class="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
+    >
+      Close
+    </button>
+    <button 
+      type="button" 
+      onclick="alert('Exporting Tax Rule Configuration Schedule...');" 
+      class="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 transition-all cursor-pointer"
+    >
+      <i class="ph-bold ph-file-text"></i>
+      <span>Export Rule Audit</span>
+    </button>
+  </x-slot:footer>
+</x-modal>
+
+<!-- Modal: Add Statutory Tax Rate Rule -->
+<x-modal 
+  id="addTaxRuleModal" 
+  title="Add Statutory Tax Rate Rule" 
+  size="lg"
+  formId="addTaxRuleForm" 
+  formAction="{{ route('tax.tax-rules.store') }}" 
+  formMethod="POST" 
+  submitText="Save Tax Rule" 
+  submitIcon="ph-check"
+>
+  <input type="hidden" name="cat_type" value="EXPANDED">
+  <div class="space-y-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Tax Rule Code <span class="text-rose-500">*</span>
+        </label>
+        <input 
+          type="text" 
+          name="tax_code" 
+          id="modalTaxCode" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-mono font-bold text-slate-900 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white" 
+          placeholder="e.g. WC158" 
+          required
+        >
       </div>
-      <div class="modal-body p-4">
-        <form id="addTaxRuleForm" action="{{ route('tax.tax-rules.store') }}" method="POST">
-          @csrf
-          <input type="hidden" name="cat_type" value="EXPANDED">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Tax Rule Code <span class="text-danger">*</span></label>
-              <input type="text" name="tax_code" id="modalTaxCode" class="form-control form-control-sm font-monospace" placeholder="e.g. WC158" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Tax Rule Name <span class="text-danger">*</span></label>
-              <input type="text" name="name" id="modalTaxName" class="form-control form-control-sm" placeholder="e.g. EWT - Medical Goods 1%" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">BIR ATC Code <span class="text-danger">*</span></label>
-              <input type="text" name="atc_code" id="modalTaxAtc" class="form-control form-control-sm font-monospace" placeholder="e.g. WC158" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Tax Category <span class="text-danger">*</span></label>
-              <select name="category" id="modalTaxCategory" class="form-select form-select-sm" required>
-                <option value="WITHHOLDING_TAX">Expanded Withholding Tax (EWT)</option>
-                <option value="VAT">Value Added Tax (VAT)</option>
-                <option value="CIT">Corporate Income Tax (CIT)</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Tax Rate (decimal e.g. 0.0100 for 1%, 12.0000 for 12%) <span class="text-danger">*</span></label>
-              <input type="number" name="rate" id="modalTaxRate" step="0.0001" min="0" max="100" class="form-control form-control-sm text-end font-monospace" placeholder="0.0100" value="0.0100" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Applicable Scope / Regulatory Description</label>
-              <input type="text" name="scope" id="modalTaxScope" class="form-control form-control-sm" placeholder="e.g. Hospital suppliers of goods">
-            </div>
-          </div>
-          <div class="d-flex justify-content-end gap-2 mt-4">
-            <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-check me-1"></i> Save Tax Rule</button>
-          </div>
-        </form>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Tax Rule Name <span class="text-rose-500">*</span>
+        </label>
+        <input 
+          type="text" 
+          name="name" 
+          id="modalTaxName" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          placeholder="e.g. EWT - Medical Goods 1%" 
+          required
+        >
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          BIR ATC Code <span class="text-rose-500">*</span>
+        </label>
+        <input 
+          type="text" 
+          name="atc_code" 
+          id="modalTaxAtc" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-mono font-bold text-slate-900 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white" 
+          placeholder="e.g. WC158" 
+          required
+        >
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Tax Category <span class="text-rose-500">*</span>
+        </label>
+        <select 
+          name="category" 
+          id="modalTaxCategory" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          required
+        >
+          <option value="WITHHOLDING_TAX">Expanded Withholding Tax (EWT)</option>
+          <option value="VAT">Value Added Tax (VAT)</option>
+          <option value="CIT">Corporate Income Tax (CIT)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Tax Rate (decimal e.g. 0.0100 for 1%, 12.0000 for 12%) <span class="text-rose-500">*</span>
+        </label>
+        <input 
+          type="number" 
+          name="rate" 
+          id="modalTaxRate" 
+          step="0.0001" 
+          min="0" 
+          max="100" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 py-2 px-3 text-xs font-mono font-bold text-slate-900 text-right shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white" 
+          placeholder="0.0100" 
+          value="0.0100" 
+          required
+        >
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Applicable Scope / Regulatory Description
+        </label>
+        <input 
+          type="text" 
+          name="scope" 
+          id="modalTaxScope" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          placeholder="e.g. Hospital suppliers of goods"
+        >
       </div>
     </div>
   </div>
-</div>
+</x-modal>
 @endsection
 
 @push('scripts')
@@ -325,24 +464,30 @@
 function openTaxRuleDetailsModal(r) {
   if (!r) return;
 
-  document.getElementById('detailTaxName').textContent = r.name || 'Tax Rule Name';
-  document.getElementById('detailTaxCode').textContent = r.code || 'TAX-000';
-  document.getElementById('detailTaxAtc').textContent = r.atc || 'WI000';
-  document.getElementById('detailTaxRate').textContent = r.rate || '0.0%';
-  document.getElementById('detailTaxCategory').textContent = r.category || 'Tax Category';
-  document.getElementById('detailTaxScope').textContent = r.scope || '-';
+  const elName = document.getElementById('detailTaxName');
+  if (elName) elName.textContent = r.name || 'Tax Rule Name';
+
+  const elCode = document.getElementById('detailTaxCode');
+  if (elCode) elCode.textContent = r.code || 'TAX-000';
+
+  const elAtc = document.getElementById('detailTaxAtc');
+  if (elAtc) elAtc.textContent = r.atc || 'WI000';
+
+  const elRate = document.getElementById('detailTaxRate');
+  if (elRate) elRate.textContent = r.rate || '0.0%';
+
+  const elCat = document.getElementById('detailTaxCategory');
+  if (elCat) elCat.textContent = r.category || 'Tax Category';
+
+  const elScope = document.getElementById('detailTaxScope');
+  if (elScope) elScope.textContent = r.scope || '-';
 
   const statusEl = document.getElementById('detailTaxStatus');
   if (statusEl) {
     statusEl.textContent = r.status;
-    statusEl.className = 'badge ' + (r.status_badge || 'bg-success-subtle text-success');
   }
 
-  const modalEl = document.getElementById('taxRuleDetailsModal');
-  if (modalEl && window.bootstrap) {
-    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-    modalInstance.show();
-  }
+  window.dispatchEvent(new CustomEvent('open-modal', { detail: 'taxRuleDetailsModal' }));
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -350,17 +495,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const catSelect = document.getElementById('taxCatSelect');
   const statusSelect = document.getElementById('taxStatusSelect');
   const summaryText = document.getElementById('taxSummaryText');
-  const btnAddTaxRule = document.getElementById('btnAddTaxRule');
-
-  if (btnAddTaxRule) {
-    btnAddTaxRule.addEventListener('click', function() {
-      const modalEl = document.getElementById('addTaxRuleModal');
-      if (modalEl && window.bootstrap) {
-        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-        modalInstance.show();
-      }
-    });
-  }
 
   function filterTaxRules() {
     const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
@@ -396,7 +530,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!emptyRow && tbody) {
         emptyRow = document.createElement('tr');
         emptyRow.id = 'noTaxRow';
-        emptyRow.innerHTML = `<td colspan="7" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No tax rules found matching the current filter.</td>`;
+        emptyRow.innerHTML = `<td colspan="7" class="py-12 text-center text-slate-400 dark:text-slate-500"><i class="ph ph-magnifying-glass text-3xl block mb-2"></i>No tax rules found matching current filter.</td>`;
         tbody.appendChild(emptyRow);
       }
       if (emptyRow) emptyRow.style.display = '';

@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'api/*',
             'api/v1/ingest/*',
+            'ingest-encounter-billing', // internal sidecar-only endpoint
         ]);
 
         $middleware->redirectTo(
@@ -43,6 +44,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'idle.timeout'        => \App\Http\Middleware\IdleSessionTimeout::class,
             'single.session'      => \App\Http\Middleware\EnforceSingleActiveSession::class,
             'audit.activity'      => \App\Http\Middleware\AuditUserActivity::class,
+            'idempotency'         => \App\Http\Middleware\EnsureIdempotency::class,
         ]);
 
         $middleware->web(append: [
@@ -55,7 +57,7 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*'),
+            fn (Request $request) => $request->expectsJson() || $request->is('api/*'),
         );
     })->create();
 

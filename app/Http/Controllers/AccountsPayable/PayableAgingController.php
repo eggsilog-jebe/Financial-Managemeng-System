@@ -33,6 +33,7 @@ final class PayableAgingController extends Controller
             'asOfDate'          => $report['as_of_date'],
             'agingBasis'        => $agingBasis,
             'vendors'           => $report['vendors'],
+            'agingData'         => $report['vendors'],
             'totalCurrent'      => $report['total_current'],
             'total1To30'        => $report['total_1_30'],
             'total31To60'       => $report['total_31_60'],

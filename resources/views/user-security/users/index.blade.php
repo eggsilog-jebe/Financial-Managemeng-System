@@ -1,200 +1,226 @@
 @extends('layouts.app')
 
-@section('title', 'User Accounts — User & Security Management')
+@section('title', 'User Accounts — User & Security Management | FMS')
+@section('module', 'user-security')
+@section('page', 'users')
 
 @section('content')
-<div class="container-fluid px-4 py-4">
+<div class="space-y-6">
+  <!-- Executive Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+    <div>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Personnel &amp; User Accounts
+        </h1>
+    </div>
 
-  {{-- Flash Messages --}}
+    <div class="flex items-center gap-2.5">
+      <a 
+        href="{{ route('user-security.audit-trail') }}" 
+        class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+      >
+        <i class="ph-bold ph-clock-countdown text-blue-600"></i>
+        <span>Audit Trail</span>
+      </a>
+      <a 
+        href="{{ route('user-security.users.create') }}" 
+        id="btn-add-user"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 ring-1 ring-blue-600/20 transition-all cursor-pointer"
+      >
+        <i class="ph-bold ph-user-plus"></i>
+        <span>Add Personnel User</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Session Alerts -->
   @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-3 mb-4" role="alert">
-      <div class="d-flex align-items-center">
-        <i class="ph ph-check-circle fs-4 me-2 text-success"></i>
+    <div class="rounded-xl bg-emerald-50 p-4 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-check-circle text-lg text-emerald-600"></i>
         <span>{!! session('success') !!}</span>
       </div>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   @endif
+
   @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-3 mb-4" role="alert">
-      <div class="d-flex align-items-center">
-        <i class="ph ph-warning-circle fs-4 me-2"></i>
+    <div class="rounded-xl bg-rose-50 p-4 text-xs font-semibold text-rose-800 ring-1 ring-rose-600/20 dark:bg-rose-950/40 dark:text-rose-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-warning-circle text-lg text-rose-600"></i>
         <span>{{ session('error') }}</span>
       </div>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   @endif
 
-  {{-- Header --}}
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-1 fs-xs">
-          <li class="breadcrumb-item"><a href="{{ route('accounting.dashboard') }}">Overview</a></li>
-          <li class="breadcrumb-item">User & Security</li>
-          <li class="breadcrumb-item active">User Accounts</li>
-        </ol>
-      </nav>
-      <h1 class="h3 mb-0 fw-bold">User Accounts</h1>
-      <p class="text-muted fs-xs mb-0">Manage hospital system user accounts, roles, and access credentials.</p>
-    </div>
-    <div class="d-flex gap-2">
-      <a href="{{ route('user-security.audit-trail') }}" class="btn btn-outline-secondary btn-sm">
-        <i class="ph ph-clock-countdown me-1"></i>Audit Trail
-      </a>
-      <a href="{{ route('user-security.users.create') }}" class="btn btn-primary btn-sm" id="btn-add-user">
-        <i class="ph ph-user-plus me-1"></i>Add User
-      </a>
-    </div>
+  <!-- Metric Summary Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+    <x-stat-card 
+      title="Total Accounts" 
+      :value="$metrics['total'] ?? (method_exists($users, 'total') ? $users->total() : $users->count())" 
+      :isCurrency="false"
+      icon="ph-users" 
+      color="blue" 
+      subtitle="Registered hospital personnel"
+    />
+    <x-stat-card 
+      title="Active Accounts" 
+      :value="$metrics['active'] ?? 0" 
+      :isCurrency="false"
+      icon="ph-check-circle" 
+      color="emerald" 
+      subtitle="Authorized for system login"
+    />
+    <x-stat-card 
+      title="Suspended Personnel" 
+      :value="$metrics['suspended'] ?? 0" 
+      :isCurrency="false"
+      icon="ph-lock" 
+      color="rose" 
+      subtitle="Access temporarily locked"
+    />
+    <x-stat-card 
+      title="Pending Password Reset" 
+      :value="$metrics['pending_reset'] ?? 0" 
+      :isCurrency="false"
+      icon="ph-key" 
+      color="amber" 
+      subtitle="Forced reset on next login"
+    />
   </div>
 
-  {{-- Stats --}}
-  <div class="row g-3 mb-4">
-    <div class="col-6 col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 h-100">
-        <div class="card-body">
-          <div class="fs-xs text-muted text-uppercase fw-semibold mb-1">Total Users</div>
-          <div class="h4 mb-0 fw-bold">{{ $users->count() }}</div>
-        </div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 h-100">
-        <div class="card-body">
-          <div class="fs-xs text-muted text-uppercase fw-semibold mb-1">Active</div>
-          <div class="h4 mb-0 fw-bold text-success">{{ $users->where('status', 'active')->count() }}</div>
-        </div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 h-100">
-        <div class="card-body">
-          <div class="fs-xs text-muted text-uppercase fw-semibold mb-1">Suspended</div>
-          <div class="h4 mb-0 fw-bold text-danger">{{ $users->where('status', 'suspended')->count() }}</div>
-        </div>
-      </div>
-    </div>
-    <div class="col-6 col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 h-100">
-        <div class="card-body">
-          <div class="fs-xs text-muted text-uppercase fw-semibold mb-1">Pending Password Reset</div>
-          <div class="h4 mb-0 fw-bold text-warning">{{ $users->where('must_change_password', true)->count() }}</div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- Sub-Module Category Navigation Bar -->
+  @include('partials.submodule-nav')
 
-  {{-- User Table --}}
-  <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="bg-light border-bottom">
-            <tr>
-              <th class="ps-4 py-3 fw-semibold fs-xs text-uppercase text-muted">User</th>
-              <th class="py-3 fw-semibold fs-xs text-uppercase text-muted">Role</th>
-              <th class="py-3 fw-semibold fs-xs text-uppercase text-muted">Status</th>
-              <th class="py-3 fw-semibold fs-xs text-uppercase text-muted">Last Login</th>
-              <th class="py-3 fw-semibold fs-xs text-uppercase text-muted">Last IP</th>
-              <th class="py-3 fw-semibold fs-xs text-uppercase text-muted text-end pe-4">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($users as $user)
-            <tr>
-              <td class="ps-4 py-3">
-                <div class="d-flex align-items-center gap-3">
-                  <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white flex-shrink-0"
-                       style="width:38px;height:38px;background:{{ $user->role === 'CFO' ? '#6f42c1' : ($user->role === 'Auditor' ? '#d63384' : '#0d6efd') }};font-size:13px;">
-                    {{ strtoupper(substr($user->name, 0, 2)) }}
-                  </div>
-                  <div>
-                    <div class="fw-semibold text-dark">{{ $user->name }}</div>
-                    <div class="fs-xs text-muted font-monospace">{{ $user->email }}</div>
-                    @if($user->must_change_password)
-                      <span class="badge bg-warning-subtle text-warning border border-warning-subtle" style="font-size:10px;">
-                        <i class="ph ph-warning me-1"></i>Must change password
-                      </span>
-                    @endif
-                  </div>
+  <!-- User Table -->
+  <div class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="border-b border-slate-200 bg-slate-50/75 dark:border-slate-800 dark:bg-slate-800/60 sticky top-0">
+          <tr>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Personnel User</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Role / Access</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 text-center">Status</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Last Login</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Last Known IP</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+          @forelse($users as $user)
+          <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+            <td class="py-3.5 px-4">
+              <div class="flex items-center gap-3">
+                <div 
+                  class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl font-bold text-white text-xs shadow-sm"
+                  style="background: {{ $user->role === 'CFO' ? '#7c3aed' : ($user->role === 'Auditor' ? '#db2777' : ($user->role === 'FinanceManager' ? '#2563eb' : '#059669')) }};"
+                >
+                  {{ strtoupper(substr($user->name, 0, 2)) }}
                 </div>
-              </td>
-              <td>
-                @php
-                  $roleColor = match($user->role) {
-                    'CFO' => 'bg-purple-subtle text-purple border-purple-subtle',
-                    'FinanceManager' => 'bg-primary-subtle text-primary border-primary-subtle',
-                    'StaffAccountant' => 'bg-info-subtle text-info border-info-subtle',
-                    'BillingClerk' => 'bg-success-subtle text-success border-success-subtle',
-                    'Cashier' => 'bg-warning-subtle text-warning border-warning-subtle',
-                    'Auditor' => 'bg-danger-subtle text-danger border-danger-subtle',
-                    default => 'bg-secondary-subtle text-secondary border-secondary-subtle',
-                  };
-                @endphp
-                <span class="badge {{ $roleColor }} border py-1 px-2">{{ $user->roleLabel() }}</span>
-              </td>
-              <td>
-                @if($user->isActive())
-                  <span class="badge bg-success-subtle text-success border border-success-subtle">
-                    <i class="ph ph-check-circle me-1"></i>Active
-                  </span>
-                @else
-                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
-                    <i class="ph ph-prohibit me-1"></i>Suspended
-                  </span>
-                @endif
-              </td>
-              <td class="fs-xs text-muted">
-                {{ $user->last_login_at ? $user->last_login_at->diffForHumans() : '—' }}
-              </td>
-              <td class="fs-xs font-monospace text-muted">
-                {{ $user->last_login_ip ?? '—' }}
-              </td>
-              <td class="text-end pe-4">
-                <div class="d-flex justify-content-end gap-1">
-                  {{-- Edit --}}
-                  <a href="{{ route('user-security.users.edit', $user) }}"
-                     class="btn btn-outline-secondary btn-sm py-1 px-2" title="Edit user">
-                    <i class="ph ph-pencil"></i>
-                  </a>
-
-                  {{-- Reset Password --}}
-                  <form method="POST" action="{{ route('user-security.users.reset-password', $user) }}"
-                        onsubmit="return confirm('Reset password for {{ $user->name }}? They will be required to change it on next login.')">
-                    @csrf
-                    <button type="submit" class="btn btn-outline-warning btn-sm py-1 px-2" title="Reset password">
-                      <i class="ph ph-key"></i>
-                    </button>
-                  </form>
-
-                  {{-- Suspend / Activate --}}
-                  @if($user->id !== auth()->id())
-                  <form method="POST" action="{{ route('user-security.users.toggle-status', $user) }}"
-                        onsubmit="return confirm('{{ $user->isActive() ? 'Suspend' : 'Activate' }} account for {{ $user->name }}?')">
-                    @csrf
-                    <button type="submit"
-                            class="btn btn-sm py-1 px-2 {{ $user->isActive() ? 'btn-outline-danger' : 'btn-outline-success' }}"
-                            title="{{ $user->isActive() ? 'Suspend' : 'Activate' }} account">
-                      <i class="ph {{ $user->isActive() ? 'ph-lock' : 'ph-lock-open' }}"></i>
-                    </button>
-                  </form>
+                <div>
+                  <div class="font-bold text-slate-900 dark:text-white">{{ $user->name }}</div>
+                  <div class="font-mono text-xs text-slate-400">{{ $user->email }}</div>
+                  @if($user->must_change_password)
+                    <span class="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 dark:text-amber-400 mt-0.5">
+                      <i class="ph-bold ph-warning"></i>
+                      <span>Must change password</span>
+                    </span>
                   @endif
                 </div>
-              </td>
-            </tr>
-            @empty
-            <tr>
-              <td colspan="6" class="text-center py-5 text-muted">
-                <i class="ph ph-users fs-1 d-block mb-2 opacity-25"></i>
-                No users found.
-              </td>
-            </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+              </div>
+            </td>
+            <td class="py-3.5 px-4">
+              @php
+                $roleBadge = match($user->role) {
+                  'CFO' => 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 border-purple-200 dark:border-purple-800',
+                  'FinanceManager' => 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200 dark:border-blue-800',
+                  'StaffAccountant' => 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+                  'BillingClerk' => 'bg-cyan-50 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-300 border-cyan-200 dark:border-cyan-800',
+                  'Cashier' => 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+                  'Auditor' => 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border-rose-200 dark:border-rose-800',
+                  default => 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700',
+                };
+              @endphp
+              <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold border {{ $roleBadge }}">
+                {{ $user->roleLabel() }}
+              </span>
+            </td>
+            <td class="py-3.5 px-4 text-center">
+              @if($user->isActive())
+                <x-status-badge status="Active" color="emerald" />
+              @else
+                <x-status-badge status="Suspended" color="rose" />
+              @endif
+            </td>
+            <td class="py-3.5 px-4 text-slate-500 dark:text-slate-400">
+              {{ $user->last_login_at ? $user->last_login_at->diffForHumans() : '—' }}
+            </td>
+            <td class="py-3.5 px-4 font-mono text-slate-500 dark:text-slate-400">
+              {{ $user->last_login_ip ?? '—' }}
+            </td>
+            <td class="py-3.5 px-4 text-right">
+              <div class="inline-flex items-center justify-end gap-1.5">
+                <a 
+                  href="{{ route('user-security.users.edit', $user) }}"
+                  class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-blue-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer" 
+                  title="Edit user"
+                >
+                  <i class="ph ph-pencil text-sm"></i>
+                </a>
 
+                <form 
+                  method="POST" 
+                  action="{{ route('user-security.users.reset-password', $user) }}"
+                  onsubmit="return confirm('Reset password for {{ $user->name }}? They will be required to change it on next login.')"
+                  class="inline"
+                >
+                  @csrf
+                  <button 
+                    type="submit" 
+                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-amber-600 hover:bg-amber-50 hover:border-amber-200 dark:border-slate-700 dark:hover:bg-amber-950/30 cursor-pointer" 
+                    title="Reset password"
+                  >
+                    <i class="ph ph-key text-sm"></i>
+                  </button>
+                </form>
+
+                @if($user->id !== auth()->id())
+                <form 
+                  method="POST" 
+                  action="{{ route('user-security.users.toggle-status', $user) }}"
+                  onsubmit="return confirm('{{ $user->isActive() ? 'Suspend' : 'Activate' }} account for {{ $user->name }}?')"
+                  class="inline"
+                >
+                  @csrf
+                  <button 
+                    type="submit" 
+                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 {{ $user->isActive() ? 'text-rose-600 hover:bg-rose-50 hover:border-rose-200 dark:hover:bg-rose-950/30' : 'text-emerald-600 hover:bg-emerald-50 hover:border-emerald-200 dark:hover:bg-emerald-950/30' }} dark:border-slate-700 cursor-pointer"
+                    title="{{ $user->isActive() ? 'Suspend' : 'Activate' }} account"
+                  >
+                    <i class="ph {{ $user->isActive() ? 'ph-lock' : 'ph-lock-open' }} text-sm"></i>
+                  </button>
+                </form>
+                @endif
+              </div>
+            </td>
+          </tr>
+          @empty
+          <tr>
+            <td colspan="6" class="py-12 text-center text-slate-400 dark:text-slate-500">
+              <i class="ph ph-users text-3xl block mb-2 text-slate-300 dark:text-slate-600"></i>
+              No users found.
+            </td>
+          </tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Table Footer & Pagination -->
+    @if(method_exists($users, 'links'))
+      <div class="border-t border-slate-200 p-4 dark:border-slate-800">
+        {{ $users->links() }}
+      </div>
+    @endif
+  </div>
 </div>
 @endsection

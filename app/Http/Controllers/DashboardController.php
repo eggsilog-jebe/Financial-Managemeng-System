@@ -16,25 +16,37 @@ final class DashboardController extends Controller
 {
     public function __invoke(AccountingCacheService $cacheService): View
     {
-        $metrics = $cacheService->rememberDashboardMetrics(function (): array {
-            // General Ledger: sum of all asset account balances as proxy for total ledger
-            $accounts = Account::with('journalEntryLines')->get();
+        $metrics = $cacheService->rememberWelcomeMetrics(function (): array {
+            // General Ledger: sum of all asset account balances computed directly at the database level
+            $totalLedgerBalance = (float) \Illuminate\Support\Facades\DB::table('accounts')
+                ->join('journal_entry_lines', 'accounts.id', '=', 'journal_entry_lines.account_id')
+                ->where('accounts.category', 'ASSET')
+                ->selectRaw("COALESCE(SUM(CASE WHEN accounts.normal_balance = 'DEBIT' THEN (journal_entry_lines.debit - journal_entry_lines.credit) ELSE (journal_entry_lines.credit - journal_entry_lines.debit) END), 0) as balance")
+                ->value('balance');
 
-            $totalLedgerBalance = (float) $accounts
-                ->where('category', 'ASSET')
-                ->sum(fn ($acc) => (float) $acc->current_balance);
+            // Accounts Receivable: single-trip sum and count of outstanding patient invoices
+            $arStats = Invoice::query()
+                ->whereIn('status', ['UNPAID', 'PARTIAL'])
+                ->selectRaw('COALESCE(SUM(patient_payable), 0) as total, COUNT(*) as count')
+                ->first();
+            $totalAR        = (float) ($arStats->total ?? 0);
+            $activeInvoices = (int) ($arStats->count ?? 0);
 
-            // Accounts Receivable: sum of outstanding patient invoices
-            $totalAR         = (float) Invoice::whereIn('status', ['UNPAID', 'PARTIAL'])->sum('patient_payable');
-            $activeInvoices  = Invoice::whereIn('status', ['UNPAID', 'PARTIAL'])->count();
+            // Accounts Payable: single-trip sum and count of outstanding purchase bills
+            $apStats = PurchaseBill::query()
+                ->whereIn('status', ['UNPAID', 'PARTIAL'])
+                ->selectRaw('COALESCE(SUM(total_amount), 0) as total, COUNT(*) as count')
+                ->first();
+            $totalAP        = (float) ($apStats->total ?? 0);
+            $pendingVendors = (int) ($apStats->count ?? 0);
 
-            // Accounts Payable: sum of outstanding purchase bills
-            $totalAP         = (float) PurchaseBill::whereIn('status', ['UNPAID', 'PARTIAL'])->sum('total_amount');
-            $pendingVendors  = PurchaseBill::whereIn('status', ['UNPAID', 'PARTIAL'])->count();
-
-            // Cash Management: total liquid across all active bank accounts
-            $totalCash       = (float) BankAccount::where('status', 'Active')->sum('balance');
-            $bankAccountCount = BankAccount::where('status', 'Active')->count();
+            // Cash Management: single-trip sum and count of active bank accounts
+            $bankStats = BankAccount::query()
+                ->where('status', 'Active')
+                ->selectRaw('COALESCE(SUM(balance), 0) as total, COUNT(*) as count')
+                ->first();
+            $totalCash        = (float) ($bankStats->total ?? 0);
+            $bankAccountCount = (int) ($bankStats->count ?? 0);
 
             return compact(
                 'totalLedgerBalance',

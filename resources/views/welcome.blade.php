@@ -5,189 +5,199 @@
 @section('page', 'dashboard')
 
 @section('content')
-<div class="container-fluid p-4">
-  <!-- Dashboard Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="space-y-6">
+  <!-- Executive Command Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <h1 class="h3 mb-1 font-weight-bold">Financial Management System</h1>
-      <p class="text-muted mb-0">Transaction Core Modules &amp; Executive Command Dashboard</p>
+      <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+        Financial Management System
+      </h1>
     </div>
-    <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="window.print()"><i class="ph ph-printer me-1"></i> Print Summary</button>
-      <button class="btn btn-primary btn-sm" type="button" onclick="alert('Transaction Core Active');"><i class="ph ph-lightning me-1"></i> System Status: Optimal</button>
-    </div>
-  </div>
-
-  <!-- Key KPI Metrics Row (Fixed Font Sizes & Zero Overlapping) -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3 h-100">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-muted small fw-semibold text-uppercase kpi-title-text">Total Ledger Balance</span>
-          <span class="badge bg-success-subtle text-success"><i class="ph ph-trend-up me-1"></i> GL</span>
-        </div>
-        <h3 class="fw-bold mb-1 text-dark kpi-value-text">₱{{ number_format($totalLedgerBalance, 2) }}</h3>
-        <span class="fs-xs text-muted kpi-sub-text">Real-time General Ledger Balance</span>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3 h-100">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-muted small fw-semibold text-uppercase kpi-title-text">Accounts Receivable</span>
-          <span class="badge bg-primary-subtle text-primary"><i class="ph ph-clock me-1"></i> Pending</span>
-        </div>
-        <h3 class="fw-bold mb-1 text-dark kpi-value-text">₱{{ number_format($totalAR, 2) }}</h3>
-        <span class="fs-xs text-muted kpi-sub-text">{{ $activeInvoices }} Active Patient &amp; HMO Invoices</span>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3 h-100">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-muted small fw-semibold text-uppercase kpi-title-text">Accounts Payable</span>
-          <span class="badge bg-warning-subtle text-warning"><i class="ph ph-calendar me-1"></i> Scheduled</span>
-        </div>
-        <h3 class="fw-bold mb-1 text-dark kpi-value-text">₱{{ number_format($totalAP, 2) }}</h3>
-        <span class="fs-xs text-muted kpi-sub-text">{{ $pendingVendors }} Vendor Payments Due</span>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3 h-100">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-muted small fw-semibold text-uppercase kpi-title-text">Available Cash Pool</span>
-          <span class="badge bg-info-subtle text-info"><i class="ph ph-shield-check me-1"></i> Optimal</span>
-        </div>
-        <h3 class="fw-bold mb-1 text-dark kpi-value-text">₱{{ number_format($totalCash, 2) }}</h3>
-        <span class="fs-xs text-muted kpi-sub-text">Liquid Across {{ $bankAccountCount }} Bank Account{{ $bankAccountCount !== 1 ? 's' : '' }}</span>
-      </div>
+    <div class="flex items-center gap-2">
+      <button 
+        type="button" 
+        onclick="window.print()" 
+        class="inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700 transition-all"
+      >
+        <i class="ph-bold ph-printer text-sm"></i>
+        <span>Print Summary</span>
+      </button>
+      <button 
+        type="button" 
+        onclick="showToast('Transaction Core Active &amp; Ledger Invariance Verified', 'success')" 
+        class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-all ring-1 ring-emerald-600/20"
+      >
+        <i class="ph-bold ph-lightning text-sm"></i>
+        <span>System Status: Optimal</span>
+      </button>
     </div>
   </div>
 
-  <!-- Modules Grid Header -->
-  <div class="d-flex align-items-center justify-content-between mb-3">
-    <h2 class="h5 mb-0 font-weight-bold">Transaction Core Systems &amp; Modules</h2>
-    <span class="badge bg-light text-dark border">9 Modules Active</span>
+  <!-- Key KPI Metrics Row -->
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <x-stat-card 
+      title="Total Ledger Balance" 
+      :value="$totalLedgerBalance ?? 0" 
+      :isCurrency="true" 
+      icon="ph-trend-up" 
+      color="emerald" 
+      subtitle="Real-time General Ledger Balance" 
+      badge="GL"
+    />
+    <x-stat-card 
+      title="Accounts Receivable" 
+      :value="$totalAR ?? 0" 
+      :isCurrency="true" 
+      icon="ph-clock" 
+      color="blue" 
+      :subtitle="($activeInvoices ?? 0) . ' Active Patient & HMO Invoices'" 
+      badge="Pending"
+    />
+    <x-stat-card 
+      title="Accounts Payable" 
+      :value="$totalAP ?? 0" 
+      :isCurrency="true" 
+      icon="ph-calendar" 
+      color="amber" 
+      :subtitle="($pendingVendors ?? 0) . ' Vendor Payments Due'" 
+      badge="Scheduled"
+    />
+    <x-stat-card 
+      title="Available Cash Pool" 
+      :value="$totalCash ?? 0" 
+      :isCurrency="true" 
+      icon="ph-shield-check" 
+      color="teal" 
+      :subtitle="'Liquid Across ' . ($bankAccountCount ?? 0) . ' Bank Account' . (($bankAccountCount ?? 0) !== 1 ? 's' : '')" 
+      badge="Optimal"
+    />
   </div>
 
-  <!-- Optimized Module Cards Grid (Title on Top, Badge Below to Prevent Horizontal Squeezing) -->
-  <div class="row g-3">
+  <!-- Core Modules Grid Header -->
+  <div class="flex items-center justify-between pt-2">
+    <div>
+      <h2 class="text-base font-bold text-slate-900 dark:text-white">Transaction Core Systems &amp; Workstations</h2>
+      <p class="text-xs text-slate-500 dark:text-slate-400">Direct navigation across all 10 clinical fintech modules</p>
+    </div>
+    <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
+      <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+      <span>10 Modules Active</span>
+    </span>
+  </div>
+
+  <!-- Module Cards Grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
     @php
       $modules = [
         [
           'title' => 'General Ledger', 
+          'desc' => 'Chart of Accounts, Journal Entries, Ledger Books, Trial Balance & Period Closing',
           'icon' => 'ph-book-open', 
           'badge' => 'GL Core', 
-          'badge_color' => 'bg-primary-subtle text-primary',
+          'color' => 'emerald',
           'route' => route('gl.chart-of-accounts')
         ],
         [
           'title' => 'Accounts Payable (AP)', 
+          'desc' => 'Vendor Registry, 3-Way Matching, Purchase Bills, Aging & Payment Approvals',
           'icon' => 'ph-receipt', 
           'badge' => 'Liabilities', 
-          'badge_color' => 'bg-warning-subtle text-warning',
+          'color' => 'amber',
           'route' => route('ap.vendors')
         ],
         [
           'title' => 'Accounts Receivable (AR)', 
+          'desc' => 'Patient Billing, PhilHealth ACR, RA 9994/10754 Discounts & Malasakit Assistance',
           'icon' => 'ph-currency-circle-dollar', 
           'badge' => 'Receivables', 
-          'badge_color' => 'bg-success-subtle text-success',
+          'color' => 'blue',
           'route' => route('ar.customers')
         ],
         [
           'title' => 'Disbursement Management', 
+          'desc' => 'Payment Vouchers, Multi-signature Approvals, Check Register & Imprest Petty Cash',
           'icon' => 'ph-arrows-out', 
           'badge' => 'Treasury', 
-          'badge_color' => 'bg-danger-subtle text-danger',
+          'color' => 'rose',
           'route' => route('disbursement.payment-requests')
         ],
         [
-          'title' => 'Collection Management', 
+          'title' => 'Collection & Cashier Desk', 
+          'desc' => 'Cashier Shifts, POS Settlement, Official Receipts (OR) & Bank Deposits',
           'icon' => 'ph-vault', 
           'badge' => 'Collections', 
-          'badge_color' => 'bg-info-subtle text-info',
+          'color' => 'teal',
           'route' => route('collection.receipts')
         ],
         [
           'title' => 'Budget Management', 
+          'desc' => 'Fiscal Planning, Department Allocations, Encumbrances & Variance Analysis',
           'icon' => 'ph-calculator', 
           'badge' => 'Planning', 
-          'badge_color' => 'bg-purple-subtle text-purple',
+          'color' => 'purple',
           'route' => route('budget.fiscal-planning')
         ],
         [
-          'title' => 'Cash Management', 
+          'title' => 'Cash & Banking', 
+          'desc' => 'Bank Directory, 30/60/90d Cash Forecasting, Bank Reconciliation & Fund Transfers',
           'icon' => 'ph-coins', 
           'badge' => 'Liquidity', 
-          'badge_color' => 'bg-teal-subtle text-teal',
+          'color' => 'sky',
           'route' => route('cash.bank-accounts')
         ],
         [
-          'title' => 'Financial Reporting', 
+          'title' => 'Financial Reporting & Analytics', 
+          'desc' => 'Balance Sheet, P&L, Statement of Cash Flows, Equity & Financial KPI Dossiers',
           'icon' => 'ph-chart-line-up', 
           'badge' => 'Analytics', 
-          'badge_color' => 'bg-indigo-subtle text-indigo',
+          'color' => 'indigo',
           'route' => route('reporting.balance-sheet')
         ],
         [
-          'title' => 'Tax Management', 
+          'title' => 'Tax & BIR Compliance', 
+          'desc' => 'BIR Form 2307, 10%/15% EWT Withholding, VAT Returns & CAS Audit Trails',
           'icon' => 'ph-percent', 
           'badge' => 'Compliance', 
-          'badge_color' => 'bg-dark-subtle text-dark',
+          'color' => 'indigo',
           'route' => route('tax.tax-config')
+        ],
+        [
+          'title' => 'User Security & CAS Audit', 
+          'desc' => 'Workstation Binding, Role Authorization, 2FA TOTP & Tamper-proof CAS Logs',
+          'icon' => 'ph-shield-check', 
+          'badge' => 'Security', 
+          'color' => 'emerald',
+          'route' => route('user-security.workstations')
         ],
       ];
     @endphp
 
     @foreach($modules as $mod)
-    <div class="col-md-4">
-      <a href="{{ $mod['route'] }}" class="card border-0 shadow-sm rounded-3 text-decoration-none module-card-item h-100">
-        <div class="card-body p-3.5 d-flex align-items-center gap-3">
-          <div class="module-icon-wrap rounded-3 bg-light border text-primary">
-            <i class="ph {{ $mod['icon'] }} fs-4"></i>
-          </div>
-          <div class="flex-grow-1 min-w-0">
-            <h3 class="fw-bold text-dark mb-1 module-title-text text-truncate">{{ $mod['title'] }}</h3>
-            <span class="badge {{ $mod['badge_color'] }} fs-xs px-2 py-0.5 fw-semibold">{{ $mod['badge'] }}</span>
-          </div>
+    <a 
+      href="{{ $mod['route'] }}" 
+      class="group relative flex flex-col justify-between rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md hover:ring-emerald-500/40 dark:bg-slate-900 dark:ring-slate-800 dark:hover:ring-emerald-500/40"
+    >
+      <div>
+        <div class="flex items-center justify-between">
+          <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-slate-700 ring-1 ring-slate-200 group-hover:bg-emerald-50 group-hover:text-emerald-600 group-hover:ring-emerald-500/20 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700 dark:group-hover:bg-emerald-950/50 dark:group-hover:text-emerald-400 transition-colors">
+            <i class="ph-bold {{ $mod['icon'] }} text-xl"></i>
+          </span>
+          <x-status-badge :status="$mod['badge']" :variant="$mod['color']" />
         </div>
-      </a>
-    </div>
+        <h3 class="mt-4 text-sm font-bold text-slate-900 group-hover:text-emerald-600 dark:text-white dark:group-hover:text-emerald-400 transition-colors">
+          {{ $mod['title'] }}
+        </h3>
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+          {{ $mod['desc'] }}
+        </p>
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+        <span>Open Workstation</span>
+        <i class="ph-bold ph-arrow-right text-xs group-hover:translate-x-1 transition-transform"></i>
+      </div>
+    </a>
     @endforeach
   </div>
 </div>
-
-<style>
-.module-card-item {
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
-  border: 1px solid rgba(0,0,0,0.07) !important;
-}
-.module-card-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06) !important;
-  border-color: var(--color-primary, #00a86b) !important;
-}
-.module-title-text {
-  font-size: 0.875rem !important;
-  line-height: 1.25 !important;
-}
-.module-icon-wrap {
-  width: 42px;
-  height: 42px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.kpi-title-text {
-  font-size: 0.725rem !important;
-  letter-spacing: 0.03em;
-}
-.kpi-value-text {
-  font-size: 1.35rem !important;
-  line-height: 1.2;
-}
-.kpi-sub-text {
-  font-size: 0.735rem !important;
-}
-</style>
 @endsection

@@ -79,10 +79,11 @@ final class GeneralLedgerReportService
 
     /**
      * Compute Balance Sheet (Assets = Liabilities + Equity + Current Period Net Income).
+     * Reuses pre-computed trial balance and PnL if passed to avoid redundant database roundtrips.
      */
-    public function getBalanceSheet(): array
+    public function getBalanceSheet(?array $trial = null, ?array $pnl = null): array
     {
-        $trial = $this->getTrialBalance();
+        $trial ??= $this->getTrialBalance();
 
         $assets = [];
         $liabilities = [];
@@ -108,7 +109,7 @@ final class GeneralLedgerReportService
             }
         }
 
-        $pnl = $this->getIncomeStatement();
+        $pnl ??= $this->getIncomeStatement($trial);
         $retainedEarnings = $pnl['net_income'];
         $totalEquityAndLiabilities = bcadd(bcadd($totalLiabilities, $totalEquity, 4), $retainedEarnings, 4);
 
@@ -127,10 +128,11 @@ final class GeneralLedgerReportService
 
     /**
      * Compute Income Statement (Profit & Loss: Revenue - Operating Expenses).
+     * Reuses pre-computed trial balance if passed to avoid redundant database roundtrips.
      */
-    public function getIncomeStatement(): array
+    public function getIncomeStatement(?array $trial = null): array
     {
-        $trial = $this->getTrialBalance();
+        $trial ??= $this->getTrialBalance();
 
         $revenues = [];
         $expenses = [];

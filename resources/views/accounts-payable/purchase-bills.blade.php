@@ -5,164 +5,208 @@
 @section('page', 'purchase-bills')
 
 @section('content')
-<div class="container-fluid p-4">
-  <!-- Alerts -->
-  @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-3 mb-4" role="alert">
-      <div class="d-flex align-items-center">
-        <i class="ph ph-check-circle fs-4 me-2"></i>
-        <span>{{ session('success') }}</span>
-      </div>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-  @endif
+<div class="space-y-6" x-data="{
+  inspectOpen: false,
+  inspectData: {
+    id: null,
+    bill_number: '',
+    vendor_invoice: '',
+    vendor_name: '',
+    vendor_tin: '',
+    bill_date: '',
+    due_date: '',
+    po_number: '',
+    grn_number: '',
+    po_amount: '₱0.00',
+    grn_amount: '₱0.00',
+    invoice_amount: '₱0.00',
+    variance: '₱0.00',
+    variance_raw: 0.00,
+    match_status: 'MATCHED',
+    bill_status: 'UNPAID',
+    approver_name: '',
+    approved_at: '',
+    items: [],
+    tax_withheld: '₱0.00',
+    net_payable: '₱0.00'
+  },
+  openInspection(data) {
+    this.inspectData = data;
+    this.inspectOpen = true;
+  }
+}">
 
-  @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-3 mb-4" role="alert">
-      <div class="d-flex align-items-center">
-        <i class="ph ph-warning-circle fs-4 me-2"></i>
-        <span>{{ session('error') }}</span>
-      </div>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-  @endif
-
-  <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <div>
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-1 fs-xs">
-          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
-          <li class="breadcrumb-item">Accounts Payable</li>
-          <li class="breadcrumb-item active">Invoice Matching &amp; Verification</li>
-        </ol>
-      </nav>
-      <h1 class="h3 mb-0 font-weight-bold text-dark">Invoice Matching &amp; Verification</h1>
-      <p class="text-muted fs-xs mb-0">Cross-check incoming supplier invoices against approved Purchase Orders (PSM) and actual delivered items (SWS Goods Receipts) before approving payment.</p>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          3-Way Invoice Matching &amp; Verification
+        </h1>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <x-integration-badge 
-          type="external" 
-          :systems="['PSM (Purchase Orders)', 'SWS (Goods Receipt Notes)']" 
-          glImpact="DR 1200 (Inventory/Expense) / CR 2010 (AP Vendors) + CR 2110 (EWT 2307)" 
-          description="Performs 3-Way matching across Purchase Orders, Goods Delivery Notes, and Supplier Invoices." 
-      />
-      <!-- Header Actions: Sync External PSM/SWS & Record Supplier Bill -->
-      <form method="POST" action="{{ route('ap.purchase-bills.sync') }}" class="d-inline">
+
+    <div class="flex items-center gap-2.5 flex-wrap">
+      <form method="POST" action="{{ route('ap.purchase-bills.sync') }}" class="inline">
         @csrf
-        <button type="submit" class="btn btn-outline-teal btn-sm" style="color: #0d9488; border-color: #0d9488;" title="Sync latest procurement purchase orders and warehouse receipts">
-          <i class="ph ph-arrows-clockwise me-1"></i> Sync External PSM/SWS Data
+        <button 
+          type="submit" 
+          class="inline-flex items-center gap-1.5 rounded-xl bg-teal-50 px-3.5 py-2 text-xs font-semibold text-teal-700 ring-1 ring-teal-600/20 hover:bg-teal-100 transition-all dark:bg-teal-950/40 dark:text-teal-300"
+          title="Sync latest procurement purchase orders and warehouse receipts"
+        >
+          <i class="ph-bold ph-arrows-clockwise"></i>
+          <span>Sync External PSM/SWS</span>
         </button>
       </form>
-      <button id="btnLogBill" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#createBillModal">
-        <i class="ph ph-plus me-1"></i> Record New Supplier Bill
+      <button 
+        type="button" 
+        @click="$dispatch('open-modal', 'createBillModal')"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20 transition-all"
+      >
+        <i class="ph-bold ph-plus"></i>
+        <span>Record Supplier Bill</span>
       </button>
     </div>
   </div>
 
+  <!-- Alerts -->
+  @if(session('success'))
+    <div class="rounded-xl bg-emerald-50 p-4 text-xs font-medium text-emerald-800 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-check-circle text-lg text-emerald-600"></i>
+        <span>{{ session('success') }}</span>
+      </div>
+    </div>
+  @endif
+
+  @if(session('error'))
+    <div class="rounded-xl bg-rose-50 p-4 text-xs font-medium text-rose-800 ring-1 ring-rose-600/20 dark:bg-rose-950/40 dark:text-rose-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-warning-circle text-lg text-rose-600"></i>
+        <span>{{ session('error') }}</span>
+      </div>
+    </div>
+  @endif
+
   <!-- Metric Summary Cards -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Purchase Bills</span>
-          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-receipt fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ $bills->total() }} Bills</h4>
-        <span class="fs-xs text-muted">Audited Procurement Invoices</span>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Unpaid Balance</span>
-          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-clock-afternoon fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-danger">₱{{ number_format((float) $totalUnpaid, 2) }}</h4>
-        <span class="fs-xs text-muted">Open Accounts Payable</span>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Paid (Settled)</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-success">₱{{ number_format((float) $totalPaid, 2) }}</h4>
-        <span class="fs-xs text-muted">Disbursed supplier payouts</span>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Pending 3-Way Approvals</span>
-          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-stamp fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-warning">{{ $pendingCount }} Bills</h4>
-        <span class="fs-xs text-muted">Awaiting reconciliation approval</span>
-      </div>
-    </div>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+    <x-stat-card 
+      title="Total Purchase Bills" 
+      :value="$bills->total()" 
+      :isCurrency="false"
+      icon="ph-receipt" 
+      color="blue" 
+      subtitle="Audited procurement bills"
+    />
+
+    <x-stat-card 
+      title="Total Unpaid Balance" 
+      :value="$totalUnpaid" 
+      icon="ph-clock-afternoon" 
+      color="rose" 
+      subtitle="Open accounts payable"
+    />
+
+    <x-stat-card 
+      title="Paid (Settled)" 
+      :value="$totalPaid" 
+      icon="ph-check-circle" 
+      color="emerald" 
+      subtitle="Disbursed supplier payouts"
+    />
+
+    <x-stat-card 
+      title="Pending 3-Way Approvals" 
+      :value="$pendingCount" 
+      :isCurrency="false"
+      icon="ph-stamp" 
+      color="amber" 
+      subtitle="Awaiting CFO sign-off"
+    />
   </div>
 
   <!-- 3-Way Matching Table Card -->
-  <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-transparent border-bottom p-3">
-      <form method="GET" action="{{ route('ap.purchase-bills') }}" class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <div class="d-flex flex-wrap align-items-center gap-3">
-          <!-- 2. Variance Status Quick-Filter -->
-          <div class="d-flex align-items-center gap-2">
-            <label for="varianceStatusSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-git-merge me-1"></i> Variance Status:</label>
-            <select id="varianceStatusSelect" name="variance_status" class="form-select form-select-sm bg-light" onchange="this.form.submit()">
-              <option value="" {{ request('variance_status') === null || request('variance_status') === '' ? 'selected' : '' }}>All Variance Statuses</option>
-              <option value="MATCHED" {{ request('variance_status') === 'MATCHED' ? 'selected' : '' }}>Matched (0.00 Variance)</option>
-              <option value="VARIANCE" {{ request('variance_status') === 'VARIANCE' ? 'selected' : '' }}>Discrepancy / Variance</option>
-              <option value="PENDING_GRN" {{ request('variance_status') === 'PENDING_GRN' ? 'selected' : '' }}>Pending GRN</option>
-            </select>
-          </div>
+  
+  <!-- Sub-Module Category Navigation Bar -->
+  @include('partials.submodule-nav')
 
-          <!-- Bill Status Filter -->
-          <div class="d-flex align-items-center gap-2">
-            <label for="billStatusSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap">Bill Status:</label>
-            <select id="billStatusSelect" name="status" class="form-select form-select-sm bg-light" onchange="this.form.submit()">
-              <option value="" {{ request('status') === null || request('status') === '' ? 'selected' : '' }}>All Statuses</option>
-              <option value="APPROVED" {{ request('status') === 'APPROVED' ? 'selected' : '' }}>Approved</option>
-              <option value="UNPAID" {{ request('status') === 'UNPAID' ? 'selected' : '' }}>Unpaid</option>
-              <option value="PARTIAL" {{ request('status') === 'PARTIAL' ? 'selected' : '' }}>Partial</option>
-              <option value="PAID" {{ request('status') === 'PAID' ? 'selected' : '' }}>Paid</option>
-            </select>
+  <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 overflow-hidden dark:bg-slate-900 dark:ring-slate-800">
+    <!-- Filter Toolbar -->
+    <div class="border-b border-slate-200 p-4 dark:border-slate-800">
+      <form method="GET" action="{{ route('ap.purchase-bills') }}" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 flex-wrap">
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="flex items-center gap-1.5 text-xs text-slate-500">
+            <i class="ph-bold ph-git-merge"></i>
+            <span>Variance:</span>
           </div>
+          <select 
+            name="variance_status" 
+            onchange="this.form.submit()" 
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
+            <option value="" {{ request('variance_status') === null || request('variance_status') === '' ? 'selected' : '' }}>All Statuses</option>
+            <option value="MATCHED" {{ request('variance_status') === 'MATCHED' ? 'selected' : '' }}>Matched (0.00 Variance)</option>
+            <option value="VARIANCE" {{ request('variance_status') === 'VARIANCE' ? 'selected' : '' }}>Discrepancy / Variance</option>
+            <option value="PENDING_GRN" {{ request('variance_status') === 'PENDING_GRN' ? 'selected' : '' }}>Pending GRN</option>
+          </select>
+
+          <div class="flex items-center gap-1.5 text-xs text-slate-500 ml-2">
+            <span>Bill Status:</span>
+          </div>
+          <select 
+            name="status" 
+            onchange="this.form.submit()" 
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
+            <option value="" {{ request('status') === null || request('status') === '' ? 'selected' : '' }}>All Statuses</option>
+            <option value="APPROVED" {{ request('status') === 'APPROVED' ? 'selected' : '' }}>Approved</option>
+            <option value="UNPAID" {{ request('status') === 'UNPAID' ? 'selected' : '' }}>Unpaid</option>
+            <option value="PARTIAL" {{ request('status') === 'PARTIAL' ? 'selected' : '' }}>Partial</option>
+            <option value="PAID" {{ request('status') === 'PAID' ? 'selected' : '' }}>Paid</option>
+          </select>
         </div>
 
-        <div class="d-flex align-items-center gap-2">
-          <div class="search-box" style="width: 280px;">
-            <input type="search" name="search" class="form-control form-control-sm" placeholder="Search bill #, PO, GRN, supplier..." value="{{ request('search') }}">
+        <div class="flex items-center gap-2">
+          <div class="relative w-full sm:w-72">
+            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+              <i class="ph ph-magnifying-glass text-sm"></i>
+            </div>
+            <input 
+              type="search" 
+              name="search" 
+              value="{{ request('search') }}" 
+              placeholder="Search bill #, PO, GRN, supplier..." 
+              class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+            >
           </div>
-          <button type="submit" class="btn btn-sm btn-primary px-3"><i class="ph ph-magnifying-glass me-1"></i> Filter</button>
+          <button type="submit" class="rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700">
+            Filter
+          </button>
           @if(request()->hasAny(['variance_status', 'status', 'search']))
-            <a href="{{ route('ap.purchase-bills') }}" class="btn btn-sm btn-light border" title="Reset Filters"><i class="ph ph-x"></i></a>
+            <a href="{{ route('ap.purchase-bills') }}" class="rounded-xl px-2 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-300">
+              Reset
+            </a>
           @endif
         </div>
       </form>
     </div>
 
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table id="purchaseBillTable" class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Bill # &amp; Vendor Invoice</th>
-              <th>Supplier Legal Name</th>
-              <th>PO Amount</th>
-              <th>GRN Amount</th>
-              <th class="text-end">Invoice Total</th>
-              <th class="text-end">Variance</th>
-              <th>3-Way Status</th>
-              <th>Bill Status</th>
-              <th class="text-end">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($bills as $inv)
+    <!-- Table -->
+    <div class="overflow-x-auto custom-scrollbar">
+      <table class="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+        <thead class="border-b border-slate-200 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+          <tr>
+            <th class="py-3 px-4">Bill # &amp; Vendor Invoice</th>
+            <th class="py-3 px-4">Supplier Legal Name</th>
+            <th class="py-3 px-4 text-right font-mono">PO Amount</th>
+            <th class="py-3 px-4 text-right font-mono">GRN Amount</th>
+            <th class="py-3 px-4 text-right font-mono">Invoice Total</th>
+            <th class="py-3 px-4 text-right font-mono">Variance</th>
+            <th class="py-3 px-4 text-center">3-Way Match</th>
+            <th class="py-3 px-4 text-center">Status</th>
+            <th class="py-3 px-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          @forelse($bills as $inv)
             @php
               $m = $inv->threeWayMatch;
               $poAmt = $m ? (float) $m->po_amount : (float) $inv->total_amount;
@@ -171,14 +215,7 @@
               $variance = $m ? (float) $m->price_variance : 0.00;
               $matchStatus = $m?->match_status ?? 'MATCHED';
 
-              $billBadge = match($inv->status) {
-                'PAID'     => 'bg-success-subtle text-success border border-success-subtle',
-                'APPROVED' => 'bg-info-subtle text-info border border-info-subtle',
-                'PARTIAL'  => 'bg-warning-subtle text-warning border border-warning-subtle',
-                default    => 'bg-secondary-subtle text-secondary border',
-              };
-
-              $inspectionData = [
+              $inspectionPayload = [
                 'id'                 => $inv->id,
                 'bill_number'        => $inv->bill_number,
                 'vendor_invoice'     => $inv->vendor_invoice_number,
@@ -211,682 +248,436 @@
                 'net_payable'        => '₱' . number_format((float) $inv->net_payable_amount, 2),
               ];
             @endphp
-            <tr>
-              <td>
-                <div class="font-monospace fw-bold text-primary">{{ $inv->bill_number }}</div>
-                <div class="fs-xs text-muted">Inv: {{ $inv->vendor_invoice_number }}</div>
+            <tr class="transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+              <td class="py-3.5 px-4">
+                <div class="font-mono font-bold text-slate-900 dark:text-white">{{ $inv->bill_number }}</div>
+                <div class="text-xs text-slate-400 font-mono">Inv: {{ $inv->vendor_invoice_number }}</div>
               </td>
-              <td>
-                <div class="fw-semibold text-dark">{{ $inv->vendor?->name ?? 'Unknown Vendor' }}</div>
-                <div class="fs-xs text-muted font-monospace">PO: {{ $m?->po_number ?? 'N/A' }} | GRN: {{ $m?->grn_number ?? 'N/A' }}</div>
+              <td class="py-3.5 px-4">
+                <div class="font-semibold text-slate-900 dark:text-white">{{ $inv->vendor?->name ?? 'Unknown Vendor' }}</div>
+                <div class="font-mono text-xs text-slate-400">PO: {{ $m?->po_number ?? 'N/A' }} | GRN: {{ $m?->grn_number ?? 'N/A' }}</div>
               </td>
-              <td class="font-monospace fs-xs">₱{{ number_format($poAmt, 2) }}</td>
-              <td class="font-monospace fs-xs">₱{{ number_format($grnAmt, 2) }}</td>
-              <td class="text-end font-monospace fw-bold text-dark">₱{{ number_format($invAmt, 2) }}</td>
-              <td class="text-end font-monospace {{ $variance != 0 ? 'text-danger fw-bold' : 'text-muted' }}">
+              <td class="py-3.5 px-4 text-right font-mono text-xs text-slate-600 dark:text-slate-400">
+                ₱{{ number_format($poAmt, 2) }}
+              </td>
+              <td class="py-3.5 px-4 text-right font-mono text-xs text-slate-600 dark:text-slate-400">
+                ₱{{ number_format($grnAmt, 2) }}
+              </td>
+              <td class="py-3.5 px-4 text-right font-mono font-bold text-slate-900 dark:text-white">
+                ₱{{ number_format($invAmt, 2) }}
+              </td>
+              <td class="py-3.5 px-4 text-right font-mono font-bold {{ abs($variance) > 0.001 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400' }}">
                 ₱{{ number_format($variance, 2) }}
               </td>
-              <td>
-                <!-- 3. Table Row Badging -->
-                @if($matchStatus === 'MATCHED' && abs($variance) == 0)
-                  <span class="badge bg-success-subtle text-success border border-success-subtle font-monospace">
-                    <i class="ph ph-check-circle me-1"></i>✓ 3-WAY MATCHED
-                  </span>
+              <td class="py-3.5 px-4 text-center">
+                @if($matchStatus === 'MATCHED' && abs($variance) < 0.001)
+                  <x-status-badge status="MATCHED" label="3-WAY MATCHED" />
                 @elseif($matchStatus === 'PENDING_GRN')
-                  <span class="badge bg-info-subtle text-info border border-info-subtle font-monospace">
-                    <i class="ph ph-clock me-1"></i>PENDING GRN
-                  </span>
+                  <x-status-badge status="PENDING" label="PENDING GRN" />
                 @else
-                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle font-monospace">
-                    <i class="ph ph-warning me-1"></i>⚠️ VARIANCE (₱{{ number_format(abs($variance), 2) }})
-                  </span>
+                  <x-status-badge status="CRITICAL" :label="'VARIANCE (₱' . number_format(abs($variance), 2) . ')'" />
                 @endif
               </td>
-              <td><span class="badge {{ $billBadge }}">{{ $inv->status }}</span></td>
-              <td class="text-end">
-                <!-- 3. Table Row Actions -->
-                <div class="d-flex justify-content-end align-items-center gap-1">
-                  <!-- Inspect Match Button (Side Drawer) -->
-                  <button type="button" class="btn btn-sm btn-icon btn-outline-secondary" title="Inspect PO vs GRN vs Invoice Match" onclick="openMatchDrawer({{ json_encode($inspectionData) }})">
-                    <i class="ph ph-eye"></i>
-                  </button>
-
-                  <!-- Convert to AP Voucher / Approve Action -->
-                  @if($inv->status !== 'APPROVED' && $inv->status !== 'PAID')
-                    <form method="POST" action="{{ route('ap.purchase-bills.approve', $inv->id) }}" class="d-inline" onsubmit="return confirm('Authorize 3-Way matching approval for {{ $inv->bill_number }}?');">
-                      @csrf
-                      <button type="submit" class="btn btn-sm btn-success py-1 px-2 fs-xs" title="Approve 3-Way Match & Convert to AP Voucher">
-                        <i class="ph ph-check-circle me-1"></i> Convert to AP Voucher
-                      </button>
-                    </form>
-                  @else
-                    <a href="{{ route('ap.invoices') }}" class="btn btn-sm btn-outline-primary py-1 px-2 fs-xs" title="View Invoices Hub">
-                      <i class="ph ph-receipt me-1"></i> Voucher Hub
-                    </a>
-                  @endif
-                </div>
+              <td class="py-3.5 px-4 text-center">
+                <x-status-badge :status="$inv->status" />
+              </td>
+              <td class="py-3.5 px-4 text-right">
+                <button 
+                  type="button" 
+                  @click="openInspection({{ json_encode($inspectionPayload) }})"
+                  class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-600/20 hover:bg-emerald-100 transition-all dark:bg-emerald-950/40 dark:text-emerald-300"
+                >
+                  <i class="ph-bold ph-scales"></i>
+                  <span>Inspect Matrix</span>
+                </button>
               </td>
             </tr>
-            @empty
+          @empty
             <tr>
-              <td colspan="9" class="text-center py-5 text-muted">
-                <i class="ph ph-receipt fs-1 d-block mb-2 text-secondary"></i>
-                No purchase bills found matching current filter.
+              <td colspan="9" class="py-12 text-center text-sm text-slate-400">
+                <i class="ph ph-receipt text-3xl mb-2 block mx-auto text-slate-300"></i>
+                No purchase bills found matching criteria.
               </td>
             </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
+          @endforelse
+        </tbody>
+      </table>
     </div>
-    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs">Showing {{ $bills->firstItem() ?? 0 }} - {{ $bills->lastItem() ?? 0 }} of {{ $bills->total() }} Bills</span>
-      <div>
-        {{ $bills->links() }}
+
+    <!-- Pagination Footer -->
+    <div class="border-t border-slate-200 p-4 dark:border-slate-800">
+      {{ $bills->links() }}
+    </div>
+  </div>
+
+  <!-- 3-Way Matching Visual Inspection Drawer (Blueprint 6) -->
+  <div 
+    x-show="inspectOpen" 
+    x-cloak 
+    class="fixed inset-0 z-50 overflow-hidden" 
+    role="dialog" 
+    aria-modal="true"
+  >
+    <div 
+      x-show="inspectOpen" 
+      x-transition.opacity.duration.300ms 
+      class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
+    ></div>
+
+    <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
+      <div 
+        x-show="inspectOpen" 
+        x-transition:enter="transform transition ease-in-out duration-300"
+        x-transition:enter-start="translate-x-full"
+        x-transition:enter-end="translate-x-0"
+        x-transition:leave="transform transition ease-in-out duration-300"
+        x-transition:leave-start="translate-x-0"
+        x-transition:leave-end="translate-x-full"
+        @click.outside="inspectOpen = false" 
+        class="w-screen max-w-2xl bg-white shadow-2xl ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800 flex flex-col justify-between"
+      >
+        <!-- Header -->
+        <div class="p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
+          <div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <i class="ph-bold ph-scales text-emerald-600"></i>
+              <span>3-Way Matching Verification Matrix</span>
+            </h3>
+            <p class="text-xs text-slate-500 font-mono mt-0.5" x-text="inspectData.bill_number + ' • ' + inspectData.vendor_name"></p>
+          </div>
+          <button 
+            type="button" 
+            @click="inspectOpen = false" 
+            class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+          >
+            <i class="ph-bold ph-x text-lg"></i>
+          </button>
+        </div>
+
+        <!-- Body -->
+        <div class="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-6">
+          <!-- Comparison Matrix 3-Card Visual -->
+          <div class="rounded-2xl bg-slate-50 p-5 ring-1 ring-slate-200/80 dark:bg-slate-800/60 dark:ring-slate-700">
+            <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3 mb-4">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500">3-Way Matching Integrity Check</span>
+              <template x-if="Math.abs(inspectData.variance_raw) < 0.001">
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300">
+                  <i class="ph-bold ph-check"></i> 3-WAY MATCHED (0.00 Variance)
+                </span>
+              </template>
+              <template x-if="Math.abs(inspectData.variance_raw) >= 0.001">
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-rose-50 px-3 py-1 text-xs font-bold text-rose-700 ring-1 ring-rose-600/20 dark:bg-rose-950/40 dark:text-rose-300">
+                  <i class="ph-bold ph-warning"></i> VARIANCE FLAGGED
+                </span>
+              </template>
+            </div>
+
+            <!-- 3 Comparison Columns: PO ↔ RR/DR ↔ Vendor Bill -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
+              <!-- PO Column -->
+              <div class="rounded-xl bg-white p-3.5 ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
+                <div class="font-sans font-semibold text-slate-700 dark:text-slate-300 text-xs">1. Purchase Order (PO)</div>
+                <div class="mt-1 text-slate-400 text-[11px]" x-text="'Ref: ' + inspectData.po_number"></div>
+                <div class="mt-2 font-bold text-slate-900 dark:text-white text-sm" x-text="inspectData.po_amount"></div>
+                <div class="text-[10px] text-slate-400 mt-0.5">Procurement Order</div>
+              </div>
+
+              <!-- RR Column -->
+              <div class="rounded-xl bg-white p-3.5 ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
+                <div class="font-sans font-semibold text-slate-700 dark:text-slate-300 text-xs">2. Receiving Report (RR)</div>
+                <div class="mt-1 text-slate-400 text-[11px]" x-text="'Ref: ' + inspectData.grn_number"></div>
+                <div class="mt-2 font-bold text-slate-900 dark:text-white text-sm" x-text="inspectData.grn_amount"></div>
+                <div class="text-[10px] text-slate-400 mt-0.5">Warehouse Accepted</div>
+              </div>
+
+              <!-- Vendor Bill Column -->
+              <div class="rounded-xl bg-white p-3.5 ring-1 ring-slate-200 dark:bg-slate-800 dark:ring-slate-700">
+                <div class="font-sans font-semibold text-slate-700 dark:text-slate-300 text-xs">3. Vendor Sales Bill</div>
+                <div class="mt-1 text-slate-400 text-[11px]" x-text="'Inv: ' + inspectData.vendor_invoice"></div>
+                <div class="mt-2 font-bold text-emerald-600 dark:text-emerald-400 text-sm" x-text="inspectData.invoice_amount"></div>
+                <div class="text-[10px] text-slate-400 mt-0.5">Supplier Billed Total</div>
+              </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center text-xs">
+              <span class="text-slate-500 font-sans">Audit Variance:</span>
+              <span class="font-mono font-bold text-base" :class="Math.abs(inspectData.variance_raw) < 0.001 ? 'text-emerald-600' : 'text-rose-600'" x-text="inspectData.variance"></span>
+            </div>
+          </div>
+
+          <!-- Itemized Breakdown Table -->
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Itemized Line Breakdown (<span x-text="inspectData.items.length"></span> Items)
+              </span>
+              <span class="text-[11px] text-slate-400 font-mono" x-text="'Due: ' + inspectData.due_date"></span>
+            </div>
+
+            <div class="rounded-xl ring-1 ring-slate-200 overflow-hidden dark:ring-slate-800">
+              <table class="w-full text-left text-xs font-mono">
+                <thead class="border-b border-slate-200 bg-slate-50 text-[11px] font-semibold uppercase text-slate-500 dark:border-slate-800 dark:bg-slate-800/50">
+                  <tr>
+                    <th class="py-2.5 px-3 font-sans">Description</th>
+                    <th class="py-2.5 px-3">Qty</th>
+                    <th class="py-2.5 px-3 text-right">Unit Price</th>
+                    <th class="py-2.5 px-3 text-right">Gross (₱)</th>
+                    <th class="py-2.5 px-3 text-right">EWT (2307)</th>
+                    <th class="py-2.5 px-3 text-right">Net Payable</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                  <template x-for="(it, idx) in inspectData.items" :key="idx">
+                    <tr>
+                      <td class="py-2.5 px-3 font-sans font-medium text-slate-900 dark:text-white" x-text="it.description"></td>
+                      <td class="py-2.5 px-3" x-text="it.quantity"></td>
+                      <td class="py-2.5 px-3 text-right" x-text="it.unit_price"></td>
+                      <td class="py-2.5 px-3 text-right font-bold text-slate-900 dark:text-white" x-text="it.gross"></td>
+                      <td class="py-2.5 px-3 text-right text-rose-600 dark:text-rose-400" x-text="it.ewt"></td>
+                      <td class="py-2.5 px-3 text-right font-bold text-emerald-600 dark:text-emerald-400" x-text="it.net"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
+          <button 
+            type="button" 
+            @click="inspectOpen = false" 
+            class="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300"
+          >
+            Close
+          </button>
+
+          <template x-if="inspectData.bill_status !== 'APPROVED' && inspectData.bill_status !== 'PAID'">
+            <form :action="'/accounts-payable/purchase-bills/' + inspectData.id + '/approve'" method="POST" class="inline">
+              @csrf
+              <button 
+                type="submit" 
+                class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20"
+              >
+                <i class="ph-bold ph-check-circle"></i>
+                <span>Authorize &amp; Convert to AP Voucher</span>
+              </button>
+            </form>
+          </template>
+          <template x-if="inspectData.bill_status === 'APPROVED' || inspectData.bill_status === 'PAID'">
+            <a 
+              href="{{ route('ap.invoices') }}" 
+              class="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-slate-800"
+            >
+              <i class="ph-bold ph-receipt"></i>
+              <span>Open in Voucher Hub</span>
+            </a>
+          </template>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- ========================================================= -->
-<!-- Slide-Over Drawer: 3-Way Match Verification & Breakdown -->
-<!-- ========================================================= -->
-<div class="offcanvas offcanvas-end shadow-lg border-0" tabindex="-1" id="matchInspectionDrawer" style="width: 840px; max-width: 95vw;" aria-labelledby="matchInspectionDrawerLabel">
-  <div class="offcanvas-header border-bottom bg-light py-3 px-4">
-    <div>
-      <div class="d-flex align-items-center gap-2 mb-1">
-        <span class="badge bg-primary-subtle text-primary font-monospace fw-bold px-2 py-1 fs-xs" id="drawerBillNo">BILL-0000</span>
-        <span class="badge" id="drawerMatchBadge">✓ 3-WAY MATCHED</span>
-      </div>
-      <h5 class="offcanvas-title font-weight-bold text-dark mb-0" id="matchInspectionDrawerLabel">Procurement 3-Way Match Audit &amp; Inspection</h5>
-    </div>
-    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-  </div>
-
-  <div class="offcanvas-body p-4 bg-light-subtle">
-    <!-- Supplier & Bill Overview -->
-    <div class="card border rounded-3 p-3 bg-white mb-3 shadow-sm">
-      <div class="d-flex justify-content-between align-items-start mb-2">
+  <!-- Modal: Record New Supplier Bill (With Live 3-Way Match Verification) -->
+  <x-modal 
+    id="createBillModal" 
+    title="Record New Supplier Purchase Bill" 
+    subtitle="3-Way matched procurement invoice ingestion & BIR ATC tax calculation" 
+    icon="ph-plus-circle" 
+    iconVariant="emerald" 
+    size="3xl" 
+    formAction="{{ route('ap.purchase-bills.store') }}" 
+    formMethod="POST" 
+    :showFooter="false"
+  >
+    <div 
+      x-data="{
+        poAmount: 0.00,
+        grnAmount: 0.00,
+        items: [
+          { description: '', expense_type: 'GOODS_INVENTORY', atc_code: 'WI158', quantity: 1, unit_price: 0.00 }
+        ],
+        addItem() {
+          this.items.push({ description: '', expense_type: 'GOODS_INVENTORY', atc_code: 'WI158', quantity: 1, unit_price: 0.00 });
+        },
+        removeItem(index) {
+          if (this.items.length > 1) {
+            this.items.splice(index, 1);
+          }
+        },
+        get totalGross() {
+          return this.items.reduce((sum, it) => sum + ((parseFloat(it.quantity) || 0) * (parseFloat(it.unit_price) || 0)), 0);
+        },
+        get totalEwt() {
+          return this.items.reduce((sum, it) => {
+            const gross = (parseFloat(it.quantity) || 0) * (parseFloat(it.unit_price) || 0);
+            const rate = it.atc_code === 'WI160' ? 0.02 : (it.atc_code === 'WC100' ? 0.05 : (it.atc_code === 'WI010' ? 0.10 : (it.atc_code === 'EXEMPT' ? 0.00 : 0.01)));
+            return sum + (gross * rate);
+          }, 0);
+        },
+        get totalNet() {
+          return this.totalGross - this.totalEwt;
+        },
+        get variance() {
+          return this.totalGross - (parseFloat(this.poAmount) || 0);
+        },
+        get isMatched() {
+          return Math.abs(this.variance) < 0.001 && this.poAmount > 0;
+        }
+      }" 
+      class="space-y-5"
+    >
+      <!-- Vendor & Document References -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-slate-50 ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700">
         <div>
-          <h6 class="fw-bold text-dark mb-1 fs-6" id="drawerVendorTitle">Supplier Legal Name</h6>
-          <span class="fs-xs font-monospace text-muted" id="drawerVendorTinText">TIN: -</span>
-        </div>
-        <div class="text-end">
-          <span class="badge bg-secondary-subtle text-secondary font-monospace d-block mb-1" id="drawerInvoiceText">Inv: -</span>
-          <span class="badge bg-light text-dark border" id="drawerBillStatusBadge">UNPAID</span>
-        </div>
-      </div>
-      <div class="row g-2 pt-2 border-top fs-xs">
-        <div class="col-md-6">
-          <span class="text-muted">Bill Date:</span> <strong class="text-dark font-monospace ms-1" id="drawerBillDateText">-</strong>
-        </div>
-        <div class="col-md-6">
-          <span class="text-muted">Payment Due Date:</span> <strong class="text-dark font-monospace ms-1" id="drawerDueDateText">-</strong>
-        </div>
-      </div>
-    </div>
-
-    <!-- 3-Way Comparison Matrix Card -->
-    <div class="card border rounded-3 p-3 bg-white mb-3 shadow-sm">
-      <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
-        <span class="fs-xs text-uppercase fw-bold text-primary d-flex align-items-center gap-1">
-          <i class="ph ph-scales fs-5"></i> 3-Way Matching Comparison Matrix
-        </span>
-        <span class="badge" id="drawerMatrixBadge">MATCHED</span>
-      </div>
-
-      <div class="table-responsive">
-        <table class="table table-sm align-middle mb-0 fs-xs">
-          <thead class="table-light">
-            <tr>
-              <th>Document Stage</th>
-              <th>Reference #</th>
-              <th class="text-end">Authorized Amount</th>
-              <th class="text-end">Variance vs Invoice</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><span class="badge bg-primary-subtle text-primary">1. Purchase Order (PSM)</span></td>
-              <td><span class="font-monospace fw-bold text-dark" id="drawerPoRef">-</span></td>
-              <td class="text-end font-monospace fw-semibold" id="drawerPoAmt">-</td>
-              <td class="text-end font-monospace text-muted" id="drawerPoVar">—</td>
-            </tr>
-            <tr>
-              <td><span class="badge bg-info-subtle text-info">2. Goods Receipt (SWS)</span></td>
-              <td><span class="font-monospace fw-bold text-dark" id="drawerGrnRef">-</span></td>
-              <td class="text-end font-monospace fw-semibold" id="drawerGrnAmt">-</td>
-              <td class="text-end font-monospace text-muted" id="drawerGrnVar">—</td>
-            </tr>
-            <tr class="table-light fw-bold">
-              <td><span class="badge bg-dark text-white">3. Supplier Invoice (AP)</span></td>
-              <td><span class="font-monospace text-dark" id="drawerInvRefText">-</span></td>
-              <td class="text-end font-monospace text-primary fs-6" id="drawerInvAmtText">-</td>
-              <td class="text-end font-monospace fs-6" id="drawerTotalVarText">₱0.00</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="fs-xs text-muted mt-2 pt-2 border-top d-flex justify-content-between">
-        <span>Verified by: <strong class="text-dark" id="drawerApproverText">Finance Approver</strong></span>
-        <span>Reconciliation: <strong class="text-dark" id="drawerApprovedAtText">-</strong></span>
-      </div>
-    </div>
-
-    <!-- Line Item Breakdown Card -->
-    <div class="card border rounded-3 p-3 bg-white mb-3 shadow-sm">
-      <div class="d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom">
-        <span class="fs-xs text-uppercase fw-bold text-dark d-flex align-items-center gap-1">
-          <i class="ph ph-list-numbers fs-5 text-secondary"></i> Invoiced Line Items &amp; Withholding Tax
-        </span>
-        <span class="fs-xs text-muted" id="drawerItemCount">0 Items</span>
-      </div>
-
-      <div class="table-responsive">
-        <table class="table table-sm align-middle mb-0 fs-xs">
-          <thead class="table-light">
-            <tr>
-              <th>Description</th>
-              <th>Classification</th>
-              <th>ATC</th>
-              <th class="text-end">Qty</th>
-              <th class="text-end">Unit Price</th>
-              <th class="text-end">Gross (₱)</th>
-            </tr>
-          </thead>
-          <tbody id="drawerItemsTbody">
-            <!-- Dynamic Items -->
-          </tbody>
-          <tfoot class="table-light fw-bold">
-            <tr>
-              <td colspan="5" class="text-end">Total Gross Invoiced:</td>
-              <td class="text-end font-monospace text-dark" id="drawerSummaryGross">₱0.00</td>
-            </tr>
-            <tr>
-              <td colspan="5" class="text-end text-danger">Total Estimated EWT (2307):</td>
-              <td class="text-end font-monospace text-danger" id="drawerSummaryEwt">₱0.00</td>
-            </tr>
-            <tr class="border-top border-dark">
-              <td colspan="5" class="text-end text-primary fs-6">Net Accounts Payable:</td>
-              <td class="text-end font-monospace text-primary fs-6" id="drawerSummaryNet">₱0.00</td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <div class="offcanvas-footer bg-white border-top p-3 d-flex justify-content-between align-items-center">
-    <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="offcanvas">Close</button>
-    <div id="drawerActionBtnContainer">
-      <!-- Dynamic Approval Button -->
-    </div>
-  </div>
-</div>
-
-<!-- ========================================================= -->
-<!-- Modal: Ingest Purchase Bill with Live 3-Way Match Calculator -->
-<!-- ========================================================= -->
-<!-- ========================================================= -->
-<!-- Modal: Ingest Purchase Bill with Live 3-Way Match Calculator -->
-<!-- ========================================================= -->
-<x-modal 
-  id="createBillModal" 
-  title="Ingest Purchase Bill & 3-Way Match" 
-  subtitle="Verify incoming supplier sales invoice against Purchase Orders and Warehouse Goods Receipts" 
-  icon="ph-file-plus" 
-  iconVariant="primary" 
-  size="xl" 
-  :scrollable="true" 
-  :centered="true" 
-  formAction="{{ route('ap.purchase-bills.store') }}" 
-  formId="ingestBillForm" 
-  formEnctype="multipart/form-data" 
-  formMethod="POST" 
-  submitText="Post Purchase Bill & 3-Way Match" 
-  submitIcon="ph-check-circle"
->
-  <!-- 1. Dynamic PO / GRN Preset Selector -->
-  <div class="p-3 bg-primary-subtle rounded-3 border border-primary-subtle mb-3">
-    <div class="row align-items-center g-2">
-      <div class="col-md-4">
-        <label class="form-label small fw-bold text-primary mb-0 d-flex align-items-center gap-1">
-          <i class="ph ph-lightning fs-5"></i> Quick-Fill from Active Procurement:
-        </label>
-      </div>
-      <div class="col-md-8">
-        <select id="poPresetSelector" class="form-select form-select-sm bg-white" onchange="applyPoPreset(this.value)">
-          <option value="">-- Select Active PO from PSM (Procurement) or Enter Custom --</option>
-          <option value="PO_01" data-vendor="1" data-po="PO-2026-0881" data-grn="GRN-2026-0881" data-amt="85000" data-item="Pharmaceutical Ampoules & Syringes" data-qty="50" data-price="1700" data-atc="WI158">
-            PO-2026-0881 | MedTech Pharma Inc. | ₱85,000.00 (Supplies)
-          </option>
-          <option value="PO_02" data-vendor="2" data-po="PO-2026-0912" data-grn="GRN-2026-0912" data-amt="120000" data-item="Dialysis Filters & Medical Tubing" data-qty="60" data-price="2000" data-atc="WI158">
-            PO-2026-0912 | B. Braun Medical | ₱120,000.00 (Equipment)
-          </option>
-          <option value="PO_03" data-vendor="3" data-po="PO-2026-0955" data-grn="GRN-2026-0955" data-amt="45000" data-item="Bio-Hazard Sterilization Maintenance" data-qty="1" data-price="45000" data-atc="WI160">
-            PO-2026-0955 | Metro Bio-Pharma | ₱45,000.00 (Services)
-          </option>
-        </select>
-      </div>
-    </div>
-  </div>
-
-  <!-- Master Header Row -->
-  <div class="row g-3 mb-3">
-    <div class="col-md-4">
-      <label class="form-label small fw-semibold">Supplier / Vendor <span class="text-danger">*</span></label>
-      <select name="vendor_id" id="modalVendorSelect" class="form-select form-select-sm" required>
-        <option value="">-- Select Vendor --</option>
-        @foreach($vendors as $v)
-          <option value="{{ $v->id }}" data-tax-type="{{ $v->tax_type ?? 'VAT_REGISTERED' }}" data-ewt="{{ $v->default_ewt_rate ?? '1.00' }}" data-atc="{{ $v->default_atc_code ?? 'WC158' }}">
-            {{ $v->name }} ({{ $v->code }})
-          </option>
-        @endforeach
-      </select>
-    </div>
-    <div class="col-md-4">
-      <label class="form-label small fw-semibold">Bill Date <span class="text-danger">*</span></label>
-      <input type="date" name="bill_date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
-    </div>
-    <div class="col-md-4">
-      <label class="form-label small fw-semibold">Payment Due Date <span class="text-danger">*</span></label>
-      <input type="date" name="due_date" class="form-control form-control-sm" value="{{ date('Y-m-d', strtotime('+30 days')) }}" required>
-    </div>
-  </div>
-
-  <!-- 3-Way Reference Controls Row -->
-  <div class="card border rounded-3 p-3 bg-light-subtle mb-3">
-    <div class="row g-3">
-      <div class="col-md-4">
-        <label class="form-label small fw-semibold">Purchase Order (PO #)</label>
-        <input type="text" name="po_number" id="modalPoNumber" class="form-control form-control-sm font-monospace" placeholder="e.g. PO-2026-0044" value="PO-{{ date('Ymd') }}-{{ rand(100,999) }}">
-        <div class="mt-1">
-          <input type="number" step="0.01" min="0" name="po_amount" id="modalPoAmount" class="form-control form-control-sm font-monospace text-end" placeholder="PO Authorized ₱" oninput="recalculateBillTotals()">
-        </div>
-      </div>
-      <div class="col-md-4">
-        <label class="form-label small fw-semibold">Goods Receipt Note (GRN #)</label>
-        <input type="text" name="grn_number" id="modalGrnNumber" class="form-control form-control-sm font-monospace" placeholder="e.g. GRN-2026-0092" value="GRN-{{ date('Ymd') }}-{{ rand(100,999) }}">
-        <div class="mt-1">
-          <input type="number" step="0.01" min="0" name="grn_amount" id="modalGrnAmount" class="form-control form-control-sm font-monospace text-end" placeholder="GRN Received ₱" oninput="recalculateBillTotals()">
-        </div>
-      </div>
-      <div class="col-md-4">
-        <label class="form-label small fw-semibold">Vendor Sales Invoice # <span class="text-danger">*</span></label>
-        <input type="text" name="vendor_invoice_number" id="modalVendorInvoice" class="form-control form-control-sm font-monospace" placeholder="e.g. SI-88992211" required>
-        <div class="fs-xs text-muted mt-1">Supplier actual billing reference</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Line Items Table -->
-  <div class="d-flex justify-content-between align-items-center mb-2">
-    <h6 class="fw-bold mb-0 small text-uppercase"><i class="ph ph-list-dashes me-1 text-primary"></i>Bill Item Breakdown &amp; Tax Withholding</h6>
-    <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2" onclick="addBillLineItem()"><i class="ph ph-plus me-1"></i> Add Line</button>
-  </div>
-
-  <div class="table-responsive border rounded-3 mb-3">
-    <table class="table table-sm align-middle mb-0" id="billItemsTable">
-      <thead class="table-light fs-xs">
-        <tr>
-          <th style="width: 25%;">Item Description</th>
-          <th style="width: 20%;">Expense Classification</th>
-          <th style="width: 15%;">BIR ATC Withholding</th>
-          <th style="width: 12%;" class="text-end">Qty</th>
-          <th style="width: 13%;" class="text-end">Unit Price (₱)</th>
-          <th style="width: 15%;" class="text-end">Gross (₱)</th>
-        </tr>
-      </thead>
-      <tbody id="billItemsTbody">
-        <tr>
-          <td><input type="text" name="items[0][description]" class="form-control form-control-sm item-desc" placeholder="Item description..." required></td>
-          <td>
-            <select name="items[0][expense_type]" class="form-select form-select-sm item-expense" onchange="autoSelectAtc(this)">
-              <option value="GOODS_INVENTORY" data-atc="WI158">Goods / Inventory (1%)</option>
-              <option value="SERVICES_MAINTENANCE" data-atc="WI160">Services & Maintenance (2%)</option>
-              <option value="SPACE_RENTAL" data-atc="WC100">Space Rental (5%)</option>
-              <option value="DOCTOR_PROFESSIONAL_FEE" data-atc="WI010">Doctor PF (10%)</option>
-              <option value="EXEMPT" data-atc="EXEMPT">Non-Taxable / Exempt (0%)</option>
-            </select>
-          </td>
-          <td>
-            <select name="items[0][atc_code]" class="form-select form-select-sm item-atc" onchange="recalculateBillTotals()">
-              <option value="WI158" data-rate="0.01">WI158 (Goods 1%)</option>
-              <option value="WI160" data-rate="0.02">WI160 (Services 2%)</option>
-              <option value="WC100" data-rate="0.05">WC100 (Rental 5%)</option>
-              <option value="WI010" data-rate="0.10">WI010 (Doctor PF 10%)</option>
-              <option value="EXEMPT" data-rate="0.00">EXEMPT (0%)</option>
-            </select>
-          </td>
-          <td><input type="number" step="1" min="1" name="items[0][quantity]" class="form-control form-control-sm text-end item-qty" value="1" oninput="recalculateBillTotals()" required></td>
-          <td><input type="number" step="0.01" min="0" name="items[0][unit_price]" class="form-control form-control-sm text-end item-price" value="0.00" oninput="recalculateBillTotals()" required></td>
-          <td class="text-end font-monospace fw-bold item-line-gross">₱0.00</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- 2. Live 3-Way Match Calculator Card & Total Tax Breakdown -->
-  <div class="row g-3">
-    <div class="col-md-7">
-      <!-- Live 3-Way Match Verification Card -->
-      <div class="card border rounded-3 p-3 h-100 bg-light-subtle">
-        <span class="fs-xs text-uppercase fw-bold text-dark d-flex align-items-center gap-1 mb-2 pb-1 border-bottom">
-          <i class="ph ph-scales fs-5 text-primary"></i> Live 3-Way Match Calculator &amp; Variance Engine
-        </span>
-        <div class="row g-2 fs-xs">
-          <div class="col-4">
-            <span class="text-muted d-block">PO Total:</span>
-            <strong class="font-monospace fs-6 text-dark" id="livePoTotal">₱0.00</strong>
-          </div>
-          <div class="col-4">
-            <span class="text-muted d-block">GRN Total:</span>
-            <strong class="font-monospace fs-6 text-dark" id="liveGrnTotal">₱0.00</strong>
-          </div>
-          <div class="col-4">
-            <span class="text-muted d-block">Vendor Invoiced:</span>
-            <strong class="font-monospace fs-6 text-primary" id="liveInvTotal">₱0.00</strong>
-          </div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Select Supplier Vendor <span class="text-rose-500">*</span></label>
+          <select name="vendor_id" required class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+            <option value="" disabled selected>Select Approved Vendor...</option>
+            @foreach(\App\Models\Vendor::orderBy('name')->get() as $v)
+              <option value="{{ $v->id }}">{{ $v->name }} (TIN: {{ $v->tin }})</option>
+            @endforeach
+          </select>
         </div>
 
-        <div class="mt-3 pt-2 border-top d-flex align-items-center justify-content-between">
-          <span class="fs-xs fw-semibold text-muted">Computed Variance:</span>
-          <div id="liveMatchBadge">
-            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 fs-xs font-monospace">
-              <i class="ph ph-check-circle me-1"></i> ₱0.00 [3-Way Match Passed]
-            </span>
-          </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Bill Date <span class="text-rose-500">*</span></label>
+          <input type="date" name="bill_date" value="{{ date('Y-m-d') }}" required class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Payment Due Date <span class="text-rose-500">*</span></label>
+          <input type="date" name="due_date" value="{{ date('Y-m-d', strtotime('+30 days')) }}" required class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
         </div>
       </div>
-    </div>
 
-    <div class="col-md-5">
-      <!-- Total Calculation Summary -->
-      <div class="card border rounded-3 p-3 bg-light h-100 fs-xs">
-        <div class="d-flex justify-content-between mb-1">
-          <span>Total Gross Invoiced:</span>
-          <span class="font-monospace fw-bold" id="lblTotalGross">₱0.00</span>
+      <!-- 3-Way Matching Inputs: PO ↔ GRN ↔ Vendor SI -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-slate-50 ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">1. Purchase Order (PO #)</label>
+          <input type="text" name="po_number" placeholder="e.g. PO-2026-0042" class="w-full rounded-xl border-0 bg-white py-2 px-3 font-mono text-xs text-slate-900 ring-1 ring-inset ring-slate-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+          <input type="number" step="0.01" min="0" name="po_amount" x-model.number="poAmount" placeholder="PO Ordered Amount ₱" class="mt-1 w-full rounded-xl border-0 bg-white py-1.5 px-3 font-mono text-xs text-right ring-1 ring-inset ring-slate-300 dark:bg-slate-800 dark:text-white">
         </div>
-        <div class="d-flex justify-content-between mb-1 text-muted">
-          <span>Estimated BIR 2307 EWT:</span>
-          <span class="font-monospace text-danger" id="lblTotalEwt">₱0.00</span>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">2. Goods Receipt Note (GRN #)</label>
+          <input type="text" name="grn_number" placeholder="e.g. GRN-2026-0092" class="w-full rounded-xl border-0 bg-white py-2 px-3 font-mono text-xs text-slate-900 ring-1 ring-inset ring-slate-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+          <input type="number" step="0.01" min="0" name="grn_amount" x-model.number="grnAmount" placeholder="GRN Received Amount ₱" class="mt-1 w-full rounded-xl border-0 bg-white py-1.5 px-3 font-mono text-xs text-right ring-1 ring-inset ring-slate-300 dark:bg-slate-800 dark:text-white">
         </div>
-        <div class="d-flex justify-content-between border-top pt-2 mt-2">
-          <span class="fw-bold fs-6">Net Accounts Payable:</span>
-          <span class="font-monospace fw-bold fs-6 text-primary" id="lblTotalNet">₱0.00</span>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">3. Vendor Sales Invoice # <span class="text-rose-500">*</span></label>
+          <input type="text" name="vendor_invoice_number" placeholder="e.g. SI-88992211" required class="w-full rounded-xl border-0 bg-white py-2 px-3 font-mono text-xs text-slate-900 ring-1 ring-inset ring-slate-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+          <span class="text-[10px] text-slate-400 mt-1 block">Supplier actual billing reference</span>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- 4. Document Attachment Box -->
-  <div class="mt-3">
-    <label class="form-label small fw-semibold text-muted mb-1"><i class="ph ph-paperclip me-1"></i> Supporting Documents (Scanned Sales Invoice / Delivery Receipt)</label>
-    <div class="border border-dashed rounded-3 p-3 text-center bg-white">
-      <input type="file" name="attachment" id="billAttachment" class="form-control form-control-sm" accept=".pdf,.jpg,.jpeg,.png">
-      <span class="fs-xs text-muted d-block mt-1">Accepts PDF, JPG, PNG attachments up to 10MB</span>
-    </div>
-  </div>
-</x-modal>
-@endsection
+      <!-- Live 3-Way Match Calculator Card -->
+      <div 
+        class="rounded-xl p-4 ring-1 flex flex-col sm:flex-row items-center justify-between gap-3"
+        :class="isMatched ? 'bg-emerald-50 text-emerald-800 ring-emerald-200' : 'bg-slate-100 text-slate-700 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700'"
+      >
+        <div>
+          <span class="font-bold text-xs uppercase tracking-wider block">Live 3-Way Match Verification</span>
+          <span class="text-xs" x-text="isMatched ? '✓ 100% PO & Bill Totals Match (0.00 Variance)' : 'PO Total: ₱' + (parseFloat(poAmount)||0).toFixed(2) + ' • Bill Total: ₱' + totalGross.toFixed(2)"></span>
+        </div>
 
-@push('scripts')
-<script>
-let billLineIndex = 1;
+        <div class="font-mono text-xs sm:text-sm font-bold">
+          <span>Variance: </span>
+          <span :class="Math.abs(variance) < 0.001 ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold'" x-text="'₱' + Math.abs(variance).toFixed(2)"></span>
+        </div>
+      </div>
 
-function applyPoPreset(preset) {
-  if (!preset) return;
-  const select = document.getElementById('poPresetSelector');
-  const opt = select.options[select.selectedIndex];
-  if (!opt) return;
+      <!-- Line Items Repeater -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Bill Items &amp; Tax Withholding</span>
+          <button type="button" @click="addItem()" class="inline-flex items-center gap-1 rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300">
+            <i class="ph-bold ph-plus"></i> Add Line
+          </button>
+        </div>
 
-  const vendorId = opt.getAttribute('data-vendor');
-  const poNum = opt.getAttribute('data-po');
-  const grnNum = opt.getAttribute('data-grn');
-  const amt = parseFloat(opt.getAttribute('data-amt') || 0);
-  const itemDesc = opt.getAttribute('data-item') || '';
-  const qty = opt.getAttribute('data-qty') || '1';
-  const price = opt.getAttribute('data-price') || amt;
-  const atc = opt.getAttribute('data-atc') || 'WI158';
+        <div class="space-y-2.5 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
+          <template x-for="(it, idx) in items" :key="idx">
+            <div class="grid grid-cols-12 gap-2.5 items-center rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200 dark:bg-slate-800/40 dark:ring-slate-700">
+              <div class="col-span-12 sm:col-span-4">
+                <input type="text" :name="'items[' + idx + '][description]'" x-model="it.description" placeholder="Item description..." required class="w-full rounded-lg border-0 bg-white py-1.5 px-2 text-xs ring-1 ring-slate-300 dark:bg-slate-800 dark:text-white">
+              </div>
 
-  if (vendorId) document.getElementById('modalVendorSelect').value = vendorId;
-  if (poNum) document.getElementById('modalPoNumber').value = poNum;
-  if (grnNum) document.getElementById('modalGrnNumber').value = grnNum;
-  if (amt) {
-    document.getElementById('modalPoAmount').value = amt.toFixed(2);
-    document.getElementById('modalGrnAmount').value = amt.toFixed(2);
-  }
-  document.getElementById('modalVendorInvoice').value = 'SI-' + poNum.replace('PO-', '');
+              <div class="col-span-6 sm:col-span-3">
+                <select :name="'items[' + idx + '][expense_type]'" x-model="it.expense_type" class="w-full rounded-lg border-0 bg-white py-1.5 px-2 text-xs ring-1 ring-slate-300 dark:bg-slate-800 dark:text-white">
+                  <option value="GOODS_INVENTORY">Goods / Inventory</option>
+                  <option value="SERVICES_MAINTENANCE">Services &amp; Maintenance</option>
+                  <option value="SPACE_RENTAL">Space Rental</option>
+                  <option value="DOCTOR_PROFESSIONAL_FEE">Doctor PF</option>
+                  <option value="EXEMPT">Non-Taxable</option>
+                </select>
+              </div>
 
-  const tbody = document.getElementById('billItemsTbody');
-  tbody.innerHTML = `
-    <tr>
-      <td><input type="text" name="items[0][description]" class="form-control form-control-sm item-desc" value="${itemDesc}" required></td>
-      <td>
-        <select name="items[0][expense_type]" class="form-select form-select-sm item-expense" onchange="autoSelectAtc(this)">
-          <option value="GOODS_INVENTORY" ${atc === 'WI158' ? 'selected' : ''}>Goods / Inventory (1%)</option>
-          <option value="SERVICES_MAINTENANCE" ${atc === 'WI160' ? 'selected' : ''}>Services & Maintenance (2%)</option>
-          <option value="SPACE_RENTAL" ${atc === 'WC100' ? 'selected' : ''}>Space Rental (5%)</option>
-          <option value="DOCTOR_PROFESSIONAL_FEE" ${atc === 'WI010' ? 'selected' : ''}>Doctor PF (10%)</option>
-          <option value="EXEMPT" ${atc === 'EXEMPT' ? 'selected' : ''}>Non-Taxable / Exempt (0%)</option>
-        </select>
-      </td>
-      <td>
-        <select name="items[0][atc_code]" class="form-select form-select-sm item-atc" onchange="recalculateBillTotals()">
-          <option value="WI158" data-rate="0.01" ${atc === 'WI158' ? 'selected' : ''}>WI158 (Goods 1%)</option>
-          <option value="WI160" data-rate="0.02" ${atc === 'WI160' ? 'selected' : ''}>WI160 (Services 2%)</option>
-          <option value="WC100" data-rate="0.05" ${atc === 'WC100' ? 'selected' : ''}>WC100 (Rental 5%)</option>
-          <option value="WI010" data-rate="0.10" ${atc === 'WI010' ? 'selected' : ''}>WI010 (Doctor PF 10%)</option>
-          <option value="EXEMPT" data-rate="0.00" ${atc === 'EXEMPT' ? 'selected' : ''}>EXEMPT (0%)</option>
-        </select>
-      </td>
-      <td><input type="number" step="1" min="1" name="items[0][quantity]" class="form-control form-control-sm text-end item-qty" value="${qty}" oninput="recalculateBillTotals()" required></td>
-      <td><input type="number" step="0.01" min="0" name="items[0][unit_price]" class="form-control form-control-sm text-end item-price" value="${parseFloat(price).toFixed(2)}" oninput="recalculateBillTotals()" required></td>
-      <td class="text-end font-monospace fw-bold item-line-gross">₱${amt.toFixed(2)}</td>
-    </tr>
-  `;
+              <div class="col-span-6 sm:col-span-2">
+                <select :name="'items[' + idx + '][atc_code]'" x-model="it.atc_code" class="w-full rounded-lg border-0 bg-white py-1.5 px-2 text-xs font-mono ring-1 ring-slate-300 dark:bg-slate-800 dark:text-white">
+                  <option value="WI158">WI158 (1%)</option>
+                  <option value="WI160">WI160 (2%)</option>
+                  <option value="WC100">WC100 (5%)</option>
+                  <option value="WI010">WI010 (10%)</option>
+                  <option value="EXEMPT">EXEMPT (0%)</option>
+                </select>
+              </div>
 
-  recalculateBillTotals();
-}
+              <div class="col-span-3 sm:col-span-1">
+                <input type="number" step="1" min="1" :name="'items[' + idx + '][quantity]'" x-model.number="it.quantity" required class="w-full rounded-lg border-0 bg-white py-1.5 px-2 text-right font-mono text-xs ring-1 ring-slate-300 dark:bg-slate-800 dark:text-white">
+              </div>
 
-function autoSelectAtc(expenseSelect) {
-  const selectedOption = expenseSelect.options[expenseSelect.selectedIndex];
-  const targetAtc = selectedOption ? selectedOption.getAttribute('data-atc') : 'WI158';
-  const row = expenseSelect.closest('tr');
-  if (row) {
-    const atcSelect = row.querySelector('.item-atc');
-    if (atcSelect) {
-      atcSelect.value = targetAtc;
-    }
-  }
-  recalculateBillTotals();
-}
+              <div class="col-span-4 sm:col-span-1">
+                <input type="number" step="0.01" min="0" :name="'items[' + idx + '][unit_price]'" x-model.number="it.unit_price" required class="w-full rounded-lg border-0 bg-white py-1.5 px-2 text-right font-mono text-xs ring-1 ring-slate-300 dark:bg-slate-800 dark:text-white">
+              </div>
 
-function addBillLineItem() {
-  const tbody = document.getElementById('billItemsTbody');
-  const row = document.createElement('tr');
-  row.innerHTML = `
-    <td><input type="text" name="items[${billLineIndex}][description]" class="form-control form-control-sm item-desc" placeholder="Item description..." required></td>
-    <td>
-      <select name="items[${billLineIndex}][expense_type]" class="form-select form-select-sm item-expense" onchange="autoSelectAtc(this)">
-        <option value="GOODS_INVENTORY" data-atc="WI158">Goods / Inventory (1%)</option>
-        <option value="SERVICES_MAINTENANCE" data-atc="WI160">Services & Maintenance (2%)</option>
-        <option value="SPACE_RENTAL" data-atc="WC100">Space Rental (5%)</option>
-        <option value="DOCTOR_PROFESSIONAL_FEE" data-atc="WI010">Doctor PF (10%)</option>
-        <option value="EXEMPT" data-atc="EXEMPT">Non-Taxable / Exempt (0%)</option>
-      </select>
-    </td>
-    <td>
-      <select name="items[${billLineIndex}][atc_code]" class="form-select form-select-sm item-atc" onchange="recalculateBillTotals()">
-        <option value="WI158" data-rate="0.01">WI158 (Goods 1%)</option>
-        <option value="WI160" data-rate="0.02">WI160 (Services 2%)</option>
-        <option value="WC100" data-rate="0.05">WC100 (Rental 5%)</option>
-        <option value="WI010" data-rate="0.10">WI010 (Doctor PF 10%)</option>
-        <option value="EXEMPT" data-rate="0.00">EXEMPT (0%)</option>
-      </select>
-    </td>
-    <td><input type="number" step="1" min="1" name="items[${billLineIndex}][quantity]" class="form-control form-control-sm text-end item-qty" value="1" oninput="recalculateBillTotals()" required></td>
-    <td><input type="number" step="0.01" min="0" name="items[${billLineIndex}][unit_price]" class="form-control form-control-sm text-end item-price" value="0.00" oninput="recalculateBillTotals()" required></td>
-    <td class="text-end font-monospace fw-bold item-line-gross">₱0.00</td>
-  `;
-  tbody.appendChild(row);
-  billLineIndex++;
-}
+              <div class="col-span-5 sm:col-span-1 flex items-center justify-end gap-1">
+                <span class="font-mono text-xs font-bold text-slate-800 dark:text-slate-200 tabular-nums truncate" x-text="'₱' + ((it.quantity||0)*(it.unit_price||0)).toFixed(2)"></span>
+                <button type="button" @click="removeItem(idx)" :disabled="items.length <= 1" class="text-slate-400 hover:text-rose-600 disabled:opacity-20 p-1">
+                  <i class="ph-bold ph-trash text-sm"></i>
+                </button>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
 
-function recalculateBillTotals() {
-  const rows = document.querySelectorAll('#billItemsTbody tr');
-  let totalGross = 0;
-  let totalEwt = 0;
+      <!-- Financial Totals Summary -->
+      <div class="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs sm:text-sm">
+        <div>
+          <span class="text-slate-500 font-sans">Gross Total: </span>
+          <strong class="text-slate-900 dark:text-white">₱<span x-text="totalGross.toFixed(2)"></span></strong>
+        </div>
+        <div>
+          <span class="text-slate-500 font-sans">EWT 2307: </span>
+          <strong class="text-rose-600 dark:text-rose-400">-₱<span x-text="totalEwt.toFixed(2)"></span></strong>
+        </div>
+        <div class="border-t sm:border-t-0 sm:border-l border-slate-200 sm:pl-4 pt-2 sm:pt-0">
+          <span class="text-slate-500 font-sans">Net Payable to Vendor: </span>
+          <strong class="text-emerald-600 dark:text-emerald-400 text-base">₱<span x-text="totalNet.toFixed(2)"></span></strong>
+        </div>
+      </div>
 
-  rows.forEach(row => {
-    const qty = parseFloat(row.querySelector('.item-qty')?.value || 0);
-    const price = parseFloat(row.querySelector('.item-price')?.value || 0);
-    const atcSelect = row.querySelector('.item-atc');
-    const atc = atcSelect?.value || 'WI158';
-
-    const gross = qty * price;
-    row.querySelector('.item-line-gross').textContent = '₱' + gross.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-
-    let rate = 0.01;
-    if (atc === 'WI160') rate = 0.02;
-    else if (atc === 'WC100') rate = 0.05;
-    else if (atc === 'WI010') rate = 0.10;
-    else if (atc === 'EXEMPT') rate = 0.00;
-
-    const ewt = gross * rate;
-
-    totalGross += gross;
-    totalEwt += ewt;
-  });
-
-  const totalNet = totalGross - totalEwt;
-
-  document.getElementById('lblTotalGross').textContent = '₱' + totalGross.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-  document.getElementById('lblTotalEwt').textContent = '₱' + totalEwt.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-  document.getElementById('lblTotalNet').textContent = '₱' + totalNet.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-
-  // Live 3-Way Match Calculator
-  const poInput = document.getElementById('modalPoAmount');
-  const grnInput = document.getElementById('modalGrnAmount');
-
-  const poVal = parseFloat(poInput?.value || 0);
-  const grnVal = parseFloat(grnInput?.value || 0);
-
-  document.getElementById('livePoTotal').textContent = '₱' + poVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-  document.getElementById('liveGrnTotal').textContent = '₱' + grnVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-  document.getElementById('liveInvTotal').textContent = '₱' + totalGross.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-
-  const variance = totalGross - poVal;
-  const badgeContainer = document.getElementById('liveMatchBadge');
-
-  if (Math.abs(variance) < 0.001 && poVal > 0) {
-    badgeContainer.innerHTML = `
-      <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 fs-xs font-monospace">
-        <i class="ph ph-check-circle me-1"></i> ₱0.00 [✓ 3-Way Match Passed]
-      </span>
-    `;
-  } else if (poVal > 0) {
-    badgeContainer.innerHTML = `
-      <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 fs-xs font-monospace">
-        <i class="ph ph-warning me-1"></i> ⚠️ ₱${Math.abs(variance).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} Variance Flagged
-      </span>
-    `;
-  } else {
-    badgeContainer.innerHTML = `
-      <span class="badge bg-secondary-subtle text-secondary border px-3 py-2 fs-xs font-monospace">
-        Enter PO &amp; GRN Amounts
-      </span>
-    `;
-  }
-}
-
-function openMatchDrawer(data) {
-  if (!data) return;
-
-  document.getElementById('drawerBillNo').textContent = data.bill_number;
-  document.getElementById('drawerVendorTitle').textContent = data.vendor_name;
-  document.getElementById('drawerVendorTinText').textContent = 'TIN: ' + data.vendor_tin;
-  document.getElementById('drawerInvoiceText').textContent = 'Inv: ' + data.vendor_invoice;
-  document.getElementById('drawerBillStatusBadge').textContent = data.bill_status;
-
-  document.getElementById('drawerBillDateText').textContent = data.bill_date;
-  document.getElementById('drawerDueDateText').textContent = data.due_date;
-
-  // Comparison Matrix
-  document.getElementById('drawerPoRef').textContent = data.po_number;
-  document.getElementById('drawerPoAmt').textContent = data.po_amount;
-  document.getElementById('drawerGrnRef').textContent = data.grn_number;
-  document.getElementById('drawerGrnAmt').textContent = data.grn_amount;
-  document.getElementById('drawerInvRefText').textContent = data.vendor_invoice;
-  document.getElementById('drawerInvAmtText').textContent = data.invoice_amount;
-  document.getElementById('drawerTotalVarText').textContent = data.variance;
-
-  const isMatched = Math.abs(data.variance_raw) < 0.001;
-  const matchBadge = document.getElementById('drawerMatchBadge');
-  const matrixBadge = document.getElementById('drawerMatrixBadge');
-
-  if (isMatched) {
-    matchBadge.className = 'badge bg-success-subtle text-success border border-success-subtle';
-    matchBadge.textContent = '✓ 3-WAY MATCHED';
-    matrixBadge.className = 'badge bg-success-subtle text-success border border-success-subtle fs-xs';
-    matrixBadge.textContent = 'MATCHED (0.00 Variance)';
-  } else {
-    matchBadge.className = 'badge bg-danger-subtle text-danger border border-danger-subtle';
-    matchBadge.textContent = '⚠️ VARIANCE';
-    matrixBadge.className = 'badge bg-danger-subtle text-danger border border-danger-subtle fs-xs';
-    matrixBadge.textContent = 'DISCREPANCY (Variance ' + data.variance + ')';
-  }
-
-  document.getElementById('drawerApproverText').textContent = data.approver_name;
-  document.getElementById('drawerApprovedAtText').textContent = data.approved_at;
-
-  // Items Table
-  const itemsTbody = document.getElementById('drawerItemsTbody');
-  itemsTbody.innerHTML = '';
-  document.getElementById('drawerItemCount').textContent = data.items.length + ' Item' + (data.items.length !== 1 ? 's' : '');
-
-  data.items.forEach(it => {
-    itemsTbody.innerHTML += `
-      <tr>
-        <td class="fw-semibold text-dark">${it.description}</td>
-        <td><span class="badge bg-light text-dark border">${it.expense_type}</span></td>
-        <td><span class="badge bg-primary-subtle text-primary font-monospace">${it.atc_code}</span></td>
-        <td class="text-end font-monospace">${it.quantity}</td>
-        <td class="text-end font-monospace">${it.unit_price}</td>
-        <td class="text-end font-monospace fw-bold text-dark">${it.gross}</td>
-      </tr>
-    `;
-  });
-
-  document.getElementById('drawerSummaryGross').textContent = data.invoice_amount;
-  document.getElementById('drawerSummaryEwt').textContent = data.tax_withheld;
-  document.getElementById('drawerSummaryNet').textContent = data.net_payable;
-
-  // Actions
-  const btnContainer = document.getElementById('drawerActionBtnContainer');
-  if (data.bill_status !== 'APPROVED' && data.bill_status !== 'PAID') {
-    btnContainer.innerHTML = `
-      <form method="POST" action="/accounts-payable/purchase-bills/${data.id}/approve" class="d-inline">
-        <input type="hidden" name="_token" value="${document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}'}">
-        <button type="submit" class="btn btn-sm btn-success px-3 fw-semibold">
-          <i class="ph ph-check-circle me-1"></i> Authorize &amp; Convert to AP Voucher
+      <!-- Modal Footer -->
+      <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+        <button 
+          type="button" 
+          @click="$dispatch('close-modal', 'createBillModal')" 
+          class="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300"
+        >
+          Cancel
         </button>
-      </form>
-    `;
-  } else {
-    btnContainer.innerHTML = `
-      <a href="{{ route('ap.invoices') }}" class="btn btn-sm btn-primary px-3">
-        <i class="ph ph-receipt me-1"></i> Open in Voucher Hub
-      </a>
-    `;
-  }
+        <button 
+          type="submit" 
+          class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700"
+        >
+          <i class="ph-bold ph-check"></i>
+          <span>Save &amp; Ingest Bill</span>
+        </button>
+      </div>
+    </div>
+  </x-modal>
 
-  const drawerEl = document.getElementById('matchInspectionDrawer');
-  if (drawerEl && window.bootstrap) {
-    const drawerInstance = bootstrap.Offcanvas.getOrCreateInstance(drawerEl);
-    drawerInstance.show();
-  }
-}
-</script>
-@endpush
+</div>
+@endsection

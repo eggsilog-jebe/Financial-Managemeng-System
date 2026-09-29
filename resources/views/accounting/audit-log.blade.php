@@ -5,343 +5,356 @@
 @section('page', 'audit-log')
 
 @section('content')
-<div class="container-fluid p-4">
-  <!-- Header -->
-  <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
+<div class="space-y-6" x-data="{
+  isOpen: false,
+  activeLog: null,
+  openDiff(data) {
+    this.activeLog = data;
+    this.isOpen = true;
+  },
+  closeDiff() {
+    this.isOpen = false;
+    this.activeLog = null;
+  }
+}" @keydown.escape.window="closeDiff()">
+
+  {{-- Header --}}
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <h1 class="h3 mb-1 font-weight-bold">
-        <i class="ph-fill ph-shield-check text-primary me-2 align-middle"></i>System Audit Trail &amp; Compliance Logs
+      <div class="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+        <a href="{{ route('accounting.dashboard') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Overview</a>
+        <i class="ph ph-caret-right text-[10px]"></i>
+        <a href="{{ route('user-security.users') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Security & Compliance</a>
+        <i class="ph ph-caret-right text-[10px]"></i>
+        <span class="text-slate-900 dark:text-slate-200 font-semibold">Audit Trail</span>
+      </div>
+      <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+        System Audit Trail &amp; Compliance Logs
       </h1>
-      <p class="text-muted mb-0">
-        Immutable Event Telemetry &bull; BIR CAS &amp; COA Regulatory Audit Trail &bull; Executive CFO &amp; Internal Auditor View
-      </p>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <span class="badge bg-danger-subtle text-danger border border-danger-subtle fs-6 py-2 px-3">
-        <i class="ph-bold ph-lock-key me-1"></i> Restricted: CFO &amp; Auditor Only
+    <div class="flex items-center gap-2.5">
+      <span class="inline-flex items-center gap-1.5 rounded-xl border border-rose-200/80 bg-rose-50/80 px-3 py-1.5 text-xs font-semibold text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300">
+        <i class="ph-fill ph-lock-key text-rose-500"></i>
+        Restricted: CFO &amp; Auditor
       </span>
-      <a href="{{ route('accounting.dashboard') }}" class="btn btn-outline-secondary btn-sm">
-        <i class="ph ph-arrow-left me-1"></i> Back to Dashboard
+      <a href="{{ route('accounting.dashboard') }}" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 transition-all">
+        <i class="ph ph-arrow-left"></i>
+        Back to Dashboard
       </a>
     </div>
   </div>
 
-  <!-- KPI Overview Cards -->
-  <div class="row g-3 mb-4">
-    <div class="col-sm-6 col-xl-3">
-      <div class="card border-0 shadow-sm rounded-3 bg-white p-3 h-100">
-        <div class="d-flex align-items-center">
-          <div class="bg-primary-subtle text-primary p-3 rounded-3 me-3">
-            <i class="ph-bold ph-list-dashes fs-4"></i>
-          </div>
-          <div>
-            <div class="text-muted small fw-medium">Total Audit Records</div>
-            <div class="fs-4 fw-bold text-dark">{{ number_format($stats['total_logs']) }}</div>
-          </div>
+  {{-- KPI Overview Cards --}}
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    {{-- Total Records --}}
+    <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Audit Records</span>
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400">
+          <i class="ph-duotone ph-list-dashes text-lg"></i>
         </div>
       </div>
+      <div class="mt-2">
+        <span class="text-2xl font-bold font-mono text-slate-900 dark:text-white">{{ number_format($stats['total_logs']) }}</span>
+      </div>
+      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Immutable ledger events</p>
     </div>
 
-    <div class="col-sm-6 col-xl-3">
-      <div class="card border-0 shadow-sm rounded-3 bg-white p-3 h-100">
-        <div class="d-flex align-items-center">
-          <div class="bg-success-subtle text-success p-3 rounded-3 me-3">
-            <i class="ph-bold ph-sign-in fs-4"></i>
-          </div>
-          <div>
-            <div class="text-muted small fw-medium">Successful Logins Today</div>
-            <div class="fs-4 fw-bold text-success">{{ number_format($stats['logins_today']) }}</div>
-          </div>
+    {{-- Successful Logins --}}
+    <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Successful Logins Today</span>
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
+          <i class="ph-duotone ph-sign-in text-lg"></i>
         </div>
       </div>
+      <div class="mt-2">
+        <span class="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">{{ number_format($stats['logins_today']) }}</span>
+      </div>
+      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Authorized personnel sessions</p>
     </div>
 
-    <div class="col-sm-6 col-xl-3">
-      <div class="card border-0 shadow-sm rounded-3 bg-white p-3 h-100">
-        <div class="d-flex align-items-center">
-          <div class="bg-danger-subtle text-danger p-3 rounded-3 me-3">
-            <i class="ph-bold ph-warning-octagon fs-4"></i>
-          </div>
-          <div>
-            <div class="text-muted small fw-medium">Failed Logins Today</div>
-            <div class="fs-4 fw-bold text-danger">{{ number_format($stats['failed_logins']) }}</div>
-          </div>
+    {{-- Failed Logins --}}
+    <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Failed Logins Today</span>
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 text-rose-600 dark:bg-rose-950/60 dark:text-rose-400">
+          <i class="ph-duotone ph-warning-octagon text-lg"></i>
         </div>
       </div>
+      <div class="mt-2">
+        <span class="text-2xl font-bold font-mono text-rose-600 dark:text-rose-400">{{ number_format($stats['failed_logins']) }}</span>
+      </div>
+      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Security challenge rejections</p>
     </div>
 
-    <div class="col-sm-6 col-xl-3">
-      <div class="card border-0 shadow-sm rounded-3 bg-white p-3 h-100">
-        <div class="d-flex align-items-center">
-          <div class="bg-warning-subtle text-warning p-3 rounded-3 me-3">
-            <i class="ph-bold ph-database fs-4"></i>
-          </div>
-          <div>
-            <div class="text-muted small fw-medium">Activities &amp; Changes Today</div>
-            <div class="fs-4 fw-bold text-dark">{{ number_format($stats['mutations_today']) }}</div>
-          </div>
+    {{-- Activities & Changes --}}
+    <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Activities &amp; Changes Today</span>
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400">
+          <i class="ph-duotone ph-database text-lg"></i>
         </div>
       </div>
+      <div class="mt-2">
+        <span class="text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">{{ number_format($stats['mutations_today']) }}</span>
+      </div>
+      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Transactions &amp; mutations logged</p>
     </div>
   </div>
 
-  <!-- Minimalist Filter & Search Toolbar -->
-  <div class="filter-bar-minimal mb-4">
-    <form method="GET" action="{{ route('accounting.audit-log') }}" class="row g-2 align-items-center">
-      <!-- Search Field with Leading Icon -->
-      <div class="col-12 col-md-3">
-        <div class="filter-control-minimal">
-          <i class="ph ph-magnifying-glass filter-icon-leading" aria-hidden="true"></i>
-          <input type="text" name="search" class="filter-input-minimal has-leading-icon" placeholder="Search logs, user, IP..." value="{{ $search }}">
+  
+  <!-- Sub-Module Category Navigation Bar -->
+  @include('partials.submodule-nav')
+
+  {{-- Audit Log Table Card --}}
+  <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 overflow-hidden">
+    {{-- Filter Toolbar --}}
+    <div class="border-b border-slate-200 p-4 dark:border-slate-800">
+      <form method="GET" action="{{ route('accounting.audit-log') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-center">
+
+        {{-- Search --}}
+        <div class="lg:col-span-3">
+          <div class="relative">
+            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+              <i class="ph ph-magnifying-glass"></i>
+            </div>
+            <input type="search" name="search" class="block w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700" placeholder="Search logs, user, IP..." value="{{ $search }}">
+          </div>
         </div>
-      </div>
 
-      <!-- Event Filter -->
-      <div class="col-6 col-md-2">
-        <select name="event" class="filter-select-minimal {{ $event ? 'is-active' : '' }}" aria-label="Filter by Event">
-          <option value="">All Events</option>
-          @foreach($events as $ev)
-            <option value="{{ $ev }}" @selected($event === $ev)>{{ ucfirst(str_replace('_', ' ', $ev)) }}</option>
-          @endforeach
-        </select>
-      </div>
+        {{-- Event --}}
+        <div class="lg:col-span-2">
+          <select name="event" onchange="this.form.submit()" class="block w-full rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700 cursor-pointer {{ $event ? 'font-semibold text-emerald-600 dark:text-emerald-400' : '' }}" aria-label="Filter by Event">
+            <option value="">All Events</option>
+            @foreach($eventGroups as $groupName => $groupItems)
+              <optgroup label="{{ $groupName }}" class="font-bold text-slate-500 bg-slate-50 dark:bg-slate-900">
+                @foreach($groupItems as $evKey => $evLabel)
+                  <option value="{{ $evKey }}" class="font-normal text-slate-800 dark:text-slate-100" @selected($event === $evKey)>{{ $evLabel }}</option>
+                @endforeach
+              </optgroup>
+            @endforeach
+          </select>
+        </div>
 
-      <!-- Module Filter -->
-      <div class="col-6 col-md-2">
-        <select name="module" class="filter-select-minimal {{ $module ? 'is-active' : '' }}" aria-label="Filter by Module">
-          <option value="">All Modules</option>
-          @foreach($modules as $mod)
-            <option value="{{ $mod }}" @selected($module === $mod)>{{ $mod }}</option>
-          @endforeach
-        </select>
-      </div>
+        {{-- Module --}}
+        <div class="lg:col-span-2">
+          <select name="module" onchange="this.form.submit()" class="block w-full rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700 cursor-pointer {{ $module ? 'font-semibold text-emerald-600 dark:text-emerald-400' : '' }}" aria-label="Filter by Module">
+            <option value="">All Modules</option>
+            @foreach($modules as $mod)
+              @if(is_string($mod) && $mod !== '')
+                <option value="{{ $mod }}" @selected($module === $mod)>{{ $mod }}</option>
+              @endif
+            @endforeach
+          </select>
+        </div>
 
-      <!-- Role Filter -->
-      <div class="col-6 col-md-2">
-        <select name="role" class="filter-select-minimal {{ $role ? 'is-active' : '' }}" aria-label="Filter by Role">
-          <option value="">All Roles</option>
-          @foreach($roles as $r)
-            <option value="{{ $r }}" @selected($role === $r)>{{ $r }}</option>
-          @endforeach
-        </select>
-      </div>
+        {{-- Role --}}
+        <div class="lg:col-span-2">
+          <select name="role" onchange="this.form.submit()" class="block w-full rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700 cursor-pointer {{ $role ? 'font-semibold text-emerald-600 dark:text-emerald-400' : '' }}" aria-label="Filter by Role">
+            <option value="">All Roles</option>
+            @foreach($roles as $r)
+              @if(is_string($r) && $r !== '')
+                <option value="{{ $r }}" @selected($role === $r)>{{ $r }}</option>
+              @endif
+            @endforeach
+          </select>
+        </div>
 
-      <!-- Date Range -->
-      <div class="col-6 col-md-1">
-        <input type="date" name="date_from" class="filter-input-minimal {{ $dateFrom ? 'is-active' : '' }}" value="{{ $dateFrom }}" placeholder="Date" title="Filter from date">
-      </div>
+        {{-- Date --}}
+        <div class="lg:col-span-1">
+          <input type="date" name="date_from" onchange="this.form.submit()" class="block w-full rounded-xl border-0 bg-slate-50 py-1.5 px-2 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700 cursor-pointer" value="{{ $dateFrom }}" title="Filter from date">
+        </div>
 
-      <!-- Minimalist Actions -->
-      <div class="col-12 col-md-2 d-flex align-items-center justify-content-end gap-1">
-        <button type="submit" class="filter-btn-submit flex-grow-1" title="Apply Filters">
-          <i class="ph ph-funnel"></i>
-          <span>Filter</span>
-        </button>
-        @if($search || $event || $module || $role || $dateFrom)
-          <a href="{{ route('accounting.audit-log') }}" class="filter-btn-reset" title="Reset all filters">
-            <i class="ph ph-arrow-counter-clockwise"></i>
-            <span>Clear</span>
-          </a>
-        @endif
-      </div>
-    </form>
+        {{-- Actions --}}
+        <div class="lg:col-span-2 flex items-center justify-end gap-2">
+          <button type="submit" class="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-all cursor-pointer">
+            <i class="ph ph-funnel"></i>
+            Filter
+          </button>
+          @if($search || $event || $module || $role || $dateFrom)
+            <a href="{{ route('accounting.audit-log') }}" class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white p-1.5 text-xs font-semibold text-slate-600 shadow-sm hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 transition-all" title="Reset all filters">
+              <i class="ph ph-arrow-counter-clockwise"></i>
+            </a>
+          @endif
+        </div>
+      </form>
 
-    <!-- Active Filter Chips (Minimalist Tag Pills) -->
-    @if($search || $event || $module || $role || $dateFrom)
-      <div class="active-filter-chips">
-        <span class="active-filter-label"><i class="ph ph-sliders-horizontal me-1"></i> Active:</span>
-        @if($search)
-          <a href="{{ request()->fullUrlWithQuery(['search' => null]) }}" class="active-filter-chip" title="Remove search filter">
-            <span>Search: "{{ Str::limit($search, 18) }}"</span>
-            <i class="ph ph-x"></i>
-          </a>
-        @endif
-        @if($event)
-          <a href="{{ request()->fullUrlWithQuery(['event' => null]) }}" class="active-filter-chip" title="Remove event filter">
-            <span>Event: {{ ucfirst(str_replace('_', ' ', $event)) }}</span>
-            <i class="ph ph-x"></i>
-          </a>
-        @endif
-        @if($module)
-          <a href="{{ request()->fullUrlWithQuery(['module' => null]) }}" class="active-filter-chip" title="Remove module filter">
-            <span>Module: {{ $module }}</span>
-            <i class="ph ph-x"></i>
-          </a>
-        @endif
-        @if($role)
-          <a href="{{ request()->fullUrlWithQuery(['role' => null]) }}" class="active-filter-chip" title="Remove role filter">
-            <span>Role: {{ $role }}</span>
-            <i class="ph ph-x"></i>
-          </a>
-        @endif
-        @if($dateFrom)
-          <a href="{{ request()->fullUrlWithQuery(['date_from' => null]) }}" class="active-filter-chip" title="Remove date filter">
-            <span>Date: {{ $dateFrom }}</span>
-            <i class="ph ph-x"></i>
-          </a>
-        @endif
-        <a href="{{ route('accounting.audit-log') }}" class="active-filter-clear-all">Reset all</a>
+      {{-- Active Filter Chips --}}
+      @if($search || $event || $module || $role || $dateFrom)
+        <div class="flex flex-wrap items-center gap-2 pt-3 mt-3 border-t border-slate-100 dark:border-slate-800/80 text-xs">
+          <span class="text-slate-400 text-[11px] font-medium flex items-center gap-1">
+            <i class="ph ph-sliders-horizontal"></i>
+            Active Filters:
+          </span>
+          @if($search)
+            <a href="{{ request()->fullUrlWithQuery(['search' => null]) }}" class="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors">
+              <span>Search: "{{ Str::limit($search, 16) }}"</span>
+              <i class="ph ph-x text-[10px]"></i>
+            </a>
+          @endif
+          @if($event)
+            <a href="{{ request()->fullUrlWithQuery(['event' => null]) }}" class="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors">
+              <span>Event: {{ ucfirst(str_replace('_', ' ', $event)) }}</span>
+              <i class="ph ph-x text-[10px]"></i>
+            </a>
+          @endif
+          @if($module)
+            <a href="{{ request()->fullUrlWithQuery(['module' => null]) }}" class="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors">
+              <span>Module: {{ $module }}</span>
+              <i class="ph ph-x text-[10px]"></i>
+            </a>
+          @endif
+          @if($role)
+            <a href="{{ request()->fullUrlWithQuery(['role' => null]) }}" class="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors">
+              <span>Role: {{ $role }}</span>
+              <i class="ph ph-x text-[10px]"></i>
+            </a>
+          @endif
+          @if($dateFrom)
+            <a href="{{ request()->fullUrlWithQuery(['date_from' => null]) }}" class="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors">
+              <span>Date: {{ $dateFrom }}</span>
+              <i class="ph ph-x text-[10px]"></i>
+            </a>
+          @endif
+          <a href="{{ route('accounting.audit-log') }}" class="text-xs text-rose-600 hover:underline dark:text-rose-400 font-medium ml-1">Reset all</a>
+        </div>
+      @endif
+    </div>
+    <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div>
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <i class="ph ph-clock-counter-clockwise text-slate-400"></i>
+          Audit Trail Records
+          <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-mono font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">{{ number_format($logs->total()) }} total</span>
+        </h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Records are cryptographically immutable and sequentially time-stamped in UTC.</p>
       </div>
-    @endif
-  </div>
-
-  <!-- Audit Log Table -->
-  <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-      <h6 class="mb-0 fw-bold text-dark">
-        <i class="ph ph-clock-counter-clockwise text-muted me-1"></i> Audit Trail Records
-        <span class="badge bg-light text-dark ms-2 font-monospace">{{ $logs->total() }} total</span>
-      </h6>
-      <span class="text-muted small">
-        <i class="ph ph-info me-1"></i> Records are immutable and digitally time-stamped.
-      </span>
     </div>
 
-    <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0" style="font-size: 13px;">
-        <thead class="table-light">
-          <tr>
-            <th scope="col" style="width: 160px;">Timestamp (UTC)</th>
-            <th scope="col" style="width: 180px;">User &amp; Role</th>
-            <th scope="col" style="width: 120px;">Event</th>
-            <th scope="col" style="width: 150px;">Module</th>
-            <th scope="col">Description</th>
-            <th scope="col" style="width: 130px;">IP Address</th>
-            <th scope="col" style="width: 80px;" class="text-end">Details</th>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-xs">
+        <thead>
+          <tr class="border-b border-slate-200/80 bg-slate-50/75 dark:border-slate-800 dark:bg-slate-950/50">
+            <th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-[11px] w-40">Timestamp (UTC)</th>
+            <th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-[11px] w-48">User &amp; Role</th>
+            <th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-[11px] w-32">Event</th>
+            <th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-[11px] w-36">Module</th>
+            <th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-[11px]">Description</th>
+            <th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-[11px] w-32">IP Address</th>
+            <th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-[11px] text-right w-20">Details</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
           @forelse($logs as $log)
-            <tr>
-              <!-- Timestamp -->
-              <td>
-                <div class="fw-semibold text-dark">{{ $log->created_at->format('M d, Y') }}</div>
-                <div class="text-muted font-monospace small">{{ $log->created_at->format('H:i:s') }}</div>
+            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+              {{-- Timestamp --}}
+              <td class="py-3 px-4 whitespace-nowrap">
+                <div class="font-semibold text-slate-900 dark:text-white">{{ $log->created_at->format('M d, Y') }}</div>
+                <div class="text-[11px] font-mono text-slate-400">{{ $log->created_at->format('H:i:s') }}</div>
               </td>
 
-              <!-- User & Role -->
-              <td>
-                <div class="fw-semibold text-dark text-truncate" style="max-width: 170px;" title="{{ $log->user_name }}">
+              {{-- User & Role --}}
+              <td class="py-3 px-4">
+                <div class="font-semibold text-slate-900 dark:text-white truncate max-w-[180px]" title="{{ $log->user_name }}">
                   {{ $log->user_name ?? 'System' }}
                 </div>
                 @php
                   $roleBadge = match($log->user_role) {
-                    'CFO' => 'bg-danger-subtle text-danger border-danger-subtle',
-                    'FinanceManager' => 'bg-primary-subtle text-primary border-primary-subtle',
-                    'StaffAccountant' => 'bg-success-subtle text-success border-success-subtle',
-                    'BillingClerk' => 'bg-info-subtle text-info border-info-subtle',
-                    'Cashier' => 'bg-warning-subtle text-warning-emphasis border-warning-subtle',
-                    'Auditor' => 'bg-secondary-subtle text-secondary border-secondary-subtle',
-                    default => 'bg-light text-muted border'
+                    'CFO' => 'bg-rose-50 text-rose-700 ring-rose-700/10 dark:bg-rose-950/60 dark:text-rose-400 dark:ring-rose-500/20',
+                    'FinanceManager' => 'bg-blue-50 text-blue-700 ring-blue-700/10 dark:bg-blue-950/60 dark:text-blue-400 dark:ring-blue-500/20',
+                    'StaffAccountant' => 'bg-emerald-50 text-emerald-700 ring-emerald-700/10 dark:bg-emerald-950/60 dark:text-emerald-400 dark:ring-emerald-500/20',
+                    'BillingClerk' => 'bg-cyan-50 text-cyan-700 ring-cyan-700/10 dark:bg-cyan-950/60 dark:text-cyan-400 dark:ring-cyan-500/20',
+                    'Cashier' => 'bg-amber-50 text-amber-700 ring-amber-700/10 dark:bg-amber-950/60 dark:text-amber-400 dark:ring-amber-500/20',
+                    'Auditor' => 'bg-purple-50 text-purple-700 ring-purple-700/10 dark:bg-purple-950/60 dark:text-purple-400 dark:ring-purple-500/20',
+                    default => 'bg-slate-100 text-slate-700 ring-slate-700/10 dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-700/20'
                   };
                 @endphp
-                <span class="badge {{ $roleBadge }} border py-0 px-2" style="font-size: 10px;">
-                  {{ $log->user_role ?? 'Guest' }}
+                <span class="inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-semibold ring-1 ring-inset {{ $roleBadge }} mt-0.5">
+                  {{ $log->user_role ?? 'System / Daemon' }}
                 </span>
               </td>
 
-              <!-- Event Badge -->
-              <td>
+              {{-- Event Badge --}}
+              <td class="py-3 px-4">
                 @php
-                  $eventBadge = match($log->event) {
-                    'login' => 'bg-success text-white',
-                    'logout' => 'bg-secondary text-white',
-                    'failed_login' => 'bg-danger text-white',
-                    '2fa_passed' => 'bg-info-subtle text-info border border-info-subtle',
-                    'session_displaced', 'session_terminated' => 'bg-dark text-white',
-                    'created' => 'bg-primary text-white',
-                    'updated' => 'bg-warning text-dark',
-                    'deleted' => 'bg-danger text-white',
-                    'posted' => 'bg-info text-white',
-                    'reversed' => 'bg-dark text-white',
-                    'viewed' => 'bg-light text-secondary border',
-                    'exported', 'printed' => 'bg-primary-subtle text-primary border border-primary-subtle',
-                    'approved' => 'bg-success text-white',
-                    'rejected' => 'bg-danger text-white',
-                    'revoked' => 'bg-warning-subtle text-warning-emphasis border border-warning-subtle',
-                    'collected' => 'bg-success-subtle text-success border border-success-subtle',
-                    'closed', 'locked' => 'bg-dark text-white',
-                    default => 'bg-light text-dark border'
+                  $eventClass = match($log->event) {
+                    'login' => 'bg-emerald-50 text-emerald-700 ring-emerald-700/10 dark:bg-emerald-950/60 dark:text-emerald-400 dark:ring-emerald-500/20',
+                    'logout' => 'bg-slate-100 text-slate-700 ring-slate-700/10 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700/20',
+                    'failed_login' => 'bg-rose-50 text-rose-700 ring-rose-700/10 dark:bg-rose-950/60 dark:text-rose-400 dark:ring-rose-500/20',
+                    '2fa_passed' => 'bg-blue-50 text-blue-700 ring-blue-700/10 dark:bg-blue-950/60 dark:text-blue-400 dark:ring-blue-500/20',
+                    'session_displaced', 'session_terminated' => 'bg-purple-50 text-purple-700 ring-purple-700/10 dark:bg-purple-950/60 dark:text-purple-400 dark:ring-purple-500/20',
+                    'created' => 'bg-emerald-50 text-emerald-700 ring-emerald-700/10 dark:bg-emerald-950/60 dark:text-emerald-400 dark:ring-emerald-500/20',
+                    'updated' => 'bg-amber-50 text-amber-700 ring-amber-700/10 dark:bg-amber-950/60 dark:text-amber-400 dark:ring-amber-500/20',
+                    'deleted' => 'bg-rose-50 text-rose-700 ring-rose-700/10 dark:bg-rose-950/60 dark:text-rose-400 dark:ring-rose-500/20',
+                    'posted' => 'bg-cyan-50 text-cyan-700 ring-cyan-700/10 dark:bg-cyan-950/60 dark:text-cyan-400 dark:ring-cyan-500/20',
+                    'reversed' => 'bg-slate-900 text-white dark:bg-slate-700',
+                    'viewed' => 'bg-slate-100 text-slate-600 ring-slate-600/10 dark:bg-slate-800 dark:text-slate-400',
+                    'exported', 'printed' => 'bg-indigo-50 text-indigo-700 ring-indigo-700/10 dark:bg-indigo-950/60 dark:text-indigo-400 dark:ring-indigo-500/20',
+                    'approved' => 'bg-emerald-50 text-emerald-700 ring-emerald-700/10 dark:bg-emerald-950/60 dark:text-emerald-400 dark:ring-emerald-500/20',
+                    'rejected' => 'bg-rose-50 text-rose-700 ring-rose-700/10 dark:bg-rose-950/60 dark:text-rose-400 dark:ring-rose-500/20',
+                    'revoked' => 'bg-amber-50 text-amber-700 ring-amber-700/10 dark:bg-amber-950/60 dark:text-amber-400 dark:ring-amber-500/20',
+                    'collected' => 'bg-teal-50 text-teal-700 ring-teal-700/10 dark:bg-teal-950/60 dark:text-teal-400 dark:ring-teal-500/20',
+                    'closed', 'locked' => 'bg-slate-900 text-white dark:bg-slate-700',
+                    default => 'bg-slate-100 text-slate-700 ring-slate-700/10 dark:bg-slate-800 dark:text-slate-300'
                   };
                 @endphp
-                <span class="badge {{ $eventBadge }} py-1 px-2 font-monospace" style="font-size: 11px;">
+                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-mono font-semibold ring-1 ring-inset {{ $eventClass }}">
                   {{ strtoupper(str_replace('_', ' ', $log->event)) }}
                 </span>
               </td>
 
-              <!-- Module -->
-              <td>
-                <span class="fw-medium text-secondary">
-                  <i class="ph ph-folder me-1 text-muted"></i>{{ $log->module }}
+              {{-- Module --}}
+              <td class="py-3 px-4">
+                <span class="inline-flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                  <i class="ph ph-folder text-slate-400"></i>
+                  {{ $log->module }}
                 </span>
               </td>
 
-              <!-- Description -->
-              <td>
-                <div class="text-dark">{{ $log->description }}</div>
+              {{-- Description --}}
+              <td class="py-3 px-4">
+                <div class="text-slate-900 dark:text-slate-100 font-medium">{{ $log->description }}</div>
                 @if($log->auditable_type)
-                  <div class="text-muted small font-monospace">
+                  <div class="text-[11px] font-mono text-slate-400 mt-0.5">
                     Ref: {{ class_basename($log->auditable_type) }} #{{ $log->auditable_id }}
                   </div>
                 @endif
               </td>
 
-              <!-- IP Address -->
-              <td>
-                <span class="font-monospace small text-muted">
-                  {{ $log->ip_address ?? '127.0.0.1' }}
-                </span>
+              {{-- IP Address --}}
+              <td class="py-3 px-4">
+                <code class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[11px] text-slate-700 dark:bg-slate-800 dark:text-slate-300">{{ $log->ip_address ?? '127.0.0.1' }}</code>
               </td>
 
-              <!-- Diff Details Modal Trigger -->
-              <td class="text-end">
+              {{-- Diff Details Trigger --}}
+              <td class="py-3 px-4 text-right">
                 @if(!empty($log->new_values) || !empty($log->old_values))
-                  <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-2" data-bs-toggle="modal" data-bs-target="#diffModal{{ $log->id }}" title="View State Changes">
-                    <i class="ph ph-code"></i>
+                  <button type="button" @click="openDiff({
+                    id: {{ $log->id }},
+                    event: '{{ $log->event }}',
+                    user: '{{ addslashes($log->user_name ?? 'System') }}',
+                    oldValues: @js($log->old_values),
+                    newValues: @js($log->new_values),
+                    userAgent: @js($log->user_agent ?? 'N/A')
+                  })" class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white p-1.5 text-slate-600 shadow-sm hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 transition-all" title="View State Changes">
+                    <i class="ph ph-code text-sm"></i>
                   </button>
-
-                  <!-- Modal -->
-                  <div class="modal fade" id="diffModal{{ $log->id }}" tabindex="-1" aria-labelledby="diffModalLabel{{ $log->id }}" aria-hidden="true">
-                    <div class="modal-dialog modal-lg modal-dialog-centered text-start">
-                      <div class="modal-content border-0 shadow">
-                        <div class="modal-header bg-light">
-                          <h6 class="modal-title fw-bold" id="diffModalLabel{{ $log->id }}">
-                            <i class="ph ph-git-diff me-1 text-primary"></i> State Diff: Log #{{ $log->id }} ({{ $log->event }})
-                          </h6>
-                          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body p-3">
-                          <div class="row g-3">
-                            <div class="col-md-6">
-                              <h6 class="text-muted small fw-bold text-uppercase">Previous Values (Original)</h6>
-                              <pre class="bg-light p-3 rounded-3 border small font-monospace text-wrap" style="max-height: 280px; overflow-y: auto;">{{ json_encode($log->old_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) ?: 'None (New Record)' }}</pre>
-                            </div>
-                            <div class="col-md-6">
-                              <h6 class="text-muted small fw-bold text-uppercase">New / Modified Values</h6>
-                              <pre class="bg-light p-3 rounded-3 border small font-monospace text-wrap" style="max-height: 280px; overflow-y: auto;">{{ json_encode($log->new_values, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) ?: 'None (Deleted Record)' }}</pre>
-                            </div>
-                          </div>
-                          <div class="mt-2 text-muted small">
-                            <strong>User Agent:</strong> {{ $log->user_agent ?? 'N/A' }}
-                          </div>
-                        </div>
-                        <div class="modal-footer bg-light py-2">
-                          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                 @else
-                  <span class="text-muted small">—</span>
+                  <span class="text-slate-400 font-mono text-xs">—</span>
                 @endif
               </td>
             </tr>
           @empty
             <tr>
-              <td colspan="7" class="text-center py-5 text-muted">
-                <i class="ph ph-folder-open fs-1 d-block mb-2 text-secondary opacity-50"></i>
-                <p class="mb-0 fw-medium">No audit log records match the selected filter criteria.</p>
-                <a href="{{ route('accounting.audit-log') }}" class="btn btn-link btn-sm mt-2">Reset all filters</a>
+              <td colspan="7" class="text-center py-10 text-slate-500 dark:text-slate-400">
+                <div class="flex flex-col items-center justify-center">
+                  <div class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800 mb-2">
+                    <i class="ph ph-folder-open text-xl"></i>
+                  </div>
+                  <span class="font-medium text-xs text-slate-700 dark:text-slate-300">No audit log records match the selected filter criteria</span>
+                  <a href="{{ route('accounting.audit-log') }}" class="text-xs text-emerald-600 dark:text-emerald-400 hover:underline mt-1 font-medium">Reset all filters</a>
+                </div>
               </td>
             </tr>
           @endforelse
@@ -350,17 +363,75 @@
     </div>
 
     @if($logs->hasPages())
-      <div class="card-footer bg-white py-3 border-0">
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-          <div class="text-muted small">
-            Showing {{ $logs->firstItem() }} to {{ $logs->lastItem() }} of {{ $logs->total() }} records
-          </div>
-          <div>
-            {{ $logs->links() }}
-          </div>
+      <div class="p-4 border-t border-slate-100 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="text-xs text-slate-500 dark:text-slate-400">
+          Showing {{ $logs->firstItem() }} to {{ $logs->lastItem() }} of {{ number_format($logs->total()) }} records
+        </div>
+        <div>
+          {{ $logs->links() }}
         </div>
       </div>
     @endif
   </div>
+
+  {{-- State Changes Alpine Modal --}}
+  <div x-show="isOpen" x-cloak class="relative z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div x-show="isOpen" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity"></div>
+
+    <div class="fixed inset-0 z-10 w-screen overflow-y-auto p-4 sm:p-6 md:p-20">
+      <div x-show="isOpen" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" @click.away="closeDiff()" class="relative mx-auto max-w-4xl transform rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 transition-all text-left">
+
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+          <div class="flex items-center gap-2.5">
+            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400">
+              <i class="ph-duotone ph-git-diff text-xl"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white" id="modal-title">
+                State Diff: Log #<span x-text="activeLog?.id"></span> (<span class="font-mono text-emerald-600 dark:text-emerald-400" x-text="activeLog?.event"></span>)
+              </h3>
+              <p class="text-[11px] text-slate-400">Actor: <span class="font-semibold text-slate-700 dark:text-slate-300" x-text="activeLog?.user"></span></p>
+            </div>
+          </div>
+          <button @click="closeDiff()" type="button" class="rounded-lg p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+            <i class="ph ph-x text-base"></i>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-5">
+          {{-- Previous Values --}}
+          <div>
+            <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 flex items-center gap-1.5">
+              <i class="ph ph-clock-counter-clockwise text-slate-400"></i>
+              Previous Values (Original)
+            </div>
+            <pre class="w-full rounded-xl border border-slate-200 bg-slate-50/75 p-3.5 text-xs font-mono text-slate-800 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 overflow-y-auto max-h-72 leading-relaxed" x-text="activeLog?.oldValues ? JSON.stringify(activeLog.oldValues, null, 2) : 'None (New Record Created)'"></pre>
+          </div>
+
+          {{-- Modified Values --}}
+          <div>
+            <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2 flex items-center gap-1.5">
+              <i class="ph ph-check-circle text-emerald-500"></i>
+              New / Modified Values
+            </div>
+            <pre class="w-full rounded-xl border border-slate-200 bg-slate-50/75 p-3.5 text-xs font-mono text-slate-800 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 overflow-y-auto max-h-72 leading-relaxed" x-text="activeLog?.newValues ? JSON.stringify(activeLog.newValues, null, 2) : 'None (Record Purged / Deleted)'"></pre>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 text-[11px] text-slate-600 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-400 flex items-center gap-2">
+          <span class="font-semibold text-slate-700 dark:text-slate-300">User Agent:</span>
+          <span class="font-mono truncate" x-text="activeLog?.userAgent"></span>
+        </div>
+
+        <div class="mt-5 flex justify-end">
+          <button @click="closeDiff()" type="button" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 transition-all">
+            Close
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
 </div>
 @endsection

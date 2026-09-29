@@ -20,18 +20,50 @@ final class ChangePasswordController extends Controller
     }
 
     /** Handle the password change submission. */
-    public function update(Request $request): RedirectResponse
+    public function update(Request $request): \Illuminate\Http\JsonResponse|RedirectResponse
     {
-        $request->validate([
-            'password' => ['required', 'confirmed', Password::min(8)->letters()->numbers()->mixedCase()],
-        ]);
-
         $user = $request->user();
+
+        // If voluntary change password from account settings (not forced), verify current password
+        $rules = [
+            'password' => ['required', 'confirmed', Password::min(8)->letters()->numbers()->mixedCase()],
+        ];
+
+        if (!$user->must_change_password) {
+            $rules['current_password'] = ['required', 'string'];
+        }
+
+        $request->validate($rules);
+
+        if (!$user->must_change_password) {
+            if (!Hash::check((string) $request->input('current_password'), (string) $user->password)) {
+                if ($request->expectsJson() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'The provided current password does not match our records.',
+                        'errors'  => [
+                            'current_password' => ['The provided current password does not match our records.'],
+                        ],
+                    ], 422);
+                }
+
+                return back()->withErrors([
+                    'current_password' => 'The provided current password does not match our records.',
+                ]);
+            }
+        }
 
         $user->update([
             'password'             => Hash::make($request->password),
             'must_change_password' => false,
         ]);
+
+        if ($request->expectsJson() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Your password has been changed successfully.',
+            ]);
+        }
 
         $targetRoute = match ($user->role ?? 'StaffAccountant') {
             'Cashier' => route('collection.cashier-desk'),

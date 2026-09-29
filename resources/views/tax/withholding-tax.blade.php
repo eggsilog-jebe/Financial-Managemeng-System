@@ -1,118 +1,179 @@
 @extends('layouts.app')
 
-@section('title', 'Withholding Tax - Tax Management | FMS')
+@section('title', 'Withholding Tax Certificates (BIR Form 2307 & 2306) - Tax Management | FMS')
 @section('module', 'tax')
 @section('page', 'withholding-tax')
 
 @section('content')
-<div class="container-fluid p-4">
+<div class="space-y-6" x-data="{
+  search: '',
+  formFilter: '',
+  payeeFilter: '',
+  certDetailsOpen: false,
+  selectedCert: {
+    num: '',
+    payee: '',
+    role: '',
+    payee_type: '',
+    tin: '',
+    atc: '',
+    gross: '₱0.00',
+    tax: '₱0.00',
+    form: 'BIR Form 2307',
+    form_type: '2307'
+  },
+  openDetails(cert) {
+    this.selectedCert = cert;
+    this.certDetailsOpen = true;
+  }
+}">
+
   <!-- Page Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <div>
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-1 fs-xs">
-          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
-          <li class="breadcrumb-item">Tax Management</li>
-          <li class="breadcrumb-item active">Withholding Tax</li>
-        </ol>
-      </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Withholding Tax Certificates (BIR Form 2307 &amp; 2306)</h1>
-      <p class="text-muted fs-xs mb-0">Generate, print, and track BIR Form 2307 tax withheld certificates issued to medical suppliers, contracted doctors, and service providers.</p>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Withholding Tax Certificates (BIR Form 2307 &amp; 2306)
+        </h1>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <x-integration-badge 
-          type="internal" 
-          :systems="['Accounts Payable', 'BIR Form 2307', 'BIR Form 1601-EQ']" 
-          description="Tracks expanded withholding tax (EWT) and generates 2307 certificates." 
-      />
-      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Exporting BIR DAT E-Submission file...');"><i class="ph ph-file-arrow-down me-1"></i> Export BIR E-Submission</button>
-      <button id="btnIssueCert" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#issueCertModal"><i class="ph ph-plus-circle me-1"></i> Issue 2307 Certificate</button>
+
+    <div class="flex items-center gap-2.5 flex-wrap">
+      <button 
+        type="button" 
+        onclick="alert('Exporting BIR DAT E-Submission file...')"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50 shadow-sm transition-all dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700"
+      >
+        <i class="ph-bold ph-file-arrow-down"></i>
+        <span>Export BIR E-Submission</span>
+      </button>
+      <button 
+        type="button" 
+        id="btnIssueCert"
+        @click="$dispatch('open-modal', 'issueCertModal')"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20 transition-all"
+      >
+        <i class="ph-bold ph-plus-circle"></i>
+        <span>Issue 2307 Certificate</span>
+      </button>
     </div>
   </div>
 
   <!-- Metric Summary Cards -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Form 2307 Issued (Month)</span>
-          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-file-text fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ count($certificates ?? []) }} Certificates</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Tax Withheld (EWT)</span>
-          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-scissors fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-danger">₱{{ number_format(($certificates ?? collect())->sum('tax_withheld'), 2) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Gross Income Base</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-currency-circle-dollar fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($certificates ?? collect())->sum(fn($c) => $c->tax_base_amount ?? $c->gross_income ?? 0), 2) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Remittance Status</span>
-          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">Due Aug 10</h4>
-      </div>
-    </div>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+    <x-stat-card 
+      title="Form 2307 Issued (Month)" 
+      :value="count($certificates ?? [])" 
+      :isCurrency="false"
+      icon="ph-file-text" 
+      color="indigo" 
+      subtitle="Generated tax certificates"
+    />
+
+    <x-stat-card 
+      title="Total Tax Withheld (EWT)" 
+      :value="(float) (($certificates ?? collect())->sum('tax_withheld'))" 
+      icon="ph-scissors" 
+      color="rose" 
+      subtitle="Expanded withholding tax"
+    />
+
+    <x-stat-card 
+      title="Total Gross Income Base" 
+      :value="(float) (($certificates ?? collect())->sum(fn($c) => $c->tax_base_amount ?? $c->gross_income ?? 0))" 
+      icon="ph-currency-circle-dollar" 
+      color="emerald" 
+      subtitle="Vatable & EWT base payments"
+    />
+
+    <x-stat-card 
+      title="Remittance Status" 
+      value="Due Aug 10" 
+      :isCurrency="false"
+      icon="ph-clock" 
+      color="amber" 
+      subtitle="BIR Form 1601-EQ eFPS Filing"
+    />
   </div>
 
-  <!-- Data Table Card -->
-  <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-transparent border-bottom p-3">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <div class="d-flex align-items-center gap-2">
-          <label for="certFormSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Form Type:</label>
-          <select id="certFormSelect" class="form-select form-select-sm bg-light" style="min-width: 220px;">
-            <option value="" selected>All Form Types</option>
+  <!-- Main Table Card -->
+  
+  <!-- Sub-Module Category Navigation Bar -->
+  @include('partials.submodule-nav')
+
+  <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 overflow-hidden dark:bg-slate-900 dark:ring-slate-800">
+    <!-- Filter Toolbar -->
+    <div class="border-b border-slate-200 p-4 dark:border-slate-800">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 flex-wrap">
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="flex items-center gap-1.5 text-xs text-slate-500">
+            <i class="ph-bold ph-funnel"></i>
+            <span>Form Type:</span>
+          </div>
+          <select 
+            id="certFormSelect"
+            x-model="formFilter"
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
+            <option value="">All Form Types</option>
             <option value="2307">BIR Form 2307</option>
             <option value="2306">BIR Form 2306</option>
           </select>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-          <label for="certPayeeTypeSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap">Payee Category:</label>
-          <select id="certPayeeTypeSelect" class="form-select form-select-sm bg-light" style="min-width: 200px;">
-            <option value="" selected>All Payee Types</option>
+
+          <div class="flex items-center gap-1.5 text-xs text-slate-500 ml-2">
+            <span>Payee Category:</span>
+          </div>
+          <select 
+            id="certPayeeTypeSelect"
+            x-model="payeeFilter"
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
+            <option value="">All Payee Types</option>
             <option value="doctor">Medical Consultants</option>
             <option value="supplier">Suppliers &amp; Vendors</option>
           </select>
         </div>
-        <div class="search-box ms-auto" style="width: 260px;">
-          <i class="ph ph-magnifying-glass"></i>
-          <input type="search" id="certSearchInput" class="form-control form-control-sm" placeholder="Search cert no, payee, TIN...">
+
+        <div class="flex items-center gap-2">
+          <div class="relative w-full sm:w-72">
+            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+              <i class="ph ph-magnifying-glass text-sm"></i>
+            </div>
+            <input 
+              type="search" 
+              id="certSearchInput"
+              x-model="search"
+              placeholder="Search cert #, payee, TIN..." 
+              class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+            >
+          </div>
+          <button 
+            type="button" 
+            x-show="search || formFilter || payeeFilter"
+            @click="search = ''; formFilter = ''; payeeFilter = '';"
+            class="rounded-xl px-2 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-300"
+          >
+            Reset
+          </button>
         </div>
       </div>
     </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table id="certTable" class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Cert Number</th>
-              <th>Payee / Doctor Name</th>
-              <th>TIN Number</th>
-              <th>ATC Code</th>
-              <th class="text-end">Gross Income (₱)</th>
-              <th class="text-end">Tax Withheld (₱)</th>
-              <th>Form Type</th>
-              <th class="text-end">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($certificates ?? [] as $c)
+
+    <!-- Table -->
+    <div class="overflow-x-auto custom-scrollbar">
+      <table id="certTable" class="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+        <thead class="border-b border-slate-200 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+          <tr>
+            <th class="py-3 px-4 font-mono">Cert Number</th>
+            <th class="py-3 px-4">Payee / Doctor Name</th>
+            <th class="py-3 px-4 font-mono">TIN Number</th>
+            <th class="py-3 px-4 text-center font-mono">ATC Code</th>
+            <th class="py-3 px-4 text-right font-mono">Gross Income (₱)</th>
+            <th class="py-3 px-4 text-right font-mono">Tax Withheld (₱)</th>
+            <th class="py-3 px-4 text-center">Form Type</th>
+            <th class="py-3 px-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          @forelse($certificates ?? [] as $c)
             @php
               $num = is_array($c) ? $c['num'] : ($c->certificate_number ?? $c->cert_number ?? 'N/A');
               $payee = is_array($c) ? $c['payee'] : ($c->payee_name ?? 'N/A');
@@ -120,10 +181,13 @@
               $payeeType = is_array($c) ? $c['payee_type'] : ($c->doctor_id ? 'doctor' : 'supplier');
               $tin = is_array($c) ? $c['tin'] : ($c->payee_tin ?? $c->tin ?? 'N/A');
               $atc = is_array($c) ? $c['atc'] : ($c->atc_code ?? 'N/A');
-              $gross = is_array($c) ? $c['gross'] : ('₱' . number_format((float) ($c->tax_base_amount ?? $c->gross_income ?? 0), 2));
-              $tax = is_array($c) ? $c['tax'] : ('₱' . number_format((float) ($c->tax_withheld ?? 0), 2));
+              $rawGross = (float) ($c->tax_base_amount ?? $c->gross_income ?? 0);
+              $rawTax = (float) ($c->tax_withheld ?? 0);
+              $gross = is_array($c) ? $c['gross'] : ('₱' . number_format($rawGross, 2));
+              $tax = is_array($c) ? $c['tax'] : ('₱' . number_format($rawTax, 2));
               $form = is_array($c) ? $c['form'] : ('BIR Form ' . ($c->form_type ?? '2307'));
               $formType = is_array($c) ? $c['form_type'] : ($c->form_type ?? '2307');
+              
               $cData = [
                 'num' => $num,
                 'payee' => $payee,
@@ -137,323 +201,330 @@
                 'form_type' => $formType
               ];
             @endphp
-            <tr class="cert-row" style="cursor: pointer;" onclick="openCertDetailsModal({{ json_encode($cData) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $num }}</span></td>
-              <td>
-                <div class="fw-semibold text-dark">{{ $payee }}</div>
-                <span class="fs-xs text-muted">{{ $role }}</span>
+            <tr 
+              class="cert-row transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/40 cursor-pointer" 
+              data-form="{{ strtolower($formType) }}"
+              data-payee="{{ strtolower($payeeType) }}"
+              @click="openDetails({{ json_encode($cData) }})"
+              x-show="(!search || '{{ strtolower($num . ' ' . $payee . ' ' . $tin . ' ' . $atc) }}'.includes(search.toLowerCase())) && (!formFilter || '{{ strtolower($formType) }}'.includes(formFilter.toLowerCase())) && (!payeeFilter || '{{ strtolower($payeeType) }}' === payeeFilter.toLowerCase())"
+            >
+              <td class="py-3.5 px-4 font-mono font-bold text-indigo-600 dark:text-indigo-400">
+                {{ $num }}
               </td>
-              <td><span class="font-monospace text-muted">{{ $tin }}</span></td>
-              <td><span class="badge bg-light text-dark border font-monospace">{{ $atc }}</span></td>
-              <td class="text-end font-monospace fw-semibold">{{ $gross }}</td>
-              <td class="text-end text-danger fw-bold font-monospace">{{ $tax }}</td>
-              <td><span class="badge bg-primary-subtle text-primary">{{ $form }}</span></td>
-              <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Certificate Details" onclick="openCertDetailsModal({{ json_encode($cData) }})"><i class="ph ph-eye"></i></button>
+              <td class="py-3.5 px-4">
+                <div class="font-semibold text-slate-900 dark:text-white">{{ $payee }}</div>
+                <div class="text-xs text-slate-400">{{ $role }}</div>
+              </td>
+              <td class="py-3.5 px-4 font-mono text-xs text-slate-600 dark:text-slate-400">
+                {{ $tin }}
+              </td>
+              <td class="py-3.5 px-4 text-center">
+                <span class="inline-flex items-center rounded-lg bg-slate-100 px-2.5 py-1 font-mono text-xs font-semibold text-slate-700 ring-1 ring-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
+                  {{ $atc }}
+                </span>
+              </td>
+              <td class="py-3.5 px-4 text-right font-mono font-semibold text-slate-900 dark:text-white">
+                ₱{{ number_format($rawGross, 2) }}
+              </td>
+              <td class="py-3.5 px-4 text-right font-mono font-bold text-rose-600 dark:text-rose-400">
+                ₱{{ number_format($rawTax, 2) }}
+              </td>
+              <td class="py-3.5 px-4 text-center">
+                <x-status-badge status="BIR_2307" :label="$form" />
+              </td>
+              <td class="py-3.5 px-4 text-right" @click.stop>
+                <button 
+                  type="button" 
+                  @click="openDetails({{ json_encode($cData) }})"
+                  class="inline-flex items-center gap-1 rounded-lg bg-indigo-50 px-2.5 py-1 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-600/20 hover:bg-indigo-100 transition-all dark:bg-indigo-950/40 dark:text-indigo-300"
+                  title="View Certificate Details"
+                >
+                  <i class="ph-bold ph-eye"></i>
+                  <span>Inspect</span>
+                </button>
               </td>
             </tr>
-            @empty
+          @empty
             <tr>
-              <td colspan="8" class="text-center py-4 text-muted">No tax certificates issued in database.</td>
+              <td colspan="8" class="py-12 text-center text-sm text-slate-400">
+                <i class="ph ph-receipt text-3xl mb-2 block mx-auto text-slate-300"></i>
+                No tax certificates issued in database.
+              </td>
             </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
+          @endforelse
+        </tbody>
+      </table>
     </div>
-    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="certSummaryText">Showing {{ count($certificates ?? []) }} Tax Certificates</span>
-      <nav aria-label="Certificate Pagination">
-        <ul class="pagination pagination-sm mb-0">
-          <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
-          <li class="page-item active"><a class="page-link" href="#">1</a></li>
-          <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
-        </ul>
-      </nav>
-    </div>
-  </div>
-</div>
 
-<!-- Modal: In-Depth Certificate Details (Executive Design) -->
-<div class="modal fade" id="certDetailsModal" tabindex="-1" aria-labelledby="certDetailsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-      <div class="modal-header bg-white border-bottom p-4 pb-3">
-        <div>
-          <div class="d-flex align-items-center gap-2 mb-1">
-            <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1" id="detailCertNum">C2307-2026-881</span>
-            <span class="badge bg-primary-subtle text-primary" id="detailCertForm">BIR Form 2307</span>
-          </div>
-          <h4 class="modal-title fw-bold text-dark mb-0" id="detailCertPayee">Dr. Roberto Gomez</h4>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <!-- Table Footer & Pagination -->
+    @if(method_exists($certificates, 'links'))
+      <div class="border-t border-slate-200 p-4 dark:border-slate-800">
+        {{ $certificates->links() }}
       </div>
+    @endif
 
-      <div class="modal-body p-4 bg-light-subtle">
-        <div class="row g-3 mb-4">
-          <div class="col-md-6">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Gross Income Base</span>
-              <h4 class="fw-bold text-dark mb-0 font-monospace" id="detailCertGross">₱120,000.00</h4>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Creditable Tax Withheld</span>
-              <h4 class="fw-bold text-danger mb-0 font-monospace" id="detailCertTax">₱12,000.00</h4>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white border rounded-3 p-3 mb-4">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-identification-card me-1 text-primary"></i> Taxpayer &amp; ATC Details</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Taxpayer Identification Number (TIN)</span>
-              <span class="font-monospace fw-bold text-dark" id="detailCertTin">102-391-441-000</span>
-            </div>
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Alphanumeric Tax Code (ATC)</span>
-              <span class="font-monospace text-primary fw-bold" id="detailCertAtc">WI010 (10%)</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">Payee Professional Category</span>
-              <span class="text-muted" id="detailCertRole">Visiting Cardiology Consultant</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Audit Trail & Segregation of Duties -->
-        <div class="bg-white border rounded-3 p-3">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-success"></i> Audit Trail &amp; BIR Form 2307 Verification</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Electronic Signature &amp; Stamp:</span>
-              <span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> Signed by Hospital Tax Compliance Officer</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">System Audit Stamp:</span>
-              <span class="font-monospace text-muted">LOG-2307-2026-881 | {{ date('Y-m-d H:i:s') }} PST</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer bg-white border-top p-3">
-        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-sm btn-primary" onclick="alert('Exporting Official BIR Form 2307 PDF...');"><i class="ph ph-printer me-1"></i> Print 2307 PDF</button>
+    <div class="border-t border-slate-200 p-4 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900/50">
+      <span id="certSummaryText">Showing {{ method_exists($certificates, 'total') ? $certificates->total() : count($certificates ?? []) }} Tax Certificates</span>
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center gap-1 text-[11px] text-slate-400">
+          <i class="ph-bold ph-shield-check text-emerald-600"></i>
+          <span>BIR CAS Rule 2021 Compliant</span>
+        </span>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Modal: Issue Form 2307 Certificate -->
-<div class="modal fade" id="issueCertModal" tabindex="-1" aria-labelledby="issueCertModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title font-weight-bold" id="issueCertModalLabel"><i class="ph ph-file-text me-2 text-primary"></i>Issue BIR Form 2307 Withholding Certificate</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body p-4">
-        <form id="issueCertForm">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Payee Name (Doctor / Supplier) <span class="text-danger">*</span></label>
-              <input type="text" id="modalCertPayee" class="form-control form-control-sm" placeholder="e.g. Dr. Alejandro Santos" required>
+  <!-- Slide-Over Drawer: In-Depth Certificate Details -->
+  <div 
+    x-show="certDetailsOpen" 
+    x-cloak 
+    class="fixed inset-0 z-50 overflow-hidden" 
+    role="dialog" 
+    aria-modal="true"
+  >
+    <div 
+      x-show="certDetailsOpen" 
+      x-transition.opacity.duration.300ms 
+      class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
+    ></div>
+
+    <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
+      <div 
+        x-show="certDetailsOpen" 
+        x-transition:enter="transform transition ease-in-out duration-300"
+        x-transition:enter-start="translate-x-full"
+        x-transition:enter-end="translate-x-0"
+        x-transition:leave="transform transition ease-in-out duration-300"
+        x-transition:leave-start="translate-x-0"
+        x-transition:leave-end="translate-x-full"
+        @click.outside="certDetailsOpen = false" 
+        class="w-screen max-w-xl bg-white shadow-2xl ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800 flex flex-col justify-between"
+      >
+        <!-- Drawer Header -->
+        <div class="p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="font-mono text-xs font-bold text-indigo-600 dark:text-indigo-400" id="detailCertNum" x-text="selectedCert.num"></span>
+              <span class="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-bold text-indigo-700 ring-1 ring-indigo-600/20" id="detailCertForm" x-text="selectedCert.form"></span>
             </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Taxpayer Identification Number (TIN) <span class="text-danger">*</span></label>
-              <input type="text" id="modalCertTin" class="form-control form-control-sm font-monospace" placeholder="000-000-000-000" value="105-882-991-000" required>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white" id="detailCertPayee" x-text="selectedCert.payee"></h3>
+          </div>
+          <button 
+            type="button" 
+            @click="certDetailsOpen = false" 
+            class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+          >
+            <i class="ph-bold ph-x text-lg"></i>
+          </button>
+        </div>
+
+        <!-- Drawer Body -->
+        <div class="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-6 text-xs">
+          <!-- Gross vs Tax Metrics -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200/80 dark:bg-slate-800/60 dark:ring-slate-700 text-center">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Gross Income Base</span>
+              <div class="font-mono text-lg font-bold text-slate-900 dark:text-white" id="detailCertGross" x-text="selectedCert.gross"></div>
             </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Alphanumeric Tax Code (ATC) <span class="text-danger">*</span></label>
-              <select id="modalCertAtc" class="form-select form-select-sm" required>
-                <option value="WI010 (10%)">WI010 - Professional Fees (10%)</option>
-                <option value="WI011 (15%)">WI011 - Professional Fees (15%)</option>
-                <option value="WC158 (1%)">WC158 - Purchase of Medical Goods (1%)</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Gross Income Payment (₱) <span class="text-danger">*</span></label>
-              <input type="number" id="modalCertGross" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace" placeholder="0.00" value="150000.00" required>
+            <div class="rounded-2xl bg-rose-50 p-4 ring-1 ring-rose-200/80 dark:bg-rose-950/40 dark:ring-rose-800/60 text-center">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 block mb-1">Creditable Tax Withheld</span>
+              <div class="font-mono text-lg font-bold text-rose-700 dark:text-rose-300" id="detailCertTax" x-text="selectedCert.tax"></div>
             </div>
           </div>
-          <div class="d-flex justify-content-end gap-2 mt-4">
-            <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-printer me-1"></i> Generate &amp; Sign 2307 PDF</button>
+
+          <!-- Taxpayer & ATC Details -->
+          <div class="rounded-2xl bg-slate-50 p-5 ring-1 ring-slate-200/80 dark:bg-slate-800/60 dark:ring-slate-700 space-y-3">
+            <h4 class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 uppercase text-[11px] tracking-wider text-slate-500">
+              <i class="ph-bold ph-identification-card text-indigo-600"></i>
+              <span>Taxpayer &amp; ATC Details</span>
+            </h4>
+            
+            <div class="space-y-2 pt-1 divide-y divide-slate-200 dark:divide-slate-700">
+              <div class="flex justify-between items-center pt-2">
+                <span class="text-slate-500">Taxpayer Identification Number (TIN):</span>
+                <span class="font-mono font-bold text-slate-900 dark:text-white" id="detailCertTin" x-text="selectedCert.tin"></span>
+              </div>
+              <div class="flex justify-between items-center pt-2">
+                <span class="text-slate-500">Alphanumeric Tax Code (ATC):</span>
+                <span class="font-mono font-bold text-indigo-600 dark:text-indigo-400" id="detailCertAtc" x-text="selectedCert.atc"></span>
+              </div>
+              <div class="flex justify-between items-center pt-2">
+                <span class="text-slate-500">Payee Professional Category:</span>
+                <span class="font-medium text-slate-800 dark:text-slate-200" id="detailCertRole" x-text="selectedCert.role"></span>
+              </div>
+            </div>
           </div>
-        </form>
+
+          <!-- Audit Trail & Digital Stamp -->
+          <div class="rounded-2xl bg-white p-5 ring-1 ring-slate-200/80 dark:bg-slate-800 dark:ring-slate-700 space-y-3">
+            <h4 class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 uppercase text-[11px] tracking-wider text-slate-500">
+              <i class="ph-bold ph-shield-check text-emerald-600"></i>
+              <span>Audit Trail &amp; BIR Verification</span>
+            </h4>
+
+            <div class="space-y-2 pt-1 text-[11px]">
+              <div class="flex items-center justify-between">
+                <span class="text-slate-500">Electronic Stamp:</span>
+                <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-600/20">
+                  <i class="ph-bold ph-check"></i> Certified by Hospital Tax Officer
+                </span>
+              </div>
+              <div class="flex items-center justify-between text-slate-400 font-mono">
+                <span>System Verification:</span>
+                <span x-text="'CERT-' + selectedCert.num + ' • ' + '{{ date('Y-m-d H:i:s') }} PST'"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Drawer Footer -->
+        <div class="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
+          <button 
+            type="button" 
+            @click="certDetailsOpen = false" 
+            class="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300"
+          >
+            Close
+          </button>
+          <button 
+            type="button" 
+            onclick="alert('Exporting Official BIR Form 2307 PDF...');"
+            class="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 ring-1 ring-indigo-600/20"
+          >
+            <i class="ph-bold ph-printer"></i>
+            <span>Print 2307 PDF</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
+
+  <!-- Modal: Issue BIR Form 2307 Withholding Certificate -->
+  <x-modal 
+    id="issueCertModal" 
+    title="Issue BIR Form 2307 Withholding Certificate" 
+    subtitle="Creditable withholding tax at source certificate generation" 
+    icon="ph-receipt" 
+    iconVariant="indigo" 
+    size="xl" 
+    :showFooter="false"
+  >
+    <div 
+      x-data="{
+        payee: '',
+        tin: '105-882-991-000',
+        atc: 'WI010 (10%)',
+        gross: 150000.00,
+        get rate() {
+          if (this.atc.includes('15%')) return 0.15;
+          if (this.atc.includes('10%')) return 0.10;
+          if (this.atc.includes('5%')) return 0.05;
+          if (this.atc.includes('2%')) return 0.02;
+          return 0.01;
+        },
+        get calculatedTax() {
+          return (parseFloat(this.gross) || 0) * this.rate;
+        }
+      }"
+    >
+      <form id="issueCertForm" @submit.prevent="
+        alert('BIR Form 2307 Certificate successfully issued and recorded in CAS audit trail.');
+        $dispatch('close-modal', 'issueCertModal');
+      " class="space-y-4">
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Payee Legal Name (Doctor / Supplier) <span class="text-rose-500">*</span>
+            </label>
+            <input 
+              type="text" 
+              id="modalCertPayee" 
+              x-model="payee"
+              class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+              placeholder="e.g. Dr. Alejandro Santos" 
+              required
+            >
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Taxpayer Identification Number (TIN) <span class="text-rose-500">*</span>
+            </label>
+            <input 
+              type="text" 
+              id="modalCertTin" 
+              x-model="tin"
+              class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs font-mono text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+              placeholder="000-000-000-000" 
+              required
+            >
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Alphanumeric Tax Code (ATC) <span class="text-rose-500">*</span>
+            </label>
+            <select 
+              id="modalCertAtc" 
+              x-model="atc"
+              class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+              required
+            >
+              <option value="WI010 (10%)">WI010 - Medical Professional Fees (10%)</option>
+              <option value="WI011 (15%)">WI011 - Medical Professional Fees (15%)</option>
+              <option value="WC158 (1%)">WC158 - Purchase of Medical Goods (1%)</option>
+              <option value="WI160 (2%)">WI160 - Purchase of Hospital Services (2%)</option>
+              <option value="WC100 (5%)">WC100 - Subcontractor Clinical Services (5%)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Gross Income Payment (₱) <span class="text-rose-500">*</span>
+            </label>
+            <input 
+              type="number" 
+              id="modalCertGross" 
+              x-model.number="gross"
+              step="0.01" 
+              min="0" 
+              class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs font-mono text-right text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+              required
+            >
+          </div>
+        </div>
+
+        <!-- Live Calculation Box -->
+        <div class="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700 flex items-center justify-between">
+          <div>
+            <span class="text-xs text-slate-500 block">Computed Creditable EWT Amount:</span>
+            <span class="text-[11px] text-slate-400 font-mono" x-text="'Rate: ' + (rate * 100) + '% applied on ₱' + (parseFloat(gross) || 0).toLocaleString('en-PH', {minimumFractionDigits: 2})"></span>
+          </div>
+          <div class="text-right">
+            <span class="font-mono text-lg font-bold text-rose-600 dark:text-rose-400" x-text="'₱' + calculatedTax.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})"></span>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+          <button 
+            type="button" 
+            @click="$dispatch('close-modal', 'issueCertModal')" 
+            class="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300"
+          >
+            Cancel
+          </button>
+          <button 
+            type="submit" 
+            class="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 ring-1 ring-indigo-600/20"
+          >
+            <i class="ph-bold ph-printer"></i>
+            <span>Generate &amp; Sign 2307 PDF</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </x-modal>
+
 </div>
 @endsection
-
-@push('scripts')
-<script>
-function openCertDetailsModal(c) {
-  if (!c) return;
-
-  document.getElementById('detailCertPayee').textContent = c.payee || 'Payee Name';
-  document.getElementById('detailCertNum').textContent = c.num || 'C2307-000';
-  document.getElementById('detailCertForm').textContent = c.form || 'Form 2307';
-  document.getElementById('detailCertTin').textContent = c.tin || '000-000-000-000';
-  document.getElementById('detailCertAtc').textContent = c.atc || 'WI000';
-  document.getElementById('detailCertGross').textContent = c.gross || '₱0.00';
-  document.getElementById('detailCertTax').textContent = c.tax || '₱0.00';
-  document.getElementById('detailCertRole').textContent = c.role || '-';
-
-  const modalEl = document.getElementById('certDetailsModal');
-  if (modalEl && window.bootstrap) {
-    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-    modalInstance.show();
-  }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  const searchInput = document.getElementById('certSearchInput');
-  const formSelect = document.getElementById('certFormSelect');
-  const payeeSelect = document.getElementById('certPayeeTypeSelect');
-  const summaryText = document.getElementById('certSummaryText');
-  const btnIssueCert = document.getElementById('btnIssueCert');
-
-  if (btnIssueCert) {
-    btnIssueCert.addEventListener('click', function() {
-      const modalEl = document.getElementById('issueCertModal');
-      if (modalEl && window.bootstrap) {
-        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-        modalInstance.show();
-      }
-    });
-  }
-
-  function filterCerts() {
-    const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
-    const selectedForm = formSelect ? formSelect.value.toLowerCase() : '';
-    const selectedPayee = payeeSelect ? payeeSelect.value.toLowerCase() : '';
-    const rows = document.querySelectorAll('.cert-row');
-    let visibleCount = 0;
-
-    rows.forEach(function(row) {
-      const rowForm = row.getAttribute('data-form') || '';
-      const rowPayee = row.getAttribute('data-payee') || '';
-      const rowText = row.textContent.toLowerCase();
-
-      const matchForm = !selectedForm || rowForm.includes(selectedForm);
-      const matchPayee = !selectedPayee || rowPayee.includes(selectedPayee);
-      const matchSearch = !searchQuery || rowText.includes(searchQuery);
-
-      if (matchForm && matchPayee && matchSearch) {
-        row.style.display = '';
-        visibleCount++;
-      } else {
-        row.style.display = 'none';
-      }
-    });
-
-    if (summaryText) {
-      summaryText.textContent = `Showing ${visibleCount} Tax Certificate${visibleCount !== 1 ? 's' : ''}`;
-    }
-
-    let emptyRow = document.getElementById('noCertRow');
-    const tbody = document.querySelector('#certTable tbody');
-    if (visibleCount === 0) {
-      if (!emptyRow && tbody) {
-        emptyRow = document.createElement('tr');
-        emptyRow.id = 'noCertRow';
-        emptyRow.innerHTML = `<td colspan="8" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No tax certificates found matching the current filter.</td>`;
-        tbody.appendChild(emptyRow);
-      }
-      if (emptyRow) emptyRow.style.display = '';
-    } else if (emptyRow) {
-      emptyRow.style.display = 'none';
-    }
-  }
-
-  if (searchInput) {
-    searchInput.addEventListener('input', filterCerts);
-    searchInput.addEventListener('keyup', filterCerts);
-  }
-  if (formSelect) formSelect.addEventListener('change', filterCerts);
-  if (payeeSelect) payeeSelect.addEventListener('change', filterCerts);
-
-  const issueCertForm = document.getElementById('issueCertForm');
-  if (issueCertForm) {
-    issueCertForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-
-      const payeeVal = document.getElementById('modalCertPayee').value;
-      const tinVal = document.getElementById('modalCertTin').value;
-      const atcVal = document.getElementById('modalCertAtc').value;
-      const rawGross = parseFloat(document.getElementById('modalCertGross').value || 0);
-      const ratePct = atcVal.includes('10%') ? 0.10 : (atcVal.includes('15%') ? 0.15 : 0.01);
-      const rawTax = rawGross * ratePct;
-
-      const formattedGross = '₱' + rawGross.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const formattedTax = '₱' + rawTax.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const nextNum = 'C2307-2026-' + Math.floor(882 + Math.random() * 10);
-
-      const certObj = {
-        num: nextNum,
-        payee: payeeVal,
-        role: 'Consultant / Vendor',
-        payee_type: 'doctor',
-        tin: tinVal,
-        atc: atcVal,
-        gross: formattedGross,
-        tax: formattedTax,
-        form: 'BIR Form 2307',
-        form_type: '2307'
-      };
-
-      const tbody = document.querySelector('#certTable tbody');
-      if (tbody) {
-        const newRow = document.createElement('tr');
-        newRow.className = 'cert-row';
-        newRow.style.cursor = 'pointer';
-        newRow.setAttribute('data-form', '2307');
-        newRow.setAttribute('data-payee', 'doctor');
-
-        newRow.onclick = function() { openCertDetailsModal(certObj); };
-
-        newRow.innerHTML = `
-          <td><span class="font-monospace text-primary fw-bold">${nextNum}</span></td>
-          <td>
-            <div class="fw-semibold text-dark">${payeeVal}</div>
-            <span class="fs-xs text-muted">Consultant / Vendor</span>
-          </td>
-          <td><span class="font-monospace text-muted">${tinVal}</span></td>
-          <td><span class="badge bg-light text-dark border font-monospace">${atcVal}</span></td>
-          <td class="text-end font-monospace fw-semibold">${formattedGross}</td>
-          <td class="text-end text-danger fw-bold font-monospace">${formattedTax}</td>
-          <td><span class="badge bg-primary-subtle text-primary">BIR Form 2307</span></td>
-          <td class="text-end" onclick="event.stopPropagation();">
-            <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Certificate Details"><i class="ph ph-eye"></i></button>
-          </td>
-        `;
-
-        const eyeBtn = newRow.querySelector('button[title="View Certificate Details"]');
-        if (eyeBtn) {
-          eyeBtn.onclick = function(ex) {
-            ex.stopPropagation();
-            openCertDetailsModal(certObj);
-          };
-        }
-
-        tbody.insertBefore(newRow, tbody.firstChild);
-      }
-
-      const modalEl = document.getElementById('issueCertModal');
-      const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-      if (modalInstance) modalInstance.hide();
-
-      issueCertForm.reset();
-      filterCerts();
-    });
-  }
-
-  filterCerts();
-});
-</script>
-@endpush

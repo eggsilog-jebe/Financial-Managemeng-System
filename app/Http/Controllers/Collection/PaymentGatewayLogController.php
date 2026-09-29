@@ -21,15 +21,21 @@ final class PaymentGatewayLogController extends Controller
 
     public function index(): View
     {
-        $logs = Payment::with(['patientAccount', 'invoice', 'officialReceipt', 'cashierShift'])
+        $baseQuery = Payment::query()
             ->where(function ($q) {
                 $q->where('payment_method', '!=', 'CASH')
                   ->orWhereNotNull('transaction_channel_ref');
-            })
-            ->latest('payment_date')
-            ->get();
+            });
 
-        // Match posted Journal Entries by payment reference pattern
+        $totalOnline = (float) $baseQuery->sum('amount');
+
+        $logs = (clone $baseQuery)
+            ->with(['patientAccount', 'invoice', 'officialReceipt', 'cashierShift'])
+            ->latest('payment_date')
+            ->paginate(20)
+            ->withQueryString();
+
+        // Match posted Journal Entries by payment reference pattern for current page items
         $refs = $logs->pluck('payment_reference')->filter()->values()->all();
         $journalEntries = JournalEntry::where(function ($q) use ($refs) {
             foreach ($refs as $ref) {
@@ -53,7 +59,6 @@ final class PaymentGatewayLogController extends Controller
         }
 
         $gateways = $logs;
-        $totalOnline = $logs->sum('amount');
 
         $viewName = view()->exists('accounting.collection.gateway-logs.index')
             ? 'accounting.collection.gateway-logs.index'

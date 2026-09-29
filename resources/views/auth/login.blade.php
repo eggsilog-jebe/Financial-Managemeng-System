@@ -1,448 +1,318 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign in - HIMS Main System</title>
+  <title>Sign in &bull; Hospital Financial Management System (FMS)</title>
   <link rel="icon" href="{{ asset('favicon.ico') }}">
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
-  <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
-  <link rel="stylesheet" href="{{ asset('assets/css/components/typography-accessibility.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Immediate Theme Boot (Default: Light, Synced with fms_theme & colorScheme) -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('fms_theme');
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.style.colorScheme = 'dark';
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.style.colorScheme = 'light';
+      }
+    })();
+  </script>
+
+  <!-- Tailwind CSS v4 & Alpine.js Asset Bundle -->
+  @vite(['resources/css/app.css', 'resources/js/app.js'])
+
   <style>
-    /* Enterprise Polish & Ergonomic Input Styles */
-    .input-icon-wrapper {
-      position: relative;
-      display: flex;
-      align-items: center;
-      width: 100%;
+    /* ─── Browser Autofill Fix (Eliminates ugly gray/slate autofill background) ─── */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover, 
+    input:-webkit-autofill:focus, 
+    input:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+      -webkit-text-fill-color: #0f172a !important;
+      box-shadow: 0 0 0 1000px #ffffff inset !important;
+      caret-color: #0f172a !important;
+      color: #0f172a !important;
+      transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s !important;
     }
-    .input-icon-wrapper .input-leading-icon {
-      position: absolute;
-      left: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #94a3b8;
-      font-size: 1.15rem;
-      pointer-events: none;
-      z-index: 2;
-      transition: color 0.15s ease-in-out;
-      line-height: 1;
+
+    html.dark input:-webkit-autofill,
+    html.dark input:-webkit-autofill:hover, 
+    html.dark input:-webkit-autofill:focus, 
+    html.dark input:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 1000px #0f172a inset !important;
+      -webkit-text-fill-color: #f8fafc !important;
+      box-shadow: 0 0 0 1000px #0f172a inset !important;
+      caret-color: #f8fafc !important;
+      color: #f8fafc !important;
+      transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s !important;
     }
-    .input-icon-wrapper input {
-      padding-left: 42px !important;
-      padding-right: 14px;
-      width: 100%;
+
+    input:-webkit-autofill:focus {
+      border-color: #059669 !important;
+      box-shadow: 0 0 0 1000px #ffffff inset, 0 0 0 2px rgba(5, 150, 105, 0.25) !important;
     }
-    .input-icon-wrapper.password-field input {
-      padding-right: 48px !important;
+
+    html.dark input:-webkit-autofill:focus {
+      border-color: #10b981 !important;
+      box-shadow: 0 0 0 1000px #0f172a inset, 0 0 0 2px rgba(16, 185, 129, 0.3) !important;
     }
-    .input-icon-wrapper input:focus ~ .input-leading-icon,
-    .input-icon-wrapper:focus-within .input-leading-icon {
-      color: #059669;
-    }
-    /* Password Sub-Row (Directly Below Password Field) */
-    .password-sub-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      min-height: 22px;
-      margin-top: 6px;
-    }
-    .password-sub-row .forgot-password-link {
-      margin-left: auto;
-      font-size: 12px;
-      font-weight: 500;
-      line-height: 1.4;
-      color: #059669;
-      text-decoration: none;
-      transition: color 0.15s ease;
-    }
-    .password-sub-row .forgot-password-link:hover {
-      color: #047857;
-      text-decoration: underline;
-    }
-    .caps-lock-badge {
-      display: none;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.74rem;
-      color: #b45309;
-      background: #fffbeb;
-      border: 1px solid #fde68a;
-      border-radius: 6px;
-      padding: 4px 10px;
-      margin-top: 6px;
-      font-weight: 500;
-      animation: fadeIn 0.15s ease-in-out;
-    }
-    .login-panel {
-      padding: 20px 24px !important;
-    }
-    .login-card {
-      padding: 24px 28px !important;
-      border-radius: 14px !important;
-      border: 1px solid #e2e8f0 !important;
-      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.06), 0 8px 10px -6px rgba(15, 23, 42, 0.04) !important;
-    }
-    .hospital-header-seal {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding-bottom: 10px;
-      margin-bottom: 14px;
-      border-bottom: 1px solid #f1f5f9;
-    }
-    .hospital-seal-icon {
-      width: 34px;
-      height: 34px;
-      border-radius: 8px;
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
-      color: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.15rem;
-      flex-shrink: 0;
-      box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2);
-    }
-    .hospital-seal-text h4 {
-      margin: 0;
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: #0f172a;
-      letter-spacing: -0.01em;
-    }
-    .hospital-seal-text p {
-      margin: 0;
-      font-size: 0.67rem;
-      font-weight: 600;
-      color: #64748b;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-    .login-card h2 {
-      font-size: 20px !important;
-    }
-    .login-card-header .page-kicker {
-      font-size: 11px !important;
-      margin-bottom: 2px !important;
-    }
-    .login-help {
-      margin: 4px 0 14px !important;
-      font-size: 12px !important;
-    }
-    .form-field {
-      margin-bottom: 11px !important;
-      gap: 4px !important;
-    }
-    .form-field label {
-      font-size: 12px !important;
-    }
-    .form-field input {
-      min-height: 40px !important;
-      font-size: 13.5px !important;
-    }
-    .login-submit {
-      width: 100%;
-      min-height: 42px !important;
-      margin-top: 10px !important;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
-      color: #ffffff !important;
-      border: none !important;
-      border-radius: 10px !important;
-      font-size: 0.88rem !important;
-      font-weight: 600 !important;
-      box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25) !important;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-      cursor: pointer;
-    }
-    .login-submit:hover:not(:disabled) {
-      background: linear-gradient(135deg, #047857 0%, #065f46 100%) !important;
-      box-shadow: 0 6px 16px rgba(5, 150, 105, 0.35) !important;
-      transform: translateY(-1px);
-      color: #ffffff !important;
-    }
-    .login-submit:disabled {
-      background: #cbd5e1 !important;
-      color: #94a3b8 !important;
-      box-shadow: none !important;
-      cursor: not-allowed;
-      transform: none !important;
-      opacity: 0.7;
-    }
-    .login-compliance-footer {
-      max-width: 440px;
-      margin-top: 14px;
-      padding: 0 10px;
-      text-align: center;
-    }
-    .login-compliance-footer p {
-      font-size: 0.70rem;
-      line-height: 1.45;
-      color: #64748b;
-      margin-bottom: 4px;
-    }
-    .login-compliance-meta {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      font-size: 0.67rem;
-      color: #94a3b8;
-      font-weight: 500;
-      letter-spacing: 0.02em;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-2px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+
   </style>
 </head>
-<body class="login-page">
+<body 
+  x-data="{ 
+    helpdeskOpen: false,
+    legalModalOpen: false,
+    legalActiveTab: 'terms',
+    darkMode: document.documentElement.classList.contains('dark')
+  }" 
+  class="h-full bg-slate-50 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-100 antialiased selection:bg-emerald-500 selection:text-white"
+>
 
-  <main class="login-layout">
-    <!-- Brand / Hero Section -->
-    <section class="login-brand" aria-label="HIMS Main System">
-      <div class="login-brand-content">
-        <div class="login-brand-mark" aria-hidden="true">
-          <i class="ph-fill ph-cross"></i>
-        </div>
-        <p class="login-kicker">Hospital Information Management System</p>
-        <h1>HIMS Main System</h1>
-        <p class="login-brand-description">One connected workspace for hospital operations and financial management modules.</p>
-        <div class="mt-4 d-flex flex-column gap-2" style="font-size: 0.83rem; color: rgba(255, 255, 255, 0.82);">
-          <div class="d-flex align-items-center gap-2">
-            <i class="ph-fill ph-check-circle" style="color: #34d399;"></i>
-            <span>Enterprise two-factor identity protection</span>
-          </div>
-          <div class="d-flex align-items-center gap-2">
-            <i class="ph-fill ph-check-circle" style="color: #34d399;"></i>
-            <span>Continuous workstation session auditing</span>
-          </div>
-          <div class="d-flex align-items-center gap-2">
-            <i class="ph-fill ph-check-circle" style="color: #34d399;"></i>
-            <span>RA 10173 &amp; HIPAA-compliant gateway</span>
-          </div>
-        </div>
+  <div class="min-h-screen flex flex-col lg:flex-row">
+    
+    <!-- Left Hero & Security Authority Column (Universal Standard) -->
+    <x-auth-hero />
+
+    <!-- Right Sign In Card Column -->
+    <div class="relative flex-1 flex flex-col justify-between p-6 sm:p-10 lg:p-16">
+      
+      <!-- Top Actions (Theme Toggle & Helpdesk trigger) -->
+      <div class="flex items-center justify-end gap-3">
+        <button 
+          type="button" 
+          @click="
+            darkMode = !darkMode;
+            if (darkMode) {
+              document.documentElement.classList.add('dark');
+              document.documentElement.style.colorScheme = 'dark';
+              localStorage.setItem('fms_theme', 'dark');
+            } else {
+              document.documentElement.classList.remove('dark');
+              document.documentElement.style.colorScheme = 'light';
+              localStorage.setItem('fms_theme', 'light');
+            }
+          " 
+          class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition-colors cursor-pointer"
+          :title="darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+        >
+          <i class="ph-bold ph-moon text-base block dark:hidden"></i>
+          <i class="ph-bold ph-sun text-base hidden dark:block"></i>
+        </button>
+
+        <button 
+          type="button" 
+          @click="helpdeskOpen = true" 
+          class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
+        >
+          <i class="ph-bold ph-headset text-sm text-emerald-600 dark:text-emerald-400"></i>
+          <span>IT Helpdesk</span>
+        </button>
       </div>
-      <footer class="login-brand-footer">
-        <span>HIMS Command Center</span>
-        <span>Version 0.9</span>
-      </footer>
-    </section>
 
-    <!-- Sign In Panel -->
-    <section class="login-panel" aria-labelledby="login-title">
-      <div class="login-panel-container d-flex flex-column align-items-center w-100" style="max-width: 440px;">
-        <div class="login-card w-100">
-          
-          <!-- Official Hospital / DOH System Seal -->
-          <div class="hospital-header-seal">
-            <div class="hospital-seal-icon" aria-hidden="true">
-              <i class="ph-fill ph-hospital"></i>
+      <!-- Center Auth Form Container -->
+      <div class="my-auto mx-auto w-full max-w-md py-8">
+        
+        <!-- Hospital Header Seal & Department Badge -->
+        <div class="flex items-center gap-3 pb-4 mb-6 border-b border-slate-200 dark:border-slate-800">
+          <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-500/30">
+            <i class="ph-bold ph-hospital text-lg"></i>
+          </div>
+          <div>
+            <h2 class="text-xs font-bold text-slate-900 dark:text-white tracking-wide uppercase">Republic of the Philippines</h2>
+            <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Department of Health &bull; Hospital Network</p>
+          </div>
+        </div>
+
+        <div>
+          <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white" id="login-title">
+            Sign in to Portal
+          </h2>
+          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Use your authorized hospital domain credentials to access the financial portal.
+          </p>
+        </div>
+
+        <!-- Security Displacement Alert Banner -->
+        @if(session('displacement_warning') || request()->has('displaced'))
+          @php
+            $dispWarning = session('displacement_warning') ?? 'Security Displacement Alert: Your account was accessed from another terminal. Only one concurrent session is authorized per hospital staff. Your previous session has been terminated.';
+          @endphp
+          <div class="mt-5 rounded-2xl border border-rose-200/80 bg-rose-50/80 p-4 text-xs text-rose-800 shadow-sm dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300" role="alert">
+            <div class="flex items-start gap-2.5">
+              <i class="ph-fill ph-shield-warning text-lg text-rose-600 dark:text-rose-400 shrink-0 mt-0.5"></i>
+              <div>
+                <strong class="font-bold block">Session Displaced</strong>
+                <p class="mt-0.5 leading-relaxed text-[11.5px]">{{ $dispWarning }}</p>
+              </div>
             </div>
-            <div class="hospital-seal-text">
-              <h4>Republic of the Philippines</h4>
-              <p>Department of Health • Public Hospital Network</p>
+          </div>
+        @endif
+
+        <!-- Session Expired Alert -->
+        @if(session('session_expired'))
+          <div class="mt-5 rounded-2xl border border-amber-200/80 bg-amber-50/80 p-4 text-xs text-amber-800 shadow-sm dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300" role="alert">
+            <div class="flex items-center gap-2.5">
+              <i class="ph-bold ph-clock-countdown text-lg text-amber-600 dark:text-amber-400 shrink-0"></i>
+              <span>{{ session('session_expired') }}</span>
+            </div>
+          </div>
+        @endif
+
+        <!-- General Validation Errors -->
+        @if($errors->any() && !session('displacement_warning'))
+          <div class="mt-5 rounded-2xl border border-rose-200/80 bg-rose-50/80 p-4 text-xs text-rose-800 shadow-sm dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300" role="alert">
+            <div class="flex items-center gap-2.5">
+              <i class="ph-bold ph-warning-circle text-lg text-rose-600 dark:text-rose-400 shrink-0"></i>
+              <span>{{ $errors->first() }}</span>
+            </div>
+          </div>
+        @endif
+
+        <!-- Login Form -->
+        <form id="login-form" method="POST" action="{{ route('login.post') }}" novalidate class="mt-6 space-y-4">
+          @csrf
+          <input type="hidden" name="device_uuid" id="login-device-uuid">
+
+          <!-- Email Field -->
+          <div>
+            <label for="login-email" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              Email address
+            </label>
+            <div class="relative">
+              <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 z-10">
+                <i class="ph-bold ph-envelope-simple text-base"></i>
+              </div>
+              <input 
+                id="login-email" 
+                name="email" 
+                type="email" 
+                autocomplete="email" 
+                autocorrect="off" 
+                autocapitalize="off" 
+                spellcheck="false"
+                placeholder="name@hospital.gov.ph" 
+                value="{{ old('email') }}" 
+                maxlength="255" 
+                required 
+                autofocus
+                class="autofill-fix w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 py-2.5 pl-10 pr-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/25 shadow-sm transition-all"
+              >
             </div>
           </div>
 
-          <header class="login-card-header">
-            <p class="page-kicker">Welcome back</p>
-            <h2 id="login-title">Sign in to HIMS</h2>
-            <p class="login-help">Use your authorized hospital domain credentials to access the financial portal.</p>
-          </header>
-
-          @if(session('displacement_warning') || request()->has('displaced'))
-            @php
-              $dispWarning = session('displacement_warning') ?? '⚠️ Security Displacement Alert: Your account was accessed from another computer or workstation. Only one concurrent session is authorized per hospital personnel. Your previous session has been terminated.';
-            @endphp
-            <div class="alert rounded-3 py-2 px-3 fs-sm border-0 mb-3" role="alert" style="background: #fef2f2; border-left: 3.5px solid #ef4444 !important; color: #991b1b;">
-              <div class="d-flex align-items-start gap-2">
-                <i class="ph-fill ph-shield-warning text-danger fs-5 flex-shrink-0 mt-1"></i>
-                <div>
-                  <div class="fw-bold">Session Displaced</div>
-                  <div style="font-size: 0.8rem;">{{ $dispWarning }}</div>
-                </div>
+          <!-- Password Field -->
+          <div>
+            <label for="login-password" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              Password
+            </label>
+            <div class="relative">
+              <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 z-10">
+                <i class="ph-bold ph-lock-key text-base"></i>
               </div>
+              <input 
+                id="login-password" 
+                name="password" 
+                type="password" 
+                autocomplete="current-password" 
+                placeholder="Enter authorized password" 
+                maxlength="128" 
+                required
+                class="autofill-fix w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 py-2.5 pl-10 pr-11 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/25 shadow-sm transition-all"
+              >
+              <button 
+                type="button" 
+                data-password-toggle 
+                aria-label="Show password" 
+                aria-pressed="false"
+                class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors z-10 cursor-pointer"
+              >
+                <i class="ph-bold ph-eye text-base"></i>
+              </button>
             </div>
-          @endif
 
-          @if(session('session_expired'))
-            <div class="alert rounded-3 py-2 px-3 fs-sm border-0 mb-3" role="alert" style="background: #fff7ed; border-left: 3px solid #f59e0b !important; color: #92400e;">
-              <i class="ph ph-clock-countdown me-1 align-middle"></i>
-              {{ session('session_expired') }}
-            </div>
-          @endif
-
-          @if($errors->any() && !session('displacement_warning'))
-            <div class="alert alert-danger rounded-3 py-2 px-3 fs-sm border-0 mb-3" role="alert">
-              <i class="ph ph-warning-circle me-1 align-middle"></i>
-              {{ $errors->first() }}
-            </div>
-          @endif
-
-          <form id="login-form" method="POST" action="{{ route('login.post') }}" novalidate>
-            @csrf
-            <input type="hidden" name="device_uuid" id="login-device-uuid">
-            <div class="form-field">
-              <label for="login-email">Email address</label>
-              <div class="input-icon-wrapper">
-                <input id="login-email" name="email" type="email" autocomplete="email" placeholder="name@hospital.gov.ph" value="{{ old('email') }}" maxlength="255" required autofocus>
-                <i class="ph ph-envelope-simple input-leading-icon" aria-hidden="true"></i>
+            <!-- Sub-Row: Caps Lock Warning & Forgot Password Trigger -->
+            <div class="mt-2 flex items-center justify-between min-h-[22px]">
+              <div id="caps-lock-warning" style="display: none;" class="items-center gap-1.5 text-[11px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded-lg ring-1 ring-amber-500/20" role="alert" aria-live="polite">
+                <i class="ph-fill ph-warning"></i>
+                <span>Caps Lock is ON</span>
               </div>
-            </div>
-
-            <div class="form-field">
-              <label for="login-password">Password</label>
-              <div class="input-icon-wrapper password-field">
-                <input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" maxlength="128" required>
-                <i class="ph ph-lock-key input-leading-icon" aria-hidden="true"></i>
-                <button class="password-toggle" type="button" data-password-toggle aria-label="Show password" aria-pressed="false">
-                  <i class="ph ph-eye" aria-hidden="true"></i>
+              <div class="ml-auto">
+                <button 
+                  type="button" 
+                  @click="helpdeskOpen = true" 
+                  class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 transition-colors cursor-pointer"
+                >
+                  Forgot password?
                 </button>
               </div>
-              <!-- Sub-row below password field: Caps Lock Warning + Forgot Password Link -->
-              <div class="password-sub-row">
-                <div id="caps-lock-warning" class="caps-lock-badge" role="alert" aria-live="polite">
-                  <i class="ph-fill ph-warning"></i>
-                  <span>Caps Lock is ON</span>
-                </div>
-                <a href="#helpdeskModal" data-bs-toggle="modal" class="forgot-password-link">Forgot password?</a>
-              </div>
             </div>
+          </div>
 
-            <button class="btn-primary login-submit mt-3" type="submit">
-              <i class="ph ph-sign-in" aria-hidden="true"></i>
-              Sign in
+          <!-- Submit Button -->
+          <div class="pt-2">
+            <button 
+              type="submit" 
+              class="login-submit w-full inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 px-4 text-sm font-semibold text-white shadow-md shadow-emerald-900/20 hover:bg-emerald-700 transition-all focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2 dark:focus:ring-offset-slate-900 cursor-pointer"
+            >
+              <i class="ph-bold ph-sign-in text-base"></i>
+              <span>Sign in</span>
             </button>
-          </form>
-
-        </div>
-
-        <!-- Statutory Compliance & Security Notice (Muted Enterprise Footer) -->
-        <div class="login-compliance-footer w-100">
-          <p>
-            <i class="ph-fill ph-shield-check me-1 text-secondary align-middle"></i>
-            <strong>Notice under RA 10173 &amp; RA 10175:</strong> Authorized hospital personnel only. Unauthorized access, disclosure, or alteration of patient financial data is strictly prohibited by law.
-          </p>
-          <div class="login-compliance-meta">
-            <span>Authorized Access Only</span>
-            <span>&bull;</span>
-            <span>FMS Transaction Core</span>
           </div>
-        </div>
+        </form>
+
       </div>
-    </section>
-  </main>
 
-  <!-- Hospital IT & MIS Helpdesk Support Directory Modal -->
-  <div class="modal fade" id="helpdeskModal" tabindex="-1" aria-labelledby="helpdeskModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" style="max-width: 520px;">
-      <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-        
-        <!-- Modal Header -->
-        <div class="modal-header border-bottom pb-3 pt-4 px-4 align-items-center justify-content-between" style="background: #f8fafc; border-color: #f1f5f9 !important;">
-          <div class="d-flex align-items-center gap-3">
-            <div class="d-inline-flex align-items-center justify-content-center rounded-3 flex-shrink-0" style="width: 40px; height: 40px; background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #ffffff; box-shadow: 0 4px 10px rgba(5, 150, 105, 0.25); font-size: 1.25rem;">
-              <i class="ph-fill ph-headset"></i>
-            </div>
-            <div>
-              <h5 class="modal-title fw-bold mb-0 text-dark" style="font-size: 1.05rem; letter-spacing: -0.01em;" id="helpdeskModalLabel">Hospital IT &amp; MIS Support Directory</h5>
-              <p class="mb-0 text-muted" style="font-size: 0.75rem; font-weight: 500;">Authorized Access &amp; Account Provisioning</p>
-            </div>
-          </div>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-
-        <!-- Modal Body -->
-        <div class="modal-body p-4">
-          <p class="text-secondary mb-3" style="font-size: 0.82rem; line-height: 1.5;">
-            To maintain compliance with RA 10173 and hospital internal audit controls, password resets, account unlocks, and workstation permissions are provisioned by the <strong>Hospital MIS Office</strong>:
-          </p>
-
-          <!-- Contact Channels List -->
-          <div class="d-flex flex-column gap-2 mb-3">
-            
-            <!-- 1. MIS Helpdesk VOIP -->
-            <div class="d-flex align-items-center justify-content-between p-2.5 rounded-3 border" style="background: #ffffff; border-color: #e2e8f0 !important;">
-              <div class="d-flex align-items-center gap-2.5 min-w-0 pe-2">
-                <div class="d-flex align-items-center justify-content-center rounded-2 flex-shrink-0" style="width: 36px; height: 36px; background: #ecfdf5; color: #059669; font-size: 1.1rem;">
-                  <i class="ph-fill ph-phone-call"></i>
-                </div>
-                <div class="min-w-0">
-                  <strong class="d-block text-dark fw-semibold" style="font-size: 0.84rem; line-height: 1.25;">MIS Helpdesk (Hospital LAN)</strong>
-                  <small class="text-muted d-block" style="font-size: 0.72rem;">Direct internal VOIP telephone</small>
-                </div>
-              </div>
-              <span class="badge fw-semibold px-2.5 py-1.5 flex-shrink-0" style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; font-size: 0.76rem; font-variant-numeric: tabular-nums;">
-                Ext. 401 / 402
-              </span>
-            </div>
-
-            <!-- 2. Emergency Night-Shift Admin -->
-            <div class="d-flex align-items-center justify-content-between p-2.5 rounded-3 border" style="background: #ffffff; border-color: #e2e8f0 !important;">
-              <div class="d-flex align-items-center gap-2.5 min-w-0 pe-2">
-                <div class="d-flex align-items-center justify-content-center rounded-2 flex-shrink-0" style="width: 36px; height: 36px; background: #ecfdf5; color: #059669; font-size: 1.1rem;">
-                  <i class="ph-fill ph-shield-check"></i>
-                </div>
-                <div class="min-w-0">
-                  <strong class="d-block text-dark fw-semibold" style="font-size: 0.84rem; line-height: 1.25;">Emergency Night-Shift Admin</strong>
-                  <small class="text-muted d-block" style="font-size: 0.72rem;">On-duty network supervisor (24/7)</small>
-                </div>
-              </div>
-              <span class="badge fw-semibold px-2.5 py-1.5 flex-shrink-0" style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; font-size: 0.76rem; font-variant-numeric: tabular-nums;">
-                Ext. 405
-              </span>
-            </div>
-
-            <!-- 3. Official IT Support Email (No Text Wrapping) -->
-            <div class="d-flex align-items-center justify-content-between p-2.5 rounded-3 border" style="background: #ffffff; border-color: #e2e8f0 !important;">
-              <div class="d-flex align-items-center gap-2.5 min-w-0 pe-2">
-                <div class="d-flex align-items-center justify-content-center rounded-2 flex-shrink-0" style="width: 36px; height: 36px; background: #ecfdf5; color: #059669; font-size: 1.1rem;">
-                  <i class="ph-fill ph-envelope-simple"></i>
-                </div>
-                <div class="min-w-0">
-                  <strong class="d-block text-dark fw-semibold" style="font-size: 0.84rem; line-height: 1.25;">Official IT Support Email</strong>
-                  <small class="text-muted d-block" style="font-size: 0.72rem;">Identity verification required</small>
-                </div>
-              </div>
-              <a href="mailto:it-support@hospital.gov.ph" class="btn btn-sm fw-semibold text-nowrap d-inline-flex align-items-center gap-1.5 flex-shrink-0 px-2.5 py-1" style="background: #f0fdf4; color: #047857; border: 1px solid #bbf7d0; font-size: 0.76rem; border-radius: 8px; text-decoration: none;" title="Send email to IT Support">
-                <i class="ph-fill ph-paper-plane-tilt"></i>
-                <span>it-support@hospital.gov.ph</span>
-              </a>
-            </div>
-
-          </div>
-
-          <!-- Compliance Notice Footer Alert -->
-          <div class="alert rounded-3 py-2.5 px-3 mb-0 d-flex gap-2.5 align-items-center" style="font-size: 0.78rem; background: #f8fafc; border: 1px solid #e2e8f0; color: #475569;">
-            <i class="ph-fill ph-info fs-5 flex-shrink-0" style="color: #059669;"></i>
-            <span>Password resets require validation of your hospital employee ID and clinical/administrative department assignment.</span>
-          </div>
-        </div>
-
-        <!-- Modal Footer -->
-        <div class="modal-footer border-top-0 pt-0 pb-4 px-4 justify-content-end">
-          <button type="button" class="btn btn-sm px-4 fw-medium rounded-3" data-bs-dismiss="modal" style="background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;">
-            Close
+      <!-- Bottom Mini Legal & Governance Footer -->
+      <div class="text-center text-xs text-slate-400 dark:text-slate-500 space-y-2 py-2">
+        <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11.5px] text-slate-500 dark:text-slate-400 font-medium">
+          <button 
+            type="button" 
+            @click="legalActiveTab = 'terms'; legalModalOpen = true" 
+            class="hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline transition-colors cursor-pointer"
+          >
+            Terms &amp; Conditions
+          </button>
+          <span class="text-slate-300 dark:text-slate-700">&bull;</span>
+          <button 
+            type="button" 
+            @click="legalActiveTab = 'privacy'; legalModalOpen = true" 
+            class="hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline transition-colors cursor-pointer"
+          >
+            Privacy Policy (RA 10173)
+          </button>
+          <span class="text-slate-300 dark:text-slate-700">&bull;</span>
+          <button 
+            type="button" 
+            @click="legalActiveTab = 'aup'; legalModalOpen = true" 
+            class="hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline transition-colors cursor-pointer"
+          >
+            Acceptable Use Policy
           </button>
         </div>
 
+        <div class="text-[11px] text-slate-400 dark:text-slate-500">
+          Hospital Financial Management System &bull; Secure Terminal Gateway &bull; DOH Network
+        </div>
       </div>
     </div>
+
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Hospital Legal & Regulatory Compliance Modal (Alpine.js) -->
+  <x-auth-legal-modal />
+
+  <!-- Hospital MIS Support Directory Modal (Alpine.js) -->
+  <x-auth-helpdesk-modal />
+
+  <!-- Workstation Device Binding & Input Scripts -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const toggle = document.querySelector('[data-password-toggle]');
@@ -458,7 +328,7 @@
           toggle.setAttribute('aria-label', 'Show password');
           const icon = toggle.querySelector('i');
           if (icon) {
-            icon.className = 'ph ph-eye';
+            icon.className = 'ph-bold ph-eye text-base';
           }
           if (maskTimer) {
             clearTimeout(maskTimer);
@@ -468,14 +338,13 @@
 
         toggle.addEventListener('click', () => {
           const isCurrentlyPassword = password.type === 'password';
-          
           if (isCurrentlyPassword) {
             password.type = 'text';
             toggle.setAttribute('aria-pressed', 'true');
             toggle.setAttribute('aria-label', 'Hide password');
             const icon = toggle.querySelector('i');
             if (icon) {
-              icon.className = 'ph ph-eye-slash';
+              icon.className = 'ph-bold ph-eye-slash text-base';
             }
 
             // Auto-revert back to masked dots after 5 seconds
@@ -486,7 +355,7 @@
           }
         });
 
-        // Revert instantly on blur (if staff tabs out or clicks away)
+        // Revert instantly on blur
         password.addEventListener('blur', () => {
           if (password.type === 'text') {
             revertToPassword();
@@ -499,7 +368,7 @@
         // 2. Caps Lock Detection Warning
         const checkCapsLock = (e) => {
           if (e.getModifierState && e.getModifierState('CapsLock')) {
-            capsWarning.style.display = 'flex';
+            capsWarning.style.display = 'inline-flex';
           } else {
             capsWarning.style.display = 'none';
           }
@@ -516,7 +385,7 @@
         form.addEventListener('submit', () => {
           if (form.checkValidity()) {
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Authenticating...';
+            submitBtn.innerHTML = '<span class="inline-block animate-spin mr-2"><i class="ph-bold ph-spinner"></i></span>Authenticating...';
             form.submit();
           }
         });

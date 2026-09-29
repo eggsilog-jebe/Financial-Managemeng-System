@@ -6,18 +6,20 @@ namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
-use App\Models\BankAccount;
 use App\Models\BankDeposit;
 use App\Models\BudgetAllocation;
 use App\Models\GuaranteeLetter;
 use App\Models\Invoice;
 use App\Models\JournalEntry;
+use App\Models\JournalEntryLine;
 use App\Models\Payment;
 use App\Models\PhilhealthClaim;
 use App\Models\PurchaseBill;
+use App\Models\UserWorkstation;
 use App\Services\Accounting\AccountingCacheService;
 use App\Services\Accounting\GeneralLedgerReportService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\DB;
 
 final class FinancialDashboardController extends Controller
 {
@@ -25,126 +27,245 @@ final class FinancialDashboardController extends Controller
         GeneralLedgerReportService $reportService,
         AccountingCacheService $cacheService,
     ): View {
-        // Cache heavy numerical financial ledger calculations across multi-table GL entries
+        // ─── 1. Heavy GL / Balance-Sheet calculations (cached 3 minutes) ───────────
         $financialMetrics = $cacheService->rememberDashboardMetrics(function () use ($reportService): array {
-            $pnl = $reportService->getIncomeStatement();
-            $balanceSheet = $reportService->getBalanceSheet();
+            $trial        = $reportService->getTrialBalance();
+            $pnl          = $reportService->getIncomeStatement($trial);
+            $balanceSheet = $reportService->getBalanceSheet($trial, $pnl);
 
-            // 1. Core Financial Ledger Overview
-            $totalRevenue = (float) $pnl['total_revenue'];
-
-            $cashOnHand = 0.0;
-            $cashInBank = 0.0;
+            // Cash accounts (Account codes 1010 / 1011 = Cash on Hand, 1020 / 1021 = Cash in Bank)
+            $cashOnHand = '0.0000';
+            $cashInBank = '0.0000';
             foreach ($balanceSheet['assets'] as $asset) {
                 if (in_array($asset['code'], ['1010', '1011'], true)) {
-                    $cashOnHand += (float) $asset['balance'];
+                    $cashOnHand = bcadd($cashOnHand, (string) $asset['balance'], 4);
                 } elseif (in_array($asset['code'], ['1020', '1021'], true)) {
-                    $cashInBank += (float) $asset['balance'];
+                    $cashInBank = bcadd($cashInBank, (string) $asset['balance'], 4);
                 }
             }
 
-            $outstandingAR = (float) Invoice::whereIn('status', ['UNPAID', 'PARTIAL'])->sum('patient_payable');
-            $outstandingAP = (float) PurchaseBill::whereIn('status', ['UNPAID', 'PARTIAL'])->sum('total_amount');
+            // AR & AP outstanding amounts
+            $outstandingAR = (string) Invoice::whereIn('status', ['UNPAID', 'PARTIAL'])->sum('patient_payable');
+            $outstandingAP = (string) PurchaseBill::whereIn('status', ['UNPAID', 'PARTIAL'])->sum('total_amount');
 
-            // 2. Public Hospital Fund-Source Utilization Telemetry
-            $philhealthTotal = (float) PhilhealthClaim::sum('total_case_rate_amount');
-            $philhealthCount = PhilhealthClaim::count();
+            // ── Payer Source breakdown (for Donut chart) ──
+            $philhealthStats   = PhilhealthClaim::query()
+                ->selectRaw('COALESCE(SUM(total_case_rate_amount), 0) as total, COUNT(*) as count')
+                ->first();
+            $philhealthTotal   = (string) ($philhealthStats->total ?? '0.0000');
+            $philhealthCount   = (int) ($philhealthStats->count ?? 0);
 
-            $malasakitGlTotal = (float) GuaranteeLetter::sum('authorized_amount');
-            $malasakitGlUtilized = (float) GuaranteeLetter::sum('utilized_amount');
-            $malasakitRemaining = (float) GuaranteeLetter::sum('remaining_amount');
-            $malasakitCount = GuaranteeLetter::count();
+            $glStats           = GuaranteeLetter::query()
+                ->selectRaw('COALESCE(SUM(authorized_amount), 0) as total_auth, COALESCE(SUM(utilized_amount), 0) as total_util, COALESCE(SUM(remaining_amount), 0) as total_rem, COUNT(*) as count')
+                ->first();
+            $malasakitGlTotal    = (string) ($glStats->total_auth ?? '0.0000');
+            $malasakitGlUtilized = (string) ($glStats->total_util ?? '0.0000');
+            $malasakitRemaining  = (string) ($glStats->total_rem ?? '0.0000');
+            $malasakitCount      = (int) ($glStats->count ?? 0);
 
-            $directCopayTotal = (float) Payment::sum('amount');
-            $directCopayCount = Payment::count();
+            $copayStats        = Payment::query()
+                ->selectRaw("COALESCE(SUM(amount), 0) as total, COUNT(*) as count, COALESCE(SUM(CASE WHEN payment_method = 'CASH' THEN amount ELSE 0 END), 0) as cash_total")
+                ->first();
+            $directCopayTotal  = (string) ($copayStats->total ?? '0.0000');
+            $directCopayCount  = (int) ($copayStats->count ?? 0);
+            $totalCashCollections = (string) ($copayStats->cash_total ?? '0.0000');
 
-            $totalFundSources = $philhealthTotal + $malasakitGlUtilized + $directCopayTotal;
-            $philhealthSharePct = $totalFundSources > 0 ? round(($philhealthTotal / $totalFundSources) * 100, 1) : 0.0;
-            $malasakitSharePct = $totalFundSources > 0 ? round(($malasakitGlUtilized / $totalFundSources) * 100, 1) : 0.0;
-            $directCopaySharePct = $totalFundSources > 0 ? round(($directCopayTotal / $totalFundSources) * 100, 1) : 0.0;
-            $socialCoveragePct = $totalFundSources > 0 ? round((($philhealthTotal + $malasakitGlUtilized) / $totalFundSources) * 100, 1) : 0.0;
+            // Private HMO / Insurance coverage deducted from patient bills
+            $hmoTotal = (string) Invoice::query()
+                ->selectRaw('COALESCE(SUM(insurance_covered), 0) as total')
+                ->where('insurance_covered', '>', 0)
+                ->value('total');
 
-            // 3. Daily Collection & Intact Deposit Telemetry (COA Circular No. 2021-014 Compliance)
-            $totalCashCollections = (float) Payment::where('payment_method', 'CASH')->sum('amount');
-            $totalDeposited = (float) BankDeposit::whereIn('status', ['DEPOSITED', 'RECONCILED'])->sum('total_deposited');
-            $pendingDeposits = (float) BankDeposit::where('status', 'PREPARED')->sum('total_deposited');
-            $undepositedCollections = max(0.0, $totalCashCollections - $totalDeposited);
-            $isCoaIntactCompliant = ($undepositedCollections <= 10000.0);
+            // Compute payer share percentages using bcmath
+            $totalFundSources = bcadd(bcadd($philhealthTotal, $malasakitGlUtilized, 4), bcadd($directCopayTotal, $hmoTotal, 4), 4);
+
+            $philhealthSharePct  = bccomp($totalFundSources, '0.0000', 4) > 0
+                ? round((float) bcdiv($philhealthTotal, $totalFundSources, 6) * 100, 1)
+                : 0.0;
+            $malasakitSharePct   = bccomp($totalFundSources, '0.0000', 4) > 0
+                ? round((float) bcdiv($malasakitGlUtilized, $totalFundSources, 6) * 100, 1)
+                : 0.0;
+            $hmoSharePct         = bccomp($totalFundSources, '0.0000', 4) > 0
+                ? round((float) bcdiv($hmoTotal, $totalFundSources, 6) * 100, 1)
+                : 0.0;
+            $directCopaySharePct = bccomp($totalFundSources, '0.0000', 4) > 0
+                ? round((float) bcdiv($directCopayTotal, $totalFundSources, 6) * 100, 1)
+                : 0.0;
+
+            // ── COA Circular 2021-014: Intact Deposit Compliance ──
+            $depositStats       = BankDeposit::query()
+                ->selectRaw("COALESCE(SUM(CASE WHEN status IN ('DEPOSITED', 'RECONCILED') THEN total_deposited ELSE 0 END), 0) as deposited, COALESCE(SUM(CASE WHEN status = 'PREPARED' THEN total_deposited ELSE 0 END), 0) as pending")
+                ->first();
+            $totalDeposited          = (string) ($depositStats->deposited ?? '0.0000');
+            $pendingDeposits         = (string) ($depositStats->pending ?? '0.0000');
+            $undepositedCollections  = bccomp($totalCashCollections, $totalDeposited, 4) > 0
+                ? bcsub($totalCashCollections, $totalDeposited, 4)
+                : '0.0000';
+            $isCoaIntactCompliant    = bccomp($undepositedCollections, '10000.0000', 4) <= 0;
 
             return [
-                'totalRevenue'            => $totalRevenue,
-                'cashOnHand'              => $cashOnHand,
-                'cashInBank'              => $cashInBank,
-                'outstandingAR'           => $outstandingAR,
-                'outstandingAP'           => $outstandingAP,
-                'isBalanced'              => $balanceSheet['is_balanced'],
-                'philhealthTotal'         => $philhealthTotal,
-                'philhealthCount'         => $philhealthCount,
-                'malasakitGlTotal'        => $malasakitGlTotal,
-                'malasakitGlUtilized'     => $malasakitGlUtilized,
-                'malasakitRemaining'      => $malasakitRemaining,
-                'malasakitCount'          => $malasakitCount,
-                'directCopayTotal'        => $directCopayTotal,
-                'directCopayCount'        => $directCopayCount,
-                'totalFundSources'        => $totalFundSources,
-                'philhealthSharePct'      => $philhealthSharePct,
-                'malasakitSharePct'       => $malasakitSharePct,
-                'directCopaySharePct'     => $directCopaySharePct,
-                'socialCoveragePct'       => $socialCoveragePct,
-                'totalCashCollections'    => $totalCashCollections,
-                'totalDeposited'          => $totalDeposited,
-                'pendingDeposits'         => $pendingDeposits,
-                'undepositedCollections'  => $undepositedCollections,
-                'isCoaIntactCompliant'    => $isCoaIntactCompliant,
+                'totalRevenue'           => (float) $pnl['total_revenue'],
+                'totalExpense'           => (float) $pnl['total_expense'],
+                'netIncome'              => (float) $pnl['net_income'],
+                'cashOnHand'             => (float) $cashOnHand,
+                'cashInBank'             => (float) $cashInBank,
+                'outstandingAR'          => (float) $outstandingAR,
+                'outstandingAP'          => (float) $outstandingAP,
+                'isBalanced'             => $balanceSheet['is_balanced'],
+                // Payer donut chart data
+                'philhealthTotal'        => (float) $philhealthTotal,
+                'philhealthCount'        => $philhealthCount,
+                'malasakitGlUtilized'    => (float) $malasakitGlUtilized,
+                'malasakitCount'         => $malasakitCount,
+                'hmoTotal'               => (float) $hmoTotal,
+                'directCopayTotal'       => (float) $directCopayTotal,
+                'directCopayCount'       => $directCopayCount,
+                'totalFundSources'       => (float) $totalFundSources,
+                'philhealthSharePct'     => $philhealthSharePct,
+                'malasakitSharePct'      => $malasakitSharePct,
+                'hmoSharePct'            => $hmoSharePct,
+                'directCopaySharePct'    => $directCopaySharePct,
+                // Treasury / COA compliance
+                'totalCashCollections'   => (float) $totalCashCollections,
+                'totalDeposited'         => (float) $totalDeposited,
+                'pendingDeposits'        => (float) $pendingDeposits,
+                'undepositedCollections' => (float) $undepositedCollections,
+                'isCoaIntactCompliant'   => $isCoaIntactCompliant,
             ];
         }, 180);
 
-        // Recent Journal Postings (live Eloquent collection to prevent serialization/unserialization issues)
+        // ─── 2. Monthly Revenue vs Expense trend (last 6 months, live query) ────────
+        // Pull monthly aggregates from JournalEntryLine joined to JournalEntry + Account
+        $revenueByMonth  = $this->getMonthlyAmountByAccountCategory('REVENUE', 6);
+        $expenseByMonth  = $this->getMonthlyAmountByAccountCategory('EXPENSE', 6);
+
+        // Build aligned 6-month arrays for Chart.js
+        $months        = [];
+        $revenueChart  = [];
+        $expenseChart  = [];
+
+        for ($i = 5; $i >= 0; $i--) {
+            $month          = now()->subMonths($i);
+            $key            = $month->format('Y-m');
+            $months[]       = $month->format('M Y');
+            $revenueChart[] = round((float) ($revenueByMonth[$key] ?? 0), 2);
+            $expenseChart[] = round((float) ($expenseByMonth[$key] ?? 0), 2);
+        }
+
+        // ─── 3. Recent Journal Postings (live, not cached — must reflect latest state) ─
         $recentJournals = JournalEntry::with(['lines.account'])
             ->latest('id')
-            ->limit(6)
+            ->limit(5)
             ->get();
 
-        // Departmental Budget Exhaustion & Fiscal Burn-Rate Indicators
-        $budgetAllocations = BudgetAllocation::with('encumbrances')
-            ->orderByDesc('spent_amount')
+        // ─── 4. Security Telemetry (single-trip, live) ────────────────────────────────
+        $activityStats = ActivityLog::query()
+            ->whereDate('created_at', now()->toDateString())
+            ->selectRaw("
+                COUNT(CASE WHEN event = 'failed_login' THEN 1 END) as failed_logins,
+                COUNT(CASE WHEN event IN ('created', 'updated', 'deleted', 'posted', 'reversed') THEN 1 END) as mutations
+            ")
+            ->first();
+
+        $failedLoginsToday = (int) ($activityStats->failed_logins ?? 0);
+        $mutationsToday    = (int) ($activityStats->mutations ?? 0);
+
+        // Security alert level: 0 = green, 1 = amber (pending ws), 2 = rose (failed logins)
+        $securityAlertLevel = match (true) {
+            $failedLoginsToday >= 5 => 2,
+            $failedLoginsToday > 0  => 1,
+            default                 => 0,
+        };
+
+        $recentAuditLogs = ActivityLog::query()
+            ->latest('id')
+            ->limit(5)
             ->get();
 
-        $totalBudgetAllocated = (float) $budgetAllocations->sum('allocated_amount');
-        $totalBudgetSpent = (float) $budgetAllocations->sum('spent_amount');
-        $totalBudgetRemaining = (float) $budgetAllocations->sum('remaining_balance');
-        $overallBurnRate = $totalBudgetAllocated > 0 ? round(($totalBudgetSpent / $totalBudgetAllocated) * 100, 1) : 0.0;
+        // ─── 5. Departmental Fiscal Budgets (live) ──────────────────────────────────
+        $budgetAllocations = BudgetAllocation::where('fiscal_year', '2026')->get();
+        $totalBudgetAllocated = '0.0000';
+        $totalBudgetSpent = '0.0000';
 
-        $criticalBudgets = $budgetAllocations->filter(function (BudgetAllocation $b): bool {
-            return $b->burn_rate >= 85.0;
+        foreach ($budgetAllocations as $budget) {
+            $totalBudgetAllocated = bcadd($totalBudgetAllocated, (string) $budget->allocated_amount, 4);
+            $totalBudgetSpent     = bcadd($totalBudgetSpent, (string) $budget->spent_amount, 4);
+        }
+
+        $overallBurnRate = bccomp($totalBudgetAllocated, '0.0000', 4) > 0
+            ? round((float) bcdiv($totalBudgetSpent, $totalBudgetAllocated, 4) * 100, 1)
+            : 0.0;
+
+        $criticalBudgets = $budgetAllocations->filter(function (BudgetAllocation $budget) {
+            if (bccomp((string) $budget->allocated_amount, '0.0000', 4) <= 0) {
+                return false;
+            }
+            $pct = (float) bcdiv((string) $budget->spent_amount, (string) $budget->allocated_amount, 4) * 100;
+            return $pct >= 85.0;
         });
 
-        // System Security & Immutable Audit Trail Telemetry (live with covering index)
-        $recentAuditLogs = ActivityLog::latest('id')->limit(5)->get();
-        $failedLoginsToday = ActivityLog::where('event', 'failed_login')
-            ->whereDate('created_at', now()->toDateString())
-            ->count();
-        $mutationsToday = ActivityLog::whereIn('event', ['created', 'updated', 'deleted', 'posted', 'reversed'])
-            ->whereDate('created_at', now()->toDateString())
-            ->count();
-
-        // User Profile Context (request-scoped)
+        // ─── 6. User Context (request-scoped) ────────────────────────────────────────
         $currentUser = auth()->user();
-        $userRole = $currentUser?->role ?? 'StaffAccountant';
 
         return view('accounting.dashboard', array_merge($financialMetrics, [
-            'recentJournals'          => $recentJournals,
-            'budgetAllocations'       => $budgetAllocations,
-            'totalBudgetAllocated'    => $totalBudgetAllocated,
-            'totalBudgetSpent'        => $totalBudgetSpent,
-            'totalBudgetRemaining'    => $totalBudgetRemaining,
-            'overallBurnRate'         => $overallBurnRate,
-            'criticalBudgets'         => $criticalBudgets,
-            'recentAuditLogs'         => $recentAuditLogs,
-            'failedLoginsToday'       => $failedLoginsToday,
-            'mutationsToday'          => $mutationsToday,
-            'currentUser'             => $currentUser,
-            'userRole'                => $userRole,
+            // Chart data
+            'chartMonths'   => json_encode($months, JSON_THROW_ON_ERROR),
+            'chartRevenue'  => json_encode($revenueChart, JSON_THROW_ON_ERROR),
+            'chartExpense'  => json_encode($expenseChart, JSON_THROW_ON_ERROR),
+            // Payer donut labels and values
+            'payerLabels'   => json_encode(['PhilHealth ACR', 'Malasakit/GL', 'Private HMO', 'Direct Cash'], JSON_THROW_ON_ERROR),
+            'payerValues'   => json_encode([
+                round($financialMetrics['philhealthSharePct'], 1),
+                round($financialMetrics['malasakitSharePct'], 1),
+                round($financialMetrics['hmoSharePct'], 1),
+                round($financialMetrics['directCopaySharePct'], 1),
+            ], JSON_THROW_ON_ERROR),
+            // Journals and security
+            'recentJournals'     => $recentJournals,
+            'recentAuditLogs'    => $recentAuditLogs,
+            'failedLoginsToday'  => $failedLoginsToday,
+            'mutationsToday'     => $mutationsToday,
+            'securityAlertLevel' => $securityAlertLevel,
+            'currentUser'        => $currentUser,
+            // Budget metrics
+            'budgetAllocations'    => $budgetAllocations,
+            'totalBudgetAllocated' => (float) $totalBudgetAllocated,
+            'totalBudgetSpent'     => (float) $totalBudgetSpent,
+            'overallBurnRate'      => $overallBurnRate,
+            'criticalBudgets'      => $criticalBudgets,
         ]));
+    }
+
+    /**
+     * Retrieve monthly credited/debited totals for a given Account category
+     * (REVENUE or EXPENSE) for the last N months, keyed by 'YYYY-MM'.
+     *
+     * @return array<string, string>  ['2026-04' => '123456.7800', ...]
+     */
+    private function getMonthlyAmountByAccountCategory(string $category, int $months): array
+    {
+        $since = now()->subMonths($months - 1)->startOfMonth();
+
+        $column  = $category === 'REVENUE' ? 'credit' : 'debit';
+        $driver = DB::connection()->getDriverName();
+        $dateExpr = match ($driver) {
+            'sqlite' => "strftime('%Y-%m', journal_entries.entry_date)",
+            'pgsql'  => "TO_CHAR(journal_entries.entry_date, 'YYYY-MM')",
+            default  => "DATE_FORMAT(journal_entries.entry_date, '%Y-%m')",
+        };
+
+        $results = DB::table('journal_entry_lines')
+            ->join('journal_entries', 'journal_entries.id', '=', 'journal_entry_lines.journal_entry_id')
+            ->join('accounts', 'accounts.id', '=', 'journal_entry_lines.account_id')
+            ->where('journal_entries.status', 'POSTED')
+            ->where('accounts.category', $category)
+            ->where('journal_entries.entry_date', '>=', $since->toDateString())
+            ->selectRaw("{$dateExpr} as month_key, COALESCE(SUM(journal_entry_lines.{$column}), 0) as total")
+            ->groupByRaw($dateExpr)
+            ->orderBy('month_key')
+            ->pluck('total', 'month_key')
+            ->toArray();
+
+        return $results;
     }
 }

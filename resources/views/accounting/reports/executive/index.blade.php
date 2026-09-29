@@ -5,175 +5,231 @@
 @section('page', 'executive-reports')
 
 @section('content')
-<div class="container-fluid p-4">
-  <!-- Page Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="space-y-6">
+  <!-- Executive Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <div>
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-1 fs-xs">
-          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
-          <li class="breadcrumb-item">Financial Reporting</li>
-          <li class="breadcrumb-item active">Executive Dossier</li>
-        </ol>
-      </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Executive Board Report &amp; Financial Dossier</h1>
-      <p class="text-muted fs-xs mb-0">Consolidated board-ready report package combining Balance Sheet, P&amp;L, Cash Flows, Key Metrics, and CFO Attestation Sign-offs.</p>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Executive Board Report &amp; Financial Dossier
+        </h1>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <x-integration-badge 
-          type="internal" 
-          :systems="['Consolidated Ledgers', 'Executive Attestation']" 
-          description="Consolidated financial & operational dossier with verified attestation blocks." 
-      />
-      <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
-        <i class="ph ph-printer me-1"></i> Print Complete Dossier
+
+    <div class="flex items-center gap-2.5">
+      <button 
+        type="button" 
+        onclick="window.print()" 
+        class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+      >
+        <i class="ph-bold ph-printer text-blue-600"></i>
+        <span>Print Complete Dossier</span>
       </button>
-      <a href="{{ route('reporting.balance-sheet.export') }}" class="btn btn-primary btn-sm">
-        <i class="ph ph-download-simple me-1"></i> Export Balance Sheet (CSV)
+      <a 
+        href="{{ route('reporting.balance-sheet.export') }}" 
+        class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 ring-1 ring-blue-600/20 transition-all cursor-pointer"
+      >
+        <i class="ph-bold ph-download-simple"></i>
+        <span>Export Balance Sheet</span>
       </a>
     </div>
   </div>
 
-  <!-- Cutoff Date Selector -->
-  <div class="card border-0 shadow-sm rounded-3 mb-4">
-    <div class="card-body p-3">
-      <form method="GET" action="{{ route('reporting.executive-reports') }}" class="row g-2 align-items-center">
-        <div class="col-md-4">
-          <label class="form-label mb-0 fs-xs text-muted fw-semibold">Dossier Statement Cutoff Date:</label>
-          <input type="date" name="cutoff_date" class="form-control form-control-sm" value="{{ $as_of_date ?? date('Y-m-d') }}" onchange="this.form.submit()">
-        </div>
-        <div class="col-md-8 d-flex justify-content-end align-items-end">
-          <span class="fs-xs text-muted font-monospace">Generated on {{ $generated_at ?? date('Y-m-d H:i:s') }} PST</span>
-        </div>
-      </form>
-    </div>
+    <!-- Sub-Module Category Navigation Bar -->
+  @include('partials.submodule-nav')
+
+<!-- Cutoff Date Selector -->
+  <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+    <form method="GET" action="{{ route('reporting.executive-reports') }}" class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <label class="text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">
+          <i class="ph-bold ph-calendar mr-1"></i> Dossier Cutoff Date:
+        </label>
+        <input 
+          type="date" 
+          name="cutoff_date" 
+          class="rounded-xl border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 shadow-sm focus:border-blue-500 focus:bg-white focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          value="{{ $as_of_date ?? date('Y-m-d') }}" 
+          onchange="this.form.submit()"
+        >
+      </div>
+
+      <span class="font-mono text-xs text-slate-400">
+        Generated on {{ $generated_at ?? date('Y-m-d H:i:s') }} PST
+      </span>
+    </form>
   </div>
 
   <!-- Branded Printable Dossier Container -->
-  <div class="card border-0 shadow-lg rounded-4 p-4 p-md-5 mb-5 bg-white">
-    <!-- Header -->
-    <div class="border-bottom pb-4 mb-4 text-center">
-      <div class="d-flex justify-content-center align-items-center gap-2 mb-2">
-        <i class="ph ph-hospital fs-2 text-primary"></i>
-        <h2 class="h4 fw-bold text-dark mb-0">{{ $hospital_name ?? 'St. Jude General Hospital & Medical Center' }}</h2>
+  <div class="rounded-3xl bg-white p-6 sm:p-10 shadow-lg ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 space-y-8">
+    <!-- Hospital Header -->
+    <div class="border-b border-slate-200 pb-6 text-center dark:border-slate-800">
+      <div class="flex items-center justify-center gap-2.5 mb-2">
+        <i class="ph-bold ph-hospital text-3xl text-blue-600"></i>
+        <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          {{ $hospital_name ?? 'St. Jude General Hospital & Medical Center' }}
+        </h2>
       </div>
-      <div class="fs-xs text-muted">
-        <span>TIN: {{ $hospital_tin ?? '004-982-114-000-VAT' }}</span> &bull; 
+      <div class="text-xs text-slate-500 dark:text-slate-400 space-x-2">
+        <span>TIN: {{ $hospital_tin ?? '004-982-114-000-VAT' }}</span>
+        <span>&bull;</span>
         <span>Accredited Healthcare Provider &bull; ISO 9001:2015</span>
       </div>
-      <div class="badge bg-primary-subtle text-primary px-3 py-2 mt-2 fs-6 fw-bold">
+      <div class="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800 mt-3">
         {{ $dossier_title ?? 'Executive Financial Dossier' }} &bull; FY {{ $fiscal_year ?? date('Y') }}
       </div>
-      <div class="fs-xs text-muted mt-1 font-monospace">Period Covered: {{ $period_covered ?? date('Y-m-d') }}</div>
+      <div class="text-xs text-slate-400 mt-1.5 font-mono">
+        Period Covered: {{ $period_covered ?? date('Y-m-d') }}
+      </div>
     </div>
 
     <!-- Section 1: Executive KPI Scorecard -->
-    <div class="mb-5">
-      <h5 class="fw-bold text-dark border-bottom pb-2 mb-3"><i class="ph ph-chart-polar me-2 text-primary"></i>1. Executive Financial Scorecard</h5>
-      <div class="row g-3">
-        <div class="col-md-3">
-          <div class="border rounded-3 p-3 text-center bg-light-subtle">
-            <span class="text-muted fs-xs text-uppercase fw-semibold d-block">Operating Margin</span>
-            <h4 class="fw-bold text-success mb-0">{{ number_format((float) ($kpis['operating_margin'] ?? 0), 1) }}%</h4>
-          </div>
+    <div>
+      <h5 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 border-b border-slate-100 pb-2 mb-4 dark:border-slate-800 flex items-center gap-2">
+        <i class="ph-bold ph-chart-polar text-blue-600"></i>
+        <span>1. Executive Financial Scorecard</span>
+      </h5>
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 text-center dark:border-slate-800 dark:bg-slate-800/40">
+          <span class="block text-xs font-semibold uppercase text-slate-400">Operating Margin</span>
+          <h4 class="mt-1 text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">
+            {{ number_format((float) ($kpis['operating_margin'] ?? 0), 1) }}%
+          </h4>
         </div>
-        <div class="col-md-3">
-          <div class="border rounded-3 p-3 text-center bg-light-subtle">
-            <span class="text-muted fs-xs text-uppercase fw-semibold d-block">Days Sales Outstanding</span>
-            <h4 class="fw-bold text-primary mb-0">{{ number_format((float) ($kpis['dso'] ?? 0), 1) }} Days</h4>
-          </div>
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 text-center dark:border-slate-800 dark:bg-slate-800/40">
+          <span class="block text-xs font-semibold uppercase text-slate-400">Days Sales Outstanding</span>
+          <h4 class="mt-1 text-2xl font-bold font-mono text-blue-600 dark:text-blue-400">
+            {{ number_format((float) ($kpis['dso'] ?? 0), 1) }} Days
+          </h4>
         </div>
-        <div class="col-md-3">
-          <div class="border rounded-3 p-3 text-center bg-light-subtle">
-            <span class="text-muted fs-xs text-uppercase fw-semibold d-block">Days Cash on Hand</span>
-            <h4 class="fw-bold text-info mb-0">{{ number_format((float) ($kpis['days_cash_on_hand'] ?? 0), 1) }} Days</h4>
-          </div>
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 text-center dark:border-slate-800 dark:bg-slate-800/40">
+          <span class="block text-xs font-semibold uppercase text-slate-400">Days Cash on Hand</span>
+          <h4 class="mt-1 text-2xl font-bold font-mono text-purple-600 dark:text-purple-400">
+            {{ number_format((float) ($kpis['days_cash_on_hand'] ?? 0), 1) }} Days
+          </h4>
         </div>
-        <div class="col-md-3">
-          <div class="border rounded-3 p-3 text-center bg-light-subtle">
-            <span class="text-muted fs-xs text-uppercase fw-semibold d-block">Current Working Ratio</span>
-            <h4 class="fw-bold text-dark mb-0">{{ number_format((float) ($kpis['current_ratio'] ?? 0), 2) }}x</h4>
-          </div>
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 text-center dark:border-slate-800 dark:bg-slate-800/40">
+          <span class="block text-xs font-semibold uppercase text-slate-400">Current Working Ratio</span>
+          <h4 class="mt-1 text-2xl font-bold font-mono text-slate-900 dark:text-white">
+            {{ number_format((float) ($kpis['current_ratio'] ?? 0), 2) }}x
+          </h4>
         </div>
       </div>
     </div>
 
-    <!-- Section 2: Statement of Financial Position (Balance Sheet Summary) -->
-    <div class="mb-5">
-      <h5 class="fw-bold text-dark border-bottom pb-2 mb-3"><i class="ph ph-scales me-2 text-primary"></i>2. Condensed Statement of Financial Position</h5>
-      <table class="table table-bordered table-sm align-middle fs-xs">
-        <thead class="table-light">
-          <tr>
-            <th>Balance Sheet Classification</th>
-            <th class="text-end" style="width: 250px;">Amount (₱)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="fw-bold text-success">TOTAL HOSPITAL ASSETS (Cash, AR, Equipment)</td>
-            <td class="text-end font-monospace text-success fw-bold">₱{{ number_format((float) ($balance_sheet['total_assets'] ?? 0), 2) }}</td>
-          </tr>
-          <tr>
-            <td class="fw-bold text-danger">TOTAL LIABILITIES (Accounts Payable, Accruals)</td>
-            <td class="text-end font-monospace text-danger fw-bold">₱{{ number_format((float) ($balance_sheet['total_liabilities'] ?? 0), 2) }}</td>
-          </tr>
-          <tr>
-            <td class="fw-bold text-primary">TOTAL NET EQUITY (Capital Reserves + Current Surplus)</td>
-            <td class="text-end font-monospace text-primary fw-bold">₱{{ number_format((float) ($balance_sheet['total_equity'] ?? 0), 2) }}</td>
-          </tr>
-          <tr class="table-light fw-bold">
-            <td class="text-uppercase text-dark">TOTAL LIABILITIES &amp; NET EQUITY</td>
-            <td class="text-end font-monospace text-dark fs-6">₱{{ number_format((float) ($balance_sheet['total_liab_and_equity'] ?? 0), 2) }}</td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- Section 2: Statement of Financial Position Summary -->
+    <div>
+      <h5 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 border-b border-slate-100 pb-2 mb-4 dark:border-slate-800 flex items-center gap-2">
+        <i class="ph-bold ph-scales text-blue-600"></i>
+        <span>2. Condensed Statement of Financial Position</span>
+      </h5>
+      <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800">
+            <tr>
+              <th class="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300">Balance Sheet Classification</th>
+              <th class="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300 text-right w-64">Amount</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+            <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="py-3 px-4 font-bold text-emerald-600 dark:text-emerald-400">TOTAL HOSPITAL ASSETS (Cash, AR, Equipment)</td>
+              <td class="py-3 px-4 text-right font-mono tabular-nums font-bold text-emerald-600 dark:text-emerald-400">
+                ₱{{ number_format((float) ($balance_sheet['total_assets'] ?? 0), 2) }}
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="py-3 px-4 font-bold text-rose-600 dark:text-rose-400">TOTAL LIABILITIES (Accounts Payable, Accruals)</td>
+              <td class="py-3 px-4 text-right font-mono tabular-nums font-bold text-rose-600 dark:text-rose-400">
+                ₱{{ number_format((float) ($balance_sheet['total_liabilities'] ?? 0), 2) }}
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="py-3 px-4 font-bold text-blue-600 dark:text-blue-400">TOTAL NET EQUITY (Capital Reserves + Current Surplus)</td>
+              <td class="py-3 px-4 text-right font-mono tabular-nums font-bold text-blue-600 dark:text-blue-400">
+                ₱{{ number_format((float) ($balance_sheet['total_equity'] ?? 0), 2) }}
+              </td>
+            </tr>
+          </tbody>
+          <tfoot class="border-t-2 border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/80 font-bold">
+            <tr>
+              <td class="py-3 px-4 uppercase text-slate-800 dark:text-slate-200">TOTAL LIABILITIES &amp; NET EQUITY</td>
+              <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-900 dark:text-white text-sm">
+                ₱{{ number_format((float) ($balance_sheet['total_liab_and_equity'] ?? 0), 2) }}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
 
-    <!-- Section 3: Statement of Comprehensive Income (P&L Summary) -->
-    <div class="mb-5">
-      <h5 class="fw-bold text-dark border-bottom pb-2 mb-3"><i class="ph ph-receipt me-2 text-primary"></i>3. Condensed Statement of Comprehensive Income</h5>
-      <table class="table table-bordered table-sm align-middle fs-xs">
-        <thead class="table-light">
-          <tr>
-            <th>Revenue &amp; Expense Summary</th>
-            <th class="text-end" style="width: 250px;">Amount (₱)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Gross Operating Revenues (Inpatient, Outpatient, Diagnostics, Pharmacy)</td>
-            <td class="text-end font-monospace text-success">₱{{ number_format((float) ($profit_and_loss['gross_revenue'] ?? 0), 2) }}</td>
-          </tr>
-          <tr>
-            <td>Less: Statutory &amp; Institutional Discounts (5010)</td>
-            <td class="text-end font-monospace text-warning">-₱{{ number_format((float) ($profit_and_loss['sales_discounts'] ?? 0), 2) }}</td>
-          </tr>
-          <tr class="table-light fw-semibold">
-            <td>Net Operating Revenues</td>
-            <td class="text-end font-monospace text-success fw-bold">₱{{ number_format((float) ($profit_and_loss['net_revenue'] ?? 0), 2) }}</td>
-          </tr>
-          <tr>
-            <td>Less: Operating Expenses (Supplies, Salaries, Facilities, Overhead)</td>
-            <td class="text-end font-monospace text-danger">-₱{{ number_format((float) ($profit_and_loss['total_expenses'] ?? 0), 2) }}</td>
-          </tr>
-          <tr class="table-primary fw-bold">
-            <td class="text-uppercase text-primary fs-6">NET OPERATING SURPLUS / (DEFICIT)</td>
-            <td class="text-end font-monospace text-primary fs-6">₱{{ number_format((float) ($profit_and_loss['net_income'] ?? 0), 2) }}</td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- Section 3: Statement of Comprehensive Income Summary -->
+    <div>
+      <h5 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 border-b border-slate-100 pb-2 mb-4 dark:border-slate-800 flex items-center gap-2">
+        <i class="ph-bold ph-receipt text-blue-600"></i>
+        <span>3. Condensed Statement of Comprehensive Income</span>
+      </h5>
+      <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800">
+            <tr>
+              <th class="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300">Revenue &amp; Expense Summary</th>
+              <th class="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300 text-right w-64">Amount</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+            <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="py-2.5 px-4 text-slate-700 dark:text-slate-300">Gross Operating Revenues (Inpatient, Outpatient, Diagnostics, Pharmacy)</td>
+              <td class="py-2.5 px-4 text-right font-mono tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
+                ₱{{ number_format((float) ($profit_and_loss['gross_revenue'] ?? 0), 2) }}
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="py-2.5 px-4 text-slate-700 dark:text-slate-300">Less: Statutory &amp; Institutional Discounts (5010)</td>
+              <td class="py-2.5 px-4 text-right font-mono tabular-nums font-semibold text-amber-600 dark:text-amber-400">
+                -₱{{ number_format((float) ($profit_and_loss['sales_discounts'] ?? 0), 2) }}
+              </td>
+            </tr>
+            <tr class="bg-slate-50/60 dark:bg-slate-800/40 font-semibold border-y border-slate-100 dark:border-slate-800">
+              <td class="py-2.5 px-4 text-slate-800 dark:text-slate-200">Net Operating Revenues</td>
+              <td class="py-2.5 px-4 text-right font-mono tabular-nums font-bold text-emerald-600 dark:text-emerald-400">
+                ₱{{ number_format((float) ($profit_and_loss['net_revenue'] ?? 0), 2) }}
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="py-2.5 px-4 text-slate-700 dark:text-slate-300">Less: Operating Expenses (Supplies, Salaries, Facilities, Overhead)</td>
+              <td class="py-2.5 px-4 text-right font-mono tabular-nums font-semibold text-rose-600 dark:text-rose-400">
+                -₱{{ number_format((float) ($profit_and_loss['total_expenses'] ?? 0), 2) }}
+              </td>
+            </tr>
+          </tbody>
+          <tfoot class="border-t-2 border-slate-300 bg-blue-50/80 dark:border-slate-700 dark:bg-blue-950/40 font-bold">
+            <tr>
+              <td class="py-3 px-4 uppercase text-blue-900 dark:text-blue-300">NET OPERATING SURPLUS / (DEFICIT)</td>
+              <td class="py-3 px-4 text-right font-mono tabular-nums text-blue-600 dark:text-blue-400 text-sm">
+                ₱{{ number_format((float) ($profit_and_loss['net_income'] ?? 0), 2) }}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
 
     <!-- Section 4: Sign-off & Signature Blocks -->
-    <div class="mt-5 pt-4 border-top">
-      <h6 class="fw-bold text-dark mb-4 text-center text-uppercase fs-xs">Executive Financial Statement Verification &amp; Attestation</h6>
-      <div class="row g-4 text-center">
+    <div class="border-t border-slate-200 pt-6 dark:border-slate-800">
+      <h6 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-6 text-center">
+        Executive Financial Statement Verification &amp; Attestation
+      </h6>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
         @foreach($signatories ?? [] as $sig)
-        <div class="col-md-4">
-          <div class="pt-4 border-top border-dark mx-3">
-            <div class="fw-bold text-dark">{{ $sig['name'] }}</div>
-            <div class="fs-xs text-muted">{{ $sig['title'] }}</div>
-            <span class="badge bg-success-subtle text-success fs-xs mt-1"><i class="ph ph-check me-1"></i> Verified &amp; Certified</span>
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-5 dark:border-slate-800 dark:bg-slate-800/40">
+          <div class="h-10 flex items-center justify-center">
+            <span class="font-serif italic text-slate-400 text-sm">Signed electronically</span>
+          </div>
+          <div class="border-t border-slate-300 pt-3 dark:border-slate-700">
+            <div class="font-bold text-xs text-slate-900 dark:text-white">{{ $sig['name'] }}</div>
+            <div class="text-[11px] text-slate-400">{{ $sig['title'] }}</div>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 mt-2">
+              <i class="ph-bold ph-check"></i> Verified &amp; Certified
+            </span>
           </div>
         </div>
         @endforeach

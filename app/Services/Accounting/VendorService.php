@@ -94,9 +94,9 @@ final class VendorService
     }
 
     /**
-     * @return Collection<int, Vendor>
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator<\App\Models\Vendor>
      */
-    public function getVendorsList(?string $status = null, ?string $search = null): Collection
+    public function getVendorsList(?string $status = null, ?string $search = null, int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
         $query = Vendor::with('purchaseBills')->orderBy('name');
 
@@ -113,6 +113,6 @@ final class VendorService
             });
         }
 
-        return $query->get();
+        return $query->paginate($perPage)->withQueryString();
     }
 }

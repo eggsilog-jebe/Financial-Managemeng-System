@@ -23,9 +23,17 @@ final class UserManagementController extends Controller
 
         $users = User::orderBy('role')
             ->orderBy('name')
-            ->get();
+            ->paginate(15)
+            ->withQueryString();
 
-        return view('user-security.users.index', compact('users'));
+        $metrics = [
+            'total'         => User::count(),
+            'active'        => User::where('status', 'active')->count(),
+            'suspended'     => User::where('status', 'suspended')->count(),
+            'pending_reset' => User::where('must_change_password', true)->count(),
+        ];
+
+        return view('user-security.users.index', compact('users', 'metrics'));
     }
 
     /** Show the create user form. */

@@ -90,7 +90,8 @@ final class TaxManagementController extends Controller
     {
         $certificates = Bir2307Certificate::with(['vendor', 'purchaseBill', 'doctorProfile'])
             ->latest()
-            ->get();
+            ->paginate(15)
+            ->withQueryString();
 
         return view('tax.withholding-tax', compact('certificates'));
     }
@@ -257,8 +258,8 @@ final class TaxManagementController extends Controller
                 ->orWhere('action', 'LIKE', '%VAT%');
             })
             ->latest('id')
-            ->limit(100)
-            ->get();
+            ->paginate(25)
+            ->withQueryString();
 
         return view('tax.tax-audit-trail', compact('taxRules', 'certificates', 'logs'));
     }

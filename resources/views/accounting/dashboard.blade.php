@@ -1,542 +1,420 @@
 @extends('layouts.app')
 
-@section('title', 'Executive Financial Dashboard & Hospital Governance')
+@section('title', 'Executive Dashboard — Financial Management System')
 @section('module', 'finance')
 @section('page', 'dashboard')
 
-@section('content')
-<div class="container-fluid p-4">
+@push('styles')
+<style>
+  /* Thin scrollbar for recent journals table */
+  .slim-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+  .slim-scroll::-webkit-scrollbar-track { background: transparent; }
+  .slim-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+  .dark .slim-scroll::-webkit-scrollbar-thumb { background: #334155; }
 
-  @if(($pendingWorkstationsCount ?? 0) > 0)
-    <div class="alert alert-warning border-0 shadow-sm rounded-3 p-3 d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2" style="background:#fffbeb; border-left: 4px solid #f59e0b !important;">
-      <div class="d-flex align-items-center gap-3">
-        <span class="p-2 rounded-3 bg-warning text-dark d-inline-flex align-items-center justify-content-center" style="width:38px;height:38px;">
-          <i class="ph-fill ph-broadcast fs-4"></i>
+  /* Pulse animation for security status dot */
+  @keyframes pulse-ring {
+    0%   { box-shadow: 0 0 0 0 rgba(52,211,153, 0.5); }
+    70%  { box-shadow: 0 0 0 6px rgba(52,211,153, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(52,211,153, 0); }
+  }
+  .pulse-green { animation: pulse-ring 2s infinite; }
+
+  @keyframes pulse-ring-amber {
+    0%   { box-shadow: 0 0 0 0 rgba(251,191,36, 0.5); }
+    70%  { box-shadow: 0 0 0 6px rgba(251,191,36, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(251,191,36, 0); }
+  }
+  .pulse-amber { animation: pulse-ring-amber 2s infinite; }
+
+  @keyframes pulse-ring-rose {
+    0%   { box-shadow: 0 0 0 0 rgba(251,113,133, 0.5); }
+    70%  { box-shadow: 0 0 0 6px rgba(251,113,133, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(251,113,133, 0); }
+  }
+  .pulse-rose { animation: pulse-ring-rose 2s infinite; }
+</style>
+@endpush
+
+@section('content')
+<div class="space-y-5 pb-8">
+
+  {{-- ─── TIER 0: Urgent Alerts (conditional, non-intrusive) ─────────────────── --}}
+  @if(($pendingWorkstationsCount ?? 0) > 0 || $securityAlertLevel >= 2)
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3
+                {{ $securityAlertLevel >= 2 ? 'rounded-2xl bg-rose-50 ring-1 ring-rose-300/70 dark:bg-rose-950/30 dark:ring-rose-800/60' : 'rounded-2xl bg-amber-50 ring-1 ring-amber-300/70 dark:bg-amber-950/30 dark:ring-amber-800/60' }}
+                p-4 shadow-sm">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl
+                     {{ $securityAlertLevel >= 2 ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-300' : 'bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-300' }}">
+          <i class="ph-bold {{ $securityAlertLevel >= 2 ? 'ph-warning' : 'ph-broadcast' }} text-base"></i>
         </span>
         <div>
-          <strong class="d-block text-dark" style="font-size:0.9rem;">Pending Workstation Authorization Requests</strong>
-          <span class="text-secondary fs-xs">There are {{ $pendingWorkstationsCount }} unauthorized computer(s) requesting access to the hospital financial system.</span>
+          <p class="text-sm font-semibold {{ $securityAlertLevel >= 2 ? 'text-rose-900 dark:text-rose-200' : 'text-amber-900 dark:text-amber-200' }}">
+            @if($securityAlertLevel >= 2)
+              Security Alert — {{ $failedLoginsToday }} Failed Login Attempt{{ $failedLoginsToday !== 1 ? 's' : '' }} Today
+            @else
+              {{ $pendingWorkstationsCount }} Workstation Authorization Request{{ $pendingWorkstationsCount !== 1 ? 's' : '' }} Pending
+            @endif
+          </p>
+          <p class="text-xs {{ $securityAlertLevel >= 2 ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400' }}">
+            @if($securityAlertLevel >= 2)
+              Review the Audit Hub immediately for suspicious authentication patterns.
+            @else
+              Unauthorized terminals are requesting access to the hospital financial system.
+            @endif
+          </p>
         </div>
       </div>
-      <a href="{{ route('user-security.workstations') }}" class="btn btn-sm btn-warning fw-semibold px-3 rounded-2 text-dark">
-        <i class="ph ph-check-circle me-1"></i>Review &amp; Authorize Requests
+      <a href="{{ $securityAlertLevel >= 2 ? route('accounting.audit-log') : route('user-security.workstations') }}"
+         class="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold text-white shadow-sm self-start sm:self-auto transition-colors
+                {{ $securityAlertLevel >= 2 ? 'bg-rose-600 hover:bg-rose-700' : 'bg-amber-600 hover:bg-amber-700' }}">
+        <i class="ph-bold {{ $securityAlertLevel >= 2 ? 'ph-magnifying-glass' : 'ph-check-circle' }}"></i>
+        {{ $securityAlertLevel >= 2 ? 'View Audit Hub' : 'Review Requests' }}
       </a>
     </div>
   @endif
 
-  <!-- Executive Context Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+  {{-- ─── TIER 1: Page Header ─────────────────────────────────────────────────── --}}
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <div class="d-flex align-items-center gap-2 mb-1">
-        <h1 class="h3 mb-0 font-weight-bold text-dark">Executive Financial Overview</h1>
-        <span class="badge bg-primary text-white fs-xs px-2 py-1">PH PUBLIC HOSPITAL CORE</span>
-      </div>
-      <p class="text-muted mb-0">
-        Hospital Financial Management System &bull; Active Role: 
-        <strong class="text-dark">{{ $currentUser->name ?? $userRole }}</strong> 
-        <span class="badge bg-secondary-subtle text-secondary ms-1">({{ $userRole }})</span>
+      <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Executive Financial Overview</h1>
+      <p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+        Executive financial overview · <span class="font-medium">{{ now()->format('l, F d Y') }}</span>
       </p>
     </div>
-
-    <div class="d-flex align-items-center gap-2 flex-wrap">
-      <x-integration-badge 
-          type="internal" 
-          :internalModules="['Executive KPIs', 'General Ledger', 'Malasakit Center', 'COA 2021-014 Intact Recon', 'Departmental Budgets', 'Accounts Receivable']"
-          :tables="['journal_entries', 'budget_allocations', 'guarantee_letters', 'philhealth_claims', 'payments', 'bank_deposits']"
-          glImpact="Live synchronization across GAA fiscal budgets, PhilHealth UHC claims, and daily treasury deposits"
-          description="Consolidated executive command overview visualizing cross-department financial health, subsidy distribution, and statutory audit integrity."
-      />
+    <div class="flex items-center gap-2">
+      <a href="{{ route('accounting.reports.index') }}"
+         class="inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-700 dark:hover:bg-slate-800 transition-colors">
+        <i class="ph-bold ph-file-text text-emerald-600 dark:text-emerald-400"></i>
+        Financial Statements
+      </a>
+      <a href="{{ route('accounting.general-ledger.index') }}"
+         class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors">
+        <i class="ph-bold ph-books"></i>
+        General Ledger
+      </a>
     </div>
   </div>
 
-  <!-- Primary Financial Metric Cards -->
-  <div class="row g-3 mb-4">
-    <!-- Total Revenue -->
-    <div class="col-md-3 col-6">
-      <div class="card border-0 shadow-sm rounded-3 p-3 h-100 bg-white">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-muted small fw-semibold text-uppercase">Hospital Revenue</span>
-          <span class="badge bg-success-subtle text-success"><i class="ph ph-arrow-up-right me-1"></i> Live P&amp;L</span>
-        </div>
-        <h3 class="fw-bold mb-1 text-dark">₱{{ number_format($totalRevenue, 2) }}</h3>
-        <span class="fs-xs text-muted">Clinical, Diagnostic &amp; Pharmacy Revenue</span>
-      </div>
-    </div>
+  {{-- ─── TIER 1: KPI Stat Cards (5 cards) ──────────────────────────────────── --}}
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
 
-    <!-- Cash on Hand (Drawer/Vault - Account 1010/1011) -->
-    <div class="col-md-2 col-6">
-      <div class="card border-0 shadow-sm rounded-3 p-3 h-100 bg-white">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-muted small fw-semibold text-uppercase">Cash on Hand</span>
-          <span class="badge bg-primary-subtle text-primary"><i class="ph ph-vault me-1"></i> Vault</span>
-        </div>
-        <h3 class="fw-bold mb-1 text-dark">₱{{ number_format($cashOnHand, 2) }}</h3>
-        <span class="fs-xs text-muted">Cashier Drawers &amp; Undeposited Cash</span>
-      </div>
-    </div>
+    {{-- Hospital Revenue --}}
+    <x-stat-card
+      title="Total Revenue"
+      :value="$totalRevenue"
+      icon="ph-trend-up"
+      color="emerald"
+      subtitle="Clinical, Diagnostic & Pharmacy"
+    />
 
-    <!-- Cash in Bank (LBP Depository - Account 1020) -->
-    <div class="col-md-2 col-6">
-      <div class="card border-0 shadow-sm rounded-3 p-3 h-100 bg-white">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-muted small fw-semibold text-uppercase">Cash in Bank</span>
-          <span class="badge bg-info-subtle text-info"><i class="ph ph-bank me-1"></i> LBP AGDB</span>
-        </div>
-        <h3 class="fw-bold mb-1 text-dark">₱{{ number_format($cashInBank, 2) }}</h3>
-        <span class="fs-xs text-muted">Land Bank Operating Accounts</span>
-      </div>
-    </div>
+    {{-- Combined Cash Position --}}
+    <x-stat-card
+      title="Cash Position"
+      :value="$cashOnHand + $cashInBank"
+      icon="ph-vault"
+      color="blue"
+      subtitle="On Hand + Land Bank AGDB"
+    />
 
-    <!-- Outstanding AR -->
-    <div class="col-md-2 col-6">
-      <div class="card border-0 shadow-sm rounded-3 p-3 h-100 bg-white">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-muted small fw-semibold text-uppercase">Outstanding AR</span>
-          <span class="badge bg-warning-subtle text-warning"><i class="ph ph-clock me-1"></i> Receivables</span>
-        </div>
-        <h3 class="fw-bold mb-1 text-dark">₱{{ number_format($outstandingAR, 2) }}</h3>
-        <span class="fs-xs text-muted">Open Patient &amp; HMO Balances</span>
-      </div>
-    </div>
+    {{-- Outstanding AR --}}
+    <x-stat-card
+      title="Outstanding AR"
+      :value="$outstandingAR"
+      icon="ph-clock"
+      color="amber"
+      subtitle="Open Patient & HMO Claims"
+    />
 
-    <!-- Outstanding AP -->
-    <div class="col-md-3 col-12">
-      <div class="card border-0 shadow-sm rounded-3 p-3 h-100 bg-white">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="text-muted small fw-semibold text-uppercase">Outstanding AP</span>
-          <span class="badge bg-danger-subtle text-danger"><i class="ph ph-warning-circle me-1"></i> Payables</span>
-        </div>
-        <h3 class="fw-bold mb-1 text-dark">₱{{ number_format($outstandingAP, 2) }}</h3>
-        <span class="fs-xs text-muted">Medical Suppliers &amp; Drug Vendors</span>
-      </div>
-    </div>
-  </div>
+    {{-- Undeposited Cash --}}
+    <x-stat-card
+      title="Undeposited"
+      :value="$undepositedCollections"
+      icon="{{ $isCoaIntactCompliant ? 'ph-check-circle' : 'ph-warning-circle' }}"
+      color="{{ $isCoaIntactCompliant ? 'teal' : 'rose' }}"
+      subtitle="{{ $isCoaIntactCompliant ? 'COA 2021-014 Compliant' : 'Remittance Overdue' }}"
+    />
 
-  <!-- PHASE 4 WIDGET: Public Hospital Fund-Source Utilization & UHC Distribution -->
-  <div class="card border-0 shadow-sm rounded-3 bg-white mb-4">
-    <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
-      <div>
-        <div class="d-flex align-items-center gap-2">
-          <h5 class="fw-bold mb-0 text-dark">
-            <i class="ph ph-hand-coins text-purple me-2" style="color: #8b5cf6;"></i>
-            Public Hospital Fund Sources &amp; Universal Healthcare Co-Pay Coverage
-          </h5>
-          <span class="badge bg-success-subtle text-success border border-success-subtle fs-xs">
-            <i class="ph ph-shield-check me-1"></i> RA 11223 &bull; RA 11463
-          </span>
-        </div>
-        <p class="text-muted fs-xs mb-0 mt-1">
-          Analysis of funding streams: PhilHealth Case Rates vs. Malasakit Center Subsidies vs. Direct Patient Out-of-Pocket
+    {{-- Security Status (traffic-light card) --}}
+    <div class="relative overflow-hidden rounded-2xl bg-white p-5 ring-1 ring-slate-200/80 transition-all hover:shadow-sm dark:bg-slate-900 dark:ring-slate-800">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Security</span>
+        @php
+          $dotClass = match($securityAlertLevel) {
+            2 => 'bg-rose-500 pulse-rose',
+            1 => 'bg-amber-400 pulse-amber',
+            default => 'bg-emerald-500 pulse-green',
+          };
+        @endphp
+        <span class="h-3 w-3 rounded-full {{ $dotClass }}"></span>
+      </div>
+      <div class="mt-4">
+        <p class="text-lg font-bold text-slate-900 dark:text-white">
+          @if($securityAlertLevel === 0) All Clear
+          @elseif($securityAlertLevel === 1) Warning
+          @else Alert
+          @endif
+        </p>
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          {{ $failedLoginsToday === 0 ? 'No failed logins today' : $failedLoginsToday . ' failed login' . ($failedLoginsToday !== 1 ? 's' : '') . ' today' }}
         </p>
       </div>
-
-      <div class="text-end">
-        <span class="fs-xs text-muted d-block">Public Protection Ratio:</span>
-        <span class="badge bg-primary text-white fs-6 px-2 py-1">
-          {{ $socialCoveragePct }}% Socialized Coverage
-        </span>
-      </div>
+      <a href="{{ route('accounting.audit-log') }}" class="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400">
+        Audit Hub <i class="ph-bold ph-arrow-right text-[10px]"></i>
+      </a>
     </div>
 
-    <div class="card-body px-4 pt-2 pb-4">
-      <!-- Composite Stacked Progress Bar -->
-      <div class="mb-3">
-        <div class="d-flex justify-content-between align-items-center mb-1 fs-xs">
-          <span class="text-muted">Funding Stream Distribution (Total: <strong>₱{{ number_format($totalFundSources, 2) }}</strong>)</span>
-          <span class="fw-semibold text-dark">{{ 100 - $directCopaySharePct }}% Government Subsidized &bull; {{ $directCopaySharePct }}% Patient Co-Pay</span>
-        </div>
-        <div class="progress" style="height: 14px; border-radius: 8px; overflow: hidden;">
-          <div class="progress-bar bg-success" role="progressbar" style="width: {{ $philhealthSharePct }}%;" title="PhilHealth: {{ $philhealthSharePct }}%"></div>
-          <div class="progress-bar" role="progressbar" style="width: {{ $malasakitSharePct }}%; background-color: #8b5cf6;" title="Malasakit Subsidies: {{ $malasakitSharePct }}%"></div>
-          <div class="progress-bar bg-warning" role="progressbar" style="width: {{ $directCopaySharePct }}%;" title="Direct Co-Pay: {{ $directCopaySharePct }}%"></div>
-        </div>
-      </div>
+  </div>
 
-      <!-- 3 Breakdown Metric Cards -->
-      <div class="row g-3">
-        <!-- 1. PhilHealth Reimbursements -->
-        <div class="col-md-4">
-          <div class="p-3 rounded-3 border bg-light h-100">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-              <span class="fw-bold text-dark fs-xs text-uppercase d-flex align-items-center gap-1">
-                <span class="rounded-circle d-inline-block" style="width: 10px; height: 10px; background-color: #10b981;"></span>
-                PhilHealth UHC Reimbursements
-              </span>
-              <span class="badge bg-success text-white fs-xs">{{ $philhealthSharePct }}% Share</span>
-            </div>
-            <h4 class="fw-bold text-dark mb-1">₱{{ number_format($philhealthTotal, 2) }}</h4>
-            <div class="fs-xs text-muted d-flex justify-content-between">
-              <span>Claims Processed: <strong>{{ $philhealthCount }}</strong></span>
-              <span>UHC Case Rate Pool</span>
-            </div>
-          </div>
-        </div>
+  {{-- ─── TIER 2: Charts Row ──────────────────────────────────────────────────── --}}
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
-        <!-- 2. Malasakit Medical Assistance (MAIP / PCSO / DSWD) -->
-        <div class="col-md-4">
-          <div class="p-3 rounded-3 border bg-light h-100">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-              <span class="fw-bold text-dark fs-xs text-uppercase d-flex align-items-center gap-1">
-                <span class="rounded-circle d-inline-block" style="width: 10px; height: 10px; background-color: #8b5cf6;"></span>
-                Malasakit Center Subsidies
-              </span>
-              <span class="badge text-white fs-xs" style="background-color: #8b5cf6;">{{ $malasakitSharePct }}% Share</span>
-            </div>
-            <h4 class="fw-bold text-dark mb-1">₱{{ number_format($malasakitGlUtilized, 2) }}</h4>
-            <div class="fs-xs text-muted d-flex justify-content-between">
-              <span>Active GLs: <strong>{{ $malasakitCount }}</strong></span>
-              <span>Authorized: <strong>₱{{ number_format($malasakitGlTotal, 2) }}</strong></span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 3. Direct Patient Co-Pay / Out-of-Pocket -->
-        <div class="col-md-4">
-          <div class="p-3 rounded-3 border bg-light h-100">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-              <span class="fw-bold text-dark fs-xs text-uppercase d-flex align-items-center gap-1">
-                <span class="rounded-circle d-inline-block" style="width: 10px; height: 10px; background-color: #f59e0b;"></span>
-                Direct Patient Co-Pay
-              </span>
-              <span class="badge bg-warning text-dark fs-xs">{{ $directCopaySharePct }}% Share</span>
-            </div>
-            <h4 class="fw-bold text-dark mb-1">₱{{ number_format($directCopayTotal, 2) }}</h4>
-            <div class="fs-xs text-muted d-flex justify-content-between">
-              <span>Cashier Receipts: <strong>{{ $directCopayCount }}</strong></span>
-              <span>Out-of-Pocket Share</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="mt-3 pt-2 border-top d-flex justify-content-between align-items-center flex-wrap gap-2 fs-xs text-muted">
+    {{-- Chart A: Revenue vs Expense — 6-Month Trend (takes 2/3 width) --}}
+    <div class="lg:col-span-2 rounded-2xl bg-white p-5 ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
         <div>
-          <i class="ph ph-info me-1 text-primary"></i>
-          <strong>Universal Healthcare (RA 11223) &amp; Malasakit Centers Act (RA 11463):</strong> Hospital policy actively prioritizes No Balance Billing (NBB) for indigent patients in basic wards.
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <i class="ph-bold ph-chart-line text-emerald-600 dark:text-emerald-400"></i>
+            Revenue vs Operating Expenses
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">6-month posted journal entries trend</p>
         </div>
-        <a href="{{ route('ar.malasakit.index') }}" class="btn btn-sm btn-link p-0 text-decoration-none fw-semibold">
-          Manage Malasakit Guarantee Letters &rarr;
-        </a>
-      </div>
-    </div>
-  </div>
-
-  <!-- PHASE 4 WIDGET: Departmental Budget Exhaustion & Fiscal Burn-Rate Indicators -->
-  <div class="card border-0 shadow-sm rounded-3 bg-white mb-4">
-    <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
-      <div>
-        <div class="d-flex align-items-center gap-2">
-          <h5 class="fw-bold mb-0 text-dark">
-            <i class="ph ph-chart-donut text-primary me-2"></i>
-            Departmental Fiscal Budget &amp; Expenditure Burn Rate (FY 2026)
-          </h5>
-          <span class="badge bg-primary-subtle text-primary border border-primary-subtle fs-xs">
-            GAA Appropriation Monitor
+        <div class="flex items-center gap-3 text-xs text-slate-500">
+          <span class="flex items-center gap-1.5">
+            <span class="h-2 w-2 rounded-full bg-emerald-500 inline-block"></span> Revenue
+          </span>
+          <span class="flex items-center gap-1.5">
+            <span class="h-2 w-2 rounded-full bg-rose-400 inline-block"></span> Expenses
           </span>
         </div>
-        <p class="text-muted fs-xs mb-0 mt-1">
-          Real-time expenditure tracking against hospital departmental appropriations to prevent year-end fund exhaustion
+      </div>
+      <div class="mt-4 h-52">
+        <canvas id="revenueExpenseChart"></canvas>
+      </div>
+    </div>
+
+    {{-- Chart B: Public Hospital Fund Sources & Universal Healthcare Co-Pay Coverage — Donut (takes 1/3 width) --}}
+    <div class="rounded-2xl bg-white p-5 ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 flex flex-col">
+      <div class="border-b border-slate-100 pb-4 dark:border-slate-800">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <i class="ph-bold ph-chart-donut text-blue-500"></i>
+          Public Hospital Fund Sources &amp; Universal Healthcare Co-Pay Coverage
+        </h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Current month fund-source breakdown</p>
+      </div>
+      <div class="flex flex-col items-center mt-4 flex-1">
+        <div class="relative h-36 w-36">
+          <canvas id="payerDonutChart"></canvas>
+          <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            <span class="font-mono text-base font-bold text-slate-900 dark:text-white tabular-nums">
+              ₱{{ number_format($totalFundSources, 0) }}
+            </span>
+            <span class="text-[10px] text-slate-400">Total</span>
+          </div>
+        </div>
+
+        {{-- Legend --}}
+        <div class="mt-4 w-full space-y-2">
+          <div class="flex items-center justify-between text-xs">
+            <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
+              <span class="h-2 w-2 rounded-full bg-blue-500 inline-block flex-shrink-0"></span>
+              PhilHealth ACR
+            </span>
+            <span class="font-mono font-semibold text-slate-800 dark:text-slate-200 tabular-nums">{{ $philhealthSharePct }}%</span>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
+              <span class="h-2 w-2 rounded-full bg-teal-500 inline-block flex-shrink-0"></span>
+              Malasakit Center Subsidies
+            </span>
+            <span class="font-mono font-semibold text-slate-800 dark:text-slate-200 tabular-nums">
+              {{ number_format((float) $malasakitGlUtilized, 2) }}
+            </span>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
+              <span class="h-2 w-2 rounded-full bg-sky-400 inline-block flex-shrink-0"></span>
+              Private HMO
+            </span>
+            <span class="font-mono font-semibold text-slate-800 dark:text-slate-200 tabular-nums">{{ $hmoSharePct }}%</span>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-400">
+              <span class="h-2 w-2 rounded-full bg-emerald-400 inline-block flex-shrink-0"></span>
+              Direct Cash
+            </span>
+            <span class="font-mono font-semibold text-slate-800 dark:text-slate-200 tabular-nums">{{ $directCopaySharePct }}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  {{-- ─── TIER 2 (secondary): GL Balance Status + COA Compliance inline strip ─── --}}
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+    {{-- GL Double-Entry Balance Status --}}
+    <div class="flex items-center gap-4 rounded-2xl bg-white px-5 py-4 ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+      <span class="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl
+                   {{ $isBalanced ? 'bg-emerald-50 text-emerald-600 ring-1 ring-emerald-500/20 dark:bg-emerald-950/50 dark:text-emerald-400' : 'bg-rose-50 text-rose-600 ring-1 ring-rose-500/20 dark:bg-rose-950/50 dark:text-rose-400' }}">
+        <i class="ph-bold {{ $isBalanced ? 'ph-scales' : 'ph-warning-circle' }} text-lg"></i>
+      </span>
+      <div class="min-w-0">
+        <p class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">General Ledger</p>
+        <p class="mt-0.5 text-sm font-semibold {{ $isBalanced ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400' }}">
+          {{ $isBalanced ? '✓ Double-Entry In Balance' : '⚠ Discrepancy Detected' }}
+        </p>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          Sum(Debit) {{ $isBalanced ? '=' : '≠' }} Sum(Credit) across all POSTED journals
         </p>
       </div>
-
-      <div class="text-end">
-        <span class="fs-xs text-muted d-block">Overall Fiscal Burn Rate:</span>
-        <span class="badge {{ $overallBurnRate >= 80 ? 'bg-danger' : 'bg-primary' }} text-white fs-6 px-2 py-1">
-          {{ $overallBurnRate }}% Spent
-        </span>
-      </div>
+      <a href="{{ route('accounting.general-ledger.index') }}"
+         class="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white whitespace-nowrap flex-shrink-0">
+        View GL <i class="ph-bold ph-arrow-right text-[10px]"></i>
+      </a>
     </div>
 
-    <div class="card-body px-4 pt-2 pb-4">
-      <!-- Critical Exhaustion Alert Banner (if any department >= 85%) -->
-      @if($criticalBudgets->count() > 0)
-        <div class="alert alert-danger border-danger-subtle bg-danger-subtle text-danger rounded-3 p-3 mb-3 d-flex align-items-start gap-3">
-          <i class="ph ph-warning-octagon fs-3 flex-shrink-0 mt-1"></i>
-          <div class="flex-grow-1">
-            <strong class="d-block fs-6 mb-1">
-              Fiscal Warning: {{ $criticalBudgets->count() }} Department(s) Approaching Budget Exhaustion (&gt;= 85% Burn Rate)
-            </strong>
-            <p class="fs-xs mb-2 text-dark">
-              The following cost centers have depleted over 85% of their allocated appropriations for FY 2026. CFO review required for budget reallocation or procurement moratorium:
-            </p>
-            <div class="d-flex flex-wrap gap-2">
-              @foreach($criticalBudgets as $crit)
-                <span class="badge bg-white text-danger border border-danger-subtle p-2 fs-xs">
-                  <strong>{{ $crit->department }}</strong>: 
-                  {{ number_format($crit->burn_rate, 1) }}% Spent 
-                  (₱{{ number_format((float) $crit->spent_amount, 2) }} / ₱{{ number_format((float) $crit->allocated_amount, 2) }}) &bull; 
-                  Remaining: ₱{{ number_format((float) $crit->remaining_balance, 2) }}
-                </span>
-              @endforeach
-            </div>
-          </div>
-          <a href="{{ url('/budget') }}" class="btn btn-danger btn-sm flex-shrink-0">
-            Reallocate Funds
-          </a>
-        </div>
-      @endif
-
-      <!-- Summary KPI Ribbon -->
-      <div class="row g-2 mb-3">
-        <div class="col-md-3 col-6">
-          <div class="p-2 border rounded-2 bg-light">
-            <span class="fs-xxs text-muted text-uppercase d-block">Total GAA Allocated</span>
-            <strong class="text-dark fs-6">₱{{ number_format($totalBudgetAllocated, 2) }}</strong>
-          </div>
-        </div>
-        <div class="col-md-3 col-6">
-          <div class="p-2 border rounded-2 bg-light">
-            <span class="fs-xxs text-muted text-uppercase d-block">Total Liquidated / Spent</span>
-            <strong class="text-dark fs-6 text-danger">₱{{ number_format($totalBudgetSpent, 2) }}</strong>
-          </div>
-        </div>
-        <div class="col-md-3 col-6">
-          <div class="p-2 border rounded-2 bg-light">
-            <span class="fs-xxs text-muted text-uppercase d-block">Remaining Balance</span>
-            <strong class="text-dark fs-6 text-success">₱{{ number_format($totalBudgetRemaining, 2) }}</strong>
-          </div>
-        </div>
-        <div class="col-md-3 col-6">
-          <div class="p-2 border rounded-2 bg-light">
-            <span class="fs-xxs text-muted text-uppercase d-block">Department Cost Centers</span>
-            <strong class="text-dark fs-6">{{ $budgetAllocations->count() }} Active Budgets</strong>
-          </div>
-        </div>
+    {{-- Treasury Daily Collection & Deposit — COA Circular No. 2021-014 Intact Deposit Compliance --}}
+    <div class="flex items-center gap-4 rounded-2xl bg-white px-5 py-4 ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+      <span class="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl
+                   {{ $isCoaIntactCompliant ? 'bg-teal-50 text-teal-600 ring-1 ring-teal-500/20 dark:bg-teal-950/50 dark:text-teal-400' : 'bg-amber-50 text-amber-600 ring-1 ring-amber-500/20 dark:bg-amber-950/50 dark:text-amber-400' }}">
+        <i class="ph-bold ph-bank text-lg"></i>
+      </span>
+      <div class="min-w-0">
+        <p class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Treasury Daily Collection &amp; Deposit</p>
+        <p class="mt-0.5 text-sm font-semibold {{ $isCoaIntactCompliant ? 'text-teal-700 dark:text-teal-400' : 'text-amber-700 dark:text-amber-400' }}">
+          COA Circular No. 2021-014 — {{ $isCoaIntactCompliant ? '✓ Intact Deposit Compliant' : '⚠ Remittance Overdue' }}
+        </p>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          Undeposited: <span class="font-mono font-semibold text-slate-700 dark:text-slate-300">₱{{ number_format($undepositedCollections, 2) }}</span>
+          · Deposited: <span class="font-mono font-semibold text-teal-600 dark:text-teal-400">₱{{ number_format($totalDeposited, 2) }}</span>
+        </p>
       </div>
-
-      <!-- Department Burn Rate Progress Bars Table -->
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr class="fs-xs text-muted text-uppercase">
-              <th>Department / Cost Center</th>
-              <th>Category</th>
-              <th class="text-end">Allocated</th>
-              <th class="text-end">Spent Amount</th>
-              <th class="text-end">Remaining</th>
-              <th style="width: 220px;">Expenditure Burn Rate</th>
-              <th class="text-center">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($budgetAllocations as $alloc)
-              @php
-                $burn = $alloc->burn_rate;
-                $barColor = $burn >= 85 ? 'bg-danger' : ($burn >= 65 ? 'bg-warning' : 'bg-success');
-              @endphp
-              <tr>
-                <td>
-                  <strong class="d-block text-dark">{{ $alloc->department }}</strong>
-                  <span class="fs-xxs text-muted font-monospace">{{ $alloc->department_code ?? 'DEPT' }} &bull; Head: {{ $alloc->department_head ?? 'N/A' }}</span>
-                </td>
-                <td><span class="badge bg-secondary-subtle text-secondary fs-xxs">{{ $alloc->category ?? 'Clinical' }}</span></td>
-                <td class="text-end font-monospace fw-semibold">₱{{ number_format((float) $alloc->allocated_amount, 2) }}</td>
-                <td class="text-end font-monospace text-danger">₱{{ number_format((float) $alloc->spent_amount, 2) }}</td>
-                <td class="text-end font-monospace text-success fw-bold">₱{{ number_format((float) $alloc->remaining_balance, 2) }}</td>
-                <td>
-                  <div class="d-flex align-items-center gap-2">
-                    <div class="progress flex-grow-1" style="height: 8px;">
-                      <div class="progress-bar {{ $barColor }}" role="progressbar" style="width: {{ min(100, $burn) }}%;"></div>
-                    </div>
-                    <span class="fs-xs font-monospace fw-bold {{ $burn >= 85 ? 'text-danger' : 'text-dark' }}">{{ number_format($burn, 1) }}%</span>
-                  </div>
-                </td>
-                <td class="text-center">
-                  @if($burn >= 85)
-                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle fs-xxs">CRITICAL</span>
-                  @elseif($burn >= 65)
-                    <span class="badge bg-warning-subtle text-warning border border-warning-subtle fs-xxs">MODERATE</span>
-                  @else
-                    <span class="badge bg-success-subtle text-success border border-success-subtle fs-xxs">HEALTHY</span>
-                  @endif
-                </td>
-              </tr>
-            @empty
-              <tr>
-                <td colspan="7" class="text-center py-3 text-muted">No departmental budget allocations configured.</td>
-              </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
+      <a href="{{ route('collection.bank-deposits') }}"
+         class="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white whitespace-nowrap flex-shrink-0">
+        Deposits <i class="ph-bold ph-arrow-right text-[10px]"></i>
+      </a>
     </div>
+
   </div>
 
-  <!-- Row: COA Circular 2021-014 Daily Intact Deposit & Security Telemetry -->
-  <div class="row g-3 mb-4">
-    <!-- PHASE 4 WIDGET: Daily Collection & Intact Deposit Reconciliation (COA Circular No. 2021-014) -->
-    <div class="col-md-6">
-      <div class="card border-0 shadow-sm rounded-3 bg-white h-100">
-        <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
-          <div>
-            <h5 class="fw-bold mb-0 text-dark">
-              <i class="ph ph-bank text-primary me-2"></i>
-              Treasury Daily Collection &amp; Deposit
-            </h5>
-            <span class="fs-xs text-muted">COA Circular No. 2021-014 Compliance Engine</span>
+  {{-- ─── TIER 2.5: Departmental Fiscal Budget & Expenditure Burn Rate (FY 2026) ── --}}
+  <div class="rounded-2xl bg-white ring-1 ring-slate-200/80 overflow-hidden dark:bg-slate-900 dark:ring-slate-800">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-chart-bar text-violet-600 dark:text-violet-400 text-base"></i>
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Departmental Fiscal Budget &amp; Expenditure Burn Rate (FY 2026)</h3>
+      </div>
+      <span class="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-slate-600 dark:text-slate-300">
+        Overall: <span class="font-bold text-violet-700 dark:text-violet-400">{{ $overallBurnRate }}% Spent</span>
+      </span>
+    </div>
+
+    @if($criticalBudgets->count() > 0)
+      <div class="mx-5 mt-4 mb-1 rounded-xl bg-amber-50 ring-1 ring-amber-300/60 px-4 py-3 dark:bg-amber-950/30 dark:ring-amber-800/50">
+        <p class="flex items-center gap-2 text-xs font-semibold text-amber-800 dark:text-amber-300">
+          <i class="ph-bold ph-warning text-base"></i>
+          Approaching Budget Exhaustion — {{ $criticalBudgets->count() }} department{{ $criticalBudgets->count() !== 1 ? 's' : '' }} above 85% threshold
+        </p>
+      </div>
+    @endif
+
+    <div class="px-5 pb-5 pt-3 space-y-3">
+      @foreach($criticalBudgets as $budget)
+        @php
+          $burnPct = bccomp((string) $budget->allocated_amount, '0.0000', 4) > 0
+            ? number_format(
+                round((float) bcdiv((string) $budget->spent_amount, (string) $budget->allocated_amount, 4) * 100, 1),
+                1
+              )
+            : '0.0';
+        @endphp
+        <div class="flex items-center justify-between gap-4">
+          <div class="min-w-0 flex-1">
+            <p class="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate">{{ $budget->department }}</p>
+            <div class="mt-1.5 h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+              <div class="h-full rounded-full {{ (float)$burnPct >= 95 ? 'bg-rose-500' : 'bg-amber-500' }} transition-all"
+                   style="width: {{ min((float)$burnPct, 100) }}%">
+              </div>
+            </div>
           </div>
-          <span class="badge {{ $isCoaIntactCompliant ? 'bg-success' : 'bg-warning text-dark' }} fs-xs">
-            {{ $isCoaIntactCompliant ? 'INTACT: COMPLIANT' : 'REMITTANCE DUE' }}
+          <span class="text-xs font-mono font-bold {{ (float)$burnPct >= 95 ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400' }} whitespace-nowrap">
+            {{ $burnPct }}% Spent
           </span>
         </div>
-
-        <div class="card-body px-4 pt-2 pb-4">
-          <p class="fs-xs text-muted mb-3">
-            Commission on Audit (COA) Circular 2021-014 mandates that all government hospital cash collections be deposited <strong>intact daily</strong> or on the next banking day with Authorized Government Depository Banks (AGDBs).
-          </p>
-
-          <div class="row g-2 mb-3">
-            <div class="col-6">
-              <div class="p-3 border rounded-2 bg-light">
-                <span class="fs-xxs text-muted text-uppercase d-block">Cash Collections Today</span>
-                <h4 class="fw-bold text-dark mb-0">₱{{ number_format($totalCashCollections, 2) }}</h4>
-                <span class="fs-xxs text-muted">Cashier POS Counters</span>
-              </div>
-            </div>
-            <div class="col-6">
-              <div class="p-3 border rounded-2 bg-light">
-                <span class="fs-xxs text-muted text-uppercase d-block">Deposited to Land Bank</span>
-                <h4 class="fw-bold text-success mb-0">₱{{ number_format($totalDeposited, 2) }}</h4>
-                <span class="fs-xxs text-muted">Validated LBP Deposits</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="p-3 border rounded-3 bg-light d-flex align-items-center justify-content-between mb-3">
-            <div>
-              <span class="fs-xs fw-semibold text-dark d-block">Undeposited Cash in Drawer / Safe</span>
-              <span class="fs-xxs text-muted">Account 1011 &bull; Retained overnight or in-transit float</span>
-            </div>
-            <h5 class="fw-bold text-dark mb-0 font-monospace">₱{{ number_format($undepositedCollections, 2) }}</h5>
-          </div>
-
-          <div class="d-flex align-items-center justify-content-between fs-xs text-muted">
-            <span>Primary AGDB: <strong>Land Bank of the Philippines (LBP)</strong></span>
-            <span class="badge bg-light text-dark border">Depository: LBP-DEPO-1020-01</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- PHASE 4 WIDGET: Security & Immutable Audit Trail Telemetry (for CFO & Auditor) -->
-    <div class="col-md-6">
-      <div class="card border-0 shadow-sm rounded-3 bg-white h-100">
-        <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
-          <div>
-            <h5 class="fw-bold mb-0 text-dark">
-              <i class="ph ph-shield-check text-success me-2"></i>
-              Security &amp; Audit Trail Telemetry
-            </h5>
-            <span class="fs-xs text-muted">Continuous CAS Integrity &amp; Access Oversight</span>
-          </div>
-          <a href="{{ route('accounting.audit-log') }}" class="btn btn-sm btn-outline-dark fs-xs">
-            Open Audit Hub &rarr;
-          </a>
-        </div>
-
-        <div class="card-body px-4 pt-2 pb-4">
-          <!-- Security KPI Mini Cards -->
-          <div class="row g-2 mb-3">
-            <div class="col-6">
-              <div class="p-2 border rounded-2 bg-light d-flex align-items-center gap-2">
-                <span class="p-2 rounded-2 {{ $failedLoginsToday > 0 ? 'bg-danger-subtle text-danger' : 'bg-success-subtle text-success' }}">
-                  <i class="ph ph-shield-warning fs-5"></i>
-                </span>
-                <div>
-                  <span class="fs-xxs text-muted text-uppercase d-block">Failed Logins Today</span>
-                  <strong class="fs-6 {{ $failedLoginsToday > 0 ? 'text-danger' : 'text-success' }}">
-                    {{ $failedLoginsToday }} {{ $failedLoginsToday === 0 ? '(Clean)' : 'Alerts' }}
-                  </strong>
-                </div>
-              </div>
-            </div>
-            <div class="col-6">
-              <div class="p-2 border rounded-2 bg-light d-flex align-items-center gap-2">
-                <span class="p-2 rounded-2 bg-primary-subtle text-primary">
-                  <i class="ph ph-database fs-5"></i>
-                </span>
-                <div>
-                  <span class="fs-xxs text-muted text-uppercase d-block">Mutations Logged</span>
-                  <strong class="fs-6 text-dark">{{ $mutationsToday }} Today</strong>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- 5 Latest Activity Logs Snippet -->
-          <span class="fs-xs fw-semibold text-muted text-uppercase d-block mb-2">Recent Security &amp; Ledger Events:</span>
-          <div class="list-group list-group-flush fs-xs">
-            @forelse($recentAuditLogs as $log)
-              <div class="list-group-item px-0 py-2 border-bottom d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center gap-2">
-                  <span class="badge {{ $log->event === 'failed_login' ? 'bg-danger' : ($log->event === 'login' ? 'bg-primary' : 'bg-secondary') }} fs-xxs">
-                    {{ strtoupper($log->event) }}
-                  </span>
-                  <div>
-                    <strong class="d-block text-dark">{{ $log->user_name ?? 'System' }}</strong>
-                    <span class="fs-xxs text-muted">{{ $log->auditable_type ? class_basename($log->auditable_type) : 'Authentication Session' }} &bull; {{ $log->ip_address }}</span>
-                  </div>
-                </div>
-                <span class="text-muted fs-xxs">{{ $log->created_at->diffForHumans() }}</span>
-              </div>
-            @empty
-              <div class="text-center py-3 text-muted fs-xs">No recent audit logs recorded.</div>
-            @endforelse
-          </div>
-        </div>
-      </div>
+      @endforeach
+      @if($criticalBudgets->isEmpty())
+        <p class="text-xs text-slate-400 py-4 text-center">All departmental budgets are within healthy thresholds.</p>
+      @endif
     </div>
   </div>
 
-  <!-- Recent General Ledger Transactions & Double-Entry Invariance -->
-  <div class="card border-0 shadow-sm rounded-3 bg-white">
-    <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
-      <div>
-        <h5 class="fw-bold mb-0 text-dark">
-          <i class="ph ph-clock-counter-clockwise text-primary me-2"></i>
-          Recent Financial Journal Postings &amp; GAAP Invariance
-        </h5>
-        <span class="fs-xs text-muted">Auditable General Ledger Vouchers (SHA-256 Hash Verified)</span>
+  {{-- ─── TIER 3: Recent Journal Postings (slim table) ────────────────────────── --}}
+  <div class="rounded-2xl bg-white ring-1 ring-slate-200/80 overflow-hidden dark:bg-slate-900 dark:ring-slate-800">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-clock-counter-clockwise text-emerald-600 dark:text-emerald-400 text-base"></i>
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Recent Journal Postings</h3>
+        @if($isBalanced)
+          <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300">
+            <i class="ph-bold ph-check-circle"></i> Balanced
+          </span>
+        @else
+          <span class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700 ring-1 ring-rose-600/20 dark:bg-rose-950/40 dark:text-rose-300">
+            <i class="ph-bold ph-warning-circle"></i> Discrepancy
+          </span>
+        @endif
       </div>
-      <div class="d-flex align-items-center gap-2">
-        <span class="badge {{ $isBalanced ? 'bg-success' : 'bg-danger' }}">
-          {{ $isBalanced ? 'DOUBLE-ENTRY IN BALANCE (Debits == Credits)' : 'DISCREPANCY DETECTED' }}
-        </span>
-        <a href="{{ route('accounting.general-ledger.index') }}" class="btn btn-sm btn-outline-secondary">View All Entries</a>
-      </div>
+      <a href="{{ route('accounting.general-ledger.index') }}"
+         class="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">
+        View All <i class="ph-bold ph-arrow-right text-[10px]"></i>
+      </a>
     </div>
 
-    <div class="table-responsive p-3">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
-          <tr class="fs-xs text-muted text-uppercase">
-            <th>Reference #</th>
-            <th>Posting Date</th>
-            <th>Description</th>
-            <th>Type</th>
-            <th>Status</th>
-            <th class="text-end">Debits / Credits</th>
+    <div class="overflow-x-auto slim-scroll">
+      <table class="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+        <thead class="border-b border-slate-100 bg-slate-50/60 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-500">
+          <tr>
+            <th class="py-2.5 px-4">Reference</th>
+            <th class="py-2.5 px-4">Date</th>
+            <th class="py-2.5 px-4">Description</th>
+            <th class="py-2.5 px-4">Type</th>
+            <th class="py-2.5 px-4 text-center">Status</th>
+            <th class="py-2.5 px-4 text-right font-mono">Amount (Dr)</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody class="divide-y divide-slate-50 dark:divide-slate-800/80">
           @forelse($recentJournals as $je)
-            <tr>
-              <td><span class="badge bg-light text-dark font-monospace border">{{ $je->reference_number }}</span></td>
-              <td>{{ $je->entry_date->format('M d, Y') }}</td>
-              <td><span class="text-dark fw-medium">{{ $je->description }}</span></td>
-              <td><span class="badge bg-secondary-subtle text-secondary">{{ $je->type }}</span></td>
-              <td>
-                <span class="badge {{ $je->status === 'POSTED' ? 'bg-success-subtle text-success' : ($je->status === 'REVERSED' ? 'bg-danger-subtle text-danger' : 'bg-warning-subtle text-warning') }}">
-                  {{ $je->status }}
+            <tr class="transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+              <td class="py-3 px-4 font-mono text-xs font-semibold text-slate-900 dark:text-white">
+                {{ $je->reference_number }}
+              </td>
+              <td class="py-3 px-4 text-xs text-slate-500 dark:text-slate-400 font-mono whitespace-nowrap">
+                {{ $je->entry_date->format('M d, Y') }}
+              </td>
+              <td class="py-3 px-4 text-xs text-slate-700 dark:text-slate-300 max-w-xs truncate">
+                {{ $je->description }}
+              </td>
+              <td class="py-3 px-4">
+                <span class="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                  {{ $je->type }}
                 </span>
               </td>
-              <td class="text-end font-monospace fw-semibold">
+              <td class="py-3 px-4 text-center">
+                <x-status-badge :status="$je->status" />
+              </td>
+              <td class="py-3 px-4 text-right font-mono text-xs font-bold text-slate-900 dark:text-white tabular-nums">
                 ₱{{ number_format((float) $je->lines->sum('debit'), 2) }}
               </td>
             </tr>
           @empty
             <tr>
-              <td colspan="6" class="text-center py-4 text-muted">No journal transactions found.</td>
+              <td colspan="6" class="py-10 text-center text-sm text-slate-400">
+                <i class="ph ph-receipt text-3xl block mb-2 text-slate-300"></i>
+                No journal transactions recorded yet.
+              </td>
             </tr>
           @endforelse
         </tbody>
@@ -544,5 +422,205 @@
     </div>
   </div>
 
+  {{-- ─── TIER 4: Security & Audit Trail Telemetry ───────────────────────────── --}}
+  <div class="rounded-2xl bg-white ring-1 ring-slate-200/80 overflow-hidden dark:bg-slate-900 dark:ring-slate-800">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-shield-check text-rose-500 text-base"></i>
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Security &amp; Audit Trail Telemetry</h3>
+        @if($failedLoginsToday > 0)
+          <span class="inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700 ring-1 ring-rose-600/20 dark:bg-rose-950/40 dark:text-rose-300">
+            <i class="ph-bold ph-warning"></i> {{ $failedLoginsToday }} Alerts
+          </span>
+        @else
+          <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300">
+            <i class="ph-bold ph-check-circle"></i> Secure
+          </span>
+        @endif
+      </div>
+      <a href="{{ route('accounting.audit-log') }}"
+         class="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-white transition-colors">
+        Audit Hub <i class="ph-bold ph-arrow-right text-[10px]"></i>
+      </a>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 dark:divide-slate-800">
+      {{-- Stat: Failed Logins Today --}}
+      <div class="px-5 py-4">
+        <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Failed Logins Today</p>
+        <p class="mt-1 text-2xl font-bold font-mono {{ $failedLoginsToday > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-800 dark:text-slate-100' }}">
+          {{ $failedLoginsToday }}
+        </p>
+      </div>
+      {{-- Stat: Mutations Today --}}
+      <div class="px-5 py-4">
+        <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Ledger Mutations Today</p>
+        <p class="mt-1 text-2xl font-bold font-mono text-slate-800 dark:text-slate-100">{{ $mutationsToday }}</p>
+      </div>
+      {{-- Stat: Workstation Status --}}
+      <div class="px-5 py-4">
+        <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Terminal Status</p>
+        <p class="mt-1 text-sm font-semibold {{ $securityAlertLevel === 0 ? 'text-emerald-600 dark:text-emerald-400' : ($securityAlertLevel === 1 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400') }}">
+          {{ $securityAlertLevel === 0 ? '✓ All Clear' : ($securityAlertLevel === 1 ? '⚠ Warning' : '⛔ Alert') }}
+        </p>
+      </div>
+    </div>
+
+    {{-- Recent Audit Log Entries --}}
+    @if($recentAuditLogs->isNotEmpty())
+      <div class="border-t border-slate-100 dark:border-slate-800 px-5 pb-4 pt-3">
+        <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2">Recent Activity</p>
+        <div class="space-y-1.5">
+          @foreach($recentAuditLogs as $log)
+            <div class="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
+              <span class="flex items-center gap-2">
+                <span class="inline-block h-1.5 w-1.5 rounded-full {{ $log->event === 'failed_login' ? 'bg-rose-500' : 'bg-emerald-500' }}"></span>
+                <span class="font-medium">{{ $log->event }}</span>
+                @if($log->description)
+                  <span class="text-slate-400 truncate max-w-xs">— {{ $log->description }}</span>
+                @endif
+              </span>
+              <span class="font-mono text-slate-400 text-[10px] whitespace-nowrap ml-2">
+                {{ $log->ip_address ?? '—' }}
+              </span>
+            </div>
+          @endforeach
+        </div>
+      </div>
+    @endif
+  </div>
+
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  const isDark = document.documentElement.classList.contains('dark');
+
+  const gridColor   = isDark ? 'rgba(51,65,85,0.5)'  : 'rgba(226,232,240,0.8)';
+  const labelColor  = isDark ? '#94a3b8' : '#64748b';
+  const tooltipBg   = isDark ? '#1e293b' : '#ffffff';
+  const tooltipBorder = isDark ? '#334155' : '#e2e8f0';
+
+  Chart.defaults.font.family = "'Inter', sans-serif";
+
+  // ── Chart A: Revenue vs Expense (Area Line Chart) ──────────────────────────
+  const revCtx = document.getElementById('revenueExpenseChart');
+  if (revCtx) {
+    const months  = {!! $chartMonths !!};
+    const revenue = {!! $chartRevenue !!};
+    const expense = {!! $chartExpense !!};
+
+    new Chart(revCtx, {
+      type: 'line',
+      data: {
+        labels: months,
+        datasets: [
+          {
+            label: 'Revenue',
+            data: revenue,
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16,185,129,0.08)',
+            borderWidth: 2,
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            pointBackgroundColor: '#10b981',
+            tension: 0.4,
+            fill: true,
+          },
+          {
+            label: 'Expenses',
+            data: expense,
+            borderColor: '#fb7185',
+            backgroundColor: 'rgba(251,113,133,0.06)',
+            borderWidth: 2,
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            pointBackgroundColor: '#fb7185',
+            tension: 0.4,
+            fill: true,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: tooltipBg,
+            borderColor: tooltipBorder,
+            borderWidth: 1,
+            titleColor: isDark ? '#e2e8f0' : '#0f172a',
+            bodyColor: labelColor,
+            padding: 10,
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label}: ₱${Number(ctx.raw).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            },
+          },
+        },
+        scales: {
+          x: {
+            grid: { color: gridColor },
+            ticks: { color: labelColor, font: { size: 11 } },
+          },
+          y: {
+            grid: { color: gridColor },
+            ticks: {
+              color: labelColor,
+              font: { size: 11 },
+              callback: val => '₱' + Number(val).toLocaleString('en-PH', { notation: 'compact', maximumFractionDigits: 1 }),
+            },
+            beginAtZero: true,
+          },
+        },
+      },
+    });
+  }
+
+  // ── Chart B: Payer Source Donut ───────────────────────────────────────────
+  const donutCtx = document.getElementById('payerDonutChart');
+  if (donutCtx) {
+    const labels = {!! $payerLabels !!};
+    const values = {!! $payerValues !!};
+
+    new Chart(donutCtx, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{
+          data: values,
+          backgroundColor: ['#3b82f6', '#14b8a6', '#38bdf8', '#34d399'],
+          borderColor: isDark ? '#0f172a' : '#ffffff',
+          borderWidth: 3,
+          hoverOffset: 4,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '72%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: tooltipBg,
+            borderColor: tooltipBorder,
+            borderWidth: 1,
+            titleColor: isDark ? '#e2e8f0' : '#0f172a',
+            bodyColor: labelColor,
+            padding: 10,
+            callbacks: {
+              label: ctx => ` ${ctx.label}: ${ctx.raw}%`,
+            },
+          },
+        },
+      },
+    });
+  }
+
+});
+</script>
+@endpush

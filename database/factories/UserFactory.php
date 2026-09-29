@@ -31,6 +31,8 @@ class UserFactory extends Factory
             'two_factor_confirmed_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
+            'must_change_password' => false,
+            'status' => 'active',
         ];
     }
 

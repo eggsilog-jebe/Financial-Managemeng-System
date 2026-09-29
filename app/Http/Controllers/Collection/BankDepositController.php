@@ -27,7 +27,8 @@ final class BankDepositController extends Controller
     {
         $deposits = BankDeposit::with(['bankAccount', 'cashierShift.cashier'])
             ->latest('deposit_date')
-            ->get();
+            ->paginate(15)
+            ->withQueryString();
         $totalDeposits = (string) BankDeposit::sum('total_deposited');
         $bankAccounts = BankAccount::where('status', 'Active')->get();
         $closedShifts = CashierShift::where('status', 'CLOSED')

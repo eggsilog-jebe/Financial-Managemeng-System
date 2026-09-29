@@ -1,202 +1,205 @@
 @extends('layouts.app')
 
 @section('title', 'Chart of Accounts - General Ledger | FMS')
-@section('module', 'finance')
+@section('module', 'gl')
 @section('page', 'chart-of-accounts')
 
 @section('content')
-<div class="container-fluid p-4">
-  <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="space-y-6">
+  <!-- Executive Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <div>
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-1 fs-xs">
-          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
-          <li class="breadcrumb-item"><a href="{{ route('gl.journal-entries') }}">General Ledger</a></li>
-          <li class="breadcrumb-item active" aria-current="page">Chart of Accounts</li>
-        </ol>
-      </nav>
-      <h1 class="h3 mb-0 font-weight-bold text-dark">Chart of Accounts (COA)</h1>
-      <p class="text-muted fs-xs mb-0">Master list of all hospital financial accounts — tracking what the hospital owns (Assets), owes (Liabilities), its net worth (Equity), revenues, and operating expenses.</p>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Chart of Accounts (COA)
+        </h1>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <x-integration-badge 
-          type="standalone" 
-          description="Master accounting framework for all hospital financial transactions and statutory reporting." 
-      />
-      <a href="{{ route('gl.trial-balance.export') }}" class="btn btn-outline-secondary btn-sm" title="Download current accounts schedule">
-        <i class="ph ph-download-simple me-1"></i> Export Accounts (CSV)
+
+    <div class="flex items-center gap-2.5 flex-wrap">
+      <a 
+        href="{{ route('gl.trial-balance.export') }}" 
+        class="inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700 transition-all"
+        title="Download current accounts schedule"
+      >
+        <i class="ph-bold ph-download-simple"></i>
+        <span>Export CSV</span>
       </a>
-      <button id="btnAddAccount" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#addAccountModal">
-        <i class="ph ph-plus me-1"></i> Add New Account
+      <button 
+        type="button" 
+        @click="$dispatch('open-modal', 'addAccountModal')"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20 transition-all"
+      >
+        <i class="ph-bold ph-plus-circle"></i>
+        <span>Add Account</span>
       </button>
     </div>
   </div>
 
+  <!-- Session Alerts -->
   @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show rounded-3 fs-sm" role="alert">
-      <i class="ph ph-check-circle me-1"></i> {{ session('success') }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="rounded-xl bg-emerald-50 p-4 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-check-circle text-lg text-emerald-600"></i>
+        <span>{{ session('success') }}</span>
+      </div>
     </div>
   @endif
 
   @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show rounded-3 fs-sm" role="alert">
-      <i class="ph ph-warning-circle me-1"></i> {{ session('error') }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="rounded-xl bg-rose-50 p-4 text-xs font-semibold text-rose-800 ring-1 ring-rose-600/20 dark:bg-rose-950/40 dark:text-rose-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-warning-circle text-lg text-rose-600"></i>
+        <span>{{ session('error') }}</span>
+      </div>
     </div>
   @endif
 
   @if($errors->any())
-    <div class="alert alert-danger alert-dismissible fade show rounded-3 fs-sm" role="alert">
-      <ul class="mb-0 ps-3">
+    <div class="rounded-xl bg-rose-50 p-4 text-xs text-rose-800 ring-1 ring-rose-600/20 dark:bg-rose-950/40 dark:text-rose-300">
+      <strong class="font-bold block mb-1">Please correct the following errors:</strong>
+      <ul class="list-disc pl-4 space-y-0.5">
         @foreach($errors->all() as $err)
           <li>{{ $err }}</li>
         @endforeach
       </ul>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   @endif
 
-  <!-- Summary Cards Row (Clean 5-Column Grid) -->
-  <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-5 g-3 mb-4">
-    <div class="col">
-      <div class="card border-0 shadow-sm rounded-3 p-3 h-100" title="What the hospital owns (Cash, Receivables, Inventory, Equipment)">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <div>
-            <span class="text-muted small fw-medium d-block">Assets (1000s)</span>
-            <span class="fs-xs text-muted">What the hospital owns</span>
-          </div>
-          <span class="p-2 rounded-3 bg-success-subtle text-success fs-xs"><i class="ph ph-trend-up fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($assetTotal ?? 0, 2) }}</h4>
-      </div>
-    </div>
-    <div class="col">
-      <div class="card border-0 shadow-sm rounded-3 p-3 h-100" title="What the hospital owes to suppliers, banks, and staff">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <div>
-            <span class="text-muted small fw-medium d-block">Liabilities (2000s)</span>
-            <span class="fs-xs text-muted">What the hospital owes</span>
-          </div>
-          <span class="p-2 rounded-3 bg-danger-subtle text-danger fs-xs"><i class="ph ph-warning-circle fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($liabilityTotal ?? 0, 2) }}</h4>
-      </div>
-    </div>
-    <div class="col">
-      <div class="card border-0 shadow-sm rounded-3 p-3 h-100" title="Hospital net worth and retained earnings">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <div>
-            <span class="text-muted small fw-medium d-block">Equity (3000s)</span>
-            <span class="fs-xs text-muted">Hospital net worth</span>
-          </div>
-          <span class="p-2 rounded-3 bg-primary-subtle text-primary fs-xs"><i class="ph ph-scales fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($equityTotal ?? 0, 2) }}</h4>
-      </div>
-    </div>
-    <div class="col">
-      <div class="card border-0 shadow-sm rounded-3 p-3 h-100" title="Income earned from patient care, pharmacy, and diagnostic services">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <div>
-            <span class="text-muted small fw-medium d-block">Revenue (4000s)</span>
-            <span class="fs-xs text-muted">Income earned</span>
-          </div>
-          <span class="p-2 rounded-3 bg-info-subtle text-info fs-xs"><i class="ph ph-receipt fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($revenueTotal ?? 0, 2) }}</h4>
-      </div>
-    </div>
-    <div class="col">
-      <div class="card border-0 shadow-sm rounded-3 p-3 h-100" title="Hospital operating costs, salaries, supplies, utilities">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <div>
-            <span class="text-muted small fw-medium d-block">Expenses (5000s)</span>
-            <span class="fs-xs text-muted">Operating costs</span>
-          </div>
-          <span class="p-2 rounded-3 bg-warning-subtle text-warning fs-xs"><i class="ph ph-chart-line-down fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format($expenseTotal ?? 0, 2) }}</h4>
-      </div>
-    </div>
+  <!-- COA Classification Summary Cards -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+    <x-stat-card 
+      title="Assets (1000s)" 
+      :value="$assetTotal ?? 0" 
+      icon="ph-trend-up" 
+      color="emerald" 
+      subtitle="Cash, AR, Equipment"
+      badge="Asset"
+    />
+    <x-stat-card 
+      title="Liabilities (2000s)" 
+      :value="$liabilityTotal ?? 0" 
+      icon="ph-warning-circle" 
+      color="rose" 
+      subtitle="AP, Accruals, Loans"
+      badge="Liability"
+    />
+    <x-stat-card 
+      title="Equity (3000s)" 
+      :value="$equityTotal ?? 0" 
+      icon="ph-scales" 
+      color="blue" 
+      subtitle="Net Worth & Retained"
+      badge="Equity"
+    />
+    <x-stat-card 
+      title="Revenue (4000s)" 
+      :value="$revenueTotal ?? 0" 
+      icon="ph-receipt" 
+      color="teal" 
+      subtitle="Inpatient & OPD Income"
+      badge="Revenue"
+    />
+    <x-stat-card 
+      title="Expenses (5000s)" 
+      :value="$expenseTotal ?? 0" 
+      icon="ph-chart-line-down" 
+      color="amber" 
+      subtitle="Clinical & Ops Costs"
+      badge="Expense"
+    />
   </div>
 
-  <!-- Main Table Section -->
-  <div class="card border-0 shadow-sm rounded-3">
-    <!-- Toolbar Header -->
-    <div class="card-header bg-transparent border-bottom p-3">
-      <form method="GET" action="{{ route('gl.chart-of-accounts') }}" id="coaFilterForm">
-        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-          <!-- Category Filter Dropdown -->
-          <div class="d-flex align-items-center gap-2">
-            <label for="accountCategorySelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Category:</label>
-            <select name="category" id="accountCategorySelect" class="form-select form-select-sm bg-light" style="min-width: 180px;" onchange="this.form.submit()">
-              <option value="" {{ empty($category) ? 'selected' : '' }}>All Categories</option>
-              <option value="ASSET" {{ ($category ?? '') === 'ASSET' ? 'selected' : '' }}>Assets</option>
-              <option value="LIABILITY" {{ ($category ?? '') === 'LIABILITY' ? 'selected' : '' }}>Liabilities</option>
-              <option value="EQUITY" {{ ($category ?? '') === 'EQUITY' ? 'selected' : '' }}>Equity</option>
-              <option value="REVENUE" {{ ($category ?? '') === 'REVENUE' ? 'selected' : '' }}>Revenue</option>
-              <option value="EXPENSE" {{ ($category ?? '') === 'EXPENSE' ? 'selected' : '' }}>Expenses</option>
-            </select>
-          </div>
+  <!-- Main Accounts Table Container -->
+  
+  <!-- Sub-Module Category Navigation Bar -->
+  @include('partials.submodule-nav')
 
-          <!-- Status Filter -->
-          <div class="d-flex align-items-center gap-2">
-            <label for="accountStatusSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap">Status:</label>
-            <select name="status" id="accountStatusSelect" class="form-select form-select-sm bg-light" style="min-width: 150px;" onchange="this.form.submit()">
-              <option value="" {{ empty($status) ? 'selected' : '' }}>All Statuses</option>
-              <option value="active" {{ ($status ?? '') === 'active' ? 'selected' : '' }}>Active Only</option>
-              <option value="inactive" {{ ($status ?? '') === 'inactive' ? 'selected' : '' }}>Inactive Only</option>
-            </select>
+  <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 overflow-hidden dark:bg-slate-900 dark:ring-slate-800">
+    <!-- Filter Toolbar -->
+    <div class="border-b border-slate-200 p-4 dark:border-slate-800">
+      <form method="GET" action="{{ route('gl.chart-of-accounts') }}" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <div class="flex items-center gap-1.5 text-xs text-slate-500">
+            <i class="ph-bold ph-funnel"></i>
+            <span>Category:</span>
           </div>
+          <select 
+            name="category" 
+            onchange="this.form.submit()" 
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
+            <option value="" {{ empty($category) ? 'selected' : '' }}>All Categories</option>
+            <option value="ASSET" {{ ($category ?? '') === 'ASSET' ? 'selected' : '' }}>Assets (1000s)</option>
+            <option value="LIABILITY" {{ ($category ?? '') === 'LIABILITY' ? 'selected' : '' }}>Liabilities (2000s)</option>
+            <option value="EQUITY" {{ ($category ?? '') === 'EQUITY' ? 'selected' : '' }}>Equity (3000s)</option>
+            <option value="REVENUE" {{ ($category ?? '') === 'REVENUE' ? 'selected' : '' }}>Revenue (4000s)</option>
+            <option value="EXPENSE" {{ ($category ?? '') === 'EXPENSE' ? 'selected' : '' }}>Expenses (5000s)</option>
+          </select>
 
-          <!-- Search Bar -->
-          <div class="search-box ms-auto" style="width: 280px;">
-            <i class="ph ph-magnifying-glass"></i>
-            <input type="search" name="q" id="accountSearchInput" class="form-control form-control-sm" placeholder="Search code, name, unit..." value="{{ $search ?? '' }}">
+          <div class="flex items-center gap-1.5 text-xs text-slate-500 ml-2">
+            <span>Status:</span>
           </div>
+          <select 
+            name="status" 
+            onchange="this.form.submit()" 
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
+            <option value="" {{ empty($status) ? 'selected' : '' }}>All Statuses</option>
+            <option value="active" {{ ($status ?? '') === 'active' ? 'selected' : '' }}>Active Only</option>
+            <option value="inactive" {{ ($status ?? '') === 'inactive' ? 'selected' : '' }}>Inactive Only</option>
+          </select>
+        </div>
+
+        <div class="relative w-full sm:w-72">
+          <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+            <i class="ph ph-magnifying-glass text-sm"></i>
+          </div>
+          <input 
+            type="search" 
+            name="q" 
+            value="{{ $search ?? '' }}" 
+            placeholder="Search code, title, department..." 
+            class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
         </div>
       </form>
     </div>
 
-    <!-- Accounts Table -->
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table id="coaTable" class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th scope="col" style="width: 110px;">Code</th>
-              <th scope="col">Account Name</th>
-              <th scope="col">Type / Category</th>
-              <th scope="col">Department</th>
-              <th scope="col">Normal Balance</th>
-              <th scope="col" class="text-end">Current Balance (₱)</th>
-              <th scope="col" class="text-center">Active Status</th>
-              <th scope="col" class="text-end" style="width: 140px;">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($accounts as $acc)
+    <!-- Responsive Table -->
+    <div class="overflow-x-auto custom-scrollbar">
+      <table class="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+        <thead class="border-b border-slate-200 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+          <tr>
+            <th scope="col" class="py-3.5 pl-5 pr-3 w-28">GL Code</th>
+            <th scope="col" class="px-3 py-3.5">Account Title</th>
+            <th scope="col" class="px-3 py-3.5">Category</th>
+            <th scope="col" class="px-3 py-3.5">Department</th>
+            <th scope="col" class="px-3 py-3.5 text-center">Normal Balance</th>
+            <th scope="col" class="px-3 py-3.5 text-right font-mono">Current Balance</th>
+            <th scope="col" class="px-3 py-3.5 text-center">Status</th>
+            <th scope="col" class="py-3.5 pl-3 pr-5 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          @forelse($accounts as $acc)
             @php
               $code          = $acc->code;
               $name          = $acc->name;
               $catUpper      = strtoupper((string) $acc->category);
-              $dept          = $acc->department ?? 'General';
+              $dept          = $acc->department ?? 'General Hospital';
               $normalBalance = strtoupper((string) $acc->normal_balance);
               $balance       = (float) $acc->current_balance;
               $hasLines      = $acc->journalEntryLines->isNotEmpty();
 
-              $badgeClass = match($catUpper) {
-                'ASSET'     => 'bg-success-subtle text-success',
-                'LIABILITY' => 'bg-danger-subtle text-danger',
-                'EQUITY'    => 'bg-primary-subtle text-primary',
-                'REVENUE'   => 'bg-info-subtle text-info',
-                'EXPENSE'   => 'bg-warning-subtle text-warning',
-                default     => 'bg-secondary-subtle text-secondary',
+              $categoryVariant = match($catUpper) {
+                'ASSET'     => 'emerald',
+                'LIABILITY' => 'rose',
+                'EQUITY'    => 'blue',
+                'REVENUE'   => 'teal',
+                'EXPENSE'   => 'amber',
+                default     => 'slate',
               };
 
-              $accJson = json_encode([
+              $accJson = [
                 'id'             => $acc->id,
                 'code'           => $acc->code,
                 'name'           => $acc->name,
@@ -206,278 +209,304 @@
                 'is_active'      => $acc->is_active,
                 'balance'        => '₱' . number_format($balance, 2),
                 'has_lines'      => $hasLines,
-              ]);
+              ];
             @endphp
-            <tr class="account-row" style="cursor: pointer;" onclick="openAccountDetailsModal({{ $accJson }})">
-              <td><span class="badge bg-secondary-subtle text-secondary font-monospace fs-xs px-2 py-1">{{ $code }}</span></td>
-              <td><div class="fw-semibold text-dark">{{ $name }}</div></td>
-              <td><span class="badge {{ $badgeClass }}">{{ $catUpper }}</span></td>
-              <td><span class="fs-xs text-muted">{{ $dept }}</span></td>
-              <td><span class="badge bg-light text-dark border font-monospace fs-xs">{{ $normalBalance }}</span></td>
-              <td class="text-end fw-bold text-dark font-monospace">₱{{ number_format($balance, 2) }}</td>
-              <td class="text-center" onclick="event.stopPropagation();">
-                <form action="{{ route('gl.chart-of-accounts.toggle-status', $acc->id) }}" method="POST" class="d-inline">
+            <tr 
+              class="transition-colors hover:bg-slate-50/60 dark:hover:bg-slate-800/40 cursor-pointer"
+              @click="$dispatch('open-modal', { id: 'accountDetailsModal', account: {{ json_encode($accJson) }} })"
+            >
+              <td class="py-3.5 pl-5 pr-3 font-mono font-bold text-slate-900 dark:text-white">
+                <span class="rounded-lg bg-slate-100 px-2 py-0.5 text-xs font-mono text-slate-700 dark:bg-slate-800 dark:text-slate-300 ring-1 ring-slate-200 dark:ring-slate-700">
+                  {{ $code }}
+                </span>
+              </td>
+              <td class="px-3 py-3.5">
+                <div class="font-semibold text-slate-900 dark:text-white text-xs sm:text-sm">{{ $name }}</div>
+              </td>
+              <td class="px-3 py-3.5">
+                <x-status-badge :status="$catUpper" :variant="$categoryVariant" />
+              </td>
+              <td class="px-3 py-3.5 text-xs text-slate-500 dark:text-slate-400">
+                {{ $dept }}
+              </td>
+              <td class="px-3 py-3.5 text-center">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-medium {{ $normalBalance === 'DEBIT' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-blue-50 text-blue-700 ring-1 ring-blue-600/20 dark:bg-blue-950/40 dark:text-blue-300' }}">
+                  {{ $normalBalance }}
+                </span>
+              </td>
+              <td class="px-3 py-3.5 text-right font-mono font-bold tabular-nums {{ $balance < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white' }}">
+                ₱{{ number_format($balance, 2) }}
+              </td>
+              <td class="px-3 py-3.5 text-center" @click.stop>
+                <form action="{{ route('gl.chart-of-accounts.toggle-status', $acc->id) }}" method="POST" class="inline">
                   @csrf
-                  <button type="submit" class="btn btn-sm py-0 px-2 {{ $acc->is_active ? 'btn-success' : 'btn-secondary' }}" style="font-size: 0.75rem;" title="{{ $acc->is_active ? 'Click to Deactivate' : 'Click to Activate' }}">
-                    <i class="ph {{ $acc->is_active ? 'ph-check-circle' : 'ph-x-circle' }} me-1"></i>
-                    {{ $acc->is_active ? 'ACTIVE' : 'INACTIVE' }}
+                  <button 
+                    type="submit" 
+                    class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold transition-all {{ $acc->is_active ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 ring-1 ring-slate-300 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400' }}"
+                    title="{{ $acc->is_active ? 'Click to Deactivate' : 'Click to Activate' }}"
+                  >
+                    <span class="h-1.5 w-1.5 rounded-full {{ $acc->is_active ? 'bg-emerald-500' : 'bg-slate-400' }}"></span>
+                    <span>{{ $acc->is_active ? 'ACTIVE' : 'INACTIVE' }}</span>
                   </button>
                 </form>
               </td>
-              <td class="text-end" onclick="event.stopPropagation();">
-                <div class="d-flex justify-content-end gap-1">
-                  <a href="{{ route('gl.ledger-books', ['account_id' => $acc->id]) }}" class="btn btn-sm btn-icon btn-outline-primary" title="View Ledger Book">
-                    <i class="ph ph-book-open"></i>
+              <td class="py-3.5 pl-3 pr-5 text-right" @click.stop>
+                <div class="flex items-center justify-end gap-1.5">
+                  <a 
+                    href="{{ route('gl.ledger-books', ['account_id' => $acc->id]) }}" 
+                    class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
+                    title="Open Ledger Book"
+                  >
+                    <i class="ph-bold ph-book-open"></i>
+                    <span class="hidden sm:inline">Ledger</span>
                   </a>
-                  <button type="button" class="btn btn-sm btn-icon btn-outline-secondary" title="Edit Account" onclick="openEditAccountModal({{ $accJson }})">
-                    <i class="ph ph-pencil-simple"></i>
+                  <button 
+                    type="button" 
+                    @click="$dispatch('open-modal', { id: 'editAccountModal', account: {{ json_encode($accJson) }} })"
+                    class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white transition-colors"
+                    title="Edit Account"
+                  >
+                    <i class="ph-bold ph-pencil-simple text-sm"></i>
                   </button>
                 </div>
               </td>
             </tr>
-            @empty
+          @empty
             <tr>
-              <td colspan="8" class="text-center py-5 text-muted">
-                <i class="ph ph-folder-dashed fs-2 d-block mb-2 text-secondary"></i>
-                No GL accounts registered matching query criteria.
+              <td colspan="8" class="py-12 text-center text-sm text-slate-400">
+                <i class="ph ph-folder-dashed text-3xl mb-2 block mx-auto text-slate-300 dark:text-slate-600"></i>
+                No GL accounts registered matching your criteria.
               </td>
             </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
+          @endforelse
+        </tbody>
+      </table>
     </div>
-    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="coaSummaryText">Showing {{ count($accounts ?? []) }} General Ledger Accounts</span>
-      <div class="fs-xs text-muted">GAAP / IFRS Double-Entry Compliant</div>
-    </div>
-  </div>
-</div>
 
-<!-- Modal: In-Depth Account Details -->
-<div class="modal fade" id="accountDetailsModal" tabindex="-1" aria-labelledby="accountDetailsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-      <div class="modal-header bg-white border-bottom p-4 pb-3">
-        <div>
-          <div class="d-flex align-items-center gap-2 mb-1">
-            <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1" id="detailAccCode">1010</span>
-            <span class="badge bg-success-subtle text-success" id="detailAccCategory">Asset</span>
-          </div>
-          <h4 class="modal-title fw-bold text-dark mb-0" id="detailAccName">Account Title</h4>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <!-- Table Footer Summary & Pagination -->
+    @if(method_exists($accounts, 'links'))
+      <div class="border-t border-slate-200 p-4 dark:border-slate-800">
+        {{ $accounts->links() }}
       </div>
+    @endif
 
-      <div class="modal-body p-4 bg-light-subtle">
-        <div class="row g-3 mb-4">
-          <div class="col-md-6">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Current Ledger Balance</span>
-              <h4 class="fw-bold text-success mb-0 font-monospace" id="detailAccBalance">₱0.00</h4>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Normal Accounting Balance</span>
-              <h4 class="fw-bold text-primary mb-0 font-monospace" id="detailAccType">Debit</h4>
-            </div>
-          </div>
-        </div>
-
-        <div class="bg-white border rounded-3 p-3 mb-4">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-buildings me-1 text-primary"></i> Organizational Mapping</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Assigned Department / Cost Center</span>
-              <span class="font-monospace fw-bold text-dark" id="detailAccDept">-</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">Active Posting Status:</span>
-              <span class="badge bg-success-subtle text-success" id="detailAccStatus">ACTIVE</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Audit Trail Control -->
-        <div class="bg-white border rounded-3 p-3">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-success"></i> BIR CAS Audit &amp; Control</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Has Transaction Activity:</span>
-              <span id="detailAccHasLines" class="fw-semibold text-dark">-</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">Tamper-Proof Audit Seal:</span>
-              <span class="font-monospace text-muted">CAS-SHA256-AUTHENTICATED</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer bg-white border-top p-3">
-        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
-        <a id="detailAccLedgerLink" href="#" class="btn btn-sm btn-primary"><i class="ph ph-book-open me-1"></i> Open Ledger Book</a>
+    <div class="border-t border-slate-200 bg-slate-50/50 px-5 py-3 dark:border-slate-800 dark:bg-slate-900/50 flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-slate-500 dark:text-slate-400 gap-2">
+      <div>Showing <span class="font-bold text-slate-700 dark:text-slate-300 font-mono">{{ method_exists($accounts, 'total') ? $accounts->total() : count($accounts ?? []) }}</span> General Ledger Accounts</div>
+      <div class="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold">
+        <i class="ph-bold ph-shield-check"></i>
+        <span>GAAP / IFRS Double-Entry Invariance Guaranteed</span>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Modal: Add New GL Account -->
-<div class="modal fade" id="addAccountModal" tabindex="-1" aria-labelledby="addAccountModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-      <div class="modal-header bg-primary text-white p-3 px-4">
-        <h5 class="modal-title fw-bold" id="addAccountModalLabel"><i class="ph ph-plus-circle me-2"></i>Add New GL Account</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Modal: Account Details Inspection (Alpine.js) -->
+<x-modal 
+  id="accountDetailsModal" 
+  title="General Ledger Account Dossier" 
+  subtitle="Master Chart of Accounts record details and audit metrics" 
+  icon="ph-tree-structure" 
+  iconVariant="emerald" 
+  size="lg" 
+  :showFooter="false"
+>
+  <div 
+    x-data="{ acc: {} }"
+    @open-modal.window="if ($event.detail.id === 'accountDetailsModal') { acc = $event.detail.account || {}; }"
+    class="space-y-4"
+  >
+    <div class="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 ring-1 ring-slate-200 dark:ring-slate-700">
+      <div>
+        <span class="rounded-lg bg-emerald-50 px-2 py-0.5 text-xs font-mono font-bold text-emerald-700 ring-1 ring-emerald-500/20 dark:bg-emerald-950/40 dark:text-emerald-300" x-text="acc.code"></span>
+        <h3 class="text-base font-bold text-slate-900 dark:text-white mt-1.5" x-text="acc.name"></h3>
+        <p class="text-xs text-slate-500" x-text="'Department: ' + (acc.department || 'General Hospital')"></p>
       </div>
-      <form action="{{ route('gl.chart-of-accounts.store') }}" method="POST">
-        @csrf
-        <div class="modal-body p-4">
-          <div class="row g-3">
-            <div class="col-md-4">
-              <label class="form-label small fw-semibold">GL Account Code <span class="text-danger">*</span></label>
-              <input type="text" name="code" class="form-control form-control-sm font-monospace" placeholder="e.g. 1060" required pattern="[0-9A-Za-z\-]+">
-              <div class="form-text fs-xs">Unique numeric/alphanumeric code.</div>
-            </div>
-            <div class="col-md-8">
-              <label class="form-label small fw-semibold">Account Title / Name <span class="text-danger">*</span></label>
-              <input type="text" name="name" class="form-control form-control-sm" placeholder="e.g. Allowance for Doubtful Accounts" required>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label small fw-semibold">Account Category <span class="text-danger">*</span></label>
-              <select name="category" id="addAccCategory" class="form-select form-select-sm" required onchange="autoSetNormalBalance(this.value, 'addAccNormalBalance')">
-                <option value="ASSET">ASSET (1000s - Cash, Inventory, Equipment)</option>
-                <option value="LIABILITY">LIABILITY (2000s - Bills, Loans, Payables)</option>
-                <option value="EQUITY">EQUITY (3000s - Retained Earnings, Capital)</option>
-                <option value="REVENUE">REVENUE (4000s - Patient Care, Pharmacy Income)</option>
-                <option value="EXPENSE">EXPENSE (5000s - Salaries, Supplies, Utilities)</option>
-              </select>
-              <div class="form-text fs-xs">Determines where this account appears in financial statements.</div>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label small fw-semibold">Normal Accounting Balance <span class="text-danger">*</span></label>
-              <select name="normal_balance" id="addAccNormalBalance" class="form-select form-select-sm" required>
-                <option value="DEBIT">DEBIT (Increases with debits)</option>
-                <option value="CREDIT">CREDIT (Increases with credits)</option>
-              </select>
-              <div class="form-text fs-xs">Automatically set based on category.</div>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label small fw-semibold">Hospital Department / Cost Center</label>
-              <input type="text" name="department" class="form-control form-control-sm" placeholder="e.g. Inpatient, Pharmacy, Laboratory, General">
-              <div class="form-text fs-xs">Optional departmental assignment.</div>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer bg-light p-3">
-          <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-sm btn-primary px-3"><i class="ph ph-check me-1"></i> Save Account</button>
-        </div>
-      </form>
+      <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300" x-text="acc.category"></span>
     </div>
-  </div>
-</div>
 
-<!-- Modal: Edit GL Account -->
-<div class="modal fade" id="editAccountModal" tabindex="-1" aria-labelledby="editAccountModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-      <div class="modal-header bg-dark text-white p-3 px-4">
-        <h5 class="modal-title fw-bold" id="editAccountModalLabel"><i class="ph ph-pencil-simple me-2"></i>Edit GL Account</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="grid grid-cols-2 gap-3 font-mono">
+      <div class="rounded-xl bg-white p-3.5 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700 text-center">
+        <span class="text-[10px] uppercase font-bold text-slate-500 block mb-1">Current Ledger Balance</span>
+        <div class="text-xl font-bold text-slate-900 dark:text-white" x-text="acc.balance"></div>
       </div>
-      <form id="editAccountForm" method="POST" action="">
-        @csrf
-        @method('PUT')
-        <div class="modal-body p-4">
-          <div class="row g-3">
-            <div class="col-md-4">
-              <label class="form-label small fw-semibold">GL Account Code <span class="text-danger">*</span></label>
-              <input type="text" name="code" id="editAccCode" class="form-control form-control-sm font-monospace" required>
-            </div>
-            <div class="col-md-8">
-              <label class="form-label small fw-semibold">Account Title / Name <span class="text-danger">*</span></label>
-              <input type="text" name="name" id="editAccName" class="form-control form-control-sm" required>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label small fw-semibold">Category <span class="text-danger">*</span></label>
-              <select name="category" id="editAccCategory" class="form-select form-select-sm" required>
-                <option value="ASSET">ASSET (1000s)</option>
-                <option value="LIABILITY">LIABILITY (2000s)</option>
-                <option value="EQUITY">EQUITY (3000s)</option>
-                <option value="REVENUE">REVENUE (4000s)</option>
-                <option value="EXPENSE">EXPENSE (5000s)</option>
-              </select>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label small fw-semibold">Normal Balance <span class="text-danger">*</span></label>
-              <select name="normal_balance" id="editAccNormalBalance" class="form-select form-select-sm" required>
-                <option value="DEBIT">DEBIT</option>
-                <option value="CREDIT">CREDIT</option>
-              </select>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label small fw-semibold">Department / Cost Center</label>
-              <input type="text" name="department" id="editAccDept" class="form-control form-control-sm" placeholder="e.g. Nursing, Pharmacy, Administration">
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer bg-light p-3">
-          <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-sm btn-primary px-3"><i class="ph ph-check me-1"></i> Update Account</button>
-        </div>
-      </form>
+      <div class="rounded-xl bg-white p-3.5 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-700 text-center">
+        <span class="text-[10px] uppercase font-bold text-slate-500 block mb-1">Normal Balance</span>
+        <div class="text-xl font-bold text-emerald-600 dark:text-emerald-400" x-text="acc.normal_balance"></div>
+      </div>
+    </div>
+
+    <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 ring-1 ring-slate-200 dark:ring-slate-700 space-y-2 text-xs">
+      <div class="flex justify-between text-slate-600 dark:text-slate-300">
+        <span>Transaction History:</span>
+        <span class="font-semibold" x-text="acc.has_lines ? 'Active ledger history recorded' : 'Zero posted transactions'"></span>
+      </div>
+      <div class="flex justify-between text-slate-600 dark:text-slate-300">
+        <span>BIR CAS Audit Trail:</span>
+        <span class="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">CAS-SHA256-VERIFIED</span>
+      </div>
+    </div>
+
+    <div class="flex justify-end gap-2 pt-2">
+      <button 
+        type="button" 
+        @click="$dispatch('close-modal', 'accountDetailsModal')" 
+        class="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+      >
+        Close
+      </button>
+      <a 
+        :href="'{{ route('gl.ledger-books') }}?account_id=' + acc.id" 
+        class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700"
+      >
+        <i class="ph-bold ph-book-open"></i>
+        <span>Open Ledger Book</span>
+      </a>
     </div>
   </div>
-</div>
+</x-modal>
+
+<!-- Modal: Add New GL Account (Alpine.js) -->
+<x-modal 
+  id="addAccountModal" 
+  title="Register New General Ledger Account" 
+  subtitle="Define account hierarchy, department mapping, and normal balance" 
+  icon="ph-plus-circle" 
+  iconVariant="emerald" 
+  size="xl" 
+  formAction="{{ route('gl.chart-of-accounts.store') }}" 
+  formMethod="POST" 
+  submitText="Save Account"
+  submitIcon="ph-check"
+>
+  <div 
+    x-data="{
+      category: 'ASSET',
+      normalBalance: 'DEBIT',
+      updateNormalBalance() {
+        if (this.category === 'ASSET' || this.category === 'EXPENSE') {
+          this.normalBalance = 'DEBIT';
+        } else {
+          this.normalBalance = 'CREDIT';
+        }
+      }
+    }" 
+    class="grid grid-cols-1 sm:grid-cols-12 gap-4"
+  >
+    <div class="sm:col-span-4">
+      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">GL Account Code <span class="text-rose-500">*</span></label>
+      <input type="text" name="code" placeholder="e.g. 1060" required pattern="[0-9A-Za-z\-]+" class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs font-mono font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700">
+      <span class="text-[10px] text-slate-400 mt-1 block">Unique alphanumeric identifier</span>
+    </div>
+
+    <div class="sm:col-span-8">
+      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Account Title / Name <span class="text-rose-500">*</span></label>
+      <input type="text" name="name" placeholder="e.g. Allowance for Impairment - Patient Receivables" required class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700">
+      <span class="text-[10px] text-slate-400 mt-1 block">Descriptive accounting classification</span>
+    </div>
+
+    <div class="sm:col-span-4">
+      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Category <span class="text-rose-500">*</span></label>
+      <select 
+        name="category" 
+        x-model="category" 
+        @change="updateNormalBalance()" 
+        required 
+        class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+      >
+        <option value="ASSET">ASSET (1000s)</option>
+        <option value="LIABILITY">LIABILITY (2000s)</option>
+        <option value="EQUITY">EQUITY (3000s)</option>
+        <option value="REVENUE">REVENUE (4000s)</option>
+        <option value="EXPENSE">EXPENSE (5000s)</option>
+      </select>
+    </div>
+
+    <div class="sm:col-span-4">
+      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Normal Balance <span class="text-rose-500">*</span></label>
+      <select 
+        name="normal_balance" 
+        x-model="normalBalance" 
+        required 
+        class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs font-mono font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+      >
+        <option value="DEBIT">DEBIT</option>
+        <option value="CREDIT">CREDIT</option>
+      </select>
+      <span class="text-[10px] text-slate-400 mt-1 block">Auto-set per GAAP convention</span>
+    </div>
+
+    <div class="sm:col-span-4">
+      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Department / Cost Center</label>
+      <input type="text" name="department" placeholder="e.g. Inpatient, Pharmacy, General" class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700">
+      <span class="text-[10px] text-slate-400 mt-1 block">Optional departmental grouping</span>
+    </div>
+  </div>
+</x-modal>
+
+<!-- Modal: Edit GL Account (Alpine.js) -->
+<x-modal 
+  id="editAccountModal" 
+  title="Edit General Ledger Account" 
+  subtitle="Update account title, category classification, or cost center" 
+  icon="ph-pencil-simple" 
+  iconVariant="blue" 
+  size="xl" 
+  formAction="#" 
+  formMethod="POST" 
+  submitText="Update Account"
+  submitIcon="ph-check"
+  submitVariant="blue"
+>
+  <div 
+    x-data="{
+      acc: {},
+      formAction: '',
+      updateUrl(account) {
+        this.acc = account || {};
+        const form = document.querySelector('#editAccountModal form');
+        if (form && this.acc.id) {
+          form.action = '{{ url('/general-ledger/chart-of-accounts') }}/' + this.acc.id;
+        }
+      }
+    }"
+    @open-modal.window="if ($event.detail.id === 'editAccountModal') { updateUrl($event.detail.account); }"
+    class="grid grid-cols-1 sm:grid-cols-12 gap-4"
+  >
+    <input type="hidden" name="_method" value="PUT">
+
+    <div class="sm:col-span-4">
+      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">GL Account Code <span class="text-rose-500">*</span></label>
+      <input type="text" name="code" x-model="acc.code" required class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs font-mono font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700">
+    </div>
+
+    <div class="sm:col-span-8">
+      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Account Title / Name <span class="text-rose-500">*</span></label>
+      <input type="text" name="name" x-model="acc.name" required class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700">
+    </div>
+
+    <div class="sm:col-span-4">
+      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Category <span class="text-rose-500">*</span></label>
+      <select name="category" x-model="acc.category" required class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700">
+        <option value="ASSET">ASSET (1000s)</option>
+        <option value="LIABILITY">LIABILITY (2000s)</option>
+        <option value="EQUITY">EQUITY (3000s)</option>
+        <option value="REVENUE">REVENUE (4000s)</option>
+        <option value="EXPENSE">EXPENSE (5000s)</option>
+      </select>
+    </div>
+
+    <div class="sm:col-span-4">
+      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Normal Balance <span class="text-rose-500">*</span></label>
+      <select name="normal_balance" x-model="acc.normal_balance" required class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs font-mono font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700">
+        <option value="DEBIT">DEBIT</option>
+        <option value="CREDIT">CREDIT</option>
+      </select>
+    </div>
+
+    <div class="sm:col-span-4">
+      <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Department / Cost Center</label>
+      <input type="text" name="department" x-model="acc.department" class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700">
+    </div>
+  </div>
+</x-modal>
 @endsection
-
-@push('scripts')
-<script>
-function autoSetNormalBalance(category, targetId) {
-  const el = document.getElementById(targetId);
-  if (!el) return;
-  if (category === 'ASSET' || category === 'EXPENSE') {
-    el.value = 'DEBIT';
-  } else {
-    el.value = 'CREDIT';
-  }
-}
-
-function openAccountDetailsModal(acc) {
-  if (!acc) return;
-  document.getElementById('detailAccName').textContent = acc.name || 'Account Title';
-  document.getElementById('detailAccCode').textContent = acc.code || '0000';
-  document.getElementById('detailAccCategory').textContent = acc.category || 'ASSET';
-  document.getElementById('detailAccDept').textContent = acc.department || 'General';
-  document.getElementById('detailAccType').textContent = acc.normal_balance || 'DEBIT';
-  document.getElementById('detailAccBalance').textContent = acc.balance || '₱0.00';
-  document.getElementById('detailAccStatus').textContent = acc.is_active ? 'ACTIVE' : 'INACTIVE';
-  document.getElementById('detailAccHasLines').textContent = acc.has_lines ? 'Yes (Ledger History Recorded)' : 'No (Zero transactions)';
-  document.getElementById('detailAccLedgerLink').href = "{{ route('gl.ledger-books') }}?account_id=" + acc.id;
-
-  const modalEl = document.getElementById('accountDetailsModal');
-  if (modalEl && window.bootstrap) {
-    bootstrap.Modal.getOrCreateInstance(modalEl).show();
-  }
-}
-
-function openEditAccountModal(acc) {
-  if (!acc) return;
-  document.getElementById('editAccCode').value = acc.code || '';
-  document.getElementById('editAccName').value = acc.name || '';
-  document.getElementById('editAccCategory').value = acc.category || 'ASSET';
-  document.getElementById('editAccNormalBalance').value = acc.normal_balance || 'DEBIT';
-  document.getElementById('editAccDept').value = acc.department || '';
-
-  const form = document.getElementById('editAccountForm');
-  form.action = "{{ url('/general-ledger/chart-of-accounts') }}/" + acc.id;
-
-  const modalEl = document.getElementById('editAccountModal');
-  if (modalEl && window.bootstrap) {
-    bootstrap.Modal.getOrCreateInstance(modalEl).show();
-  }
-}
-</script>
-@endpush

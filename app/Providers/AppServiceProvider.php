@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
@@ -20,6 +22,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        \Illuminate\Pagination\Paginator::useTailwind();
+
         // Force HTTPS for all URLs in production (Vercel terminates SSL at edge,
         // forwards requests as HTTP internally — without this, form actions and
         // route() helper generate http:// URLs which browsers block as insecure).

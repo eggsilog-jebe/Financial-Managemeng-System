@@ -5,147 +5,176 @@
 @section('page', 'payment-gateways')
 
 @section('content')
-<div class="container-fluid p-4">
-  <!-- Page Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="space-y-6">
+  <!-- Executive Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <div>
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-1 fs-xs">
-          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
-          <li class="breadcrumb-item">Collection Management</li>
-          <li class="breadcrumb-item active">Payment Gateway Logs</li>
-        </ol>
-      </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Payment Gateway &amp; E-Wallet Transaction Logs</h1>
-      <p class="text-muted fs-xs mb-0">Monitor online patient copay transactions, digital receipts (GCash, Maya, Credit/Debit cards), and webhook synchronization status.</p>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Payment Gateway &amp; E-Wallet Transaction Logs
+        </h1>
     </div>
-    <div class="d-flex gap-2">
-      <a href="{{ route('collection.cashier-desk') }}" class="btn btn-outline-secondary btn-sm"><i class="ph ph-hand-coins me-1"></i> Cashier POS Desk</a>
+
+    <div class="flex items-center gap-2.5">
+      <a 
+        href="{{ route('collection.cashier-desk') }}" 
+        class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+      >
+        <i class="ph-bold ph-hand-coins text-teal-600"></i>
+        <span>Cashier POS Desk</span>
+      </a>
     </div>
   </div>
 
+  <!-- Session Alerts -->
   @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show mb-4 d-flex align-items-center" role="alert">
-      <i class="ph ph-check-circle fs-4 me-2"></i>
-      <div>{{ session('success') }}</div>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="rounded-xl bg-emerald-50 p-4 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-check-circle text-lg text-emerald-600"></i>
+        <span>{{ session('success') }}</span>
+      </div>
     </div>
   @endif
 
   @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show mb-4 d-flex align-items-center" role="alert">
-      <i class="ph ph-warning-circle fs-4 me-2"></i>
-      <div>{{ session('error') }}</div>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="rounded-xl bg-rose-50 p-4 text-xs font-semibold text-rose-800 ring-1 ring-rose-600/20 dark:bg-rose-950/40 dark:text-rose-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-warning-circle text-lg text-rose-600"></i>
+        <span>{{ session('error') }}</span>
+      </div>
     </div>
   @endif
 
   <!-- Metric Summary Cards -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-4">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Digital Gateway Inflows</span>
-          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-globe-hemisphere-west fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($totalOnline ?? 0), 2) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Digital Transactions</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-credit-card fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ count($logs ?? []) }} Transactions</h4>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Settlement Status</span>
-          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-shield-check fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">100% Synchronized</h4>
-      </div>
-    </div>
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <x-stat-card 
+      title="Digital Gateway Inflows" 
+      :value="$totalOnline ?? 0" 
+      icon="ph-globe-hemisphere-west" 
+      color="emerald" 
+      subtitle="E-Wallet &amp; Card settlements"
+    />
+    <x-stat-card 
+      title="Digital Transactions" 
+      :value="count($logs ?? [])" 
+      :isCurrency="false"
+      icon="ph-credit-card" 
+      color="blue" 
+      subtitle="Online gateway payments processed"
+    />
+    <x-stat-card 
+      title="Settlement Status" 
+      value="100% Synced" 
+      :isCurrency="false"
+      icon="ph-shield-check" 
+      color="teal" 
+      subtitle="Real-time gateway stream active"
+    />
   </div>
 
+  
+  <!-- Sub-Module Category Navigation Bar -->
+  @include('partials.submodule-nav')
+
   <!-- Data Table Card -->
-  <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-transparent border-bottom p-3">
-      <h6 class="fw-bold mb-0 text-dark"><i class="ph ph-device-mobile me-2 text-primary"></i>Digital Gateway &amp; POS Settlements Stream</h6>
+  <div class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+    <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800">
+      <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+        <i class="ph-bold ph-device-mobile text-teal-600"></i> Digital Gateway &amp; POS Settlements Stream
+      </h2>
     </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Channel / Provider</th>
-              <th>Transaction Channel Ref</th>
-              <th>Official Receipt #</th>
-              <th>Patient / Payor</th>
-              <th>Date</th>
-              <th class="text-end">Settled Amount (₱)</th>
-              <th class="text-center">Status</th>
-              <th class="text-end">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($logs ?? [] as $log)
-            @php
-              $method = $log->payment_method;
-              $badge = match($method) {
-                  'GCASH' => 'bg-info-subtle text-info',
-                  'MAYA' => 'bg-success-subtle text-success',
-                  'CREDIT_CARD', 'DEBIT_CARD' => 'bg-primary-subtle text-primary',
-                  default => 'bg-secondary-subtle text-secondary'
-              };
-            @endphp
-            <tr>
-              <td><span class="badge {{ $badge }} px-2 py-1"><i class="ph ph-credit-card me-1"></i> {{ $method }}</span></td>
-              <td><span class="font-monospace text-dark fw-semibold">{{ $log->transaction_channel_ref ?? $log->payment_reference }}</span></td>
-              <td>
-                <span class="font-monospace text-primary fw-bold">
-                  {{ $log->officialReceipt?->or_number ?? $log->payment_reference }}
-                </span>
-              </td>
-              <td>
-                <div class="fw-semibold text-dark">{{ $log->officialReceipt?->payor_name ?: ($log->patientAccount?->full_name ?? 'Patient') }}</div>
-              </td>
-              <td class="font-monospace fs-xs">{{ $log->payment_date ? $log->payment_date->format('M d, Y') : '-' }}</td>
-              <td class="text-end font-monospace fw-bold text-success">₱{{ number_format((float) $log->amount, 2) }}</td>
-              <td class="text-center"><span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> SETTLED</span></td>
-              <td class="text-end">
-                @if($log->journalEntry)
-                  <a href="{{ route('gl.journal-entries') }}?search={{ $log->journalEntry->reference_number }}" 
-                     class="badge bg-success-subtle text-success border border-success-subtle py-2 px-3 text-decoration-none d-inline-flex align-items-center gap-1 font-monospace"
-                     title="View Double-Entry Journal in General Ledger">
-                    <i class="ph ph-check-circle fs-6"></i>
-                    <span>Posted: {{ $log->journalEntry->reference_number }}</span>
-                  </a>
-                @else
-                  <form method="POST" action="{{ route('collection.payment-gateways.retrigger-gl', $log->id) }}" class="d-inline">
-                    @csrf
-                    <button type="submit" class="btn btn-sm btn-outline-primary p-1 px-3 fw-semibold" title="Post Missing Double-Entry Ledger Transaction">
-                      <i class="ph ph-arrow-counter-clockwise me-1"></i> Re-Trigger GL
-                    </button>
-                  </form>
-                @endif
-              </td>
-            </tr>
-            @empty
-            <tr>
-              <td colspan="8" class="text-center py-4 text-muted">No digital gateway transaction records found.</td>
-            </tr>
-            @endforelse
-          </tbody>
-        </table>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+        <thead class="bg-slate-50/75 border-b border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:bg-slate-800/50 dark:border-slate-800 dark:text-slate-400">
+          <tr>
+            <th class="px-4 py-3.5">Channel / Provider</th>
+            <th class="px-4 py-3.5">Channel Ref</th>
+            <th class="px-4 py-3.5">Official Receipt #</th>
+            <th class="px-4 py-3.5">Patient / Payor</th>
+            <th class="px-4 py-3.5">Date</th>
+            <th class="px-4 py-3.5 text-right">Settled Amount (₱)</th>
+            <th class="px-4 py-3.5 text-center">Status</th>
+            <th class="px-4 py-3.5 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+          @forelse($logs ?? [] as $log)
+          @php
+            $method = $log->payment_method;
+          @endphp
+          <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+            <td class="px-4 py-3">
+              @if($method === 'GCASH')
+                <x-status-badge status="blue" label="GCASH" size="sm" />
+              @elseif($method === 'MAYA')
+                <x-status-badge status="active" label="MAYA" size="sm" />
+              @elseif(in_array($method, ['CREDIT_CARD', 'DEBIT_CARD']))
+                <x-status-badge status="purple" label="{{ str_replace('_', ' ', $method) }}" size="sm" />
+              @else
+                <x-status-badge status="slate" label="{{ $method }}" size="sm" />
+              @endif
+            </td>
+            <td class="px-4 py-3 font-mono font-semibold text-slate-900 dark:text-white">
+              {{ $log->transaction_channel_ref ?? $log->payment_reference }}
+            </td>
+            <td class="px-4 py-3 font-mono font-bold text-teal-600 dark:text-teal-400">
+              {{ $log->officialReceipt?->or_number ?? $log->payment_reference }}
+            </td>
+            <td class="px-4 py-3 text-slate-900 dark:text-white font-medium">
+              {{ $log->officialReceipt?->payor_name ?: ($log->patientAccount?->full_name ?? 'Patient') }}
+            </td>
+            <td class="px-4 py-3 font-mono text-slate-600 dark:text-slate-300">
+              {{ $log->payment_date ? $log->payment_date->format('M d, Y') : '-' }}
+            </td>
+            <td class="px-4 py-3 text-right font-mono font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+              ₱{{ number_format((float) $log->amount, 2) }}
+            </td>
+            <td class="px-4 py-3 text-center">
+              <x-status-badge status="active" label="SETTLED" size="sm" />
+            </td>
+            <td class="px-4 py-3 text-right">
+              @if($log->journalEntry)
+                <a 
+                  href="{{ route('gl.journal-entries') }}?search={{ $log->journalEntry->reference_number }}" 
+                  class="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2.5 py-1 text-[11px] font-mono font-semibold text-emerald-700 ring-1 ring-emerald-600/20 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300" 
+                  title="View Double-Entry Journal in General Ledger"
+                >
+                  <i class="ph-bold ph-check-circle"></i>
+                  <span>Posted: {{ $log->journalEntry->reference_number }}</span>
+                </a>
+              @else
+                <form method="POST" action="{{ route('collection.payment-gateways.retrigger-gl', $log->id) }}" class="inline">
+                  @csrf
+                  <button 
+                    type="submit" 
+                    class="inline-flex items-center gap-1 rounded-lg border border-teal-200 bg-white px-2.5 py-1 text-xs font-semibold text-teal-700 shadow-sm hover:bg-teal-50 dark:border-teal-800 dark:bg-slate-800 dark:text-teal-300 dark:hover:bg-slate-700 cursor-pointer" 
+                    title="Post Missing Double-Entry Ledger Transaction"
+                  >
+                    <i class="ph-bold ph-arrows-clockwise text-teal-600"></i>
+                    <span>Re-Trigger GL</span>
+                  </button>
+                </form>
+              @endif
+            </td>
+          </tr>
+          @empty
+          <tr>
+            <td colspan="8" class="px-4 py-12 text-center text-slate-500 dark:text-slate-400">
+              <i class="ph ph-globe text-3xl mb-2 text-slate-400"></i>
+              <p>No digital gateway transaction records found.</p>
+            </td>
+          </tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    @if(method_exists($logs, 'links'))
+      <div class="border-t border-slate-200 p-4 dark:border-slate-800">
+        {{ $logs->links() }}
       </div>
-    </div>
-    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs">Showing {{ count($logs ?? []) }} Digital Gateway Transactions</span>
-    </div>
+    @endif
   </div>
 </div>
 @endsection

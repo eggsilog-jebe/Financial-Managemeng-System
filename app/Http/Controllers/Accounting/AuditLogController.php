@@ -48,24 +48,87 @@ final class AuditLogController extends Controller
             ];
         }, ['audit'], 30);
 
-        // Unique filter options for the filter bar cached for 10 minutes
-        $filterOptions = $this->cacheService->remember('audit:filter_options', 600, function (): array {
+        // Curated, structured event categories for high-signal auditing
+        $definedEventGroups = [
+            'Security & Authentication' => [
+                'login'                       => 'Login (Success)',
+                'failed_login'                => 'Failed Login Attempt',
+                'logout'                      => 'Logout',
+                'session_displaced'           => 'Session Displaced (Concurrent Login)',
+                'session_displaced_logged_out'=> 'Displaced Session Terminated',
+            ],
+            'Two-Factor Authentication (2FA)' => [
+                '2fa_passed'                  => '2FA Verification Success',
+                '2fa_failed'                  => '2FA Verification Failed',
+                '2fa_totp_enrolled'           => '2FA TOTP Enrolled',
+                '2fa_totp_reprovisioned'      => '2FA TOTP Reset / Re-enrolled',
+                'email_otp_sent'              => 'Email OTP Dispatched',
+                'workstation_auth_requested'  => 'Workstation Authorization Requested',
+                'workstation_approved'        => 'Workstation Approved',
+                'workstation_revoked'         => 'Workstation Revoked',
+            ],
+            'Data Mutations & Actions' => [
+                'created'                     => 'Record Created',
+                'updated'                     => 'Record Updated',
+                'submitted'                   => 'Transaction / Batch Submitted',
+                'approved'                    => 'Transaction / Approval Granted',
+                'revoked'                     => 'Record / Access Revoked',
+                'toggled'                     => 'Setting / Status Toggled',
+            ],
+            'Audit & Inspection' => [
+                'viewed'                      => 'Record / Page Viewed',
+            ],
+        ];
+
+        // Unique filter options for the filter bar cached for 10 minutes (stored as pure primitive arrays)
+        $filterOptions = $this->cacheService->remember('audit:filter_options_v3', 600, function (): array {
             return [
-                'modules' => ActivityLog::distinct()->whereNotNull('module')->pluck('module')->sort()->values(),
-                'events'  => ActivityLog::distinct()->whereNotNull('event')->pluck('event')->sort()->values(),
-                'roles'   => ActivityLog::distinct()->whereNotNull('user_role')->pluck('user_role')->sort()->values(),
+                'modules' => ActivityLog::distinct()->whereNotNull('module')->pluck('module')->filter()->sort()->values()->all(),
+                'events'  => ActivityLog::distinct()->whereNotNull('event')->pluck('event')->filter()->sort()->values()->all(),
+                'roles'   => ActivityLog::distinct()->whereNotNull('user_role')->pluck('user_role')->filter()->sort()->values()->all(),
             ];
         }, ['audit'], 120);
 
-        $modules = $filterOptions['modules'];
-        $events = $filterOptions['events'];
-        $roles = $filterOptions['roles'];
+        $modules = is_iterable($filterOptions['modules'] ?? null) ? $filterOptions['modules'] : [];
+        $rawEvents = is_iterable($filterOptions['events'] ?? null) ? $filterOptions['events'] : [];
+        $roles   = is_iterable($filterOptions['roles'] ?? null) ? $filterOptions['roles'] : [];
+
+        // Build organized event groups for Blade dropdown, including any miscellaneous logged events
+        $eventGroups = [];
+        $mappedKeys = [];
+
+        foreach ($definedEventGroups as $groupLabel => $items) {
+            $groupEntries = [];
+            foreach ($items as $evKey => $evDisplay) {
+                if (in_array($evKey, $rawEvents, true)) {
+                    $groupEntries[$evKey] = $evDisplay;
+                    $mappedKeys[] = $evKey;
+                }
+            }
+            if (!empty($groupEntries)) {
+                $eventGroups[$groupLabel] = $groupEntries;
+            }
+        }
+
+        // Catch-all for any other dynamic events
+        $unmapped = array_diff($rawEvents, $mappedKeys);
+        if (!empty($unmapped)) {
+            $otherGroup = [];
+            foreach ($unmapped as $uEv) {
+                if (is_string($uEv) && $uEv !== '') {
+                    $otherGroup[$uEv] = ucfirst(str_replace('_', ' ', $uEv));
+                }
+            }
+            if (!empty($otherGroup)) {
+                $eventGroups['Other Events'] = $otherGroup;
+            }
+        }
 
         return view('accounting.audit-log', compact(
             'logs',
             'stats',
             'modules',
-            'events',
+            'eventGroups',
             'roles',
             'event',
             'module',

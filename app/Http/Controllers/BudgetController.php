@@ -153,9 +153,10 @@ final class BudgetController extends Controller
     {
         $reallocations = BudgetReallocation::with(['sourceAllocation', 'destinationAllocation', 'approver'])
             ->latest('transfer_date')
-            ->get();
+            ->paginate(15)
+            ->withQueryString();
 
-        $reallocationsList = $reallocations->map(function (BudgetReallocation $r): array {
+        $reallocationsList = $reallocations->getCollection()->map(function (BudgetReallocation $r): array {
             return [
                 'ref'          => $r->reference_number,
                 'from'         => $r->source_department,

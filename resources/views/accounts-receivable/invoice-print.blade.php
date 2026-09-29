@@ -4,88 +4,109 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Hospital Billing Statement - {{ $invoice->invoice_number }}</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  @vite(['resources/css/app.css'])
   <style>
     @media print {
       .no-print { display: none !important; }
-      body { font-size: 12px; }
+      body { background-color: #fff !important; font-size: 11px; }
+      .invoice-card { box-shadow: none !important; border: 1px solid #cbd5e1 !important; }
     }
-    body { background-color: #f8fafc; color: #1e293b; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    .invoice-card { background: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
   </style>
 </head>
-<body class="p-4">
-  <div class="container" style="max-width: 850px;">
+<body class="bg-slate-50 text-slate-800 p-4 sm:p-8 font-sans antialiased">
+  <div class="max-w-4xl mx-auto">
     <!-- Print Button Toolbar -->
-    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
-      <button class="btn btn-outline-secondary btn-sm" onclick="window.history.back()">&larr; Back to Invoices</button>
-      <button class="btn btn-primary btn-sm" onclick="window.print()">
-        <i class="ph ph-printer me-1"></i> Print / Save as PDF
+    <div class="flex items-center justify-between mb-6 no-print">
+      <button 
+        type="button" 
+        onclick="window.history.back()" 
+        class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-all cursor-pointer"
+      >
+        <i class="ph-bold ph-arrow-left"></i>
+        <span>Back to Invoices</span>
+      </button>
+      <button 
+        type="button" 
+        onclick="window.print()" 
+        class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 transition-all cursor-pointer"
+      >
+        <i class="ph-bold ph-printer"></i>
+        <span>Print / Save as PDF</span>
       </button>
     </div>
 
     <!-- Official Billing Statement Card -->
-    <div class="invoice-card p-5 border">
+    <div class="invoice-card rounded-2xl bg-white p-6 sm:p-10 shadow-sm ring-1 ring-slate-200/80">
       <!-- Hospital Header -->
-      <div class="row align-items-center border-bottom pb-4 mb-4">
-        <div class="col-8">
-          <h3 class="fw-bold text-dark mb-0">ST. JUDE METROPOLITAN MEDICAL CENTER</h3>
-          <p class="text-muted small mb-0">1029 Ortigas Center, Pasig City, Metro Manila, Philippines</p>
-          <p class="text-muted fs-xs mb-0">BIR VAT Reg. TIN: 004-991-234-000 | CAS Permit: CAS-2026-MED-0991</p>
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-6 mb-6">
+        <div>
+          <h1 class="text-xl font-extrabold tracking-tight text-slate-900">
+            ST. JUDE METROPOLITAN MEDICAL CENTER
+          </h1>
+          <p class="text-xs text-slate-500 mt-0.5">1029 Ortigas Center, Pasig City, Metro Manila, Philippines</p>
+          <p class="text-[11px] text-slate-400 mt-0.5 font-mono">BIR VAT Reg. TIN: 004-991-234-000 | CAS Permit: CAS-2026-MED-0991</p>
         </div>
-        <div class="col-4 text-end">
-          <div class="badge bg-primary fs-6 px-3 py-2 text-uppercase mb-2">Billing Statement</div>
-          <div class="font-monospace fw-bold fs-6 text-dark">{{ $invoice->invoice_number }}</div>
-          <div class="fs-xs text-muted">Date: {{ $invoice->invoice_date->format('M d, Y') }}</div>
+        <div class="text-left sm:text-right">
+          <span class="inline-flex items-center px-3 py-1 rounded-xl text-xs font-bold tracking-wider uppercase bg-blue-50 text-blue-700 ring-1 ring-blue-500/20 mb-2">
+            Billing Statement
+          </span>
+          <div class="font-mono font-bold text-sm text-slate-900">{{ $invoice->invoice_number }}</div>
+          <div class="text-xs text-slate-400 mt-0.5">Date: {{ $invoice->invoice_date->format('M d, Y') }}</div>
         </div>
       </div>
 
       <!-- Patient Information -->
-      <div class="row g-3 bg-light rounded-3 p-3 mb-4">
-        <div class="col-6">
-          <div class="fs-xs text-muted text-uppercase fw-semibold">Patient Full Name</div>
-          <div class="fw-bold text-dark fs-6">{{ $invoice->patientAccount?->full_name ?? 'Walk-In Patient' }}</div>
-          <div class="fs-xs text-muted font-monospace mt-1">MRN: {{ $invoice->patientAccount?->patient_id_number ?? 'N/A' }}</div>
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200/60 mb-6 text-xs">
+        <div class="sm:col-span-6">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">Patient Full Name</span>
+          <div class="font-bold text-slate-900 text-sm">{{ $invoice->patientAccount?->full_name ?? 'Walk-In Patient' }}</div>
+          <div class="text-xs text-slate-500 font-mono mt-0.5">MRN: {{ $invoice->patientAccount?->patient_id_number ?? 'N/A' }}</div>
         </div>
-        <div class="col-3">
-          <div class="fs-xs text-muted text-uppercase fw-semibold">Admission Type</div>
-          <div class="fw-semibold text-dark">{{ $invoice->patientAccount?->admission_type ?? 'Inpatient' }}</div>
-          <div class="fs-xs text-muted mt-1">Due Date: {{ $invoice->due_date ? $invoice->due_date->format('M d, Y') : 'Immediate' }}</div>
+        <div class="sm:col-span-3">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">Admission Type</span>
+          <div class="font-semibold text-slate-800">{{ $invoice->patientAccount?->admission_type ?? 'Inpatient' }}</div>
+          <div class="text-slate-500 mt-0.5">Due Date: {{ $invoice->due_date ? $invoice->due_date->format('M d, Y') : 'Immediate' }}</div>
         </div>
-        <div class="col-3">
-          <div class="fs-xs text-muted text-uppercase fw-semibold">HMO Provider / Policy</div>
-          <div class="fw-semibold text-primary">{{ $invoice->patientAccount?->hmo_provider ?? 'Self-Pay' }}</div>
-          <div class="fs-xs text-muted mt-1">Status: <span class="fw-bold">{{ $invoice->status }}</span></div>
+        <div class="sm:col-span-3">
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">HMO / Policy Provider</span>
+          <div class="font-semibold text-blue-600">{{ $invoice->patientAccount?->hmo_provider ?? 'Self-Pay' }}</div>
+          <div class="text-slate-500 mt-0.5">Status: <span class="font-bold text-slate-800">{{ $invoice->status }}</span></div>
         </div>
       </div>
 
       <!-- Itemized Hospital Charges -->
-      <h6 class="fw-bold text-dark mb-2 text-uppercase fs-xs">Itemized Departmental Charges</h6>
-      <div class="table-responsive mb-4">
-        <table class="table table-bordered align-middle mb-0">
-          <thead class="table-light">
+      <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Itemized Departmental Charges</h2>
+      <div class="overflow-x-auto rounded-xl border border-slate-200 mb-6">
+        <table class="w-full text-left text-xs text-slate-600">
+          <thead class="bg-slate-50 border-b border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-500">
             <tr>
-              <th style="width: 5%;">#</th>
-              <th style="width: 20%;">Department</th>
-              <th style="width: 45%;">Procedure / Service Particulars</th>
-              <th style="width: 10%;" class="text-center">Qty</th>
-              <th style="width: 10%;" class="text-end">Unit Price</th>
-              <th style="width: 10%;" class="text-end">Gross (₱)</th>
+              <th class="px-3.5 py-2.5 w-12">#</th>
+              <th class="px-3.5 py-2.5">Department</th>
+              <th class="px-3.5 py-2.5">Procedure / Service Particulars</th>
+              <th class="px-3.5 py-2.5 text-center">Qty</th>
+              <th class="px-3.5 py-2.5 text-right">Unit Price</th>
+              <th class="px-3.5 py-2.5 text-right">Gross (₱)</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody class="divide-y divide-slate-200">
             @forelse($invoice->items as $idx => $item)
             <tr>
-              <td>{{ $idx + 1 }}</td>
-              <td><span class="badge bg-light text-dark border font-monospace">{{ $item->department }}</span></td>
-              <td class="fw-medium text-dark">{{ $item->description }}</td>
-              <td class="text-center font-monospace">{{ number_format((float) $item->quantity, 0) }}</td>
-              <td class="text-end font-monospace">₱{{ number_format((float) $item->unit_price, 2) }}</td>
-              <td class="text-end font-monospace fw-semibold">₱{{ number_format((float) $item->gross_amount, 2) }}</td>
+              <td class="px-3.5 py-2 text-slate-400 font-mono">{{ $idx + 1 }}</td>
+              <td class="px-3.5 py-2">
+                <span class="inline-flex px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-slate-100 text-slate-700">{{ $item->department }}</span>
+              </td>
+              <td class="px-3.5 py-2 font-medium text-slate-900">{{ $item->description }}</td>
+              <td class="px-3.5 py-2 text-center font-mono">{{ number_format((float) $item->quantity, 0) }}</td>
+              <td class="px-3.5 py-2 text-right font-mono text-slate-600 tabular-nums">₱{{ number_format((float) $item->unit_price, 2) }}</td>
+              <td class="px-3.5 py-2 text-right font-mono font-semibold text-slate-900 tabular-nums">₱{{ number_format((float) $item->gross_amount, 2) }}</td>
             </tr>
             @empty
             <tr>
-              <td colspan="6" class="text-center py-3 text-muted">No itemized charges listed.</td>
+              <td colspan="6" class="px-3.5 py-6 text-center text-slate-400">No itemized charges listed.</td>
             </tr>
             @endforelse
           </tbody>
@@ -93,53 +114,47 @@
       </div>
 
       <!-- Financial Calculation Breakdown -->
-      <div class="row justify-content-end mb-4">
-        <div class="col-6">
-          <div class="table-responsive">
-            <table class="table table-sm table-borderless align-middle mb-0">
-              <tbody>
-                <tr>
-                  <td class="text-muted fw-semibold">Gross Hospital Charges:</td>
-                  <td class="text-end font-monospace fw-bold text-dark">₱{{ number_format((float) $invoice->total_amount, 2) }}</td>
-                </tr>
-                @if((float) $invoice->discount_amount > 0)
-                <tr>
-                  <td class="text-danger">Less: Senior Citizen / PWD &amp; VAT Relief:</td>
-                  <td class="text-end font-monospace text-danger">-₱{{ number_format((float) $invoice->discount_amount, 2) }}</td>
-                </tr>
-                @endif
-                @if((float) $invoice->insurance_covered > 0)
-                <tr>
-                  <td class="text-info">Less: PhilHealth ACR &amp; HMO Coverage:</td>
-                  <td class="text-end font-monospace text-info">-₱{{ number_format((float) $invoice->insurance_covered, 2) }}</td>
-                </tr>
-                @endif
-                @if((float) $invoice->paid_amount > 0)
-                <tr>
-                  <td class="text-success">Less: Cashier Payments Settled:</td>
-                  <td class="text-end font-monospace text-success">-₱{{ number_format((float) $invoice->paid_amount, 2) }}</td>
-                </tr>
-                @endif
-                <tr class="border-top">
-                  <td class="fw-bold fs-6 text-dark">Net Patient Balance Due:</td>
-                  <td class="text-end font-monospace fw-bold fs-5 text-danger">₱{{ number_format((float) $invoice->balance_due, 2) }}</td>
-                </tr>
-              </tbody>
-            </table>
+      <div class="flex justify-end mb-8">
+        <div class="w-full sm:w-80 space-y-2 text-xs">
+          <div class="flex justify-between py-1 border-b border-slate-100">
+            <span class="text-slate-500 font-medium">Gross Hospital Charges:</span>
+            <span class="font-mono font-bold text-slate-900 tabular-nums">₱{{ number_format((float) $invoice->total_amount, 2) }}</span>
+          </div>
+          @if((float) $invoice->discount_amount > 0)
+          <div class="flex justify-between py-1 border-b border-slate-100 text-purple-700">
+            <span>Less: Senior / PWD &amp; VAT Relief:</span>
+            <span class="font-mono font-semibold tabular-nums">-₱{{ number_format((float) $invoice->discount_amount, 2) }}</span>
+          </div>
+          @endif
+          @if((float) $invoice->insurance_covered > 0)
+          <div class="flex justify-between py-1 border-b border-slate-100 text-blue-700">
+            <span>Less: PhilHealth &amp; HMO Coverage:</span>
+            <span class="font-mono font-semibold tabular-nums">-₱{{ number_format((float) $invoice->insurance_covered, 2) }}</span>
+          </div>
+          @endif
+          @if((float) $invoice->paid_amount > 0)
+          <div class="flex justify-between py-1 border-b border-slate-100 text-emerald-700">
+            <span>Less: Cashier Payments Settled:</span>
+            <span class="font-mono font-semibold tabular-nums">-₱{{ number_format((float) $invoice->paid_amount, 2) }}</span>
+          </div>
+          @endif
+          <div class="flex justify-between py-2 border-t-2 border-slate-800 text-sm">
+            <span class="font-bold text-slate-900">Net Patient Balance Due:</span>
+            <span class="font-mono font-extrabold text-rose-600 tabular-nums">₱{{ number_format((float) $invoice->balance_due, 2) }}</span>
           </div>
         </div>
       </div>
 
       <!-- Footer & Signatures -->
-      <div class="row pt-5 mt-5 border-top text-center fs-xs text-muted">
-        <div class="col-4">
-          <div class="border-top pt-2 mx-3">Prepared by: Billing Clerk</div>
+      <div class="grid grid-cols-3 gap-6 text-center text-xs text-slate-500 pt-6 border-t border-slate-200">
+        <div>
+          <div class="border-t border-slate-300 pt-2 font-medium">Prepared by: Billing Clerk</div>
         </div>
-        <div class="col-4">
-          <div class="border-top pt-2 mx-3">Verified by: Patient / Representative</div>
+        <div>
+          <div class="border-t border-slate-300 pt-2 font-medium">Verified by: Patient / Representative</div>
         </div>
-        <div class="col-4">
-          <div class="border-top pt-2 mx-3">Authorized by: Hospital Cashier</div>
+        <div>
+          <div class="border-t border-slate-300 pt-2 font-medium">Authorized by: Hospital Cashier</div>
         </div>
       </div>
     </div>

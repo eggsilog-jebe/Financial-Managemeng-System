@@ -25,6 +25,8 @@ final class AccountingCacheService
     public const TAG_LEDGER    = 'ledger';
 
     public const KEY_DASHBOARD_METRICS = 'accounting:dashboard:metrics';
+    public const KEY_DASHBOARD_WIDGETS = 'accounting:dashboard:live_widgets';
+    public const KEY_WELCOME_METRICS   = 'accounting:welcome:metrics';
     public const KEY_COA_TOTALS        = 'accounting:coa:classification_totals';
     public const KEY_LEDGER_TOTALS     = 'accounting:ledger:ytd_totals';
     public const KEY_KPI_METRICS       = 'accounting:kpi:metrics';
@@ -40,6 +42,20 @@ final class AccountingCacheService
     {
         return $this->multiLayerCache->remember(
             key: self::KEY_DASHBOARD_METRICS,
+            baseTtl: $ttlSeconds,
+            callback: $callback,
+            tags: [self::TAG_DASHBOARD],
+            l1Ttl: 60,
+        );
+    }
+
+    /**
+     * Cache welcome overview metrics using 3-layer caching.
+     */
+    public function rememberWelcomeMetrics(Closure $callback, int $ttlSeconds = 300): array
+    {
+        return $this->multiLayerCache->remember(
+            key: self::KEY_WELCOME_METRICS,
             baseTtl: $ttlSeconds,
             callback: $callback,
             tags: [self::TAG_DASHBOARD],
@@ -104,6 +120,8 @@ final class AccountingCacheService
         ]);
 
         $this->multiLayerCache->forget(self::KEY_DASHBOARD_METRICS);
+        $this->multiLayerCache->forget(self::KEY_DASHBOARD_WIDGETS);
+        $this->multiLayerCache->forget(self::KEY_WELCOME_METRICS);
         $this->multiLayerCache->forget(self::KEY_COA_TOTALS);
         $this->multiLayerCache->forget(self::KEY_LEDGER_TOTALS);
         $this->multiLayerCache->forget(self::KEY_KPI_METRICS);
@@ -116,6 +134,8 @@ final class AccountingCacheService
     {
         $this->multiLayerCache->invalidateTags([self::TAG_DASHBOARD]);
         $this->multiLayerCache->forget(self::KEY_DASHBOARD_METRICS);
+        $this->multiLayerCache->forget(self::KEY_DASHBOARD_WIDGETS);
+        $this->multiLayerCache->forget(self::KEY_WELCOME_METRICS);
     }
 
     /**

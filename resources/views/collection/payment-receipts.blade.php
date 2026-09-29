@@ -5,90 +5,105 @@
 @section('page', 'payment-receipts')
 
 @section('content')
-<div class="container-fluid p-4">
-  <!-- Page Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="space-y-6">
+  <!-- Executive Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <div>
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-1 fs-xs">
-          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
-          <li class="breadcrumb-item">Collection Management</li>
-          <li class="breadcrumb-item active">Payment Receipts</li>
-        </ol>
-      </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Payment Receipts &amp; Official Receipts (OR)</h1>
-      <p class="text-muted fs-xs mb-0">Master register of all issued official receipts, payment methods (Cash, Card, GCash, Maya), and patient bill settlements.</p>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Payment Receipts &amp; Official Receipts (OR)
+        </h1>
     </div>
-    <div class="d-flex gap-2">
-      <a href="{{ route('collection.cashier-desk') }}" class="btn btn-outline-secondary btn-sm"><i class="ph ph-hand-coins me-1"></i> Cashier POS Desk</a>
+
+    <div class="flex items-center gap-2.5">
+      <a 
+        href="{{ route('collection.cashier-desk') }}" 
+        class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+      >
+        <i class="ph-bold ph-hand-coins text-emerald-600"></i>
+        <span>Cashier POS Desk</span>
+      </a>
     </div>
   </div>
 
+  <!-- Session Alerts -->
   @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show mb-4 d-flex align-items-center" role="alert">
-      <i class="ph ph-check-circle fs-4 me-2"></i>
-      <div>{{ session('success') }}</div>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="rounded-xl bg-emerald-50 p-4 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-check-circle text-lg text-emerald-600"></i>
+        <span>{{ session('success') }}</span>
+      </div>
     </div>
   @endif
 
   @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show mb-4 d-flex align-items-center" role="alert">
-      <i class="ph ph-warning-circle fs-4 me-2"></i>
-      <div>{{ session('error') }}</div>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="rounded-xl bg-rose-50 p-4 text-xs font-semibold text-rose-800 ring-1 ring-rose-600/20 dark:bg-rose-950/40 dark:text-rose-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-warning-circle text-lg text-rose-600"></i>
+        <span>{{ session('error') }}</span>
+      </div>
     </div>
   @endif
 
   <!-- Metric Summary Cards -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Collections</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-receipt fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($totalCollected ?? 0), 2) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Cash Collections</span>
-          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-money fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($cashCollected ?? 0), 2) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Digital / E-Wallet</span>
-          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-credit-card fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($digitalCollected ?? 0), 2) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Count</span>
-          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-files fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ $payments->total() ?? count($payments) }} Records</h4>
-      </div>
-    </div>
+  <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+    <x-stat-card 
+      title="Total Collections" 
+      :value="$totalCollected ?? 0" 
+      icon="ph-receipt" 
+      color="emerald" 
+      subtitle="Cumulative received tender"
+    />
+    <x-stat-card 
+      title="Cash Collections" 
+      :value="$cashCollected ?? 0" 
+      icon="ph-money" 
+      color="slate" 
+      subtitle="Physical tender across cashier desks"
+    />
+    <x-stat-card 
+      title="Digital / E-Wallet" 
+      :value="$digitalCollected ?? 0" 
+      icon="ph-credit-card" 
+      color="blue" 
+      subtitle="GCash, Maya, cards & bank"
+    />
+    <x-stat-card 
+      title="Receipts Issued" 
+      :value="$payments->total() ?? count($payments)" 
+      :isCurrency="false"
+      icon="ph-files" 
+      color="amber" 
+      subtitle="Official BIR receipt entries"
+    />
   </div>
 
-  <!-- Filter & Search Card -->
-  <div class="card border-0 shadow-sm rounded-3 mb-4">
-    <div class="card-body p-3">
-      <form method="GET" action="{{ route('collection.receipts') }}" class="row g-2 align-items-center">
-        <div class="col-md-3">
-          <input type="text" name="search" value="{{ request('search') }}" class="form-control form-control-sm" placeholder="Search OR #, patient, payor...">
+  
+  <!-- Sub-Module Category Navigation Bar -->
+  @include('partials.submodule-nav')
+
+  <!-- Data Table Card -->
+  <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 overflow-hidden dark:bg-slate-900 dark:ring-slate-800">
+    <!-- Filter Toolbar -->
+    <div class="border-b border-slate-200 p-4 dark:border-slate-800">
+      <form method="GET" action="{{ route('collection.receipts') }}" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+        <div class="sm:col-span-4 relative">
+          <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+            <i class="ph ph-magnifying-glass text-sm"></i>
+          </div>
+          <input 
+            type="search" 
+            name="search" 
+            value="{{ request('search') }}" 
+            class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700" 
+            placeholder="Search OR #, patient, payor..."
+          >
         </div>
-        <div class="col-md-2">
-          <select name="method" class="form-select form-select-sm">
+
+        <div class="sm:col-span-2">
+          <select 
+            name="method" 
+            class="w-full rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
             <option value="">All Payment Methods</option>
             <option value="CASH" {{ request('method') === 'CASH' ? 'selected' : '' }}>CASH</option>
             <option value="GCASH" {{ request('method') === 'GCASH' ? 'selected' : '' }}>GCASH</option>
@@ -98,172 +113,231 @@
             <option value="CHECK" {{ request('method') === 'CHECK' ? 'selected' : '' }}>CHECK</option>
           </select>
         </div>
-        <div class="col-md-2">
-          <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-control form-control-sm" placeholder="From Date">
+
+        <div class="sm:col-span-2">
+          <input 
+            type="date" 
+            name="date_from" 
+            value="{{ request('date_from') }}" 
+            class="w-full rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
         </div>
-        <div class="col-md-2">
-          <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control form-control-sm" placeholder="To Date">
+
+        <div class="sm:col-span-2">
+          <input 
+            type="date" 
+            name="date_to" 
+            value="{{ request('date_to') }}" 
+            class="w-full rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
         </div>
-        <div class="col-md-3 d-flex gap-2">
-          <button type="submit" class="btn btn-primary btn-sm flex-grow-1"><i class="ph ph-magnifying-glass me-1"></i> Filter</button>
-          <a href="{{ route('collection.receipts') }}" class="btn btn-light border btn-sm"><i class="ph ph-x me-1"></i> Reset</a>
+
+        <div class="sm:col-span-2 flex items-center gap-2">
+          <button 
+            type="submit" 
+            class="w-full inline-flex items-center justify-center gap-1 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-all cursor-pointer"
+          >
+            <i class="ph-bold ph-funnel"></i> Filter
+          </button>
+          <a 
+            href="{{ route('collection.receipts') }}" 
+            class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+          >
+            <i class="ph-bold ph-arrow-counter-clockwise"></i>
+          </a>
         </div>
       </form>
     </div>
-  </div>
 
-  <!-- Data Table Card -->
-  <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Official Receipt #</th>
-              <th>Date</th>
-              <th>Patient / Payor</th>
-              <th>Invoice Number</th>
-              <th>Payment Method</th>
-              <th>Shift / Terminal</th>
-              <th>General Ledger</th>
-              <th class="text-end">Amount Paid (₱)</th>
-              <th class="text-center">Status</th>
-              <th class="text-end">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($payments as $pay)
-            @php
-              $orNo = $pay->officialReceipt?->or_number ?? $pay->payment_reference;
-              $isCancelled = ($pay->officialReceipt?->status === 'CANCELLED');
-            @endphp
-            <tr class="{{ $isCancelled ? 'table-light text-muted' : '' }}">
-              <td>
-                <span class="font-monospace fw-bold {{ $isCancelled ? 'text-decoration-line-through text-danger' : 'text-primary' }}">
-                  {{ $orNo }}
-                </span>
-                <div class="fs-xs text-muted font-monospace">{{ $pay->payment_reference }}</div>
-              </td>
-              <td class="font-monospace fs-xs">{{ $pay->payment_date ? $pay->payment_date->format('M d, Y') : '-' }}</td>
-              <td>
-                <strong class="d-block text-dark">{{ $pay->officialReceipt?->payor_name ?: ($pay->patientAccount?->full_name ?? 'Walk-In') }}</strong>
-                <span class="fs-xs text-muted font-monospace">{{ $pay->patientAccount?->patient_id_number }}</span>
-              </td>
-              <td>
-                <span class="badge bg-light text-dark font-monospace border">
-                  {{ $pay->invoice?->invoice_number ?? 'COP-SETTLED' }}
-                </span>
-              </td>
-              <td><span class="badge bg-secondary-subtle text-secondary">{{ $pay->payment_method }}</span></td>
-              <td>
-                <span class="fs-xs font-monospace text-muted">{{ $pay->cashierShift?->shift_code ?? '-' }}</span>
-              </td>
-              <td>
-                <a href="{{ route('gl.journal-entries') }}?search={{ $pay->payment_reference }}" class="badge bg-primary-subtle text-primary border border-primary-subtle text-decoration-none">
-                  <i class="ph ph-link-simple me-1"></i> JE-COL-{{ $pay->payment_reference }}
+    <!-- Table -->
+    <div class="overflow-x-auto custom-scrollbar">
+      <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+        <thead class="bg-slate-50/75 border-b border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:bg-slate-800/50 dark:border-slate-800 dark:text-slate-400">
+          <tr>
+            <th class="px-4 py-3.5">Official Receipt #</th>
+            <th class="px-4 py-3.5">Date</th>
+            <th class="px-4 py-3.5">Patient / Payor</th>
+            <th class="px-4 py-3.5">Invoice Number</th>
+            <th class="px-4 py-3.5">Payment Method</th>
+            <th class="px-4 py-3.5">Shift / Terminal</th>
+            <th class="px-4 py-3.5">General Ledger</th>
+            <th class="px-4 py-3.5 text-right">Amount Paid (₱)</th>
+            <th class="px-4 py-3.5 text-center">Status</th>
+            <th class="px-4 py-3.5 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+          @forelse($payments as $pay)
+          @php
+            $orNo = $pay->officialReceipt?->or_number ?? $pay->payment_reference;
+            $isCancelled = ($pay->officialReceipt?->status === 'CANCELLED');
+          @endphp
+          <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors {{ $isCancelled ? 'opacity-60 bg-slate-50/40 dark:bg-slate-800/20' : '' }}">
+            <td class="px-4 py-3">
+              <span class="font-mono font-bold {{ $isCancelled ? 'line-through text-rose-500' : 'text-emerald-600 dark:text-emerald-400' }}">
+                {{ $orNo }}
+              </span>
+              <div class="text-[11px] text-slate-400 font-mono">{{ $pay->payment_reference }}</div>
+            </td>
+            <td class="px-4 py-3 font-mono text-slate-600 dark:text-slate-300">
+              {{ $pay->payment_date ? $pay->payment_date->format('M d, Y') : '-' }}
+            </td>
+            <td class="px-4 py-3">
+              <strong class="block text-slate-900 dark:text-white">{{ $pay->officialReceipt?->payor_name ?: ($pay->patientAccount?->full_name ?? 'Walk-In') }}</strong>
+              <span class="text-[11px] text-slate-400 font-mono">{{ $pay->patientAccount?->patient_id_number }}</span>
+            </td>
+            <td class="px-4 py-3">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-mono font-medium bg-slate-100 text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
+                {{ $pay->invoice?->invoice_number ?? 'COP-SETTLED' }}
+              </span>
+            </td>
+            <td class="px-4 py-3">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                {{ $pay->payment_method }}
+              </span>
+            </td>
+            <td class="px-4 py-3 font-mono text-[11px] text-slate-500 dark:text-slate-400">
+              {{ $pay->cashierShift?->shift_code ?? '-' }}
+            </td>
+            <td class="px-4 py-3">
+              <a 
+                href="{{ route('gl.journal-entries') }}?search={{ $pay->payment_reference }}" 
+                class="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-2 py-0.5 text-[11px] font-mono font-medium text-blue-700 ring-1 ring-blue-500/20 hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-300"
+              >
+                <i class="ph-bold ph-link-simple"></i> JE-COL-{{ $pay->payment_reference }}
+              </a>
+            </td>
+            <td class="px-4 py-3 text-right font-mono font-bold tabular-nums {{ $isCancelled ? 'text-slate-400' : 'text-emerald-600 dark:text-emerald-400' }}">
+              ₱{{ number_format((float) $pay->amount, 2) }}
+            </td>
+            <td class="px-4 py-3 text-center">
+              @if($isCancelled)
+                <x-status-badge status="inactive" label="VOIDED" size="sm" />
+              @else
+                <x-status-badge status="active" label="VALID" size="sm" />
+              @endif
+            </td>
+            <td class="px-4 py-3 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                <a 
+                  href="{{ route('collection.receipts.print', $pay->id) }}" 
+                  target="_blank" 
+                  class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300" 
+                  title="Print Official Receipt"
+                >
+                  <i class="ph-bold ph-printer text-emerald-600"></i>
                 </a>
-              </td>
-              <td class="text-end font-monospace fw-bold {{ $isCancelled ? 'text-muted' : 'text-success' }}">
-                ₱{{ number_format((float) $pay->amount, 2) }}
-              </td>
-              <td class="text-center">
-                @if($isCancelled)
-                  <span class="badge bg-danger-subtle text-danger"><i class="ph ph-x-circle me-1"></i> VOIDED</span>
-                @else
-                  <span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> VALID</span>
+                @if(! $isCancelled)
+                  <button 
+                    type="button" 
+                    class="inline-flex items-center rounded-lg border border-rose-200 bg-white px-2 py-1 text-xs font-semibold text-rose-600 shadow-sm hover:bg-rose-50 dark:border-rose-900/50 dark:bg-slate-800 dark:text-rose-400 cursor-pointer" 
+                    title="Void Official Receipt" 
+                    onclick="openVoidModal('{{ $pay->id }}', '{{ $orNo }}', '{{ number_format((float) $pay->amount, 2) }}')"
+                  >
+                    <i class="ph-bold ph-prohibit"></i>
+                  </button>
                 @endif
-              </td>
-              <td class="text-end">
-                <div class="d-flex justify-content-end gap-1">
-                  <a href="{{ route('collection.receipts.print', $pay->id) }}" target="_blank" class="btn btn-sm btn-outline-primary p-1 px-2" title="Print Official Receipt">
-                    <i class="ph ph-printer"></i>
-                  </a>
-                  @if(! $isCancelled)
-                    <button class="btn btn-sm btn-outline-danger p-1 px-2" type="button" title="Void Official Receipt" onclick="openVoidModal('{{ $pay->id }}', '{{ $orNo }}', '{{ number_format((float) $pay->amount, 2) }}')">
-                      <i class="ph ph-prohibit"></i>
-                    </button>
-                  @endif
-                </div>
-              </td>
-            </tr>
-            @empty
-            <tr>
-              <td colspan="10" class="text-center py-4 text-muted">No official payment receipts found.</td>
-            </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
+              </div>
+            </td>
+          </tr>
+          @empty
+          <tr>
+            <td colspan="10" class="px-4 py-12 text-center text-slate-500 dark:text-slate-400">
+              <i class="ph ph-receipt text-3xl mb-2 text-slate-400"></i>
+              <p>No official payment receipts found.</p>
+            </td>
+          </tr>
+          @endforelse
+        </tbody>
+      </table>
     </div>
-    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs">Showing {{ $payments->count() }} of {{ $payments->total() }} Official Receipts</span>
-      {{ $payments->links() }}
+
+    <!-- Pagination & Meta -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
+      <span>Showing {{ $payments->count() }} of {{ $payments->total() }} Official Receipts</span>
+      <div>
+        {{ $payments->links() }}
+      </div>
     </div>
   </div>
 </div>
 
 <!-- Modal: Void Official Receipt -->
-<div class="modal fade" id="voidReceiptModal" tabindex="-1" aria-labelledby="voidReceiptModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow">
-      <div class="modal-header border-bottom bg-danger-subtle">
-        <h5 class="modal-title font-weight-bold text-danger"><i class="ph ph-warning me-2"></i>Void Official Receipt &amp; Reverse Ledger</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<x-modal 
+  id="voidReceiptModal" 
+  title="Void Official Receipt & Reverse Ledger" 
+  subtitle="Marks receipt as CANCELLED, restores invoice balance, and posts GL reversal." 
+  icon="ph-warning" 
+  iconVariant="rose" 
+  size="md" 
+  formId="voidReceiptForm" 
+  formAction="" 
+  formMethod="POST" 
+  submitText="Confirm Receipt Void" 
+  submitIcon="ph-prohibit"
+>
+  <div class="space-y-4">
+    <p class="text-xs text-slate-500 dark:text-slate-400">
+      Voiding an official receipt marks it as <strong>CANCELLED</strong> in compliance with BIR CAS rules, restores the outstanding copay balance on the patient invoice, and automatically posts a balancing reversing General Ledger entry.
+    </p>
+
+    <div class="rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200/60 dark:bg-slate-800/40 dark:ring-slate-800 space-y-1.5">
+      <div class="flex justify-between items-center text-xs">
+        <span class="text-slate-400">Official Receipt:</span>
+        <span id="voidOrNumber" class="font-mono font-bold text-slate-900 dark:text-white">-</span>
       </div>
-      <form id="voidReceiptForm" method="POST" action="">
-        @csrf
-        <div class="modal-body p-4">
-          <p class="text-muted small mb-3">
-            Voiding an official receipt marks it as <strong>CANCELLED</strong> in compliance with BIR CAS rules, restores the outstanding copay balance on the patient invoice, and automatically posts a balancing reversing General Ledger entry.
-          </p>
+      <div class="flex justify-between items-center text-xs pt-1 border-t border-slate-200 dark:border-slate-700">
+        <span class="text-slate-400">Amount to Reverse:</span>
+        <span id="voidAmount" class="font-mono font-bold text-rose-600 dark:text-rose-400 tabular-nums">-</span>
+      </div>
+    </div>
 
-          <div class="p-3 bg-light rounded-3 mb-3">
-            <div class="d-flex justify-content-between mb-1">
-              <span class="text-muted fs-xs">Official Receipt:</span>
-              <span id="voidOrNumber" class="font-monospace fw-bold text-dark">-</span>
-            </div>
-            <div class="d-flex justify-content-between">
-              <span class="text-muted fs-xs">Amount to Reverse:</span>
-              <span id="voidAmount" class="font-monospace fw-bold text-danger">-</span>
-            </div>
-          </div>
+    <div>
+      <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+        Reason for Voiding <span class="text-rose-500">*</span>
+      </label>
+      <select 
+        name="reason" 
+        class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-rose-500 focus:bg-white focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+        required
+      >
+        <option value="Erroneous Amount Tendered">Erroneous Amount Tendered</option>
+        <option value="Duplicate Official Receipt">Duplicate Official Receipt</option>
+        <option value="Patient Transaction Cancelled / Reversed">Patient Transaction Cancelled / Reversed</option>
+        <option value="Payment Method Input Correction">Payment Method Input Correction</option>
+        <option value="Management Discretion / Refund">Management Discretion / Refund</option>
+      </select>
+    </div>
 
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Reason for Voiding <span class="text-danger">*</span></label>
-            <select name="reason" class="form-select form-select-sm mb-2" required>
-              <option value="Erroneous Amount Tendered">Erroneous Amount Tendered</option>
-              <option value="Duplicate Official Receipt">Duplicate Official Receipt</option>
-              <option value="Patient Transaction Cancelled / Reversed">Patient Transaction Cancelled / Reversed</option>
-              <option value="Payment Method Input Correction">Payment Method Input Correction</option>
-              <option value="Management Discretion / Refund">Management Discretion / Refund</option>
-            </select>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Audit Justification Notes</label>
-            <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Additional audit details..."></textarea>
-          </div>
-        </div>
-        <div class="modal-footer border-top">
-          <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-sm btn-danger"><i class="ph ph-prohibit me-1"></i> Confirm Receipt Void</button>
-        </div>
-      </form>
+    <div>
+      <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+        Audit Justification Notes
+      </label>
+      <textarea 
+        name="notes" 
+        rows="2" 
+        class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 placeholder-slate-400 shadow-sm focus:border-rose-500 focus:bg-white focus:ring-rose-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+        placeholder="Additional audit details..."
+      ></textarea>
     </div>
   </div>
-</div>
+</x-modal>
 
 @push('scripts')
 <script>
 function openVoidModal(paymentId, orNumber, amount) {
   const form = document.getElementById('voidReceiptForm');
-  form.action = `/collection-management/payment-receipts/${paymentId}/void`;
+  if (form) {
+    form.action = `/collection-management/payment-receipts/${paymentId}/void`;
+  }
 
-  document.getElementById('voidOrNumber').textContent = orNumber;
-  document.getElementById('voidAmount').textContent = '₱' + amount;
+  const elOr = document.getElementById('voidOrNumber');
+  if (elOr) elOr.textContent = orNumber;
 
-  const modal = new bootstrap.Modal(document.getElementById('voidReceiptModal'));
-  modal.show();
+  const elAmt = document.getElementById('voidAmount');
+  if (elAmt) elAmt.textContent = '₱' + amount;
+
+  window.dispatchEvent(new CustomEvent('open-modal', { detail: 'voidReceiptModal' }));
 }
 </script>
 @endpush

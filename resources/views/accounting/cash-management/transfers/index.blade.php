@@ -5,247 +5,340 @@
 @section('page', 'fund-transfers')
 
 @section('content')
-<div class="container-fluid p-4">
-  <!-- Page Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="space-y-6">
+  <!-- Executive Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <div>
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-1 fs-xs">
-          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
-          <li class="breadcrumb-item">Cash Management</li>
-          <li class="breadcrumb-item active">Fund Transfers</li>
-        </ol>
-      </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Bank Fund Transfers &amp; Sweeps</h1>
-      <p class="text-muted fs-xs mb-0">Move money between hospital accounts (e.g. Daily Collections $\rightarrow$ Main Operating Account $\rightarrow$ Payroll Fund) with automatic GL entries.</p>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Bank Fund Transfers &amp; Sweeps
+        </h1>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <x-integration-badge 
-          type="internal" 
-          :internalModules="['Bank Accounts', 'General Ledger']" 
-          :tables="['bank_accounts', 'journal_entries', 'journal_entry_lines']"
-          glImpact="DR Destination Bank GL / CR Source Bank GL"
-          description="Sweeps cash balances between internal depository, payroll, and operating bank accounts." 
-      />
-      <a href="{{ route('cash.bank-accounts') }}" class="btn btn-outline-secondary btn-sm"><i class="ph ph-bank me-1"></i> Bank Accounts</a>
-      <button id="btnNewTransfer" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#newTransferModal">
-        <i class="ph ph-arrows-left-right me-1"></i> Execute Fund Transfer
+
+    <div class="flex items-center gap-2.5">
+      <a 
+        href="{{ route('cash.bank-accounts') }}" 
+        class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+      >
+        <i class="ph-bold ph-bank text-purple-600"></i>
+        <span>Bank Accounts</span>
+      </a>
+      <button 
+        type="button" 
+        id="btnNewTransfer" 
+        @click="$dispatch('open-modal', 'newTransferModal')"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-purple-700 ring-1 ring-purple-600/20 transition-all cursor-pointer"
+      >
+        <i class="ph-bold ph-arrows-left-right"></i>
+        <span>Execute Fund Transfer</span>
       </button>
     </div>
   </div>
 
+  <!-- Session Alerts -->
   @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show mb-4 d-flex align-items-center" role="alert">
-      <i class="ph ph-check-circle fs-4 me-2"></i>
-      <div>{{ session('success') }}</div>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="rounded-xl bg-emerald-50 p-4 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-check-circle text-lg text-emerald-600"></i>
+        <span>{{ session('success') }}</span>
+      </div>
     </div>
   @endif
 
   @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show mb-4 d-flex align-items-center" role="alert">
-      <i class="ph ph-warning-circle fs-4 me-2"></i>
-      <div>{{ session('error') }}</div>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="rounded-xl bg-rose-50 p-4 text-xs font-semibold text-rose-800 ring-1 ring-rose-600/20 dark:bg-rose-950/40 dark:text-rose-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-warning-circle text-lg text-rose-600"></i>
+        <span>{{ session('error') }}</span>
+      </div>
     </div>
   @endif
 
   <!-- Metric Summary Cards -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-4">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Cumulative Transferred Volume</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-arrows-clockwise fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($totalTransferVolume ?? 0), 2) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Transfer Transactions</span>
-          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-files fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ $transfers->total() ?? count($transfers ?? []) }} Transfers</h4>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Available Transfer Channels</span>
-          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-globe-hemisphere-west fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">PESONet &bull; InstaPay &bull; Internal Book</h4>
-      </div>
-    </div>
-  </div>
-
-  <!-- Filter & Search Card -->
-  <div class="card border-0 shadow-sm rounded-3 mb-4">
-    <div class="card-body p-3">
-      <form method="GET" action="{{ route('cash.fund-transfers') }}" class="row g-2 align-items-center">
-        <div class="col-md-4">
-          <input type="text" name="search" value="{{ request('search') }}" class="form-control form-control-sm" placeholder="Search reference #, bank, memo...">
-        </div>
-        <div class="col-md-2">
-          <input type="date" name="date_from" value="{{ request('date_from') }}" class="form-control form-control-sm" placeholder="From Date">
-        </div>
-        <div class="col-md-2">
-          <input type="date" name="date_to" value="{{ request('date_to') }}" class="form-control form-control-sm" placeholder="To Date">
-        </div>
-        <div class="col-md-4 d-flex gap-2">
-          <button type="submit" class="btn btn-primary btn-sm flex-grow-1"><i class="ph ph-magnifying-glass me-1"></i> Filter</button>
-          <a href="{{ route('cash.fund-transfers') }}" class="btn btn-light border btn-sm"><i class="ph ph-x me-1"></i> Reset</a>
-        </div>
-      </form>
-    </div>
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <x-stat-card 
+      title="Cumulative Volume" 
+      :value="$totalTransferVolume ?? 0" 
+      icon="ph-arrows-clockwise" 
+      color="emerald" 
+      subtitle="Total value swept across bank accounts"
+    />
+    <x-stat-card 
+      title="Transfer Transactions" 
+      :value="$transfers->total() ?? count($transfers ?? [])" 
+      :isCurrency="false"
+      icon="ph-files" 
+      color="purple" 
+      subtitle="Completed internal treasury transfers"
+    />
+    <x-stat-card 
+      title="Transfer Channels" 
+      value="PESONet • InstaPay • Book" 
+      :isCurrency="false"
+      icon="ph-globe-hemisphere-west" 
+      color="blue" 
+      subtitle="Active banking rails"
+    />
   </div>
 
   <!-- Transfers Ledger Table Card -->
-  <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Transfer Ref #</th>
-              <th>Date</th>
-              <th>Source Account (Debit Outflow)</th>
-              <th>Destination Account (Credit Inflow)</th>
-              <th>Method</th>
-              <th>General Ledger Entry</th>
-              <th class="text-end">Amount (₱)</th>
-              <th class="text-center">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($transfers ?? [] as $t)
-            <tr>
-              <td>
-                <span class="font-monospace text-primary fw-bold">{{ $t->reference_number }}</span>
-                @if($t->memo)
-                  <small class="d-block text-muted">{{ $t->memo }}</small>
-                @endif
-              </td>
-              <td class="font-monospace fs-xs">{{ $t->transfer_date ? $t->transfer_date->format('M d, Y') : '-' }}</td>
-              <td>
-                <strong class="d-block text-dark">{{ $t->sourceBank?->name ?? $t->source_account }}</strong>
-                <span class="fs-xs text-muted font-monospace">{{ $t->sourceBank?->account_number ?? $t->source_number }}</span>
-              </td>
-              <td>
-                <strong class="d-block text-dark">{{ $t->destinationBank?->name ?? $t->destination_account }}</strong>
-                <span class="fs-xs text-muted font-monospace">{{ $t->destinationBank?->account_number ?? $t->destination_number }}</span>
-              </td>
-              <td><span class="badge bg-secondary-subtle text-secondary">{{ $t->transfer_method }}</span></td>
-              <td>
-                @if($t->journalEntry)
-                  <a href="{{ route('gl.journal-entries') }}?search={{ $t->journalEntry->reference_number }}" 
-                     class="badge bg-primary-subtle text-primary border border-primary-subtle text-decoration-none">
-                    <i class="ph ph-link me-1"></i> {{ $t->journalEntry->reference_number }}
-                  </a>
-                @else
-                  <span class="badge bg-light text-muted border">JE-POSTED</span>
-                @endif
-              </td>
-              <td class="text-end font-monospace fw-bold text-success">₱{{ number_format((float) $t->amount, 2) }}</td>
-              <td class="text-center">
-                <span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> {{ $t->status }}</span>
-              </td>
-            </tr>
-            @empty
-            <tr>
-              <td colspan="8" class="text-center py-4 text-muted">No fund transfers recorded.</td>
-            </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
+  
+  <!-- Sub-Module Category Navigation Bar -->
+  @include('partials.submodule-nav')
+
+  <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 overflow-hidden dark:bg-slate-900 dark:ring-slate-800">
+    <!-- Filter Toolbar -->
+    <div class="border-b border-slate-200 p-4 dark:border-slate-800">
+      <form method="GET" action="{{ route('cash.fund-transfers') }}" class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 flex-wrap">
+        <div class="flex flex-wrap items-center gap-2.5">
+          <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <i class="ph-bold ph-calendar"></i>
+            <span>Dates:</span>
+          </div>
+          <input 
+            type="date" 
+            name="date_from" 
+            value="{{ request('date_from') }}" 
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-purple-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
+          <span class="text-xs text-slate-400">to</span>
+          <input 
+            type="date" 
+            name="date_to" 
+            value="{{ request('date_to') }}" 
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-purple-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
+          <button 
+            type="submit" 
+            class="inline-flex items-center gap-1 rounded-xl bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-purple-700 transition-all cursor-pointer"
+          >
+            <i class="ph-bold ph-funnel"></i>
+            <span>Filter</span>
+          </button>
+          <a 
+            href="{{ route('cash.fund-transfers') }}" 
+            class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white p-1.5 text-xs font-semibold text-slate-600 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            title="Reset"
+          >
+            <i class="ph-bold ph-arrow-counter-clockwise"></i>
+          </a>
+        </div>
+
+        <div class="relative w-full sm:w-72">
+          <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+            <i class="ph ph-magnifying-glass text-sm"></i>
+          </div>
+          <input 
+            type="search" 
+            name="search" 
+            value="{{ request('search') }}" 
+            placeholder="Search reference #, bank, memo..." 
+            class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-purple-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
+        </div>
+      </form>
     </div>
-    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs">Showing {{ $transfers->count() }} of {{ $transfers->total() }} Fund Transfers</span>
-      {{ $transfers->links() }}
+
+    <!-- Table -->
+    <div class="overflow-x-auto custom-scrollbar">
+      <table class="w-full text-left text-xs">
+        <thead class="border-b border-slate-200 bg-slate-50/75 dark:border-slate-800 dark:bg-slate-800/60 sticky top-0">
+          <tr>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Transfer Ref #</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Date</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Source (Debit Outflow)</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Destination (Credit Inflow)</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Method</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">General Ledger</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 text-right">Amount</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 text-center">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+          @forelse($transfers ?? [] as $t)
+          <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+            <td class="py-3.5 px-4">
+              <span class="font-mono font-bold text-purple-600 dark:text-purple-400">{{ $t->reference_number }}</span>
+              @if($t->memo)
+                <span class="block text-[11px] text-slate-400 truncate max-w-xs">{{ $t->memo }}</span>
+              @endif
+            </td>
+            <td class="py-3.5 px-4 font-mono text-slate-500 dark:text-slate-400">
+              {{ $t->transfer_date ? $t->transfer_date->format('M d, Y') : '-' }}
+            </td>
+            <td class="py-3.5 px-4">
+              <div class="font-semibold text-slate-900 dark:text-white">{{ $t->sourceBank?->name ?? $t->source_account }}</div>
+              <span class="font-mono text-xs text-slate-400">{{ $t->sourceBank?->account_number ?? $t->source_number }}</span>
+            </td>
+            <td class="py-3.5 px-4">
+              <div class="font-semibold text-slate-900 dark:text-white">{{ $t->destinationBank?->name ?? $t->destination_account }}</div>
+              <span class="font-mono text-xs text-slate-400">{{ $t->destinationBank?->account_number ?? $t->destination_number }}</span>
+            </td>
+            <td class="py-3.5 px-4">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                {{ $t->transfer_method }}
+              </span>
+            </td>
+            <td class="py-3.5 px-4">
+              @if($t->journalEntry)
+                <a 
+                  href="{{ route('gl.journal-entries') }}?search={{ $t->journalEntry->reference_number }}" 
+                  class="inline-flex items-center gap-1 font-mono text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                >
+                  <i class="ph ph-link"></i>
+                  <span>{{ $t->journalEntry->reference_number }}</span>
+                </a>
+              @else
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] text-slate-400 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-700">
+                  JE-POSTED
+                </span>
+              @endif
+            </td>
+            <td class="py-3.5 px-4 text-right font-mono tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
+              ₱{{ number_format((float) $t->amount, 2) }}
+            </td>
+            <td class="py-3.5 px-4 text-center">
+              <x-status-badge :status="$t->status" color="emerald" />
+            </td>
+          </tr>
+          @empty
+          <tr>
+            <td colspan="8" class="py-12 text-center text-slate-400 dark:text-slate-500">
+              <i class="ph ph-arrows-left-right text-3xl block mb-2 text-slate-300 dark:text-slate-600"></i>
+              No fund transfers recorded.
+            </td>
+          </tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Table Footer -->
+    <div class="flex items-center justify-between border-t border-slate-200 px-4 py-3 dark:border-slate-800">
+      <span class="text-xs text-slate-500 dark:text-slate-400">
+        Showing {{ $transfers->count() }} of {{ $transfers->total() }} Fund Transfers
+      </span>
+      <div>
+        {{ $transfers->links() }}
+      </div>
     </div>
   </div>
 </div>
 
 <!-- Modal: Execute Fund Transfer -->
-<div class="modal fade" id="newTransferModal" tabindex="-1" aria-labelledby="newTransferModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title font-weight-bold" id="newTransferModalLabel"><i class="ph ph-arrows-left-right me-2 text-primary"></i>Execute Inter-Account Fund Transfer</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<x-modal 
+  id="newTransferModal" 
+  title="Execute Inter-Account Fund Transfer" 
+  size="md"
+  formId="newTransferForm" 
+  formAction="{{ route('cash.fund-transfers.store') }}" 
+  formMethod="POST" 
+  submitText="Authorize &amp; Post Transfer" 
+  submitIcon="ph-check"
+>
+  <div class="space-y-3.5">
+    <div>
+      <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+        Source Bank Account (From) <span class="text-rose-500">*</span>
+      </label>
+      <select 
+        name="source_bank_account_id" 
+        id="sourceBankSelect" 
+        class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-purple-500 focus:bg-white focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+        required 
+        onchange="validateDifferentBanks()"
+      >
+        <option value="">-- Select Source Bank Account --</option>
+        @foreach($bankAccounts ?? [] as $ba)
+          <option value="{{ $ba->id }}" data-balance="{{ (float) $ba->balance }}">
+            {{ $ba->bank_name }} - {{ $ba->name }} (₱{{ number_format((float) $ba->balance, 2) }})
+          </option>
+        @endforeach
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+        Destination Bank Account (To) <span class="text-rose-500">*</span>
+      </label>
+      <select 
+        name="destination_bank_account_id" 
+        id="destBankSelect" 
+        class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-purple-500 focus:bg-white focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+        required 
+        onchange="validateDifferentBanks()"
+      >
+        <option value="">-- Select Destination Bank Account --</option>
+        @foreach($bankAccounts ?? [] as $ba)
+          <option value="{{ $ba->id }}">
+            {{ $ba->bank_name }} - {{ $ba->name }} ({{ $ba->account_number }})
+          </option>
+        @endforeach
+      </select>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Transfer Amount (₱) <span class="text-rose-500">*</span>
+        </label>
+        <div class="relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 font-mono font-bold text-slate-400 text-xs">₱</span>
+          <input 
+            type="number" 
+            step="0.01" 
+            min="0.01" 
+            name="amount" 
+            class="w-full rounded-xl border-slate-200 bg-slate-50 py-2 pl-7 pr-3 text-xs font-mono font-bold text-slate-900 shadow-sm focus:border-purple-500 focus:bg-white focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white" 
+            placeholder="0.00" 
+            required
+          >
+        </div>
       </div>
-      <div class="modal-body p-4">
-        <form method="POST" action="{{ route('cash.fund-transfers.store') }}">
-          @csrf
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Source Bank Account (From) <span class="text-danger">*</span></label>
-            <select name="source_bank_account_id" id="sourceBankSelect" class="form-select form-select-sm" required onchange="validateDifferentBanks()">
-              <option value="">-- Select Source Bank Account --</option>
-              @foreach($bankAccounts ?? [] as $ba)
-                <option value="{{ $ba->id }}" data-balance="{{ (float) $ba->balance }}">
-                  {{ $ba->bank_name }} - {{ $ba->name }} (₱{{ number_format((float) $ba->balance, 2) }})
-                </option>
-              @endforeach
-            </select>
-          </div>
 
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Destination Bank Account (To) <span class="text-danger">*</span></label>
-            <select name="destination_bank_account_id" id="destBankSelect" class="form-select form-select-sm" required onchange="validateDifferentBanks()">
-              <option value="">-- Select Destination Bank Account --</option>
-              @foreach($bankAccounts ?? [] as $ba)
-                <option value="{{ $ba->id }}">
-                  {{ $ba->bank_name }} - {{ $ba->name }} ({{ $ba->account_number }})
-                </option>
-              @endforeach
-            </select>
-          </div>
-
-          <div class="row g-2 mb-3">
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Transfer Amount (₱) <span class="text-danger">*</span></label>
-              <input type="number" step="0.01" min="0.01" name="amount" class="form-control form-control-sm text-end font-monospace fw-bold" placeholder="0.00" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Transfer Date <span class="text-danger">*</span></label>
-              <input type="date" name="transfer_date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
-            </div>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Transfer Protocol / Channel</label>
-            <select name="transfer_method" class="form-select form-select-sm">
-              <option value="INSTAPAY_PESONET">PESONet / InstaPay Commercial Routing</option>
-              <option value="INTERNAL_BOOK_TRANSFER">Internal Bank Intragroup Book Transfer</option>
-              <option value="RTGS_DIRECT">RTGS High-Value Treasury Transfer</option>
-              <option value="MANAGER_CHECK_DEPOSIT">Manager's Check Inter-Branch Deposit</option>
-            </select>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Transfer Memo &amp; Justification</label>
-            <input type="text" name="memo" class="form-control form-control-sm" placeholder="e.g. Funding payroll account for 15th cutoff">
-          </div>
-
-          <div class="d-flex justify-content-end gap-2 mt-4">
-            <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" id="btnSubmitTransfer" class="btn btn-sm btn-primary"><i class="ph ph-check me-1"></i> Authorize &amp; Post Transfer</button>
-          </div>
-        </form>
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Transfer Date <span class="text-rose-500">*</span>
+        </label>
+        <input 
+          type="date" 
+          name="transfer_date" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 shadow-sm focus:border-purple-500 focus:bg-white focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          value="{{ date('Y-m-d') }}" 
+          required
+        >
       </div>
     </div>
+
+    <div>
+      <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Transfer Protocol / Channel</label>
+      <select 
+        name="transfer_method" 
+        class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-purple-500 focus:bg-white focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+      >
+        <option value="INSTAPAY_PESONET">PESONet / InstaPay Commercial Routing</option>
+        <option value="INTERNAL_BOOK_TRANSFER">Internal Bank Intragroup Book Transfer</option>
+        <option value="RTGS_DIRECT">RTGS High-Value Treasury Transfer</option>
+        <option value="MANAGER_CHECK_DEPOSIT">Manager's Check Inter-Branch Deposit</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Transfer Memo &amp; Justification</label>
+      <input 
+        type="text" 
+        name="memo" 
+        class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 shadow-sm focus:border-purple-500 focus:bg-white focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+        placeholder="e.g. Funding payroll account for 15th cutoff"
+      >
+    </div>
   </div>
-</div>
+</x-modal>
 
 @push('scripts')
 <script>
 function validateDifferentBanks() {
   const src = document.getElementById('sourceBankSelect')?.value;
   const dst = document.getElementById('destBankSelect')?.value;
-  const btn = document.getElementById('btnSubmitTransfer');
 
   if (src && dst && src === dst) {
     alert('Source and Destination bank accounts must be different!');

@@ -5,231 +5,297 @@
 @section('page', 'balance-sheet')
 
 @section('content')
-<div class="container-fluid p-4">
-  <!-- Page Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="space-y-6">
+  <!-- Executive Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <div>
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-1 fs-xs">
-          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
-          <li class="breadcrumb-item">Financial Reporting</li>
-          <li class="breadcrumb-item active">Balance Sheet</li>
-        </ol>
-      </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Statement of Financial Position (Balance Sheet)</h1>
-      <p class="text-muted fs-xs mb-0">Summary of hospital financial standing asserting the fundamental accounting equality: Total Assets = Total Liabilities + Total Equity.</p>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Statement of Financial Position (Balance Sheet)
+        </h1>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <x-integration-badge 
-          type="internal" 
-          :internalModules="['General Ledger (Journal Entries)', 'Chart of Accounts', 'Fiscal Periods']" 
-          :tables="['journal_entry_lines', 'journal_entries', 'accounts', 'fiscal_periods']"
-          description="Compiles posted double-entry journal lines into standard financial statements." 
-      />
-      <a href="{{ route('reporting.balance-sheet.export', ['as_of_date' => $asOfDate ?? date('Y-m-d')]) }}" class="btn btn-outline-secondary btn-sm">
-        <i class="ph ph-file-csv me-1"></i> Export Statement (CSV)
+
+    <div class="flex items-center gap-2.5">
+      <a 
+        href="{{ route('reporting.balance-sheet.export', ['as_of_date' => $asOfDate ?? date('Y-m-d')]) }}" 
+        class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+      >
+        <i class="ph-bold ph-file-csv text-blue-600"></i>
+        <span>Export Statement (CSV)</span>
       </a>
-      <button class="btn btn-primary btn-sm" type="button" onclick="window.print()">
-        <i class="ph ph-printer me-1"></i> Print Formal Statement
+      <button 
+        type="button" 
+        onclick="window.print()" 
+        class="inline-flex items-center gap-1.5 rounded-xl bg-slate-800 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 ring-1 ring-slate-800/20 transition-all cursor-pointer"
+      >
+        <i class="ph-bold ph-printer"></i>
+        <span>Print Statement</span>
       </button>
     </div>
   </div>
 
   <!-- Metric Summary Cards -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Assets (Debit)</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-trend-up fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-success">₱{{ number_format((float) ($totalAssets ?? 0), 2) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Liabilities (Credit)</span>
-          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-bank fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-danger">₱{{ number_format((float) ($totalLiabilities ?? 0), 2) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Adjusted Net Equity</span>
-          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-scales fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-primary">₱{{ number_format((float) ($totalEquity ?? 0), 2) }}</h4>
-        <span class="fs-xs text-muted">Surplus: ₱{{ number_format((float) ($netSurplus ?? 0), 2) }}</span>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Accounting Invariance</span>
-          <span class="badge {{ ($isBalanced ?? true) ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' }} p-2 rounded-2">
-            <i class="ph {{ ($isBalanced ?? true) ? 'ph-check-circle' : 'ph-warning' }} fs-5"></i>
-          </span>
-        </div>
-        <h4 class="fw-bold mb-0 {{ ($isBalanced ?? true) ? 'text-success' : 'text-danger' }}">
-          {{ ($isBalanced ?? true) ? 'BALANCED' : 'UNBALANCED' }}
-        </h4>
-        <span class="fs-xs text-muted">A = L + E (Variance: ₱{{ number_format((float) ($variance ?? 0), 2) }})</span>
-      </div>
-    </div>
+  <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+    <x-stat-card 
+      title="Total Assets (Debit)" 
+      :value="$totalAssets ?? 0" 
+      icon="ph-trend-up" 
+      color="emerald" 
+      subtitle="Combined current & non-current assets"
+    />
+    <x-stat-card 
+      title="Total Liabilities (Credit)" 
+      :value="$totalLiabilities ?? 0" 
+      icon="ph-bank" 
+      color="rose" 
+      subtitle="Current & non-current obligations"
+    />
+    <x-stat-card 
+      title="Adjusted Net Equity" 
+      :value="$totalEquity ?? 0" 
+      icon="ph-scales" 
+      color="blue" 
+      subtitle="Surplus: ₱{{ number_format((float) ($netSurplus ?? 0), 2) }}"
+    />
+    <x-stat-card 
+      title="Accounting Invariance" 
+      :value="($isBalanced ?? true) ? 'BALANCED' : 'UNBALANCED'" 
+      :isCurrency="false"
+      icon="ph-shield-check" 
+      color="{{ ($isBalanced ?? true) ? 'emerald' : 'rose' }}" 
+      subtitle="A = L + E (Variance: ₱{{ number_format((float) ($variance ?? 0), 2) }})"
+    />
   </div>
 
-  <!-- Filter Toolbar Card -->
-  <div class="card border-0 shadow-sm rounded-3 mb-4">
-    <div class="card-body p-3">
-      <form method="GET" action="{{ route('reporting.balance-sheet') }}" class="row g-2 align-items-center">
-        <div class="col-md-4">
-          <label class="form-label mb-0 fs-xs text-muted fw-semibold"><i class="ph ph-calendar me-1"></i> As-Of Cutoff Date:</label>
-          <input type="date" name="as_of_date" class="form-control form-control-sm" value="{{ $asOfDate ?? date('Y-m-d') }}">
+    <!-- Sub-Module Category Navigation Bar -->
+  @include('partials.submodule-nav')
+
+<!-- Filter Toolbar -->
+  <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+    <form method="GET" action="{{ route('reporting.balance-sheet') }}" class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div class="flex flex-wrap items-center gap-3 flex-1">
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">
+            <i class="ph-bold ph-calendar mr-1"></i> As-Of Cutoff Date:
+          </label>
+          <input 
+            type="date" 
+            name="as_of_date" 
+            class="rounded-xl border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 shadow-sm focus:border-blue-500 focus:bg-white focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+            value="{{ $asOfDate ?? date('Y-m-d') }}"
+          >
         </div>
-        <div class="col-md-4">
-          <label class="form-label mb-0 fs-xs text-muted fw-semibold">Comparative Analysis:</label>
-          <select name="comparison" class="form-select form-select-sm">
+
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">
+            Comparative:
+          </label>
+          <select 
+            name="comparison" 
+            class="rounded-xl border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm focus:border-blue-500 focus:bg-white focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+          >
             <option value="none" {{ ($comparison ?? '') === 'none' ? 'selected' : '' }}>Standard Single Period</option>
             <option value="prior_year" {{ ($comparison ?? '') === 'prior_year' ? 'selected' : '' }}>Compare Prior Year (1 Year Prior)</option>
             <option value="prior_quarter" {{ ($comparison ?? '') === 'prior_quarter' ? 'selected' : '' }}>Compare Prior Quarter (3 Months Prior)</option>
           </select>
         </div>
-        <div class="col-md-4 d-flex gap-2 align-items-end">
-          <button type="submit" class="btn btn-primary btn-sm flex-grow-1"><i class="ph ph-arrows-clockwise me-1"></i> Recompute Balance Sheet</button>
-          <a href="{{ route('reporting.balance-sheet') }}" class="btn btn-light border btn-sm"><i class="ph ph-x me-1"></i> Reset</a>
-        </div>
-      </form>
-    </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button 
+          type="submit" 
+          class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 ring-1 ring-blue-600/20 transition-all cursor-pointer"
+        >
+          <i class="ph-bold ph-arrows-clockwise"></i>
+          <span>Recompute</span>
+        </button>
+        <a 
+          href="{{ route('reporting.balance-sheet') }}" 
+          class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+        >
+          <i class="ph-bold ph-x"></i>
+          <span>Reset</span>
+        </a>
+      </div>
+    </form>
   </div>
 
   <!-- Dual Column Balance Sheet Layout -->
-  <div class="row g-4">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <!-- Assets Column -->
-    <div class="col-md-6">
-      <div class="card border-0 shadow-sm rounded-3 h-100">
-        <div class="card-header bg-success-subtle border-bottom p-3 d-flex justify-content-between align-items-center">
-          <h5 class="card-title h6 mb-0 fw-bold text-success"><i class="ph ph-vault me-2"></i>ASSETS (DEBIT ACCOUNTS)</h5>
-          <span class="fs-xs font-monospace text-success fw-bold">₱{{ number_format((float) ($totalAssets ?? 0), 2) }}</span>
+    <div class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 flex flex-col">
+      <div class="flex items-center justify-between border-b border-slate-200 p-4 dark:border-slate-800 bg-emerald-50/50 dark:bg-emerald-950/20">
+        <div class="flex items-center gap-2">
+          <i class="ph-bold ph-vault text-emerald-600"></i>
+          <h5 class="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+            Assets (Debit Accounts)
+          </h5>
         </div>
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 fs-xs">
-              <thead class="table-light">
-                <tr>
-                  <th>Code</th>
-                  <th>Account Description</th>
-                  <th class="text-end">Balance (₱)</th>
-                </tr>
-              </thead>
-              <tbody>
-                @forelse($assets ?? [] as $a)
-                <tr>
-                  <td><span class="badge bg-light text-dark border font-monospace">{{ $a['code'] }}</span></td>
-                  <td class="fw-semibold text-dark">{{ $a['name'] }}</td>
-                  <td class="text-end font-monospace text-success fw-bold">₱{{ number_format((float) $a['balance'], 2) }}</td>
-                </tr>
-                @empty
-                <tr>
-                  <td colspan="3" class="text-center py-4 text-muted">No asset ledger accounts recorded.</td>
-                </tr>
-                @endforelse
-              </tbody>
-              <tfoot class="table-light fw-bold">
-                <tr>
-                  <td colspan="2" class="text-uppercase text-dark">TOTAL ASSETS</td>
-                  <td class="text-end font-monospace text-success fs-6">₱{{ number_format((float) ($totalAssets ?? 0), 2) }}</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </div>
+        <span class="font-mono tabular-nums text-xs font-bold text-emerald-600 dark:text-emerald-400">
+          ₱{{ number_format((float) ($totalAssets ?? 0), 2) }}
+        </span>
+      </div>
+
+      <div class="overflow-x-auto flex-1">
+        <table class="w-full text-left text-xs">
+          <thead class="border-b border-slate-200 bg-slate-50/75 dark:border-slate-800 dark:bg-slate-800/60">
+            <tr>
+              <th class="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300 w-24">Code</th>
+              <th class="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300">Account Description</th>
+              <th class="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300 text-right">Balance</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+            @forelse($assets ?? [] as $a)
+            <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="py-3 px-4">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-semibold bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                  {{ $a['code'] }}
+                </span>
+              </td>
+              <td class="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">{{ $a['name'] }}</td>
+              <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
+                ₱{{ number_format((float) $a['balance'], 2) }}
+              </td>
+            </tr>
+            @empty
+            <tr>
+              <td colspan="3" class="py-8 text-center text-slate-400">No asset ledger accounts recorded.</td>
+            </tr>
+            @endforelse
+          </tbody>
+          <tfoot class="border-t-2 border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/80 font-semibold">
+            <tr>
+              <td colspan="2" class="py-3.5 px-4 uppercase text-slate-800 dark:text-slate-200 tracking-wider">
+                Total Assets
+              </td>
+              <td class="py-3.5 px-4 text-right font-mono tabular-nums font-bold text-emerald-600 dark:text-emerald-400 text-sm">
+                ₱{{ number_format((float) ($totalAssets ?? 0), 2) }}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
       </div>
     </div>
 
     <!-- Liabilities & Equity Column -->
-    <div class="col-md-6">
+    <div class="space-y-6">
       <!-- Liabilities Card -->
-      <div class="card border-0 shadow-sm rounded-3 mb-4">
-        <div class="card-header bg-danger-subtle border-bottom p-3 d-flex justify-content-between align-items-center">
-          <h5 class="card-title h6 mb-0 fw-bold text-danger"><i class="ph ph-bank me-2"></i>LIABILITIES (CREDIT ACCOUNTS)</h5>
-          <span class="fs-xs font-monospace text-danger fw-bold">₱{{ number_format((float) ($totalLiabilities ?? 0), 2) }}</span>
-        </div>
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 fs-xs">
-              <thead class="table-light">
-                <tr>
-                  <th>Code</th>
-                  <th>Account Description</th>
-                  <th class="text-end">Balance (₱)</th>
-                </tr>
-              </thead>
-              <tbody>
-                @forelse($liabilities ?? [] as $l)
-                <tr>
-                  <td><span class="badge bg-light text-dark border font-monospace">{{ $l['code'] }}</span></td>
-                  <td class="fw-semibold text-dark">{{ $l['name'] }}</td>
-                  <td class="text-end font-monospace text-danger fw-bold">₱{{ number_format((float) $l['balance'], 2) }}</td>
-                </tr>
-                @empty
-                <tr>
-                  <td colspan="3" class="text-center py-3 text-muted">No liability ledger accounts recorded.</td>
-                </tr>
-                @endforelse
-              </tbody>
-              <tfoot class="table-light fw-bold">
-                <tr>
-                  <td colspan="2" class="text-uppercase text-dark">TOTAL LIABILITIES</td>
-                  <td class="text-end font-monospace text-danger">₱{{ number_format((float) ($totalLiabilities ?? 0), 2) }}</td>
-                </tr>
-              </tfoot>
-            </table>
+      <div class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+        <div class="flex items-center justify-between border-b border-slate-200 p-4 dark:border-slate-800 bg-rose-50/50 dark:bg-rose-950/20">
+          <div class="flex items-center gap-2">
+            <i class="ph-bold ph-bank text-rose-600"></i>
+            <h5 class="text-xs font-bold uppercase tracking-wider text-rose-800 dark:text-rose-300">
+              Liabilities (Credit Accounts)
+            </h5>
           </div>
+          <span class="font-mono tabular-nums text-xs font-bold text-rose-600 dark:text-rose-400">
+            ₱{{ number_format((float) ($totalLiabilities ?? 0), 2) }}
+          </span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="border-b border-slate-200 bg-slate-50/75 dark:border-slate-800 dark:bg-slate-800/60">
+              <tr>
+                <th class="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300 w-24">Code</th>
+                <th class="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300">Account Description</th>
+                <th class="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300 text-right">Balance</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+              @forelse($liabilities ?? [] as $l)
+              <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                <td class="py-3 px-4">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-semibold bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                    {{ $l['code'] }}
+                  </span>
+                </td>
+                <td class="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">{{ $l['name'] }}</td>
+                <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-rose-600 dark:text-rose-400">
+                  ₱{{ number_format((float) $l['balance'], 2) }}
+                </td>
+              </tr>
+              @empty
+              <tr>
+                <td colspan="3" class="py-6 text-center text-slate-400">No liability ledger accounts recorded.</td>
+              </tr>
+              @endforelse
+            </tbody>
+            <tfoot class="border-t border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60 font-semibold">
+              <tr>
+                <td colspan="2" class="py-3 px-4 uppercase text-slate-700 dark:text-slate-300">
+                  Total Liabilities
+                </td>
+                <td class="py-3 px-4 text-right font-mono tabular-nums font-bold text-rose-600 dark:text-rose-400">
+                  ₱{{ number_format((float) ($totalLiabilities ?? 0), 2) }}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
       </div>
 
       <!-- Equity Card -->
-      <div class="card border-0 shadow-sm rounded-3">
-        <div class="card-header bg-primary-subtle border-bottom p-3 d-flex justify-content-between align-items-center">
-          <h5 class="card-title h6 mb-0 fw-bold text-primary"><i class="ph ph-scales me-2"></i>EQUITY &amp; ACCUMULATED SURPLUS</h5>
-          <span class="fs-xs font-monospace text-primary fw-bold">₱{{ number_format((float) ($totalEquity ?? 0), 2) }}</span>
-        </div>
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 fs-xs">
-              <thead class="table-light">
-                <tr>
-                  <th>Code</th>
-                  <th>Account Description</th>
-                  <th class="text-end">Balance (₱)</th>
-                </tr>
-              </thead>
-              <tbody>
-                @forelse($equity ?? [] as $e)
-                <tr>
-                  <td><span class="badge bg-light text-dark border font-monospace">{{ $e['code'] }}</span></td>
-                  <td class="fw-semibold text-dark">{{ $e['name'] }}</td>
-                  <td class="text-end font-monospace text-primary fw-bold">₱{{ number_format((float) $e['balance'], 2) }}</td>
-                </tr>
-                @empty
-                @endforelse
-                <tr class="table-warning-subtle">
-                  <td><span class="badge bg-warning text-dark font-monospace">SURPLUS</span></td>
-                  <td class="fw-bold text-dark">Current Year Operating Surplus / (Deficit)</td>
-                  <td class="text-end font-monospace fw-bold text-primary">₱{{ number_format((float) ($netSurplus ?? 0), 2) }}</td>
-                </tr>
-              </tbody>
-              <tfoot class="table-light fw-bold">
-                <tr>
-                  <td colspan="2" class="text-uppercase text-dark">TOTAL LIABILITIES &amp; EQUITY</td>
-                  <td class="text-end font-monospace text-primary fs-6">₱{{ number_format((float) ($totalLiabAndEq ?? 0), 2) }}</td>
-                </tr>
-              </tfoot>
-            </table>
+      <div class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+        <div class="flex items-center justify-between border-b border-slate-200 p-4 dark:border-slate-800 bg-blue-50/50 dark:bg-blue-950/20">
+          <div class="flex items-center gap-2">
+            <i class="ph-bold ph-scales text-blue-600"></i>
+            <h5 class="text-xs font-bold uppercase tracking-wider text-blue-800 dark:text-blue-300">
+              Equity &amp; Accumulated Surplus
+            </h5>
           </div>
+          <span class="font-mono tabular-nums text-xs font-bold text-blue-600 dark:text-blue-400">
+            ₱{{ number_format((float) ($totalEquity ?? 0), 2) }}
+          </span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="border-b border-slate-200 bg-slate-50/75 dark:border-slate-800 dark:bg-slate-800/60">
+              <tr>
+                <th class="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300 w-24">Code</th>
+                <th class="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300">Account Description</th>
+                <th class="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300 text-right">Balance</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+              @forelse($equity ?? [] as $e)
+              <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                <td class="py-3 px-4">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-semibold bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                    {{ $e['code'] }}
+                  </span>
+                </td>
+                <td class="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">{{ $e['name'] }}</td>
+                <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-blue-600 dark:text-blue-400">
+                  ₱{{ number_format((float) $e['balance'], 2) }}
+                </td>
+              </tr>
+              @empty
+              @endforelse
+              <tr class="bg-amber-50/50 dark:bg-amber-950/20">
+                <td class="py-3 px-4">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
+                    SURPLUS
+                  </span>
+                </td>
+                <td class="py-3 px-4 font-semibold text-slate-900 dark:text-white">Current Year Operating Surplus / (Deficit)</td>
+                <td class="py-3 px-4 text-right font-mono tabular-nums font-bold text-blue-600 dark:text-blue-400">
+                  ₱{{ number_format((float) ($netSurplus ?? 0), 2) }}
+                </td>
+              </tr>
+            </tbody>
+            <tfoot class="border-t-2 border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/80 font-semibold">
+              <tr>
+                <td colspan="2" class="py-3.5 px-4 uppercase text-slate-800 dark:text-slate-200 tracking-wider">
+                  Total Liabilities &amp; Equity
+                </td>
+                <td class="py-3.5 px-4 text-right font-mono tabular-nums font-bold text-blue-600 dark:text-blue-400 text-sm">
+                  ₱{{ number_format((float) ($totalLiabAndEq ?? 0), 2) }}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
       </div>
     </div>

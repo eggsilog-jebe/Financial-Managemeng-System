@@ -5,208 +5,244 @@
 @section('page', 'trial-balance')
 
 @section('content')
-<div class="container-fluid p-4">
-  <!-- Page Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="space-y-6">
+  <!-- Executive Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <div>
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-1 fs-xs">
-          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
-          <li class="breadcrumb-item"><a href="{{ route('gl.journal-entries') }}">General Ledger</a></li>
-          <li class="breadcrumb-item active">Trial Balance</li>
-        </ol>
-      </nav>
-      <h1 class="h3 mb-0 font-weight-bold text-dark">General Ledger Trial Balance</h1>
-      <p class="text-muted fs-xs mb-0">Summary of all debit and credit balances across hospital accounts to confirm that Total Debits equal Total Credits before generating financial statements.</p>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          General Ledger Trial Balance
+        </h1>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <x-integration-badge 
-          type="internal" 
-          :systems="['General Ledger']" 
-          description="Real-time double-entry trial balance verifier ensuring total debits equal total credits." 
-      />
-      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="window.print()" title="Print this trial balance report">
-        <i class="ph ph-printer me-1"></i> Print Statement
+
+    <div class="flex items-center gap-2.5 flex-wrap">
+      <button 
+        type="button" 
+        onclick="window.print()" 
+        class="inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700 transition-all"
+      >
+        <i class="ph-bold ph-printer"></i>
+        <span>Print Statement</span>
       </button>
-      <a href="{{ route('gl.trial-balance.export', ['as_of_date' => $asOfDate, 'hide_zero_balances' => $hideZeroBalances ? '1' : '0', 'category' => $selectedCategory]) }}" class="btn btn-primary btn-sm" title="Download trial balance spreadsheet">
-        <i class="ph ph-file-arrow-down me-1"></i> Export Trial Balance (CSV)
+      <a 
+        href="{{ route('gl.trial-balance.export', ['as_of_date' => $asOfDate, 'hide_zero_balances' => $hideZeroBalances ? '1' : '0', 'category' => $selectedCategory]) }}" 
+        class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20 transition-all"
+      >
+        <i class="ph-bold ph-download-simple"></i>
+        <span>Export CSV</span>
       </a>
     </div>
   </div>
 
-  <!-- Real-Time Audit Status Banner -->
-  <div class="p-3 mb-4 rounded-3 border d-flex align-items-center justify-content-between {{ $isBalanced ? 'bg-success-subtle text-success border-success' : 'bg-danger-subtle text-danger border-danger' }}">
-    <div class="d-flex align-items-center gap-3">
-      <i class="ph {{ $isBalanced ? 'ph-shield-check' : 'ph-warning-octagon' }} fs-2"></i>
+  <!-- Real-Time Audit Invariance Banner -->
+  <div class="rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 {{ $isBalanced ? 'bg-emerald-50 text-emerald-900 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-500/30' : 'bg-rose-50 text-rose-900 ring-1 ring-rose-600/20 dark:bg-rose-950/40 dark:text-rose-300 dark:ring-rose-500/30' }}">
+    <div class="flex items-center gap-3.5">
+      <span class="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl {{ $isBalanced ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white' }} shadow-sm">
+        <i class="ph-bold {{ $isBalanced ? 'ph-shield-check' : 'ph-warning-octagon' }} text-2xl"></i>
+      </span>
       <div>
-        <h5 class="fw-bold mb-0 {{ $isBalanced ? 'text-success' : 'text-danger' }}">
-          {{ $isBalanced ? 'TRIAL BALANCE IS BALANCED (Total Debits = Total Credits)' : 'OUT OF BALANCE - VARIANCE DETECTED' }}
-        </h5>
-        <span class="fs-xs">
-          {{ $isBalanced ? 'All accounts are in perfect double-entry balance. Ready for financial statement generation.' : 'A difference between total debits and credits was detected. Please review recent journal entries or unposted drafts.' }}
-        </span>
+        <h3 class="text-sm sm:text-base font-bold">
+          {{ $isBalanced ? 'TRIAL BALANCE IS BALANCED (In Equilibrium: Debits == Credits)' : 'DOUBLE-ENTRY VARIANCE DETECTED' }}
+        </h3>
+        <p class="text-xs opacity-90 mt-0.5">
+          {{ $isBalanced ? 'All general ledger accounts are in strict debit-credit balance. Ready for financial statement generation and period close.' : 'An imbalance between total debits and credits was detected. Review unposted journal entries or reversal drafts.' }}
+        </p>
       </div>
     </div>
-    <div class="text-end font-monospace">
-      <span class="fs-xs text-uppercase d-block">Variance Difference</span>
-      <span class="fs-4 fw-bold {{ $isBalanced ? 'text-success' : 'text-danger' }}">
+    <div class="text-left sm:text-right font-mono">
+      <span class="text-[10px] font-bold uppercase tracking-wider block opacity-75">Variance Imbalance</span>
+      <span class="text-2xl font-bold tabular-nums {{ $isBalanced ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300' }}">
         ₱{{ number_format(abs($discrepancy ?? 0), 2) }}
       </span>
     </div>
   </div>
 
-  <!-- Metric Summary Cards -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Debit Balances</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-arrow-up-right fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-success font-monospace">₱{{ number_format($totalDebitBalance ?? 0, 2) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Credit Balances</span>
-          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-arrow-down-left fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-primary font-monospace">₱{{ number_format($totalCreditBalance ?? 0, 2) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Accounts in Report</span>
-          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-book-open fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ count($rows ?? []) }} Accounts</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Audit Verification</span>
-          <span class="badge bg-secondary-subtle text-secondary p-2 rounded-2"><i class="ph ph-stamp fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ $isBalanced ? 'GAAP Compliant' : 'Unbalanced' }}</h4>
-      </div>
-    </div>
+  <!-- Summary Metric Cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+    <x-stat-card 
+      title="Total Debit Balances" 
+      :value="$totalDebitBalance ?? 0" 
+      icon="ph-arrow-up-right" 
+      color="emerald" 
+      subtitle="Sum of active asset & expense debits"
+    />
+
+    <x-stat-card 
+      title="Total Credit Balances" 
+      :value="$totalCreditBalance ?? 0" 
+      icon="ph-arrow-down-left" 
+      color="blue" 
+      subtitle="Sum of liability, equity & revenue credits"
+    />
+
+    <x-stat-card 
+      title="Accounts in Schedule" 
+      :value="count($rows ?? [])" 
+      :isCurrency="false"
+      icon="ph-book-open" 
+      color="slate" 
+      subtitle="Filtered active GL accounts"
+    />
+
+    <x-stat-card 
+      title="Net Trial Variance" 
+      :value="abs($discrepancy ?? 0)" 
+      icon="ph-shield-check" 
+      :color="$isBalanced ? 'emerald' : 'rose'" 
+      :subtitle="$isBalanced ? 'Zero deviation from GAAP/IFRS' : 'Requires reconciling adjustment'"
+    />
   </div>
 
-  <!-- Data Table Card -->
-  <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-transparent border-bottom p-3">
-      <form method="GET" action="{{ route('gl.trial-balance') }}">
-        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-          <!-- As Of Date -->
-          <div class="d-flex align-items-center gap-2">
-            <label for="tbDateInput" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-calendar me-1"></i> As-Of Date:</label>
-            <input type="date" name="as_of_date" id="tbDateInput" class="form-control form-control-sm bg-light" value="{{ $asOfDate ?? date('Y-m-d') }}" onchange="this.form.submit()">
-          </div>
+  <!-- Filter & Table Card -->
+  
+  <!-- Sub-Module Category Navigation Bar -->
+  @include('partials.submodule-nav')
 
-          <!-- Category -->
-          <div class="d-flex align-items-center gap-2">
-            <label for="tbCategorySelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Category:</label>
-            <select name="category" id="tbCategorySelect" class="form-select form-select-sm bg-light" style="min-width: 170px;" onchange="this.form.submit()">
-              <option value="" {{ empty($selectedCategory) ? 'selected' : '' }}>All Categories</option>
-              <option value="ASSET" {{ ($selectedCategory ?? '') === 'ASSET' ? 'selected' : '' }}>Assets (1000s)</option>
-              <option value="LIABILITY" {{ ($selectedCategory ?? '') === 'LIABILITY' ? 'selected' : '' }}>Liabilities (2000s)</option>
-              <option value="EQUITY" {{ ($selectedCategory ?? '') === 'EQUITY' ? 'selected' : '' }}>Equity (3000s)</option>
-              <option value="REVENUE" {{ ($selectedCategory ?? '') === 'REVENUE' ? 'selected' : '' }}>Revenue (4000s)</option>
-              <option value="EXPENSE" {{ ($selectedCategory ?? '') === 'EXPENSE' ? 'selected' : '' }}>Expenses (5000s)</option>
-            </select>
+  <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 overflow-hidden dark:bg-slate-900 dark:ring-slate-800">
+    <!-- Filter Toolbar -->
+    <div class="border-b border-slate-200 p-4 dark:border-slate-800">
+      <form method="GET" action="{{ route('gl.trial-balance') }}" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-3 flex-wrap">
+          <div class="flex items-center gap-1.5 text-xs text-slate-500">
+            <i class="ph-bold ph-calendar"></i>
+            <span>As of Date:</span>
           </div>
+          <input 
+            type="date" 
+            name="as_of_date" 
+            value="{{ $asOfDate }}" 
+            onchange="this.form.submit()" 
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
 
-          <!-- Hide Zero-Balance Toggle -->
-          <div class="form-check form-switch mb-0">
-            <input class="form-check-input" type="checkbox" name="hide_zero_balances" value="1" id="hideZeroToggle" {{ $hideZeroBalances ? 'checked' : '' }} onchange="this.form.submit()">
-            <label class="form-check-label small fw-semibold" for="hideZeroToggle">Hide Zero-Balance Accounts</label>
+          <div class="flex items-center gap-1.5 text-xs text-slate-500 ml-2">
+            <span>Category:</span>
           </div>
+          <select 
+            name="category" 
+            onchange="this.form.submit()" 
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
+            <option value="" {{ empty($selectedCategory) ? 'selected' : '' }}>All Accounts</option>
+            <option value="ASSET" {{ ($selectedCategory ?? '') === 'ASSET' ? 'selected' : '' }}>Assets (1000s)</option>
+            <option value="LIABILITY" {{ ($selectedCategory ?? '') === 'LIABILITY' ? 'selected' : '' }}>Liabilities (2000s)</option>
+            <option value="EQUITY" {{ ($selectedCategory ?? '') === 'EQUITY' ? 'selected' : '' }}>Equity (3000s)</option>
+            <option value="REVENUE" {{ ($selectedCategory ?? '') === 'REVENUE' ? 'selected' : '' }}>Revenue (4000s)</option>
+            <option value="EXPENSE" {{ ($selectedCategory ?? '') === 'EXPENSE' ? 'selected' : '' }}>Expenses (5000s)</option>
+          </select>
 
-          <!-- Search Bar -->
-          <div class="search-box ms-auto" style="width: 260px;">
-            <i class="ph ph-magnifying-glass"></i>
-            <input type="search" name="q" id="tbSearchInput" class="form-control form-control-sm" placeholder="Search account code, title..." value="{{ $search ?? '' }}">
-          </div>
+          <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-700 dark:text-slate-300 ml-2">
+            <input 
+              type="checkbox" 
+              name="hide_zero_balances" 
+              value="1" 
+              {{ $hideZeroBalances ? 'checked' : '' }} 
+              onchange="this.form.submit()"
+              class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-600 dark:border-slate-700 dark:bg-slate-800"
+            >
+            <span>Hide Zero Balances</span>
+          </label>
         </div>
+
+        <span class="text-xs font-mono font-semibold text-slate-500">
+          Cutoff: {{ \Carbon\Carbon::parse($asOfDate)->format('M d, Y') }}
+        </span>
       </form>
     </div>
 
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table id="trialBalanceTable" class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th style="width: 120px;">Account Code</th>
-              <th>Account Title</th>
-              <th>Category</th>
-              <th>Normal Balance</th>
-              <th class="text-end" style="width: 180px;">Debit Balance (₱)</th>
-              <th class="text-end" style="width: 180px;">Credit Balance (₱)</th>
-              <th class="text-end" style="width: 100px;">Ledger</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($rows as $row)
+    <!-- Responsive Table -->
+    <div class="overflow-x-auto custom-scrollbar">
+      <table class="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+        <thead class="border-b border-slate-200 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+          <tr>
+            <th scope="col" class="py-3.5 pl-5 pr-3 w-28">GL Code</th>
+            <th scope="col" class="px-3 py-3.5">Account Title</th>
+            <th scope="col" class="px-3 py-3.5">Category</th>
+            <th scope="col" class="px-3 py-3.5 text-center">Normal</th>
+            <th scope="col" class="px-3 py-3.5 text-right font-mono">Debit Balance</th>
+            <th scope="col" class="px-3 py-3.5 text-right font-mono">Credit Balance</th>
+            <th scope="col" class="py-3.5 pl-3 pr-5 text-center">Audit Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          @forelse($rows as $row)
             @php
-              $debitVal = (float) $row['debit'];
-              $creditVal = (float) $row['credit'];
-              $catUpper = strtoupper((string) $row['category']);
-              $badgeClass = match($catUpper) {
-                'ASSET'     => 'bg-success-subtle text-success',
-                'LIABILITY' => 'bg-danger-subtle text-danger',
-                'EQUITY'    => 'bg-primary-subtle text-primary',
-                'REVENUE'   => 'bg-info-subtle text-info',
-                'EXPENSE'   => 'bg-warning-subtle text-warning',
-                default     => 'bg-secondary-subtle text-secondary',
+              $category = $row['category'] ?? '';
+              $categoryVariant = match($category) {
+                'ASSET'     => 'emerald',
+                'LIABILITY' => 'rose',
+                'EQUITY'    => 'blue',
+                'REVENUE'   => 'teal',
+                'EXPENSE'   => 'amber',
+                default     => 'slate',
               };
             @endphp
-            <tr>
-              <td><span class="badge bg-secondary-subtle text-secondary font-monospace fs-xs px-2 py-1">{{ $row['code'] }}</span></td>
-              <td><div class="fw-semibold text-dark">{{ $row['name'] }}</div></td>
-              <td><span class="badge {{ $badgeClass }} fs-xs">{{ $catUpper }}</span></td>
-              <td><span class="badge bg-light text-dark border font-monospace fs-xs">{{ $row['normal_balance'] }}</span></td>
-              <td class="text-end font-monospace {{ $debitVal > 0 ? 'fw-bold text-dark' : 'text-muted' }}">
-                {{ $debitVal > 0 ? '₱' . number_format($debitVal, 2) : '-' }}
+            <tr class="transition-colors hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+              <td class="py-3.5 pl-5 pr-3 font-mono font-bold text-slate-900 dark:text-white">
+                <span class="rounded-lg bg-slate-100 px-2 py-0.5 text-xs font-mono text-slate-700 dark:bg-slate-800 dark:text-slate-300 ring-1 ring-slate-200 dark:ring-slate-700">
+                  {{ $row['code'] }}
+                </span>
               </td>
-              <td class="text-end font-monospace {{ $creditVal > 0 ? 'fw-bold text-dark' : 'text-muted' }}">
-                {{ $creditVal > 0 ? '₱' . number_format($creditVal, 2) : '-' }}
+              <td class="px-3 py-3.5">
+                <div class="font-semibold text-slate-900 dark:text-white text-xs sm:text-sm">{{ $row['name'] }}</div>
               </td>
-              <td class="text-end">
-                <a href="{{ route('gl.ledger-books', ['account_id' => $row['id'], 'end_date' => $asOfDate]) }}" class="btn btn-sm btn-icon btn-outline-secondary" title="View Account Ledger Book">
-                  <i class="ph ph-book-open"></i>
-                </a>
+              <td class="px-3 py-3.5">
+                <x-status-badge :status="$category" :variant="$categoryVariant" />
+              </td>
+              <td class="px-3 py-3.5 text-center">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono font-medium {{ ($row['normal_balance'] ?? '') === 'DEBIT' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-blue-50 text-blue-700 ring-1 ring-blue-600/20 dark:bg-blue-950/40 dark:text-blue-300' }}">
+                  {{ $row['normal_balance'] }}
+                </span>
+              </td>
+              @php
+                $debitVal = (float) ($row['debit_balance'] ?? $row['debit'] ?? 0);
+                $creditVal = (float) ($row['credit_balance'] ?? $row['credit'] ?? 0);
+              @endphp
+              <td class="px-3 py-3.5 text-right font-mono font-bold tabular-nums {{ $debitVal > 0 ? 'text-slate-900 dark:text-white' : 'text-slate-400' }}">
+                {{ $debitVal > 0 ? '₱' . number_format($debitVal, 2) : '—' }}
+              </td>
+              <td class="px-3 py-3.5 text-right font-mono font-bold tabular-nums {{ $creditVal > 0 ? 'text-slate-900 dark:text-white' : 'text-slate-400' }}">
+                {{ $creditVal > 0 ? '₱' . number_format($creditVal, 2) : '—' }}
+              </td>
+              <td class="py-3.5 pl-3 pr-5 text-center">
+                <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300">
+                  <i class="ph-bold ph-check"></i> Verified
+                </span>
               </td>
             </tr>
-            @empty
+          @empty
             <tr>
-              <td colspan="7" class="text-center py-5 text-muted">
-                <i class="ph ph-scales fs-2 d-block mb-2 text-secondary"></i>
-                No account balances found matching criteria.
+              <td colspan="7" class="py-12 text-center text-sm text-slate-400">
+                <i class="ph ph-scales text-3xl mb-2 block mx-auto text-slate-300 dark:text-slate-600"></i>
+                No accounts match the selected trial balance filter.
               </td>
             </tr>
-            @endforelse
-          </tbody>
-          <tfoot class="table-light fw-bold">
-            <tr>
-              <td colspan="4" class="text-end">TRIAL BALANCE TOTALS:</td>
-              <td class="text-end font-monospace text-success fs-5">₱{{ number_format($totalDebitBalance ?? 0, 2) }}</td>
-              <td class="text-end font-monospace text-primary fs-5">₱{{ number_format($totalCreditBalance ?? 0, 2) }}</td>
-              <td></td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-    </div>
-
-    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs">Report As of: {{ $asOfDate }} | BIR CAS Compliant</span>
-      <span class="fw-bold fs-xs {{ $isBalanced ? 'text-success' : 'text-danger' }}">
-        <i class="ph {{ $isBalanced ? 'ph-check-circle' : 'ph-x-circle' }} me-1"></i>
-        {{ $isBalanced ? 'Double-Entry Invariance Satisfied (0.00 Variance)' : 'Double-Entry Invariance Broken' }}
-      </span>
+          @endforelse
+        </tbody>
+        <tfoot class="border-t-2 border-slate-300 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/60 font-mono text-xs font-bold">
+          <tr>
+            <td colspan="4" class="py-4 pl-5 pr-3 font-sans text-right text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+              Total Trial Balance Assertion:
+            </td>
+            <td class="px-3 py-4 text-right text-emerald-600 dark:text-emerald-400 text-sm tabular-nums">
+              ₱{{ number_format((float)($totalDebitBalance ?? 0), 2) }}
+            </td>
+            <td class="px-3 py-4 text-right text-emerald-600 dark:text-emerald-400 text-sm tabular-nums">
+              ₱{{ number_format((float)($totalCreditBalance ?? 0), 2) }}
+            </td>
+            <td class="py-4 pl-3 pr-5 text-center">
+              @if($isBalanced)
+                <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                  <i class="ph-bold ph-check-circle"></i> Balanced
+                </span>
+              @else
+                <span class="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-1 text-xs font-bold text-rose-800 dark:bg-rose-950 dark:text-rose-300">
+                  <i class="ph-bold ph-warning"></i> Out of Balance
+                </span>
+              @endif
+            </td>
+          </tr>
+        </tfoot>
+      </table>
     </div>
   </div>
 </div>

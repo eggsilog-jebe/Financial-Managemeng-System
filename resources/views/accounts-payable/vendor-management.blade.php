@@ -5,489 +5,471 @@
 @section('page', 'vendors')
 
 @section('content')
-<div class="container-fluid p-4">
-  <!-- Alerts -->
-  @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-3 mb-4" role="alert">
-      <div class="d-flex align-items-center">
-        <i class="ph ph-check-circle fs-4 me-2"></i>
-        <span>{{ session('success') }}</span>
-      </div>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-  @endif
-
-  @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-3 mb-4" role="alert">
-      <div class="d-flex align-items-center">
-        <i class="ph ph-warning-circle fs-4 me-2"></i>
-        <span>{{ session('error') }}</span>
-      </div>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-  @endif
-
-  <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="space-y-6">
+  <!-- Executive Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <div>
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-1 fs-xs">
-          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
-          <li class="breadcrumb-item">Accounts Payable</li>
-          <li class="breadcrumb-item active">Vendor Directory</li>
-        </ol>
-      </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Vendor Directory &amp; Supplier Master</h1>
-      <p class="text-muted fs-xs mb-0">Register and manage accredited hospital suppliers, pharmaceutical vendors, BIR Tax Identification Numbers (TIN), and credit terms.</p>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Vendor Directory &amp; Supplier Master
+        </h1>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <x-integration-badge 
-          type="external" 
-          :systems="['Supplier/Vendor Management', 'PSM (Procurement)']" 
-          description="Syncs accredited suppliers, TINs, and payment credit terms with Hospital Procurement." 
-      />
-      <button id="btnAddVendor" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#addVendorModal">
-        <i class="ph ph-plus me-1"></i> Register New Vendor
+
+    <div class="flex items-center gap-2.5 flex-wrap">
+      <button 
+        type="button" 
+        @click="$dispatch('open-modal', 'addVendorModal')"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20 transition-all"
+      >
+        <i class="ph-bold ph-plus-circle"></i>
+        <span>Register New Vendor</span>
       </button>
     </div>
   </div>
 
+  <!-- Session Alerts -->
+  @if(session('success'))
+    <div class="rounded-xl bg-emerald-50 p-4 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-check-circle text-lg text-emerald-600"></i>
+        <span>{{ session('success') }}</span>
+      </div>
+    </div>
+  @endif
+
+  @if(session('error'))
+    <div class="rounded-xl bg-rose-50 p-4 text-xs font-semibold text-rose-800 ring-1 ring-rose-600/20 dark:bg-rose-950/40 dark:text-rose-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-warning-circle text-lg text-rose-600"></i>
+        <span>{{ session('error') }}</span>
+      </div>
+    </div>
+  @endif
+
   <!-- Summary Cards Row -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3" title="Active suppliers accredited to deliver supplies and services">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Active Accredited Suppliers</span>
-          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-buildings fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ $totalActiveVendors }} Vendor{{ $totalActiveVendors !== 1 ? 's' : '' }}</h4>
-        <span class="fs-xs text-muted">Ready for Purchase Orders</span>
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+    <x-stat-card 
+      title="Accredited Suppliers" 
+      :value="$totalActiveVendors ?? 0" 
+      :isCurrency="false" 
+      icon="ph-buildings" 
+      color="emerald" 
+      subtitle="Ready for Purchase Orders"
+      badge="Active"
+    />
+
+    <x-stat-card 
+      title="Total AP Liability" 
+      :value="$totalApLiability ?? 0" 
+      icon="ph-receipt" 
+      color="rose" 
+      subtitle="Gross outstanding supplier payables"
+    />
+
+    <div class="relative overflow-hidden rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 transition-all hover:shadow-md dark:bg-slate-900 dark:ring-slate-800">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Standard Credit Terms</span>
+        <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 ring-1 ring-blue-500/20 dark:bg-blue-950/50 dark:text-blue-400">
+          <i class="ph-bold ph-clock text-lg"></i>
+        </span>
       </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3" title="Total unpaid balance owed to all suppliers">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Total Unpaid AP Balance</span>
-          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-trend-down fs-5"></i></span>
+      <div class="mt-4 flex items-baseline justify-between gap-2">
+        <div class="font-mono text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Net 30 Days
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) $totalApLiability, 2) }}</h4>
-        <span class="fs-xs text-muted">Total amount owed to suppliers</span>
+        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+          Standard
+        </span>
       </div>
+      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Average settlement window post delivery</p>
     </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3" title="Standard payment credit window allowed by vendors">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Standard Credit Terms</span>
-          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">Net 30 Days</h4>
-        <span class="fs-xs text-muted">Average due date after delivery</span>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3" title="Expanded Withholding Tax withheld from supplier payouts for BIR">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Total Tax Withheld (EWT)</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-percent fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) $totalEwt, 2) }}</h4>
-        <span class="fs-xs text-muted">Tracked for BIR Form 1601-EQ</span>
-      </div>
-    </div>
+
+    <x-stat-card 
+      title="Total Tax Withheld (EWT)" 
+      :value="$totalEwt ?? 0" 
+      icon="ph-percent" 
+      color="indigo" 
+      subtitle="Tracked for BIR Form 1601-EQ"
+      badge="BIR 2307"
+    />
   </div>
 
   <!-- Vendors Table Card -->
-  <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-transparent border-bottom p-3">
-      <form method="GET" action="{{ route('ap.vendors') }}" class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <div class="d-flex align-items-center gap-2">
-          <label for="statusSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Status:</label>
-          <select id="statusSelect" name="status" class="form-select form-select-sm bg-light" onchange="this.form.submit()">
+  
+  <!-- Sub-Module Category Navigation Bar -->
+  @include('partials.submodule-nav')
+
+  <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 overflow-hidden dark:bg-slate-900 dark:ring-slate-800">
+    <!-- Filter Toolbar -->
+    <div class="border-b border-slate-200 p-4 dark:border-slate-800">
+      <form method="GET" action="{{ route('ap.vendors') }}" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <div class="flex items-center gap-1.5 text-xs text-slate-500">
+            <i class="ph-bold ph-funnel"></i>
+            <span>Status:</span>
+          </div>
+          <select 
+            name="status" 
+            onchange="this.form.submit()" 
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
             <option value="" {{ request('status') === null || request('status') === '' ? 'selected' : '' }}>All Statuses</option>
-            <option value="Active" {{ request('status') === 'Active' ? 'selected' : '' }}>Active</option>
-            <option value="Inactive" {{ request('status') === 'Inactive' ? 'selected' : '' }}>Inactive</option>
+            <option value="Active" {{ request('status') === 'Active' ? 'selected' : '' }}>Active Only</option>
+            <option value="Inactive" {{ request('status') === 'Inactive' ? 'selected' : '' }}>Inactive Only</option>
           </select>
         </div>
 
-        <div class="search-box" style="width: 280px;">
-          <input type="search" name="search" class="form-control form-control-sm" placeholder="Search vendor name, TIN, code..." value="{{ request('search') }}">
+        <div class="relative w-full sm:w-72">
+          <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+            <i class="ph ph-magnifying-glass text-sm"></i>
+          </div>
+          <input 
+            type="search" 
+            name="search" 
+            value="{{ request('search') }}" 
+            placeholder="Search vendor name, TIN, code..." 
+            class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
         </div>
       </form>
     </div>
 
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table id="vendorTable" class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Vendor Code</th>
-              <th>Supplier Legal Name</th>
-              <th>TIN &amp; Tax Type</th>
-              <th>Default EWT (2307)</th>
-              <th>Contact Person</th>
-              <th>Phone / Email</th>
-              <th>Payment Terms</th>
-              <th class="text-end">Balance Due (₱)</th>
-              <th>Status</th>
-              <th class="text-end">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($vendors ?? [] as $v)
+    <!-- Responsive Table -->
+    <div class="overflow-x-auto custom-scrollbar">
+      <table class="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+        <thead class="border-b border-slate-200 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+          <tr>
+            <th scope="col" class="py-3.5 pl-5 pr-3 w-28">Vendor Code</th>
+            <th scope="col" class="px-3 py-3.5">Supplier Legal Name</th>
+            <th scope="col" class="px-3 py-3.5">TIN &amp; Tax Type</th>
+            <th scope="col" class="px-3 py-3.5">Default EWT (2307)</th>
+            <th scope="col" class="px-3 py-3.5">Contact Person</th>
+            <th scope="col" class="px-3 py-3.5">Phone / Email</th>
+            <th scope="col" class="px-3 py-3.5 text-right font-mono">Current Balance</th>
+            <th scope="col" class="px-3 py-3.5 text-center">Status</th>
+            <th scope="col" class="py-3.5 pl-3 pr-5 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          @forelse($vendors as $vendor)
             @php
-              $balance = $v->purchaseBills->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE', 'APPROVED'])->sum(fn ($b) => $b->balance_due);
-              $ewtRateFormatted = number_format((float) ($v->default_ewt_rate ?? 1.00), 2) . '%';
-              $atcDisplay = $v->default_atc_code ? " ({$v->default_atc_code})" : '';
               $vData = [
-                'id'                  => $v->id,
-                'code'                => $v->code,
-                'name'                => $v->name,
-                'tin'                 => $v->tin ?? 'N/A',
-                'tax_type'            => $v->tax_type === 'NON_VAT' ? 'Non-VAT' : 'VAT-Registered (12%)',
-                'ewt_rate'            => $ewtRateFormatted,
-                'atc_code'            => $v->default_atc_code ?? 'WC158',
-                'contact'             => $v->contact_person ?? 'N/A',
-                'phone'               => $v->phone ?? 'N/A',
-                'email'               => $v->email ?? 'N/A',
-                'registered_address'  => $v->registered_address ?? '—',
-                'bank_name'           => $v->bank_name ?? '—',
-                'bank_account_number' => $v->bank_account_number ?? '—',
-                'bank_account_name'   => $v->bank_account_name ?? '—',
-                'terms'               => "Net {$v->payment_terms_days} Days",
-                'balance'             => '₱' . number_format((float) $balance, 2),
-                'status'              => $v->status,
-                'is_active'           => $v->is_active,
+                'id' => $vendor->id,
+                'code' => $vendor->code,
+                'name' => $vendor->name,
+                'tin' => $vendor->tin,
+                'tax_type' => $vendor->tax_type,
+                'default_ewt_rate' => $vendor->default_ewt_rate,
+                'default_atc_code' => $vendor->default_atc_code,
+                'payment_terms' => $vendor->payment_terms,
+                'bank_name' => $vendor->bank_name,
+                'bank_account_number' => $vendor->bank_account_number,
+                'bank_account_name' => $vendor->bank_account_name,
+                'contact_person' => $vendor->contact_person,
+                'phone' => $vendor->phone,
+                'email' => $vendor->email,
+                'registered_address' => $vendor->registered_address,
+                'status' => $vendor->status,
               ];
             @endphp
-            <tr class="vendor-row">
-              <td><span class="font-monospace fw-bold text-primary">{{ $v->code }}</span></td>
-              <td>
-                <div class="fw-bold text-dark">{{ $v->name }}</div>
-                @if($v->bank_name)
-                  <div class="fs-xs text-muted"><i class="ph ph-bank me-1"></i>{{ $v->bank_name }}</div>
-                @endif
-              </td>
-              <td>
-                <div class="font-monospace text-dark fw-semibold">{{ $v->tin ?? 'N/A' }}</div>
-                <span class="badge {{ ($v->tax_type ?? 'VAT_REGISTERED') === 'VAT_REGISTERED' ? 'bg-primary-subtle text-primary border border-primary-subtle' : 'bg-secondary-subtle text-secondary border' }}" style="font-size: 10px;">
-                  {{ ($v->tax_type ?? 'VAT_REGISTERED') === 'VAT_REGISTERED' ? 'VAT 12%' : 'Non-VAT' }}
+            <tr class="transition-colors hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+              <td class="py-3.5 pl-5 pr-3 font-mono font-bold text-slate-900 dark:text-white">
+                <span class="rounded-lg bg-slate-100 px-2 py-0.5 text-xs font-mono text-slate-700 dark:bg-slate-800 dark:text-slate-300 ring-1 ring-slate-200 dark:ring-slate-700">
+                  {{ $vendor->code }}
                 </span>
               </td>
-              <td>
-                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle font-monospace">
-                  <i class="ph ph-receipt me-1"></i>EWT {{ $ewtRateFormatted }}{{ $atcDisplay }}
+              <td class="px-3 py-3.5">
+                <div class="font-semibold text-slate-900 dark:text-white text-xs sm:text-sm">{{ $vendor->name }}</div>
+                <div class="text-[11px] text-slate-500">{{ $vendor->payment_terms ?? 'Net 30' }} credit terms</div>
+              </td>
+              <td class="px-3 py-3.5 text-xs font-mono">
+                <div class="text-slate-800 dark:text-slate-200 font-semibold">{{ $vendor->tin ?: 'NO-TIN' }}</div>
+                <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] {{ $vendor->tax_type === 'VAT_REGISTERED' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20' : 'bg-slate-100 text-slate-600' }}">
+                  {{ $vendor->tax_type === 'VAT_REGISTERED' ? '12% VAT' : 'NON-VAT' }}
                 </span>
               </td>
-              <td>{{ $v->contact_person ?? '—' }}</td>
-              <td>
-                <div class="fs-xs text-dark">{{ $v->phone ?? '—' }}</div>
-                <div class="fs-xs text-muted">{{ $v->email ?? '' }}</div>
-              </td>
-              <td><span class="badge bg-light text-dark border">Net {{ $v->payment_terms_days }} Days</span></td>
-              <td class="text-end font-monospace fw-bold {{ $balance > 0 ? 'text-danger' : 'text-muted' }}">₱{{ number_format((float) $balance, 2) }}</td>
-              <td>
-                <span class="badge {{ $v->status === 'Active' ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary' }}">
-                  <i class="ph ph-check-circle me-1"></i> {{ $v->status }}
+              <td class="px-3 py-3.5 text-xs">
+                <span class="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 font-semibold text-indigo-700 ring-1 ring-indigo-600/20 dark:bg-indigo-950/40 dark:text-indigo-300">
+                  <span>{{ number_format((float) $vendor->default_ewt_rate, 0) }}%</span>
+                  <span class="font-mono text-[10px]">({{ $vendor->default_atc_code ?: 'WC158' }})</span>
                 </span>
               </td>
-              <td class="text-end">
-                <div class="d-flex justify-content-end gap-1">
-                  <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Details" onclick="openVendorDetailsModal({{ json_encode($vData) }})">
-                    <i class="ph ph-eye"></i>
+              <td class="px-3 py-3.5 text-xs text-slate-700 dark:text-slate-300">
+                {{ $vendor->contact_person ?: '—' }}
+              </td>
+              <td class="px-3 py-3.5 text-xs text-slate-500 dark:text-slate-400">
+                <div>{{ $vendor->phone ?: '—' }}</div>
+                <div class="text-[11px] truncate max-w-[150px]">{{ $vendor->email ?: '—' }}</div>
+              </td>
+              <td class="px-3 py-3.5 text-right font-mono font-bold tabular-nums text-slate-900 dark:text-white">
+                ₱{{ number_format((float) ($vendor->current_balance ?? 0), 2) }}
+              </td>
+              <td class="px-3 py-3.5 text-center">
+                <x-status-badge :status="$vendor->status === 'Active' ? 'ACTIVE' : 'INACTIVE'" :variant="$vendor->status === 'Active' ? 'emerald' : 'slate'" />
+              </td>
+              <td class="py-3.5 pl-3 pr-5 text-right">
+                <div class="flex items-center justify-end gap-1.5">
+                  <button 
+                    type="button" 
+                    @click="$dispatch('open-modal', { id: 'editVendorModal', vendor: {{ json_encode($vData) }} })"
+                    class="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white transition-colors"
+                    title="Edit Vendor Master"
+                  >
+                    <i class="ph-bold ph-pencil-simple text-sm"></i>
                   </button>
-                  <form method="POST" action="{{ route('ap.vendors.toggle-status', $v->id) }}" class="d-inline" onsubmit="return confirm('Toggle status for {{ $v->name }}?');">
+                  <form action="{{ route('ap.vendors.toggle-status', $vendor->id) }}" method="POST" class="inline">
                     @csrf
-                    <button type="submit" class="btn btn-sm btn-icon {{ $v->is_active ? 'btn-outline-warning' : 'btn-outline-success' }}" title="{{ $v->is_active ? 'Deactivate Vendor' : 'Activate Vendor' }}">
-                      <i class="ph {{ $v->is_active ? 'ph-pause-circle' : 'ph-play-circle' }}"></i>
+                    <button 
+                      type="submit" 
+                      class="rounded-lg p-1.5 {{ $vendor->status === 'Active' ? 'text-amber-500 hover:bg-amber-50' : 'text-emerald-600 hover:bg-emerald-50' }} transition-colors"
+                      title="{{ $vendor->status === 'Active' ? 'Deactivate Supplier' : 'Activate Supplier' }}"
+                    >
+                      <i class="ph-bold {{ $vendor->status === 'Active' ? 'ph-power' : 'ph-check' }} text-sm"></i>
                     </button>
                   </form>
                 </div>
               </td>
             </tr>
-            @empty
+          @empty
             <tr>
-              <td colspan="10" class="text-center py-4 text-muted">No vendors found in masterfile.</td>
+              <td colspan="9" class="py-12 text-center text-sm text-slate-400">
+                <i class="ph ph-buildings text-3xl mb-2 block mx-auto text-slate-300 dark:text-slate-600"></i>
+                No vendors found matching query criteria.
+              </td>
             </tr>
-            @endforelse
-          </tbody>
-        </table>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    @if(method_exists($vendors, 'links'))
+      <div class="border-t border-slate-200 p-4 dark:border-slate-800">
+        {{ $vendors->links() }}
       </div>
-    </div>
-    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="vendorSummaryText">Total: {{ count($vendors ?? []) }} Registered Supplier{{ count($vendors ?? []) !== 1 ? 's' : '' }}</span>
-    </div>
+    @endif
   </div>
 </div>
 
-<!-- Modal: In-Depth Vendor Details -->
+<!-- Modal: Add New Vendor (Alpine.js) -->
 <x-modal 
-    id="vendorDetailsModal" 
-    title="Supplier Details & BIR Tax Profile"
-    subtitle="Accredited hospital vendor master record, payment credit terms & banking details."
-    icon="ph-buildings"
-    iconVariant="primary"
-    size="lg"
-    :scrollable="true"
-    :centered="true"
-    :showFooter="true"
+  id="addVendorModal" 
+  title="Register New Accredited Supplier" 
+  subtitle="Masterfile profile, BIR Form 2307 EWT classification & bank disbursement details" 
+  icon="ph-buildings" 
+  iconVariant="emerald" 
+  size="2xl" 
+  formAction="{{ route('ap.vendors.store') }}" 
+  formMethod="POST" 
+  submitText="Save Vendor Master"
+  submitIcon="ph-check"
 >
-  <div class="row g-3 mb-4">
-    <div class="col-md-6">
-      <div class="bg-white border rounded-3 p-3">
-        <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Current Open Balance Due</span>
-        <h5 class="fw-bold text-danger mb-0 font-monospace" id="detailVendorBalance">₱0.00</h5>
-      </div>
-    </div>
-    <div class="col-md-6">
-      <div class="bg-white border rounded-3 p-3">
-        <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Payment Terms</span>
-        <h5 class="fw-bold text-primary mb-0" id="detailVendorTerms">Net 30 Days</h5>
-      </div>
-    </div>
-  </div>
-
-  <div class="row g-3 mb-1">
-    <!-- Section 1: Tax & BIR 2307 Profile -->
-    <div class="col-md-6">
-      <div class="bg-white border rounded-3 p-3 h-100">
-        <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase d-flex align-items-center gap-1">
-          <i class="ph ph-receipt fs-5 text-primary"></i> BIR 2307 &amp; Tax Compliance
-        </h6>
-        <div class="d-flex flex-column gap-2 fs-xs">
-          <div class="d-flex justify-content-between border-bottom pb-2">
-            <span class="text-muted">BIR TIN Number</span>
-            <span class="font-monospace fw-bold text-dark" id="detailVendorTin">-</span>
-          </div>
-          <div class="d-flex justify-content-between border-bottom pb-2">
-            <span class="text-muted">VAT Registration</span>
-            <span class="badge bg-primary-subtle text-primary border" id="detailVendorTaxType">VAT-Registered</span>
-          </div>
-          <div class="d-flex justify-content-between border-bottom pb-2">
-            <span class="text-muted">Default EWT Rate</span>
-            <span class="badge bg-warning-subtle text-warning-emphasis font-monospace fw-bold" id="detailVendorEwtRate">1.00%</span>
-          </div>
-          <div class="d-flex justify-content-between border-bottom pb-2">
-            <span class="text-muted">Default ATC Code</span>
-            <span class="font-monospace text-dark fw-semibold" id="detailVendorAtcCode">WC158</span>
-          </div>
-          <div class="d-flex flex-column pt-1">
-            <span class="text-muted mb-1">Registered Business Address</span>
-            <span class="text-dark fw-medium" id="detailVendorAddress">-</span>
-          </div>
+  <div 
+    x-data="{
+      ewtRate: '1.00',
+      atcCode: 'WC158',
+      taxType: 'VAT_REGISTERED',
+      syncAtc() {
+        const map = {
+          '1.00': 'WC158',
+          '2.00': 'WC160',
+          '5.00': 'WC100',
+          '10.00': 'WI010',
+          '0.00': 'EXEMPT'
+        };
+        this.atcCode = map[this.ewtRate] || 'WC158';
+      }
+    }" 
+    class="space-y-4"
+  >
+    <!-- Section 1: Identification -->
+    <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 ring-1 ring-slate-200 dark:ring-slate-700">
+      <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5">
+        <i class="ph-bold ph-identification-card text-emerald-600"></i>
+        <span>Supplier Legal Identity</span>
+      </h4>
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
+        <div class="sm:col-span-4">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Vendor Code</label>
+          <input type="text" name="code" placeholder="Auto-generated (e.g. VND-0024)" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs font-mono text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+        </div>
+        <div class="sm:col-span-8">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Supplier Legal Name <span class="text-rose-500">*</span></label>
+          <input type="text" name="name" placeholder="e.g. Metro Pharma Medical Supplies Inc." required class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+        </div>
+        <div class="sm:col-span-4">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">BIR Tax ID (TIN) <span class="text-rose-500">*</span></label>
+          <input type="text" name="tin" placeholder="000-000-000-000" required class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs font-mono text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+        </div>
+        <div class="sm:col-span-4">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">VAT Classification <span class="text-rose-500">*</span></label>
+          <select name="tax_type" x-model="taxType" required class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+            <option value="VAT_REGISTERED">VAT-Registered (12% VAT Applied)</option>
+            <option value="NON_VAT">Non-VAT / VAT-Exempt Entity</option>
+          </select>
+        </div>
+        <div class="sm:col-span-4">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Credit Payment Terms</label>
+          <input type="text" name="payment_terms" placeholder="e.g. Net 30 Days" value="Net 30" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
         </div>
       </div>
     </div>
 
-    <!-- Section 2: Bank & Settlement Info -->
-    <div class="col-md-6">
-      <div class="bg-white border rounded-3 p-3 h-100">
-        <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase d-flex align-items-center gap-1">
-          <i class="ph ph-bank fs-5 text-success"></i> Settlement &amp; Bank Details
-        </h6>
-        <div class="d-flex flex-column gap-2 fs-xs">
-          <div class="d-flex justify-content-between border-bottom pb-2">
-            <span class="text-muted">Bank Name</span>
-            <span class="fw-bold text-dark" id="detailVendorBankName">-</span>
-          </div>
-          <div class="d-flex justify-content-between border-bottom pb-2">
-            <span class="text-muted">Bank Account Number</span>
-            <span class="font-monospace fw-bold text-primary" id="detailVendorBankAccountNo">-</span>
-          </div>
-          <div class="d-flex justify-content-between border-bottom pb-2">
-            <span class="text-muted">Bank Account Name</span>
-            <span class="text-dark fw-medium" id="detailVendorBankAccountName">-</span>
-          </div>
-          <div class="d-flex justify-content-between border-bottom pb-2">
-            <span class="text-muted">Contact Representative</span>
-            <span class="fw-semibold text-dark" id="detailVendorContact">-</span>
-          </div>
-          <div class="d-flex justify-content-between border-bottom pb-2">
-            <span class="text-muted">Phone Number</span>
-            <span class="font-monospace text-dark" id="detailVendorPhone">-</span>
-          </div>
-          <div class="d-flex justify-content-between pt-1">
-            <span class="text-muted">Email Address</span>
-            <span class="text-primary font-monospace" id="detailVendorEmail">-</span>
-          </div>
+    <!-- Section 2: BIR 2307 Tax Defaults -->
+    <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 ring-1 ring-slate-200 dark:ring-slate-700">
+      <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5">
+        <i class="ph-bold ph-receipt text-indigo-600"></i>
+        <span>BIR Form 2307 Withholding Defaults</span>
+      </h4>
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
+        <div class="sm:col-span-6">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Default EWT Rate <span class="text-rose-500">*</span></label>
+          <select name="default_ewt_rate" x-model="ewtRate" @change="syncAtc()" required class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+            <option value="1.00">1% — Purchase of Goods (WC 158)</option>
+            <option value="2.00">2% — Purchase of Services (WC 160)</option>
+            <option value="5.00">5% — Space &amp; Equipment Rental (WC 100)</option>
+            <option value="10.00">10% — Doctor Retainers / Professional (WI 010)</option>
+            <option value="0.00">0% — Exempt / Non-Taxable</option>
+          </select>
+          <input type="hidden" name="default_atc_code" :value="atcCode">
+        </div>
+        <div class="sm:col-span-6">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Registered Business Address</label>
+          <input type="text" name="registered_address" placeholder="Official BIR registration address" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Bank Disbursement Details -->
+    <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 ring-1 ring-slate-200 dark:ring-slate-700">
+      <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5">
+        <i class="ph-bold ph-bank text-blue-600"></i>
+        <span>Bank Disbursement &amp; EFT Details</span>
+      </h4>
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
+        <div class="sm:col-span-4">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Settlement Bank Name</label>
+          <input type="text" name="bank_name" placeholder="e.g. BDO, BPI, Landbank" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+        </div>
+        <div class="sm:col-span-4">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Account Number</label>
+          <input type="text" name="bank_account_number" placeholder="e.g. 0012-3456-7890" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs font-mono text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+        </div>
+        <div class="sm:col-span-4">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Account Holder Name</label>
+          <input type="text" name="bank_account_name" placeholder="e.g. Metro Pharma Med Inc." class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 4: Contact Representative -->
+    <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 ring-1 ring-slate-200 dark:ring-slate-700">
+      <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5">
+        <i class="ph-bold ph-user text-teal-600"></i>
+        <span>Contact Representative</span>
+      </h4>
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
+        <div class="sm:col-span-4">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Contact Person</label>
+          <input type="text" name="contact_person" placeholder="e.g. Maria Santos" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+        </div>
+        <div class="sm:col-span-4">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Phone Number</label>
+          <input type="text" name="phone" placeholder="e.g. +63 (02) 8842-1090" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+        </div>
+        <div class="sm:col-span-4">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Email Address</label>
+          <input type="email" name="email" placeholder="e.g. billing@supplier.ph" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
         </div>
       </div>
     </div>
   </div>
-
-  <x-slot:footer>
-    <button type="button" class="btn btn-sm btn-light border px-3" data-bs-dismiss="modal">Close</button>
-    <a href="{{ route('ap.purchase-bills') }}" class="btn btn-sm btn-primary px-3">
-      <i class="ph ph-file-plus me-1"></i> New Purchase Bill
-    </a>
-  </x-slot:footer>
 </x-modal>
 
-<!-- Modal: Add New Vendor -->
+<!-- Modal: Edit Vendor Master (Alpine.js) -->
 <x-modal 
-    id="addVendorModal" 
-    title="Register New Supplier Profile"
-    subtitle="Accredit supplier with BIR 2307 withholding tax defaults and bank disbursement details."
-    icon="ph-buildings"
-    iconVariant="primary"
-    size="lg"
-    :scrollable="true"
-    :centered="true"
-    formAction="{{ route('ap.vendors.store') }}"
-    formId="createVendorForm"
-    formMethod="POST"
-    submitText="Register Supplier"
-    submitIcon="ph-check-circle"
+  id="editVendorModal" 
+  title="Edit Vendor Master Record" 
+  subtitle="Update accreditation parameters, withholding tax codes, and contact details" 
+  icon="ph-pencil-simple" 
+  iconVariant="blue" 
+  size="2xl" 
+  formAction="#" 
+  formMethod="POST" 
+  submitText="Update Vendor Record"
+  submitIcon="ph-check"
+  submitVariant="blue"
 >
-  <!-- General Master Data Section -->
-  <div class="row g-3 mb-3">
-    <div class="col-md-4">
-      <label class="form-label small fw-semibold">Vendor Code</label>
-      <input type="text" name="vendor_code" class="form-control form-control-sm font-monospace" placeholder="Auto-generated if blank (e.g. VND-0025)">
-    </div>
-    <div class="col-md-5">
-      <label class="form-label small fw-semibold">Supplier Legal Name <span class="text-danger">*</span></label>
-      <input type="text" name="name" class="form-control form-control-sm" placeholder="e.g. MedTech Pharma Inc." required>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label small fw-semibold">Payment Terms (Days) <span class="text-danger">*</span></label>
-      <input type="number" name="payment_terms_days" class="form-control form-control-sm" value="30" min="0" max="365" required>
-    </div>
-  </div>
+  <div 
+    x-data="{
+      vendor: {},
+      updateAction(v) {
+        this.vendor = v || {};
+        const form = document.querySelector('#editVendorModal form');
+        if (form && this.vendor.id) {
+          form.action = '{{ url('/accounts-payable/vendors') }}/' + this.vendor.id;
+        }
+      }
+    }"
+    @open-modal.window="if ($event.detail.id === 'editVendorModal') { updateAction($event.detail.vendor); }"
+    class="space-y-4"
+  >
+    <input type="hidden" name="_method" value="PUT">
 
-  <!-- Section 1: Tax & BIR Compliance Grid -->
-  <div class="card border border-primary-subtle bg-light-subtle rounded-3 p-3 mb-3">
-    <div class="d-flex align-items-center justify-content-between mb-2 pb-1 border-bottom border-primary-subtle">
-      <span class="fs-xs text-uppercase fw-bold text-primary d-flex align-items-center gap-1">
-        <i class="ph ph-receipt fs-5"></i> Tax &amp; BIR Form 2307 Compliance Defaults
-      </span>
-      <span class="badge bg-primary-subtle text-primary border border-primary-subtle fs-xs">BIR Standard</span>
-    </div>
-
-    <div class="row g-3">
-      <div class="col-md-4">
-        <label class="form-label small fw-semibold">TIN Number <span class="text-danger">*</span></label>
-        <input type="text" name="tin" class="form-control form-control-sm font-monospace" placeholder="e.g. 402-192-881-000" required>
+    <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 ring-1 ring-slate-200 dark:ring-slate-700">
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
+        <div class="sm:col-span-4">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Vendor Code</label>
+          <input type="text" name="code" x-model="vendor.code" readonly class="w-full rounded-xl border-0 bg-slate-100 py-2 px-3 text-xs font-mono font-bold text-slate-500 ring-1 ring-inset ring-slate-200 dark:bg-slate-800 dark:text-slate-400">
+        </div>
+        <div class="sm:col-span-8">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Supplier Name <span class="text-rose-500">*</span></label>
+          <input type="text" name="name" x-model="vendor.name" required class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+        </div>
+        <div class="sm:col-span-4">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">TIN</label>
+          <input type="text" name="tin" x-model="vendor.tin" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs font-mono text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+        </div>
+        <div class="sm:col-span-4">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">VAT Type</label>
+          <select name="tax_type" x-model="vendor.tax_type" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+            <option value="VAT_REGISTERED">VAT-Registered (12%)</option>
+            <option value="NON_VAT">Non-VAT / Exempt</option>
+          </select>
+        </div>
+        <div class="sm:col-span-4">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Default EWT Rate</label>
+          <select name="default_ewt_rate" x-model="vendor.default_ewt_rate" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+            <option value="1.00">1% (WC 158)</option>
+            <option value="2.00">2% (WC 160)</option>
+            <option value="5.00">5% (WC 100)</option>
+            <option value="10.00">10% (WI 010)</option>
+            <option value="0.00">0% Exempt</option>
+          </select>
+        </div>
       </div>
-      <div class="col-md-4">
-        <label class="form-label small fw-semibold">VAT Registration <span class="text-danger">*</span></label>
-        <select name="tax_type" id="tax_type_select" class="form-select form-select-sm" required>
-          <option value="VAT_REGISTERED" selected>VAT-Registered (12% VAT Applied)</option>
-          <option value="NON_VAT">Non-VAT / VAT-Exempt Entity</option>
-        </select>
-      </div>
-      <div class="col-md-4">
-        <label class="form-label small fw-semibold">Default EWT Rate (BIR 2307) <span class="text-danger">*</span></label>
-        <select name="default_ewt_rate" id="default_ewt_select" class="form-select form-select-sm" required>
-          <option value="1.00" data-atc="WC158" selected>1% — Purchase of Goods (WC 158)</option>
-          <option value="2.00" data-atc="WC160">2% — Purchase of Services (WC 160)</option>
-          <option value="5.00" data-atc="WC100">5% — Space Rental (WC 100)</option>
-          <option value="10.00" data-atc="WI010">10% — Professional / Doctor Retainers (WI 010)</option>
-          <option value="0.00" data-atc="EXEMPT">0% — Non-Taxable / Exempt</option>
-        </select>
-        <input type="hidden" name="default_atc_code" id="default_atc_code_input" value="WC158">
-      </div>
-      <div class="col-md-12">
-        <label class="form-label small fw-semibold">Official Registered Business Address</label>
-        <input type="text" name="registered_address" class="form-control form-control-sm" placeholder="e.g. Unit 1205 Medical Plaza, Ortigas Ave, Pasig City (For BIR Form 2307 printing)">
-      </div>
-    </div>
-  </div>
-
-  <!-- Section 2: Settlement & Bank Details -->
-  <div class="card border rounded-3 p-3 mb-3 bg-white">
-    <div class="d-flex align-items-center justify-content-between mb-2 pb-1 border-bottom">
-      <span class="fs-xs text-uppercase fw-bold text-dark d-flex align-items-center gap-1">
-        <i class="ph ph-bank fs-5 text-success"></i> Settlement &amp; Bank Details (Disbursement Clearing)
-      </span>
-      <span class="badge bg-light text-muted border fs-xs">EFT / Check Payout</span>
     </div>
 
-    <div class="row g-3">
-      <div class="col-md-4">
-        <label class="form-label small fw-semibold">Bank Name</label>
-        <input type="text" name="bank_name" list="bankListOptions" class="form-control form-control-sm" placeholder="e.g. BDO Unibank">
-        <datalist id="bankListOptions">
-          <option value="BDO Unibank">
-          <option value="Bank of the Philippine Islands (BPI)">
-          <option value="Metrobank">
-          <option value="LandBank of the Philippines">
-          <option value="UnionBank of the Philippines">
-          <option value="Security Bank">
-          <option value="China Banking Corporation">
-          <option value="Rizal Commercial Banking Corp (RCBC)">
-          <option value="Philippine National Bank (PNB)">
-          <option value="EastWest Bank">
-        </datalist>
+    <!-- Contact & Address -->
+    <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 ring-1 ring-slate-200 dark:ring-slate-700">
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
+        <div class="sm:col-span-4">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Contact Person</label>
+          <input type="text" name="contact_person" x-model="vendor.contact_person" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+        </div>
+        <div class="sm:col-span-4">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Phone</label>
+          <input type="text" name="phone" x-model="vendor.phone" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+        </div>
+        <div class="sm:col-span-4">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Email</label>
+          <input type="email" name="email" x-model="vendor.email" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+        </div>
+        <div class="sm:col-span-12">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Registered Business Address</label>
+          <input type="text" name="registered_address" x-model="vendor.registered_address" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+        </div>
       </div>
-      <div class="col-md-4">
-        <label class="form-label small fw-semibold">Bank Account Number</label>
-        <input type="text" name="bank_account_number" class="form-control form-control-sm font-monospace" placeholder="e.g. 0012-3456-7890">
-      </div>
-      <div class="col-md-4">
-        <label class="form-label small fw-semibold">Bank Account Name</label>
-        <input type="text" name="bank_account_name" class="form-control form-control-sm" placeholder="e.g. MedTech Pharma Inc.">
-      </div>
-    </div>
-  </div>
-
-  <!-- Contact Details -->
-  <div class="row g-3 mb-1">
-    <div class="col-md-4">
-      <label class="form-label small fw-semibold">Contact Representative</label>
-      <input type="text" name="contact_person" class="form-control form-control-sm" placeholder="e.g. Juan dela Cruz">
-    </div>
-    <div class="col-md-4">
-      <label class="form-label small fw-semibold">Phone Number</label>
-      <input type="text" name="phone" class="form-control form-control-sm" placeholder="e.g. +63 (02) 8842-1090">
-    </div>
-    <div class="col-md-4">
-      <label class="form-label small fw-semibold">Email Address</label>
-      <input type="email" name="email" class="form-control form-control-sm" placeholder="e.g. billing@supplier.ph">
     </div>
   </div>
 </x-modal>
 @endsection
-
-@push('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  const ewtSelect = document.getElementById('default_ewt_select');
-  const atcInput = document.getElementById('default_atc_code_input');
-
-  if (ewtSelect && atcInput) {
-    ewtSelect.addEventListener('change', function () {
-      const selectedOption = ewtSelect.options[ewtSelect.selectedIndex];
-      if (selectedOption) {
-        atcInput.value = selectedOption.getAttribute('data-atc') || 'WC158';
-      }
-    });
-  }
-});
-
-function openVendorDetailsModal(vendor) {
-  if (!vendor) return;
-
-  document.getElementById('detailVendorCode').textContent = vendor.code || 'VEND-000';
-  document.getElementById('detailVendorName').textContent = vendor.name || 'Supplier Name';
-  document.getElementById('detailVendorTin').textContent = vendor.tin || '-';
-  document.getElementById('detailVendorTaxType').textContent = vendor.tax_type || 'VAT-Registered';
-  document.getElementById('detailVendorEwtRate').textContent = vendor.ewt_rate || '1.00%';
-  document.getElementById('detailVendorAtcCode').textContent = vendor.atc_code || 'WC158';
-  document.getElementById('detailVendorAddress').textContent = vendor.registered_address || '—';
-  document.getElementById('detailVendorTerms').textContent = vendor.terms || '-';
-  document.getElementById('detailVendorBalance').textContent = vendor.balance || '₱0.00';
-  document.getElementById('detailVendorBankName').textContent = vendor.bank_name || '—';
-  document.getElementById('detailVendorBankAccountNo').textContent = vendor.bank_account_number || '—';
-  document.getElementById('detailVendorBankAccountName').textContent = vendor.bank_account_name || '—';
-  document.getElementById('detailVendorContact').textContent = vendor.contact || '-';
-  document.getElementById('detailVendorPhone').textContent = vendor.phone || '-';
-  document.getElementById('detailVendorEmail').textContent = vendor.email || '-';
-
-  const modalEl = document.getElementById('vendorDetailsModal');
-  if (modalEl && window.bootstrap) {
-    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-    modalInstance.show();
-  }
-}
-</script>
-@endpush

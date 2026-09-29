@@ -5,290 +5,421 @@
 @section('page', 'reallocations')
 
 @section('content')
-<div class="container-fluid p-4">
-  <!-- Page Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="space-y-6">
+  <!-- Executive Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <div>
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-1 fs-xs">
-          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
-          <li class="breadcrumb-item">Budget Management</li>
-          <li class="breadcrumb-item active">Budget Reallocations</li>
-        </ol>
-      </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Budget Reallocations &amp; Fund Transfers</h1>
-      <p class="text-muted fs-xs mb-0">Reallocate surplus funds between department budget lines to cover unexpected clinical or operational expenditures.</p>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Budget Reallocations &amp; Fund Transfers
+        </h1>
     </div>
-    <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Downloading Transfer Log PDF...');"><i class="ph ph-file-text me-1"></i> Transfer Log PDF</button>
-      <button id="btnRequestTransfer" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#requestTransferModal"><i class="ph ph-arrows-left-right me-1"></i> Request Budget Transfer</button>
+
+    <div class="flex items-center gap-2.5">
+      <button 
+        type="button" 
+        onclick="alert('Downloading Transfer Log PDF...');" 
+        class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+      >
+        <i class="ph-bold ph-file-text text-purple-600"></i>
+        <span>Transfer Log PDF</span>
+      </button>
+      <button 
+        type="button" 
+        id="btnRequestTransfer" 
+        @click="$dispatch('open-modal', 'requestTransferModal')"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-purple-700 ring-1 ring-purple-600/20 transition-all cursor-pointer"
+      >
+        <i class="ph-bold ph-arrows-left-right"></i>
+        <span>Request Transfer</span>
+      </button>
     </div>
   </div>
 
+  <!-- Session Alerts -->
   @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show mb-4 d-flex align-items-center" role="alert">
-      <i class="ph ph-check-circle fs-4 me-2"></i>
-      <div>{{ session('success') }}</div>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="rounded-xl bg-emerald-50 p-4 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-check-circle text-lg text-emerald-600"></i>
+        <span>{{ session('success') }}</span>
+      </div>
     </div>
   @endif
 
   @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show mb-4 d-flex align-items-center" role="alert">
-      <i class="ph ph-warning-circle fs-4 me-2"></i>
-      <div>{{ session('error') }}</div>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="rounded-xl bg-rose-50 p-4 text-xs font-semibold text-rose-800 ring-1 ring-rose-600/20 dark:bg-rose-950/40 dark:text-rose-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-warning-circle text-lg text-rose-600"></i>
+        <span>{{ session('error') }}</span>
+      </div>
     </div>
   @endif
 
   <!-- Metric Summary Cards -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Monitored Department Units</span>
-          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-buildings fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ ($budgets ?? collect())->count() }} Departments</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Available Budget Pool</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-success">₱{{ number_format((float) ($budgets ?? collect())->sum('remaining_balance'), 2) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Allocated Cap</span>
-          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-scales fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($budgets ?? collect())->sum('allocated_amount'), 2) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Transfer Reallocation Status</span>
-          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-shield-check fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">Balanced</h4>
-      </div>
-    </div>
+  <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+    <x-stat-card 
+      title="Monitored Departments" 
+      :value="($budgets ?? collect())->count()" 
+      :isCurrency="false"
+      icon="ph-buildings" 
+      color="amber" 
+      subtitle="Active operational cost centers"
+    />
+    <x-stat-card 
+      title="Available Budget Pool" 
+      :value="($budgets ?? collect())->sum('remaining_balance')" 
+      icon="ph-check-circle" 
+      color="emerald" 
+      subtitle="Liquid unencumbered pool"
+    />
+    <x-stat-card 
+      title="Total Allocated Cap" 
+      :value="($budgets ?? collect())->sum('allocated_amount')" 
+      icon="ph-scales" 
+      color="blue" 
+      subtitle="Total authorized budget cap"
+    />
+    <x-stat-card 
+      title="Transfer Status" 
+      value="100% Balanced" 
+      :isCurrency="false"
+      icon="ph-shield-check" 
+      color="purple" 
+      subtitle="Zero debit/credit variances"
+    />
   </div>
 
-  <!-- Data Table Card -->
-  <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-transparent border-bottom p-3">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <div class="d-flex align-items-center gap-2">
-          <label for="sourceDeptSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Source Dept:</label>
-          <select id="sourceDeptSelect" class="form-select form-select-sm bg-light" style="min-width: 200px;">
+  <!-- Reallocations Data Table Card -->
+  
+  <!-- Sub-Module Category Navigation Bar -->
+  @include('partials.submodule-nav')
+
+  <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 overflow-hidden dark:bg-slate-900 dark:ring-slate-800">
+    <!-- Filter Toolbar -->
+    <div class="border-b border-slate-200 p-4 dark:border-slate-800">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 flex-wrap">
+        <div class="flex flex-wrap items-center gap-2.5">
+          <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <i class="ph-bold ph-funnel"></i>
+            <span>Source Dept:</span>
+          </div>
+          <select 
+            id="sourceDeptSelect" 
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-purple-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
             <option value="" selected>All Source Departments</option>
             <option value="radiology">Radiology &amp; Imaging</option>
             <option value="outpatient">Outpatient Clinic</option>
+            <option value="pharmacy">Pharmacy</option>
+            <option value="emergency">Emergency Care</option>
           </select>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-          <label for="transferStatusSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap">Status:</label>
-          <select id="transferStatusSelect" class="form-select form-select-sm bg-light" style="min-width: 180px;">
+
+          <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 ml-2">
+            <span>Status:</span>
+          </div>
+          <select 
+            id="transferStatusSelect" 
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-purple-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
             <option value="" selected>All Transfer Statuses</option>
             <option value="approved">Approved</option>
             <option value="pending">Pending CFO Review</option>
           </select>
         </div>
-        <div class="search-box ms-auto" style="width: 260px;">
-          <i class="ph ph-magnifying-glass"></i>
-          <input type="search" id="reallocSearchInput" class="form-control form-control-sm" placeholder="Search transfer ref, source, target...">
+
+        <div class="relative w-full sm:w-72">
+          <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+            <i class="ph ph-magnifying-glass text-sm"></i>
+          </div>
+          <input 
+            type="search" 
+            id="reallocSearchInput" 
+            placeholder="Search transfer ref, source, target..." 
+            class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-purple-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
         </div>
       </div>
     </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table id="reallocTable" class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Transfer Ref</th>
-              <th>Source Department (From)</th>
-              <th>Destination Department (To)</th>
-              <th class="text-end">Transfer Amount (₱)</th>
-              <th>Operational Reason</th>
-              <th>Status</th>
-              <th class="text-end">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($reallocations ?? [] as $r)
-            @php
-              $rArr = is_array($r) ? $r : [
-                'ref' => $r->reference_number ?? 'REAL-N/A',
-                'from' => $r->source_department ?? 'N/A', 'to' => $r->destination_department ?? 'N/A',
-                'amount' => '₱' . number_format($r->amount ?? 0, 2),
-                'reason' => $r->reason ?? 'N/A', 'status' => $r->status ?? 'Pending',
-                'status_badge' => 'bg-warning-subtle text-warning', 'status_icon' => 'ph-clock',
-              ];
-            @endphp
-            <tr class="realloc-row" style="cursor: pointer;" data-from="{{ strtolower($rArr['from']) }}" data-status="{{ strtolower($rArr['status']) }}" onclick="openReallocationDetailsModal({{ json_encode($rArr) }})">
-              <td><span class="font-monospace text-primary fw-bold">{{ $rArr['ref'] }}</span></td>
-              <td><span class="badge bg-light text-dark border">{{ $rArr['from'] }}</span></td>
-              <td><span class="badge bg-light text-dark border">{{ $rArr['to'] }}</span></td>
-              <td class="text-end text-success fw-bold font-monospace">{{ $rArr['amount'] }}</td>
-              <td class="fs-xs text-muted">{{ $rArr['reason'] }}</td>
-              <td><span class="badge {{ $rArr['status_badge'] }}"><i class="ph {{ $rArr['status_icon'] }} me-1"></i> {{ $rArr['status'] }}</span></td>
-              <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Transfer Details" onclick="openReallocationDetailsModal({{ json_encode($rArr) }})"><i class="ph ph-eye"></i></button>
-              </td>
-            </tr>
-            @empty
-            <tr>
-              <td colspan="7" class="text-center py-4 text-muted">No budget reallocations recorded in database.</td>
-            </tr>
-            @endforelse
-          </tbody>
-        </table>
+
+    <!-- Table -->
+    <div class="overflow-x-auto custom-scrollbar">
+      <table id="reallocTable" class="w-full text-left text-xs">
+        <thead class="border-b border-slate-200 bg-slate-50/75 dark:border-slate-800 dark:bg-slate-800/60 sticky top-0">
+          <tr>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Transfer Ref</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Source (Surplus)</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Destination (Deficit)</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 text-right">Transfer Amount</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Operational Reason</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Status</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+          @forelse($reallocations ?? [] as $r)
+          @php
+            $rArr = is_array($r) ? $r : [
+              'ref' => $r->reference_number ?? 'REAL-N/A',
+              'from' => $r->source_department ?? 'N/A', 
+              'to' => $r->destination_department ?? 'N/A',
+              'amount' => '₱' . number_format((float) ($r->amount ?? 0), 2),
+              'reason' => $r->reason ?? 'N/A', 
+              'status' => $r->status ?? 'Pending',
+              'status_badge' => 'emerald',
+            ];
+            $statusLower = strtolower($rArr['status'] ?? 'pending');
+            $badgeColor = str_contains($statusLower, 'appr') ? 'emerald' : 'amber';
+          @endphp
+          <tr 
+            class="realloc-row hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
+            data-from="{{ strtolower($rArr['from']) }}" 
+            data-status="{{ strtolower($rArr['status']) }}" 
+            onclick="openReallocationDetailsModal({{ json_encode($rArr) }})"
+          >
+            <td class="py-3.5 px-4 font-mono font-semibold text-purple-600 dark:text-purple-400">
+              {{ $rArr['ref'] }}
+            </td>
+            <td class="py-3.5 px-4">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                {{ $rArr['from'] }}
+              </span>
+            </td>
+            <td class="py-3.5 px-4">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                {{ $rArr['to'] }}
+              </span>
+            </td>
+            <td class="py-3.5 px-4 text-right font-mono tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
+              {{ $rArr['amount'] }}
+            </td>
+            <td class="py-3.5 px-4 text-slate-500 dark:text-slate-400 max-w-xs truncate">
+              {{ $rArr['reason'] }}
+            </td>
+            <td class="py-3.5 px-4">
+              <x-status-badge :status="$rArr['status']" :color="$badgeColor" />
+            </td>
+            <td class="py-3.5 px-4 text-right" onclick="event.stopPropagation();">
+              <button 
+                type="button" 
+                title="View Transfer Details" 
+                onclick="openReallocationDetailsModal({{ json_encode($rArr) }})"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-purple-600 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
+              >
+                <i class="ph ph-eye text-sm"></i>
+              </button>
+            </td>
+          </tr>
+          @empty
+          <tr>
+            <td colspan="7" class="py-12 text-center text-slate-400 dark:text-slate-500">
+              <i class="ph ph-arrows-left-right text-3xl block mb-2 text-slate-300 dark:text-slate-600"></i>
+              No budget reallocations recorded in database.
+            </td>
+          </tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Table Footer & Pagination -->
+    @if(isset($rawReallocations) && method_exists($rawReallocations, 'links'))
+      <div class="border-t border-slate-200 p-4 dark:border-slate-800">
+        {{ $rawReallocations->links() }}
       </div>
-    </div>
-    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="reallocSummaryText">Showing {{ count($reallocations ?? []) }} Transfer Requests</span>
-      <nav aria-label="Reallocation Pagination">
-        <ul class="pagination pagination-sm mb-0">
-          <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
-          <li class="page-item active"><a class="page-link" href="#">1</a></li>
-          <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
-        </ul>
-      </nav>
-    </div>
+    @endif
   </div>
 </div>
 
 <!-- Modal: In-Depth Reallocation Details (Executive Design) -->
-<div class="modal fade" id="reallocationDetailsModal" tabindex="-1" aria-labelledby="reallocationDetailsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-      <div class="modal-header bg-white border-bottom p-4 pb-3">
-        <div>
-          <div class="d-flex align-items-center gap-2 mb-1">
-            <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1" id="detailRealRef">REAL-2026-05</span>
-            <span class="badge bg-warning-subtle text-warning" id="detailRealStatus"><i class="ph ph-clock me-1"></i> Pending CFO Review</span>
-          </div>
-          <h4 class="modal-title fw-bold text-dark mb-0">Inter-Departmental Budget Transfer</h4>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<x-modal 
+  id="reallocationDetailsModal" 
+  title="Inter-Departmental Budget Transfer" 
+  size="lg"
+>
+  <div class="space-y-4">
+    <!-- Header badges inside modal -->
+    <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+      <div class="flex items-center gap-2">
+        <span class="font-mono text-xs font-bold text-purple-600 dark:text-purple-400 px-2 py-0.5 rounded bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800" id="detailRealRef">
+          REAL-2026-05
+        </span>
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300" id="detailRealStatus">
+          <i class="ph ph-clock mr-1"></i> Pending CFO Review
+        </span>
       </div>
+      <span class="text-xs text-slate-400">Transfer Review</span>
+    </div>
 
-      <div class="modal-body p-4 bg-light-subtle">
-        <div class="row g-3 mb-4">
-          <div class="col-md-6">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Transfer Amount</span>
-              <h4 class="fw-bold text-success mb-0 font-monospace" id="detailRealAmount">₱150,000.00</h4>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Source &amp; Target Route</span>
-              <h5 class="fw-bold text-dark mb-0 font-monospace" id="detailRealRoute">Radiology ➔ Facilities</h5>
-            </div>
-          </div>
+    <!-- Key Metrics Highlight -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-4 text-center dark:border-slate-800 dark:bg-slate-800/40">
+        <span class="block text-xs font-semibold uppercase text-slate-400">Transfer Amount</span>
+        <h4 class="mt-1 text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400" id="detailRealAmount">₱150,000.00</h4>
+      </div>
+      <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-4 text-center dark:border-slate-800 dark:bg-slate-800/40">
+        <span class="block text-xs font-semibold uppercase text-slate-400">Transfer Route</span>
+        <h5 class="mt-1 text-base font-bold font-mono text-slate-800 dark:text-slate-200" id="detailRealRoute">Radiology ➔ Facilities</h5>
+      </div>
+    </div>
+
+    <!-- Justification & Dept Breakdown -->
+    <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <h6 class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300 flex items-center gap-1.5 mb-3">
+        <i class="ph-bold ph-arrows-left-right text-purple-600"></i>
+        Transfer Justification &amp; Departments
+      </h6>
+      <div class="space-y-2.5 text-xs">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2 dark:border-slate-800">
+          <span class="text-slate-500 dark:text-slate-400">Source Department (Surplus)</span>
+          <span class="font-medium text-slate-800 dark:text-slate-200" id="detailRealFrom">Radiology &amp; Imaging</span>
         </div>
-
-        <div class="bg-white border rounded-3 p-3 mb-4">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-arrows-left-right me-1 text-primary"></i> Transfer Justification &amp; Departments</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Source Department (Surplus)</span>
-              <span class="badge bg-light text-dark border" id="detailRealFrom">Radiology &amp; Imaging</span>
-            </div>
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Destination Department (Deficit)</span>
-              <span class="badge bg-light text-dark border" id="detailRealTo">Facilities &amp; Utilities</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">Operational Reason</span>
-              <span class="fw-semibold text-dark" id="detailRealReason">Coverage for power generator fuel rate hike</span>
-            </div>
-          </div>
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2 dark:border-slate-800">
+          <span class="text-slate-500 dark:text-slate-400">Destination Department (Deficit)</span>
+          <span class="font-medium text-slate-800 dark:text-slate-200" id="detailRealTo">Facilities &amp; Utilities</span>
         </div>
-
-        <!-- Audit Trail & Segregation of Duties -->
-        <div class="bg-white border rounded-3 p-3">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-success"></i> Audit Trail &amp; CFO Approval Verification</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Dual Sign-off Authorization:</span>
-              <span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> Department Heads Approved</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">System Audit Stamp:</span>
-              <span class="font-monospace text-muted">LOG-REAL-2026-05 | {{ date('Y-m-d H:i:s') }} PST</span>
-            </div>
-          </div>
+        <div class="flex items-center justify-between pt-1">
+          <span class="text-slate-500 dark:text-slate-400">Operational Reason</span>
+          <span class="font-semibold text-slate-800 dark:text-slate-200" id="detailRealReason">Coverage for power generator fuel rate hike</span>
         </div>
       </div>
+    </div>
 
-      <div class="modal-footer bg-white border-top p-3">
-        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-sm btn-success" onclick="alert('Transfer Approved by CFO!');"><i class="ph ph-check me-1"></i> Approve Transfer</button>
+    <!-- Audit Trail & Segregation of Duties -->
+    <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <h6 class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300 flex items-center gap-1.5 mb-3">
+        <i class="ph-bold ph-shield-check text-emerald-600"></i>
+        Audit Trail &amp; CFO Approval Verification
+      </h6>
+      <div class="space-y-2 text-xs">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2 dark:border-slate-800">
+          <span class="text-slate-500 dark:text-slate-400">Dual Sign-off Authorization:</span>
+          <span class="inline-flex items-center text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+            <i class="ph-bold ph-check mr-1"></i> Department Heads Approved
+          </span>
+        </div>
+        <div class="flex items-center justify-between pt-1">
+          <span class="text-slate-500 dark:text-slate-400">System Audit Stamp:</span>
+          <span class="font-mono text-slate-400">LOG-REAL-2026-05 | {{ date('Y-m-d H:i:s') }} PST</span>
+        </div>
       </div>
     </div>
   </div>
-</div>
+
+  <x-slot:footer>
+    <button 
+      type="button" 
+      @click="show = false"
+      class="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
+    >
+      Close
+    </button>
+    <button 
+      type="button" 
+      onclick="alert('Transfer Approved by CFO!');" 
+      class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-all cursor-pointer"
+    >
+      <i class="ph-bold ph-check"></i>
+      <span>Approve Transfer</span>
+    </button>
+  </x-slot:footer>
+</x-modal>
 
 <!-- Modal: Request Inter-Departmental Transfer -->
-<div class="modal fade" id="requestTransferModal" tabindex="-1" aria-labelledby="requestTransferModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title font-weight-bold" id="requestTransferModalLabel"><i class="ph ph-arrows-left-right me-2 text-primary"></i>Request Inter-Departmental Budget Transfer</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<x-modal 
+  id="requestTransferModal" 
+  title="Request Inter-Departmental Budget Transfer" 
+  size="lg"
+  formId="requestTransferForm" 
+  formAction="{{ route('budget.reallocate') }}" 
+  formMethod="POST" 
+  submitText="Submit Transfer Request" 
+  submitIcon="ph-paper-plane-tilt"
+>
+  <input type="hidden" name="transfer_date" value="{{ date('Y-m-d') }}">
+  <div class="space-y-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Source Department (Surplus) <span class="text-rose-500">*</span>
+        </label>
+        <select 
+          name="source_budget_allocation_id" 
+          id="modalRealFrom" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-purple-500 focus:bg-white focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          required
+        >
+          @foreach($budgets ?? [] as $b)
+            <option value="{{ $b->id }}">{{ $b->department }} (Avail: ₱{{ number_format((float) $b->available_unencumbered_balance, 2) }})</option>
+          @endforeach
+        </select>
       </div>
-      <div class="modal-body p-4">
-        <form method="POST" action="{{ route('budget.reallocate') }}" id="requestTransferForm">
-          @csrf
-          <input type="hidden" name="transfer_date" value="{{ date('Y-m-d') }}">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Source Department (Surplus) <span class="text-danger">*</span></label>
-              <select name="source_budget_allocation_id" id="modalRealFrom" class="form-select form-select-sm" required>
-                @foreach($budgets ?? [] as $b)
-                  <option value="{{ $b->id }}">{{ $b->department }} (Avail: ₱{{ number_format((float) $b->available_unencumbered_balance, 2) }})</option>
-                @endforeach
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Destination Department (Deficit) <span class="text-danger">*</span></label>
-              <select name="destination_budget_allocation_id" id="modalRealTo" class="form-select form-select-sm" required>
-                @foreach($budgets ?? [] as $b)
-                  <option value="{{ $b->id }}">{{ $b->department }}</option>
-                @endforeach
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Transfer Amount (₱) <span class="text-danger">*</span></label>
-              <input type="number" name="amount" id="modalRealAmount" step="0.01" min="0.01" class="form-control form-control-sm text-end font-monospace" placeholder="0.00" value="100000.00" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Effective Transfer Date</label>
-              <input type="date" name="transfer_date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
-            </div>
-            <div class="col-12">
-              <label class="form-label small fw-semibold">Operational Justification <span class="text-danger">*</span></label>
-              <input type="text" name="reason" id="modalRealReason" class="form-control form-control-sm" placeholder="e.g. Emergency equipment repair cost overrun" required>
-            </div>
-          </div>
-          <div class="d-flex justify-content-end gap-2 mt-4">
-            <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-paper-plane-tilt me-1"></i> Submit Transfer Request</button>
-          </div>
-        </form>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Destination Department (Deficit) <span class="text-rose-500">*</span>
+        </label>
+        <select 
+          name="destination_budget_allocation_id" 
+          id="modalRealTo" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-purple-500 focus:bg-white focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          required
+        >
+          @foreach($budgets ?? [] as $b)
+            <option value="{{ $b->id }}">{{ $b->department }}</option>
+          @endforeach
+        </select>
       </div>
     </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Transfer Amount (₱) <span class="text-rose-500">*</span>
+        </label>
+        <div class="relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 font-mono font-bold text-slate-400 text-xs">₱</span>
+          <input 
+            type="number" 
+            name="amount" 
+            id="modalRealAmount" 
+            step="0.01" 
+            min="0.01" 
+            class="w-full rounded-xl border-slate-200 bg-slate-50 py-2 pl-7 pr-3 text-xs font-mono font-bold text-slate-900 shadow-sm focus:border-purple-500 focus:bg-white focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white" 
+            placeholder="0.00" 
+            value="100000.00" 
+            required
+          >
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Effective Transfer Date <span class="text-rose-500">*</span>
+        </label>
+        <input 
+          type="date" 
+          name="transfer_date" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 shadow-sm focus:border-purple-500 focus:bg-white focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          value="{{ date('Y-m-d') }}" 
+          required
+        >
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+        Operational Justification <span class="text-rose-500">*</span>
+      </label>
+      <input 
+        type="text" 
+        name="reason" 
+        id="modalRealReason" 
+        class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 shadow-sm focus:border-purple-500 focus:bg-white focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+        placeholder="e.g. Emergency equipment repair cost overrun" 
+        required
+      >
+    </div>
   </div>
-</div>
+</x-modal>
 @endsection
 
 @push('scripts')
@@ -296,24 +427,30 @@
 function openReallocationDetailsModal(r) {
   if (!r) return;
 
-  document.getElementById('detailRealRef').textContent = r.ref || 'REAL-000';
-  document.getElementById('detailRealFrom').textContent = r.from || 'Source';
-  document.getElementById('detailRealTo').textContent = r.to || 'Target';
-  document.getElementById('detailRealAmount').textContent = r.amount || '₱0.00';
-  document.getElementById('detailRealRoute').textContent = (r.from || 'Source') + ' ➔ ' + (r.to || 'Target');
-  document.getElementById('detailRealReason').textContent = r.reason || '-';
+  const elRef = document.getElementById('detailRealRef');
+  if (elRef) elRef.textContent = r.ref || 'REAL-000';
+
+  const elFrom = document.getElementById('detailRealFrom');
+  if (elFrom) elFrom.textContent = r.from || 'Source';
+
+  const elTo = document.getElementById('detailRealTo');
+  if (elTo) elTo.textContent = r.to || 'Target';
+
+  const elAmount = document.getElementById('detailRealAmount');
+  if (elAmount) elAmount.textContent = r.amount || '₱0.00';
+
+  const elRoute = document.getElementById('detailRealRoute');
+  if (elRoute) elRoute.textContent = (r.from || 'Source') + ' ➔ ' + (r.to || 'Target');
+
+  const elReason = document.getElementById('detailRealReason');
+  if (elReason) elReason.textContent = r.reason || '-';
 
   const statusEl = document.getElementById('detailRealStatus');
   if (statusEl) {
     statusEl.textContent = r.status;
-    statusEl.className = 'badge ' + (r.status_badge || 'bg-warning-subtle text-warning');
   }
 
-  const modalEl = document.getElementById('reallocationDetailsModal');
-  if (modalEl && window.bootstrap) {
-    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-    modalInstance.show();
-  }
+  window.dispatchEvent(new CustomEvent('open-modal', { detail: 'reallocationDetailsModal' }));
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -321,17 +458,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const sourceDeptSelect = document.getElementById('sourceDeptSelect');
   const transferStatusSelect = document.getElementById('transferStatusSelect');
   const summaryText = document.getElementById('reallocSummaryText');
-  const btnRequestTransfer = document.getElementById('btnRequestTransfer');
-
-  if (btnRequestTransfer) {
-    btnRequestTransfer.addEventListener('click', function() {
-      const modalEl = document.getElementById('requestTransferModal');
-      if (modalEl && window.bootstrap) {
-        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-        modalInstance.show();
-      }
-    });
-  }
 
   function filterReallocations() {
     const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
@@ -367,7 +493,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!emptyRow && tbody) {
         emptyRow = document.createElement('tr');
         emptyRow.id = 'noReallocRow';
-        emptyRow.innerHTML = `<td colspan="7" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No transfer requests found matching the current filter.</td>`;
+        emptyRow.innerHTML = `<td colspan="7" class="py-12 text-center text-slate-400 dark:text-slate-500"><i class="ph ph-magnifying-glass text-3xl block mb-2"></i>No transfer requests found matching current filter.</td>`;
         tbody.appendChild(emptyRow);
       }
       if (emptyRow) emptyRow.style.display = '';
@@ -382,71 +508,6 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   if (sourceDeptSelect) sourceDeptSelect.addEventListener('change', filterReallocations);
   if (transferStatusSelect) transferStatusSelect.addEventListener('change', filterReallocations);
-
-  const requestTransferForm = document.getElementById('requestTransferForm');
-  if (requestTransferForm) {
-    requestTransferForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-
-      const fromVal = document.getElementById('modalRealFrom').value;
-      const toVal = document.getElementById('modalRealTo').value;
-      const reasonVal = document.getElementById('modalRealReason').value;
-      const rawAmount = parseFloat(document.getElementById('modalRealAmount').value || 0);
-      const formattedAmount = '₱' + rawAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const nextRef = 'REAL-2026-' + Math.floor(6 + Math.random() * 20);
-
-      const reallocObj = {
-        ref: nextRef,
-        from: fromVal,
-        to: toVal,
-        amount: formattedAmount,
-        reason: reasonVal,
-        status: 'Pending CFO Review',
-        status_badge: 'bg-warning-subtle text-warning',
-        status_icon: 'ph-clock'
-      };
-
-      const tbody = document.querySelector('#reallocTable tbody');
-      if (tbody) {
-        const newRow = document.createElement('tr');
-        newRow.className = 'realloc-row';
-        newRow.style.cursor = 'pointer';
-        newRow.setAttribute('data-from', fromVal.toLowerCase());
-        newRow.setAttribute('data-status', 'pending cfo review');
-
-        newRow.onclick = function() { openReallocationDetailsModal(reallocObj); };
-
-        newRow.innerHTML = `
-          <td><span class="font-monospace text-primary fw-bold">${nextRef}</span></td>
-          <td><span class="badge bg-light text-dark border">${fromVal}</span></td>
-          <td><span class="badge bg-light text-dark border">${toVal}</span></td>
-          <td class="text-end text-success fw-bold font-monospace">${formattedAmount}</td>
-          <td class="fs-xs text-muted">${reasonVal}</td>
-          <td><span class="badge bg-warning-subtle text-warning"><i class="ph ph-clock me-1"></i> Pending CFO Review</span></td>
-          <td class="text-end" onclick="event.stopPropagation();">
-            <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Transfer Details"><i class="ph ph-eye"></i></button>
-          </td>
-        `;
-
-        const eyeBtn = newRow.querySelector('button[title="View Transfer Details"]');
-        if (eyeBtn) {
-          eyeBtn.onclick = function(ex) {
-            ex.stopPropagation();
-            openReallocationDetailsModal(reallocObj);
-          };
-        }
-
-        tbody.insertBefore(newRow, tbody.firstChild);
-      }
-
-      const modalEl = document.getElementById('requestTransferModal');
-      const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-      if (modalInstance) modalInstance.hide();
-
-      requestTransferForm.reset();
-      filterReallocations();
-    });
-  }
 
   filterReallocations();
 });

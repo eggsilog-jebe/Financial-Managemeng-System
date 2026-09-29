@@ -1,9 +1,159 @@
 @import 'tailwindcss';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+@source '../views/**/*.blade.php';
+@source '../js/**/*.js';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/* Local Phosphor Icons bundle */
+@import '@phosphor-icons/web/regular';
+@import '@phosphor-icons/web/bold';
+@import '@phosphor-icons/web/fill';
+@import '@phosphor-icons/web/duotone';
+
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+    /* Hospital & Healthcare Emerald / Slate Fintech Palette */
+    --color-hospital-primary: #00a86b;
+    --color-hospital-primary-hover: #008f5a;
+    --color-hospital-primary-light: #e6f7f0;
+
+    --color-hospital-navy: #0f172a;
+    --color-hospital-slate: #1e293b;
+    --color-hospital-surface: #ffffff;
+    --color-hospital-border: #e2e8f0;
+    --color-hospital-subtle: #f8fafc;
+
+    /* Statutory & Healthcare Domain Tokens */
+    --color-statutory-settled: #10b981;
+    --color-statutory-pending: #f59e0b;
+    --color-statutory-overdue: #f43f5e;
+    --color-statutory-philhealth: #3b82f6;
+    --color-statutory-senior-pwd: #a855f7;
+    --color-statutory-malasakit: #14b8a6;
+    --color-statutory-hmo: #0ea5e9;
+    --color-statutory-tax: #6366f1;
 }
+
+[x-cloak] {
+    display: none !important;
+}
+
+/* Custom scrollbars for high-density financial tables */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+}
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #334155;
+}
+
+/* Universal Browser Autofill Fix (Eliminates gray/blue background on Chrome/Edge/Safari) */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+    -webkit-text-fill-color: #0f172a !important;
+    box-shadow: 0 0 0 1000px #ffffff inset !important;
+    caret-color: #0f172a !important;
+    color: #0f172a !important;
+    transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s !important;
+}
+
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover, 
+.dark input:-webkit-autofill:focus, 
+.dark input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #0f172a inset !important;
+    -webkit-text-fill-color: #f8fafc !important;
+    box-shadow: 0 0 0 1000px #0f172a inset !important;
+    caret-color: #f8fafc !important;
+    color: #f8fafc !important;
+    transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s !important;
+}
+
+input:-webkit-autofill:focus {
+    border-color: #059669 !important;
+    box-shadow: 0 0 0 1000px #ffffff inset, 0 0 0 2px rgba(5, 150, 105, 0.2) !important;
+}
+
+.dark input:-webkit-autofill:focus {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 1000px #0f172a inset, 0 0 0 2px rgba(16, 185, 129, 0.3) !important;
+}
+
+/* ==========================================================================
+   Global Interactive Button System: Soft Subtle Glow & Surface Pop
+   Applies smooth elevation, subtle glow, micro-scale pop, and tactile press
+   ========================================================================== */
+@layer components {
+    /* Target all standard buttons, icon buttons, action buttons & trigger links */
+    button:not([disabled]):not([role="tab"]):not([aria-hidden="true"]),
+    a.btn,
+    .btn,
+    button[type="submit"]:not([disabled]),
+    button[type="button"]:not([disabled]),
+    a[class*="rounded"]:has(i[class*="ph"]):not([class*="pointer-events-none"]),
+    button[class*="rounded"]:not([disabled]) {
+        transition-property: all;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 200ms;
+        will-change: transform, box-shadow;
+    }
+
+    /* Subtle Surface Pop & Glow on Hover */
+    button:not([disabled]):not([role="tab"]):not([aria-hidden="true"]):hover,
+    a.btn:hover,
+    .btn:hover,
+    button[type="submit"]:not([disabled]):hover,
+    button[type="button"]:not([disabled]):hover,
+    a[class*="rounded"]:has(i[class*="ph"]):not([class*="pointer-events-none"]):hover,
+    button[class*="rounded"]:not([disabled]):hover {
+        transform: translateY(-1px) scale(1.04);
+        box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Specific Theme/Color Glows */
+    button[class*="bg-emerald"]:not([disabled]):hover,
+    .btn-emerald:hover {
+        box-shadow: 0 4px 14px -1px rgba(16, 185, 129, 0.35), 0 2px 6px -1px rgba(16, 185, 129, 0.2) !important;
+    }
+
+    button[class*="text-amber"]:not([disabled]):hover,
+    button[class*="bg-amber"]:not([disabled]):hover {
+        box-shadow: 0 4px 14px -1px rgba(245, 158, 11, 0.3), 0 2px 6px -1px rgba(245, 158, 11, 0.15) !important;
+    }
+
+    button[class*="text-rose"]:not([disabled]):hover,
+    button[class*="bg-rose"]:not([disabled]):hover {
+        box-shadow: 0 4px 14px -1px rgba(244, 63, 94, 0.3), 0 2px 6px -1px rgba(244, 63, 94, 0.15) !important;
+    }
+
+    button[class*="text-blue"]:not([disabled]):hover,
+    button[class*="bg-blue"]:not([disabled]):hover {
+        box-shadow: 0 4px 14px -1px rgba(59, 130, 246, 0.3), 0 2px 6px -1px rgba(59, 130, 246, 0.15) !important;
+    }
+
+    /* Tactile Press State */
+    button:not([disabled]):active,
+    a.btn:active,
+    .btn:active,
+    button[type="submit"]:not([disabled]):active,
+    button[type="button"]:not([disabled]):active {
+        transform: translateY(0) scale(0.97) !important;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
+    }
+}
+

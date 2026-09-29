@@ -1,307 +1,368 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="csrf-token" content="{{ csrf_token() }}">
-  <title>Set Up Google Authenticator &mdash; HIMS</title>
-  <meta name="description" content="Set up TOTP Two-Factor Authentication with Google Authenticator for your Hospital Financial Management System account.">
+  <title>Set Up Google Authenticator &bull; Two-Factor Authentication &bull; HIMS &bull; FMS</title>
+  <meta name="description" content="Scan the QR code with your authenticator app and enter the 6-digit code to activate 2FA.">
   <link rel="icon" href="{{ asset('favicon.ico') }}">
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
-  <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
-  <link rel="stylesheet" href="{{ asset('assets/css/components/typography-accessibility.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Immediate Theme Boot -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('fms_theme');
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.style.colorScheme = 'dark';
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.style.colorScheme = 'light';
+      }
+    })();
+  </script>
+
+  <!-- Tailwind CSS v4 & Alpine.js Asset Bundle -->
+  @vite(['resources/css/app.css', 'resources/js/app.js'])
+
   <style>
-    /* -- TOTP Setup Page (FMS Unified Theme) ------------------------- */
-    .login-panel { padding: 20px 24px !important; }
-    .login-card {
-      padding: 24px 28px !important;
-      border-radius: 14px !important;
-      border: 1px solid #e2e8f0 !important;
-      box-shadow: 0 10px 25px -5px rgba(15,23,42,0.06), 0 8px 10px -6px rgba(15,23,42,0.04) !important;
-    }
-    .hospital-header-seal {
-      display: flex; align-items: center; gap: 12px;
-      padding-bottom: 10px; margin-bottom: 14px;
-      border-bottom: 1px solid #f1f5f9;
-    }
-    .hospital-seal-icon {
-      width: 34px; height: 34px; border-radius: 8px;
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
-      color: #ffffff; display: flex; align-items: center;
-      justify-content: center; font-size: 1.15rem; flex-shrink: 0;
-      box-shadow: 0 2px 4px rgba(5,150,105,0.2);
-    }
-    .hospital-seal-text h4 { margin: 0; font-size: 0.82rem; font-weight: 700; color: #0f172a; letter-spacing: -0.01em; }
-    .hospital-seal-text p  { margin: 0; font-size: 0.67rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.04em; }
-    .shield-icon-wrap {
-      width: 56px; height: 56px; border-radius: 16px;
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.7rem; color: #ffffff;
-      box-shadow: 0 8px 20px rgba(5,150,105,0.25);
-      margin: 4px auto 12px;
-    }
-    .login-card-title { font-size: 1.25rem; font-weight: 700; color: #0f172a; letter-spacing: -0.02em; }
-    .login-card-desc  { font-size: 0.82rem; color: #64748b; line-height: 1.45; }
-
-    /* Step badges */
-    .step-badge {
-      display: inline-flex; align-items: center; justify-content: center;
-      width: 28px; height: 28px; border-radius: 50%;
-      background: linear-gradient(135deg, #059669, #047857);
-      color: #ffffff; font-size: 0.8rem; font-weight: 700; flex-shrink: 0;
-      box-shadow: 0 2px 6px rgba(5,150,105,0.25);
-    }
-    .step-connector {
-      width: 2px; height: 22px;
-      background: linear-gradient(180deg, rgba(5,150,105,0.35), rgba(5,150,105,0.08));
-      margin: 6px auto;
+    /* ─── Browser Autofill Styling ────────────────────────────────────────── */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover, 
+    input:-webkit-autofill:focus, 
+    input:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+      -webkit-text-fill-color: #0f172a !important;
+      box-shadow: 0 0 0 1000px #ffffff inset !important;
+      caret-color: #0f172a !important;
+      color: #0f172a !important;
+      transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s !important;
     }
 
-    /* QR Code container */
-    .qr-wrap {
-      display: flex; flex-direction: column; align-items: center;
-      background: #f8fafc; border: 1.5px solid #e2e8f0;
-      border-radius: 14px; padding: 16px; gap: 10px;
-    }
-    .qr-wrap svg { width: 160px; height: 160px; border-radius: 8px; }
-    .qr-label { font-size: 0.74rem; color: #64748b; font-weight: 500; text-align: center; }
-
-    /* App badge pills */
-    .app-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: #f0fdf4; border: 1px solid #bbf7d0;
-      border-radius: 100px; padding: 5px 12px;
-      font-size: 0.78rem; font-weight: 600; color: #065f46;
+    html.dark input:-webkit-autofill,
+    html.dark input:-webkit-autofill:hover, 
+    html.dark input:-webkit-autofill:focus, 
+    html.dark input:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 1000px #0f172a inset !important;
+      -webkit-text-fill-color: #f8fafc !important;
+      box-shadow: 0 0 0 1000px #0f172a inset !important;
+      caret-color: #f8fafc !important;
+      color: #f8fafc !important;
+      transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s !important;
     }
 
-    /* Regenerate link */
-    .regen-btn {
-      background: none; border: none; color: #059669;
-      font-size: 0.78rem; font-weight: 500; cursor: pointer;
-      padding: 0; text-decoration: none; transition: color 0.15s;
+    /* ─── 6-Digit OTP Box Styling ─────────────────────────────────────────── */
+    .otp-input-group {
+      display: flex;
+      gap: 10px;
+      justify-content: space-between;
     }
-    .regen-btn:hover { color: #047857; text-decoration: underline; }
-    .regen-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    /* OTP digit boxes */
-    .otp-input-group { display: flex; gap: 8px; justify-content: center; }
     .otp-digit {
-      width: 48px; height: 56px; text-align: center;
-      font-size: 1.55rem; font-weight: 700;
-      font-family: 'Poppins', sans-serif; font-variant-numeric: tabular-nums;
-      border: 1.5px solid #cbd5e1; border-radius: 12px;
-      outline: none; transition: border-color 0.15s, box-shadow 0.15s, background 0.15s, transform 0.1s;
-      color: #0f172a; background: #ffffff; caret-color: transparent;
+      width: 50px;
+      height: 58px;
+      text-align: center;
+      font-size: 1.65rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      font-variant-numeric: tabular-nums;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 12px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s, transform 0.1s;
+      color: #0f172a;
+      background: #f8fafc;
+      caret-color: transparent;
+    }
+    html.dark .otp-digit {
+      background: #0b1120;
+      border-color: #334155;
+      color: #f8fafc;
     }
     .otp-digit:focus {
-      border-color: #059669; box-shadow: 0 0 0 3.5px rgba(5,150,105,0.16);
-      background: #ffffff; transform: translateY(-1px);
+      border-color: #059669;
+      box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2);
+      background: #ffffff;
+      transform: translateY(-1px);
     }
-    .otp-digit.filled { border-color: #059669; background: #f0fdf4; color: #065f46; }
-    .otp-digit.error  { border-color: #ef4444; background: #fef2f2; color: #dc2626; animation: shake 0.35s ease-in-out; }
-
+    html.dark .otp-digit:focus {
+      background: #0f172a;
+      border-color: #10b981;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+    }
+    .otp-digit.filled {
+      border-color: #059669;
+      background: #f0fdf4;
+      color: #065f46;
+    }
+    html.dark .otp-digit.filled {
+      border-color: #10b981;
+      background: rgba(6, 78, 59, 0.3);
+      color: #6ee7b7;
+    }
+    .otp-digit.error {
+      border-color: #ef4444 !important;
+      background: #fef2f2 !important;
+      color: #dc2626 !important;
+      animation: shake 0.35s ease-in-out;
+    }
+    html.dark .otp-digit.error {
+      border-color: #f87171 !important;
+      background: rgba(127, 29, 29, 0.3) !important;
+      color: #fca5a5 !important;
+    }
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
-      20%      { transform: translateX(-6px); }
-      60%      { transform: translateX(6px); }
+      20% { transform: translateX(-6px); }
+      60% { transform: translateX(6px); }
     }
-    @keyframes pulse-in {
-      0%   { opacity: 0; transform: scale(0.95) translateY(8px); }
-      100% { opacity: 1; transform: scale(1) translateY(0); }
-    }
-    .fade-in { animation: pulse-in 0.35s ease both; }
 
-    /* Submit button */
-    .login-submit {
-      width: 100%; min-height: 42px;
-      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-      background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
-      color: #ffffff !important; border: none !important; border-radius: 10px !important;
-      font-size: 0.88rem !important; font-weight: 600 !important;
-      box-shadow: 0 4px 12px rgba(5,150,105,0.25) !important;
-      transition: all 0.2s cubic-bezier(0.16,1,0.3,1) !important; cursor: pointer;
+    /* ─── Silky Smooth 60fps TOTP Countdown Progress Bar ─────────────────── */
+    .totp-progress-track {
+      width: 100%;
+      height: 4px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: 12px;
+      margin-bottom: 20px;
     }
-    .login-submit:hover:not(:disabled) {
-      background: linear-gradient(135deg, #047857 0%, #065f46 100%) !important;
-      box-shadow: 0 6px 16px rgba(5,150,105,0.35); transform: translateY(-1px);
-      color: #ffffff !important;
+    html.dark .totp-progress-track {
+      background: #1e293b;
     }
-    .login-submit:disabled {
-      background: #cbd5e1 !important; color: #94a3b8 !important;
-      box-shadow: none !important; cursor: not-allowed; transform: none !important; opacity: 0.7;
+    .totp-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+      border-radius: 999px;
+      width: 100%;
+      will-change: width;
     }
-    .account-switch-btn {
-      background: none; border: none; color: #64748b; font-size: 0.8rem; font-weight: 500;
-      cursor: pointer; transition: color 0.15s; padding: 0; text-decoration: none;
+
+    /* ─── QR Code Container ──────────────────────────────────────────────── */
+    .qr-card-surface svg {
+      display: block;
+      margin: 0 auto;
+      max-width: 180px;
+      max-height: 180px;
+      border-radius: 8px;
     }
-    .account-switch-btn:hover { color: #0f172a; text-decoration: underline; }
   </style>
 </head>
-<body class="login-page">
+<body 
+  x-data="{ 
+    helpdeskOpen: false,
+    darkMode: document.documentElement.classList.contains('dark')
+  }" 
+  class="h-full bg-slate-50 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-100 antialiased selection:bg-emerald-500 selection:text-white"
+>
 
-  <main class="login-layout">
-    <!-- Brand Section -->
-    <section class="login-brand" aria-label="HIMS Main System">
-      <div class="login-brand-content">
-        <div class="login-brand-mark" aria-hidden="true"><i class="ph-fill ph-cross"></i></div>
-        <p class="login-kicker">Hospital Information Management System</p>
-        <h1>HIMS Main System</h1>
-        <p class="login-brand-description">One connected workspace for hospital operations and financial management modules.</p>
-        <div class="mt-4 d-flex flex-column gap-2" style="font-size: 0.83rem; color: rgba(255,255,255,0.82);">
-          <div class="d-flex align-items-center gap-2"><i class="ph-fill ph-check-circle" style="color: #34d399;"></i><span>Google Authenticator TOTP protection</span></div>
-          <div class="d-flex align-items-center gap-2"><i class="ph-fill ph-check-circle" style="color: #34d399;"></i><span>No internet required for code generation</span></div>
-          <div class="d-flex align-items-center gap-2"><i class="ph-fill ph-check-circle" style="color: #34d399;"></i><span>RA 10173 &amp; HIPAA-compliant access gate</span></div>
-        </div>
+  <div class="min-h-screen flex flex-col lg:flex-row">
+    
+    <!-- Left Hero & Security Authority Column (Universal Standard) -->
+    <x-auth-hero />
+
+    <!-- Right Verification & Setup Column -->
+    <div class="relative flex-1 flex flex-col justify-between p-6 sm:p-10 lg:p-16">
+      
+      <!-- Top Actions (Theme Toggle & Helpdesk trigger) -->
+      <div class="flex items-center justify-end gap-3">
+        <button 
+          type="button" 
+          @click="
+            darkMode = !darkMode;
+            if (darkMode) {
+              document.documentElement.classList.add('dark');
+              document.documentElement.style.colorScheme = 'dark';
+              localStorage.setItem('fms_theme', 'dark');
+            } else {
+              document.documentElement.classList.remove('dark');
+              document.documentElement.style.colorScheme = 'light';
+              localStorage.setItem('fms_theme', 'light');
+            }
+          " 
+          class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition-colors cursor-pointer"
+          :title="darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+        >
+          <i class="ph-bold ph-moon text-base block dark:hidden"></i>
+          <i class="ph-bold ph-sun text-base hidden dark:block"></i>
+        </button>
+
+        <button 
+          type="button" 
+          @click="helpdeskOpen = true" 
+          class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+        >
+          <i class="ph-bold ph-headset text-sm text-emerald-600 dark:text-emerald-400"></i>
+          <span>IT Helpdesk</span>
+        </button>
       </div>
-      <footer class="login-brand-footer">
-        <span>HIMS Command Center</span><span>Version 0.9</span>
-      </footer>
-    </section>
 
-    <!-- Setup Panel -->
-    <section class="login-panel" aria-labelledby="setup-title" style="overflow-y: auto; max-height: 100vh;">
-      <div class="login-panel-container d-flex flex-column align-items-center w-100 py-4" style="max-width: 440px;">
-        <div class="login-card w-100">
+      <!-- Center Auth Form Container -->
+      <div class="my-auto mx-auto w-full max-w-md py-6">
+        
+        <!-- Hospital Header Seal & Department Badge -->
+        <div class="flex items-center gap-3 pb-4 mb-5 border-b border-slate-200 dark:border-slate-800">
+          <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-500/30">
+            <i class="ph-bold ph-hospital text-lg"></i>
+          </div>
+          <div>
+            <h2 class="text-xs font-bold text-slate-900 dark:text-white tracking-wide uppercase">Republic of the Philippines</h2>
+            <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Department of Health &bull; Hospital Network</p>
+          </div>
+        </div>
 
-          <!-- Official Hospital / DOH Seal -->
-          <div class="hospital-header-seal">
-            <div class="hospital-seal-icon" aria-hidden="true"><i class="ph-fill ph-hospital"></i></div>
-            <div class="hospital-seal-text">
-              <h4>Republic of the Philippines</h4>
-              <p>Department of Health &bull; Public Hospital Network</p>
+        <!-- Top Badge -->
+        <div class="mb-2.5">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20 dark:bg-emerald-950/60 dark:text-emerald-300 font-mono tracking-wider uppercase">
+            <i class="ph-bold ph-shield-check text-xs"></i>
+            TWO-FACTOR ENROLLMENT
+          </span>
+        </div>
+
+        <!-- Heading & Description -->
+        <div>
+          <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white" id="setup-title">
+            Set Up Google Authenticator
+          </h2>
+          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            Scan the QR code with your authenticator app, then enter the 6-digit code to activate 2FA.
+          </p>
+        </div>
+
+        @if(session('error'))
+          <div class="mt-4 rounded-xl border border-rose-200/80 bg-rose-50/80 p-3 text-xs text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300 flex items-center gap-2" role="alert">
+            <i class="ph-bold ph-warning-circle text-base text-rose-600 dark:text-rose-400 shrink-0"></i>
+            <span>{{ session('error') }}</span>
+          </div>
+        @endif
+
+        @if($errors->any())
+          <div class="mt-4 rounded-xl border border-rose-200/80 bg-rose-50/80 p-3 text-xs text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300 flex items-center gap-2" role="alert" id="error-banner">
+            <i class="ph-bold ph-warning-circle text-base text-rose-600 dark:text-rose-400 shrink-0"></i>
+            <span>{{ $errors->first() }}</span>
+          </div>
+        @endif
+
+        <!-- ─── Clean QR Code Card Surface ───────────────────────────────────── -->
+        <div class="mt-5 rounded-2xl bg-white dark:bg-slate-900 p-5 shadow-sm ring-1 ring-slate-200/90 dark:ring-slate-800">
+          
+          <div class="text-center">
+            <!-- QR Code Presentation Box -->
+            <div class="qr-card-surface inline-block p-3 bg-white rounded-2xl shadow-sm ring-1 ring-slate-200/80 dark:ring-slate-700" id="qr-container">
+              {!! $qrCodeSvg !!}
+            </div>
+
+            <!-- Email & User Identifier -->
+            <div class="mt-3 flex items-center justify-center gap-1.5 text-xs font-mono text-slate-500 dark:text-slate-400">
+              <i class="ph-bold ph-envelope-simple text-slate-400"></i>
+              <span>{{ $userEmail }}</span>
+            </div>
+
+            <!-- Regenerate QR Code Link -->
+            <div class="mt-1.5">
+              <button 
+                type="button" 
+                class="inline-flex items-center gap-1 text-[11.5px] font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300 transition-colors cursor-pointer" 
+                id="regen-btn" 
+                onclick="regenerateQr()"
+              >
+                <i class="ph-bold ph-arrows-clockwise"></i>
+                <span>Regenerate QR code</span>
+              </button>
+              <span id="regen-spinner" class="hidden text-xs text-slate-400 items-center gap-1">
+                <i class="ph-bold ph-circle-notch animate-spin text-emerald-600"></i> Generating...
+              </span>
             </div>
           </div>
 
-          <!-- Hero Icon & Title -->
-          <div class="text-center mb-3">
-            <div class="shield-icon-wrap" aria-hidden="true">
-              <i class="ph-fill ph-qr-code"></i>
+          <!-- Divider -->
+          <div class="my-5 border-t border-slate-100 dark:border-slate-800"></div>
+
+          <!-- ─── 6-Digit Verification Form with 30s Live Timer ─────────────────── -->
+          <form method="POST" action="{{ route('two-factor.setup.confirm') }}" id="confirm-form" novalidate>
+            @csrf
+
+            <!-- Header Row: Label & 30s Countdown Timer -->
+            <div class="flex justify-between items-center mb-2.5">
+              <label class="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider" for="otp-d1">
+                Authenticator Code
+              </label>
+              <span class="text-xs font-mono text-slate-400 dark:text-slate-500">
+                Refreshes in <strong id="totp-countdown-sec" class="text-slate-900 dark:text-white font-bold">30</strong>s
+              </span>
             </div>
-            <h2 id="setup-title" class="login-card-title mb-1">Set Up Google Authenticator</h2>
-            <p class="login-card-desc mb-0">Scan the QR code with your authenticator app, then enter the 6-digit code to activate 2FA.</p>
-          </div>
 
-          @if(session('error'))
-            <div class="alert alert-danger rounded-3 py-2 px-3 border-0 mb-3" role="alert" style="font-size: 0.82rem;">
-              <i class="ph ph-warning-circle me-1"></i> {{ session('error') }}
+            <!-- 6 Digit Input Group -->
+            <div class="otp-input-group" role="group" aria-label="6-digit TOTP code">
+              <input class="otp-digit" id="otp-d1" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]" autocomplete="one-time-code" aria-label="Digit 1">
+              <input class="otp-digit" id="otp-d2" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]" aria-label="Digit 2">
+              <input class="otp-digit" id="otp-d3" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]" aria-label="Digit 3">
+              <input class="otp-digit" id="otp-d4" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]" aria-label="Digit 4">
+              <input class="otp-digit" id="otp-d5" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]" aria-label="Digit 5">
+              <input class="otp-digit" id="otp-d6" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]" aria-label="Digit 6">
             </div>
-          @endif
+            <input type="hidden" name="code" id="otp-assembled">
 
-          @if($errors->any())
-            <div class="alert alert-danger rounded-3 py-2 px-3 border-0 mb-3 fade-in" role="alert" style="font-size: 0.82rem;" id="error-banner">
-              <i class="ph ph-warning-circle me-1"></i> {{ $errors->first() }}
+            <!-- Silky Smooth 60fps 30-Second TOTP Progress Bar -->
+            <div class="totp-progress-track">
+              <div class="totp-progress-bar" id="totp-progress-bar"></div>
             </div>
-          @endif
 
-          <!-- Step 1: Download App -->
-          <div class="d-flex gap-3 mb-3">
-            <div class="d-flex flex-column align-items-center">
-              <div class="step-badge">1</div>
-              <div class="step-connector"></div>
-            </div>
-            <div class="w-100 pb-1">
-              <p class="fw-semibold mb-2" style="font-size: 0.85rem; color: #1e293b;">Install an authenticator app</p>
-              <div class="d-flex gap-2 flex-wrap">
-                <span class="app-badge"><i class="ph-fill ph-device-mobile-camera" style="color: #059669;"></i> Google Authenticator</span>
-                <span class="app-badge"><i class="ph-fill ph-device-mobile-camera" style="color: #059669;"></i> Microsoft Authenticator</span>
-              </div>
-              <p class="mt-2 mb-0" style="font-size: 0.75rem; color: #64748b;">Available on the App Store &amp; Google Play</p>
-            </div>
-          </div>
+            <!-- Activate Submit Button -->
+            <button 
+              id="confirm-btn" 
+              class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 px-4 text-sm font-semibold text-white shadow-md shadow-emerald-900/20 hover:bg-emerald-700 active:bg-emerald-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer" 
+              type="submit" 
+              disabled
+            >
+              <i class="ph-bold ph-shield-check text-base" aria-hidden="true"></i>
+              <span>Activate 2FA &amp; Enter Workspace</span>
+              <i class="ph-bold ph-arrow-right text-sm" aria-hidden="true"></i>
+            </button>
 
-          <!-- Step 2: Scan QR Code -->
-          <div class="d-flex gap-3 mb-3">
-            <div class="d-flex flex-column align-items-center">
-              <div class="step-badge">2</div>
-              <div class="step-connector"></div>
-            </div>
-            <div class="w-100 pb-1">
-              <p class="fw-semibold mb-2" style="font-size: 0.85rem; color: #1e293b;">Scan this QR code with your app</p>
-
-              <div class="qr-wrap" id="qr-container">
-                {!! $qrCodeSvg !!}
-                <p class="qr-label mb-0">
-                  <i class="ph ph-envelope me-1" style="color: #64748b;"></i>
-                  {{ $userEmail }}
-                </p>
-              </div>
-
-              <div class="d-flex align-items-center justify-content-center gap-2 mt-2">
-                <button type="button" class="regen-btn" id="regen-btn" onclick="regenerateQr()">
-                  <i class="ph ph-arrows-clockwise me-1"></i>Regenerate QR code
-                </button>
-                <span id="regen-spinner" class="d-none" style="font-size: 0.75rem; color: #64748b;">
-                  <i class="ph ph-circle-notch" style="animation: spin 0.8s linear infinite;"></i> Generating...
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Step 3: Enter Code -->
-          <div class="d-flex gap-3">
-            <div class="d-flex flex-column align-items-center">
-              <div class="step-badge">3</div>
-            </div>
-            <div class="w-100">
-              <p class="fw-semibold mb-2" style="font-size: 0.85rem; color: #1e293b;">Enter the 6-digit code from your app</p>
-
-              <form method="POST" action="{{ route('two-factor.setup.confirm') }}" id="confirm-form" novalidate>
-                @csrf
-
-                <div class="otp-input-group mb-3" role="group" aria-label="6-digit TOTP code">
-                  <input class="otp-digit" id="otp-d1" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]" autocomplete="one-time-code" aria-label="Digit 1">
-                  <input class="otp-digit" id="otp-d2" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]" aria-label="Digit 2">
-                  <input class="otp-digit" id="otp-d3" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]" aria-label="Digit 3">
-                  <input class="otp-digit" id="otp-d4" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]" aria-label="Digit 4">
-                  <input class="otp-digit" id="otp-d5" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]" aria-label="Digit 5">
-                  <input class="otp-digit" id="otp-d6" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]" aria-label="Digit 6">
-                </div>
-                <input type="hidden" name="code" id="otp-assembled">
-
-                <button id="confirm-btn" class="login-submit" type="submit" disabled>
-                  <i class="ph-fill ph-shield-check me-1" aria-hidden="true"></i>
-                  Activate Google Authenticator 2FA
-                </button>
-
-                <p class="text-center mt-2 mb-0" style="font-size: 0.74rem; color: #94a3b8;">
-                  <i class="ph ph-clock me-1"></i> TOTP codes refresh every 30 seconds
-                </p>
-              </form>
-            </div>
-          </div>
+          </form>
 
         </div>
 
-        <!-- Cancel and sign out -->
-        <div class="mt-3 text-center">
-          <form method="POST" action="{{ route('logout') }}" style="display:inline;">
+        <!-- Cancel and Sign Out Link -->
+        <div class="mt-4 text-center">
+          <form method="POST" action="{{ route('logout') }}" class="inline">
             @csrf
-            <button type="submit" class="account-switch-btn">
-              <i class="ph ph-arrow-left me-1"></i> Cancel and sign out
+            <button type="submit" class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors cursor-pointer">
+              <i class="ph-bold ph-arrow-left"></i>
+              <span>Cancel and sign out</span>
             </button>
           </form>
         </div>
-      </div>
-    </section>
-  </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+      </div>
+
+      <!-- Bottom Mini Footer -->
+      <div class="text-center text-xs text-slate-400 dark:text-slate-500 py-2">
+        Hospital Financial Management System &bull; Secure Terminal Gateway &bull; DOH Network
+      </div>
+    </div>
+
+  </div>
+
+  <!-- IT Helpdesk Support Directory Modal -->
+  <x-auth-helpdesk-modal />
+
   <script>
-    // -- OTP Digit Wiring ----------------------------------------------------
+    // ─── 1. OTP Digit Handling & Auto-Advance ────────────────────────────────
     const digits     = Array.from(document.querySelectorAll('.otp-digit'));
     const assembled  = document.getElementById('otp-assembled');
     const confirmBtn = document.getElementById('confirm-btn');
 
     function syncAssembled() {
       const code     = digits.map(d => d.value).join('');
-      assembled.value = code;
-      const complete  = code.length === 6 && /^\d{6}$/.test(code);
-      confirmBtn.disabled = !complete;
+      if (assembled) assembled.value = code;
+      const complete = code.length === 6 && /^\d{6}$/.test(code);
+      if (confirmBtn) confirmBtn.disabled = !complete;
       digits.forEach(d => d.classList.toggle('filled', d.value !== ''));
     }
 
@@ -311,82 +372,107 @@
         if (digit.value && i < digits.length - 1) digits[i + 1].focus();
         syncAssembled();
       });
+
       digit.addEventListener('keydown', (e) => {
         if (e.key === 'Backspace' && !digit.value && i > 0) {
-          digits[i - 1].focus(); digits[i - 1].value = ''; syncAssembled();
+          digits[i - 1].focus();
+          digits[i - 1].value = '';
+          syncAssembled();
         }
-        if (e.key === 'ArrowLeft'  && i > 0)               digits[i - 1].focus();
-        if (e.key === 'ArrowRight' && i < digits.length-1) digits[i + 1].focus();
+        if (e.key === 'ArrowLeft' && i > 0) digits[i - 1].focus();
+        if (e.key === 'ArrowRight' && i < digits.length - 1) digits[i + 1].focus();
       });
+
       digit.addEventListener('paste', (e) => {
         e.preventDefault();
-        const pasted = (e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6);
-        pasted.split('').forEach((c, idx) => { if (digits[idx]) digits[idx].value = c; });
-        if (pasted.length) digits[Math.min(pasted.length, digits.length-1)].focus();
+        const pasted = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+        pasted.split('').forEach((char, idx) => {
+          if (digits[idx]) digits[idx].value = char;
+        });
+        if (pasted.length) digits[Math.min(pasted.length, digits.length - 1)].focus();
         syncAssembled();
       });
     });
 
-    // Shake on error
-    @if($errors->any())
-      digits.forEach(d => d.classList.add('error'));
-      setTimeout(() => digits.forEach(d => d.classList.remove('error')), 600);
-      digits[0]?.focus();
-    @endif
-
     // Auto-focus first digit on load
     window.addEventListener('DOMContentLoaded', () => digits[0]?.focus());
 
-    // -- Regenerate QR Code --------------------------------------------------
-    window.regenerateQr = async function () {
-      const btn      = document.getElementById('regen-btn');
-      const spinner  = document.getElementById('regen-spinner');
-      const qrWrap   = document.getElementById('qr-container');
+    // Shake animation on error
+    @if($errors->any())
+      digits.forEach(d => d.classList.add('error'));
+      setTimeout(() => digits.forEach(d => d.classList.remove('error')), 600);
+    @endif
 
-      btn.disabled = true;
-      btn.classList.add('d-none');
-      spinner.classList.remove('d-none');
+    // Prevent submitting with incomplete code
+    document.getElementById('confirm-form')?.addEventListener('submit', (e) => {
+      syncAssembled();
+      const code = assembled ? assembled.value : '';
+      if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+        e.preventDefault();
+      }
+    });
+
+    // ─── 2. Silky Smooth 60fps TOTP 30-Second Refresh Timer ────────────────
+    function smoothTotpProgress() {
+      const nowMs = Date.now();
+      const elapsedInWindowMs = nowMs % 30000;
+      const remainingMs = 30000 - elapsedInWindowMs;
+      const pct = (remainingMs / 30000) * 100;
+
+      const barEl   = document.getElementById('totp-progress-bar');
+      const timerEl = document.getElementById('totp-countdown-sec');
+
+      if (barEl) {
+        barEl.style.width = pct.toFixed(2) + '%';
+      }
+
+      const secondsRemaining = Math.ceil(remainingMs / 1000);
+      if (timerEl && timerEl.textContent !== String(secondsRemaining)) {
+        timerEl.textContent = secondsRemaining;
+      }
+
+      requestAnimationFrame(smoothTotpProgress);
+    }
+
+    requestAnimationFrame(smoothTotpProgress);
+
+    // ─── 3. Regenerate QR Code ─────────────────────────────────────────────
+    async function regenerateQr() {
+      const btn = document.getElementById('regen-btn');
+      const spinner = document.getElementById('regen-spinner');
+      const container = document.getElementById('qr-container');
+
+      if (btn) btn.classList.add('hidden');
+      if (spinner) spinner.classList.remove('hidden');
 
       try {
-        const res  = await fetch('{{ route('two-factor.setup.store') }}', {
+        const response = await fetch('{{ route('two-factor.setup.store') }}', {
           method: 'POST',
           headers: {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'Accept':       'application/json',
-            'Content-Type': 'application/json',
+            'Accept': 'application/json',
           },
         });
-        const data = await res.json();
 
-        if (res.ok && data.qr_svg) {
-          // Replace QR content preserving email label
-          const label = qrWrap.querySelector('.qr-label');
-          qrWrap.innerHTML = data.qr_svg;
-          if (label) qrWrap.appendChild(label);
-          // Clear inputs
-          digits.forEach(d => { d.value = ''; d.classList.remove('filled', 'error'); });
-          syncAssembled();
-          digits[0]?.focus();
+        if (!response.ok) throw new Error('Failed to regenerate secret');
+
+        const data = await response.json();
+        if (data.qr_svg && container) {
+          container.innerHTML = data.qr_svg;
         }
-      } catch (_) { /* silently fail */ }
-      finally {
-        btn.disabled = false;
-        btn.classList.remove('d-none');
-        spinner.classList.add('d-none');
-      }
-    };
 
-    // Inline spin style
-    const style = document.createElement('style');
-    style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
-    document.head.appendChild(style);
-
-    // Prevent bfcache restoration
-    window.addEventListener('pageshow', (event) => {
-      if (event.persisted || (window.performance && window.performance.getEntriesByType('navigation')[0]?.type === 'back_forward')) {
-        window.location.reload();
+        // Reset input fields
+        digits.forEach(d => { d.value = ''; d.classList.remove('filled'); });
+        if (assembled) assembled.value = '';
+        if (confirmBtn) confirmBtn.disabled = true;
+        digits[0]?.focus();
+      } catch (err) {
+        console.error('QR Regeneration failed:', err);
+      } finally {
+        if (btn) btn.classList.remove('hidden');
+        if (spinner) spinner.classList.add('hidden');
       }
-    });
+    }
   </script>
 </body>
 </html>

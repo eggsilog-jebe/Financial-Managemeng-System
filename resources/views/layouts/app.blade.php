@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="h-full">
   <head>
     <meta charset="UTF-8">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -7,191 +7,332 @@
     <meta name="color-scheme" content="light dark">
     <title>@yield('title', 'Financial Management System (FMS)')</title>
     <link rel="icon" href="{{ asset('favicon.ico') }}">
+
+    <!-- Google Fonts: Inter & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
-    <script src="{{ asset('assets/js/core/theme-boot.js') }}"></script>
-    <script src="{{ asset('assets/js/auth/session.js') }}"></script>
-    <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}?v={{ @filemtime(public_path('assets/css/style.css')) }}">
-    @stack('styles')
-    <link rel="stylesheet" href="{{ asset('assets/css/components/typography-accessibility.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/css/components/modal-design-system.css') }}?v={{ @filemtime(public_path('assets/css/components/modal-design-system.css')) }}">
-  </head>
-  <body data-module="@yield('module', 'main')" data-page="@yield('page', 'dashboard')">
-    <div class="app-shell" data-auth-guard>
-      @include('partials.sidebar')
-      <div class="sidebar-backdrop" data-sidebar-backdrop aria-hidden="true"></div>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-      <main class="main-content" id="main-content">
+    <!-- Immediate Dark Mode Boot to Prevent FOUC (Supports light, dark, system) -->
+    <script>
+      (function() {
+        const dbTheme = @json(auth()->user()?->theme_preference ?? 'system');
+        let savedTheme = localStorage.getItem('fms_theme');
+        if (!savedTheme && dbTheme) {
+          savedTheme = dbTheme;
+          localStorage.setItem('fms_theme', dbTheme);
+          localStorage.setItem('himsMainTheme', dbTheme);
+        }
+        if (!savedTheme) savedTheme = 'system';
+
+        const systemPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const shouldBeDark = savedTheme === 'dark' || (savedTheme === 'system' && systemPrefersDark);
+
+        if (shouldBeDark) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+
+        // Live system OS listener
+        if (window.matchMedia) {
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+            const currentMode = localStorage.getItem('fms_theme') || 'system';
+            if (currentMode === 'system') {
+              if (e.matches) {
+                document.documentElement.classList.add('dark');
+              } else {
+                document.documentElement.classList.remove('dark');
+              }
+              window.dispatchEvent(new CustomEvent('theme-applied', { detail: { isDark: e.matches, theme: 'system' } }));
+            }
+          });
+        }
+
+        window.setFmsTheme = function(theme) {
+          localStorage.setItem('fms_theme', theme);
+          localStorage.setItem('himsMainTheme', theme);
+          const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          const isDark = theme === 'dark' || (theme === 'system' && prefersDark);
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+          window.dispatchEvent(new CustomEvent('theme-applied', { detail: { theme: theme, isDark: isDark } }));
+        };
+      })();
+    </script>
+
+    <!-- Tailwind CSS v4 & Localized Alpine.js / Phosphor Icons Bundle -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    @stack('styles')
+  </head>
+  <body 
+    x-data="{
+      sidebarOpen: false,
+      darkMode: document.documentElement.classList.contains('dark'),
+      systemModal: {
+        open: false,
+        title: 'System Notification',
+        message: '',
+        icon: 'ph-info'
+      },
+      idleModalOpen: false
+    }"
+    @keydown.escape.window="systemModal.open = false"
+    @theme-applied.window="darkMode = $event.detail.isDark"
+    class="h-full bg-slate-50 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-100 antialiased selection:bg-emerald-500 selection:text-white"
+    data-module="@yield('module', 'main')" 
+    data-page="@yield('page', 'dashboard')"
+  >
+    <div class="min-h-screen flex bg-slate-50 dark:bg-slate-950 transition-colors">
+      <!-- Master Navigation Sidebar -->
+      @include('partials.sidebar')
+
+      <!-- Primary Content Column -->
+      <div class="flex-1 flex flex-col min-w-0 overflow-x-hidden">
         @include('partials.headbar')
 
-        <section class="page-wrapper" aria-label="@yield('page-label', 'FMS workspace')">
+        <main class="flex-1 w-full px-6 lg:px-8 py-6" id="main-content">
           @yield('content')
-        </section>
+        </main>
 
         @include('partials.footer')
-      </main>
+      </div>
     </div>
 
-    <div id="modal-portal" aria-live="polite"></div>
-    <div id="toast-container" role="status" aria-live="polite" aria-atomic="true"></div>
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm pointer-events-none" role="status" aria-live="polite"></div>
 
-    {{-- ── Idle Session Timeout Warning Modal ─────────────────────────────────── --}}
-    <div class="modal fade" id="idleTimeoutModal" tabindex="-1" aria-labelledby="idleTimeoutModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;">
-        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-          <div class="modal-header border-0 pt-4 px-4 pb-2" style="background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%);">
-            <div class="d-flex align-items-center gap-3">
-              <span class="d-inline-flex align-items-center justify-content-center rounded-3" style="width:42px;height:42px;background:linear-gradient(135deg,#f59e0b,#d97706);box-shadow:0 4px 12px rgba(245,158,11,0.35);">
-                <i class="ph-fill ph-clock-countdown text-white fs-4"></i>
-              </span>
-              <div>
-                <h5 class="modal-title fw-bold mb-0" style="color:#92400e;" id="idleTimeoutModalLabel">Session Expiring Soon</h5>
-                <p class="mb-0" style="font-size:0.72rem;color:#b45309;font-weight:500;">Hospital Security • Inactivity Detected</p>
-              </div>
+    {{-- ── Idle Session Timeout Warning Modal (Alpine.js + Backdrop Blur) ────────────── --}}
+    <div 
+      id="idleTimeoutModal"
+      x-show="idleModalOpen" 
+      x-cloak
+      class="fixed inset-0 z-50 overflow-y-auto" 
+      aria-labelledby="idleTimeoutModalLabel" 
+      role="dialog" 
+      aria-modal="true"
+    >
+      <div 
+        x-show="idleModalOpen"
+        x-transition:enter="ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm"
+      ></div>
+
+      <div class="fixed inset-0 z-10 flex min-h-full items-center justify-center p-4">
+        <div 
+          x-show="idleModalOpen"
+          x-transition:enter="ease-out duration-300"
+          x-transition:enter-start="opacity-0 translate-y-4 sm:scale-95"
+          x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+          x-transition:leave="ease-in duration-200"
+          x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+          x-transition:leave-end="opacity-0 translate-y-4 sm:scale-95"
+          class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800"
+        >
+          <div class="flex items-center gap-3">
+            <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 ring-1 ring-amber-500/20 dark:bg-amber-950/50 dark:text-amber-400">
+              <i class="ph-bold ph-clock-countdown text-2xl"></i>
+            </span>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white" id="idleTimeoutModalLabel">Session Expiring Soon</h3>
+              <p class="text-xs text-amber-600 dark:text-amber-400 font-medium">Hospital Security &bull; Inactivity Detected</p>
             </div>
           </div>
-          <div class="modal-body px-4 py-3">
-            <p class="text-secondary mb-3" style="font-size:0.875rem;">
-              Your HIMS session will automatically sign out in
+
+          <div class="mt-4">
+            <p class="text-xs text-slate-600 dark:text-slate-300">
+              Your HIMS session will automatically sign out to protect patient health records and financial data per RA 10173:
             </p>
-            <div class="d-flex align-items-center justify-content-center gap-3 mb-3">
-              <div class="text-center p-3 rounded-4" style="background:#fef3c7;border:2px solid #fde68a;min-width:90px;">
-                <div class="fw-bold" style="font-size:2.25rem;color:#b45309;line-height:1;font-variant-numeric:tabular-nums;" id="idle-countdown-seconds">300</div>
-                <div style="font-size:0.7rem;color:#92400e;font-weight:600;letter-spacing:0.05em;">SECONDS</div>
+
+            <div class="my-5 flex justify-center">
+              <div class="flex flex-col items-center justify-center rounded-2xl bg-amber-50 px-8 py-4 ring-1 ring-amber-200 dark:bg-amber-950/40 dark:ring-amber-800/40">
+                <span id="idle-countdown-seconds" class="font-mono text-4xl font-bold tabular-nums text-amber-700 dark:text-amber-400">300</span>
+                <span class="mt-1 text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500">SECONDS REMAINING</span>
               </div>
             </div>
-            <p class="text-secondary mb-0" style="font-size:0.8rem;">
-              <i class="ph ph-shield-warning me-1 text-warning align-middle"></i>
-              To protect sensitive patient financial data, inactive sessions are closed automatically per RA 10173 compliance.
+
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+              <i class="ph-bold ph-shield-warning text-amber-500 text-sm"></i>
+              <span>Active unsaved drafts or terminal drawers remain secure.</span>
             </p>
           </div>
-          <div class="modal-footer border-0 px-4 pb-4 pt-0 gap-2">
-            <button type="button" class="btn btn-warning fw-semibold px-4 rounded-3" id="idle-stay-logged-in" style="background:linear-gradient(135deg,#f59e0b,#d97706);border:none;color:#fff;box-shadow:0 2px 8px rgba(245,158,11,0.3);">
-              <i class="ph ph-hand-waving me-1"></i>I'm still here
+
+          <div class="mt-6 flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <button 
+              type="button" 
+              id="idle-logout-now"
+              class="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors"
+            >
+              Sign Out Now
             </button>
-            <button type="button" class="btn btn-outline-secondary fw-medium px-3 rounded-3" id="idle-logout-now" style="font-size:0.85rem;">
-              <i class="ph ph-sign-out me-1"></i>Sign out now
+            <button 
+              type="button" 
+              id="idle-stay-logged-in"
+              class="inline-flex items-center gap-1.5 rounded-xl bg-amber-600 px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-amber-700 ring-1 ring-amber-600/20 transition-all"
+            >
+              <i class="ph-bold ph-hand-waving"></i>
+              <span>I'm Still Here</span>
             </button>
           </div>
         </div>
       </div>
     </div>
 
-    {{-- Hidden form used by idle-monitor.js to POST /logout on timeout --}}
-    <form id="idle-logout-form" method="POST" action="{{ route('logout') }}" style="display:none;">
+    <!-- Hidden form for automated idle logout POST -->
+    <form id="idle-logout-form" method="POST" action="{{ route('logout') }}" class="hidden">
       @csrf
     </form>
 
-    <!-- Global Executive System Alert Modal -->
-    <div class="modal fade" id="systemAlertModal" tabindex="-1" aria-labelledby="systemAlertModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-dialog-centered" style="max-width: 440px;">
-        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-          <div class="modal-header border-0 bg-light-subtle pt-4 px-4 pb-2">
-            <div class="d-flex align-items-center gap-2">
-              <span class="p-2 rounded-3 bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
-                <i class="ph ph-info fs-4" id="systemModalIcon"></i>
-              </span>
-              <h5 class="modal-title fw-bold text-dark mb-0" id="systemModalTitle">System Notification</h5>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    {{-- ── Global Executive Alert Modal (Alpine.js) ─────────────────────────────── --}}
+    <div 
+      x-show="systemModal.open" 
+      x-cloak 
+      class="fixed inset-0 z-50 overflow-y-auto" 
+      role="dialog" 
+      aria-modal="true"
+    >
+      <div 
+        x-show="systemModal.open"
+        x-transition:enter="ease-out duration-300"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
+        x-transition:leave="ease-in duration-200"
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
+      ></div>
+
+      <div class="fixed inset-0 z-10 flex min-h-full items-center justify-center p-4">
+        <div 
+          x-show="systemModal.open"
+          x-transition:enter="ease-out duration-300"
+          x-transition:enter-start="opacity-0 translate-y-4 sm:scale-95"
+          x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+          x-transition:leave="ease-in duration-200"
+          x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+          x-transition:leave-end="opacity-0 translate-y-4 sm:scale-95"
+          @click.outside="systemModal.open = false"
+          class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800 text-left"
+        >
+          <div class="flex items-center gap-3">
+            <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-500/20 dark:bg-emerald-950/40 dark:text-emerald-400">
+              <i class="ph-bold" :class="systemModal.icon"></i>
+            </span>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white" x-text="systemModal.title"></h3>
           </div>
-          <div class="modal-body p-4 pt-2">
-            <p class="text-secondary fs-sm mb-0" id="systemModalMessage">Notification content...</p>
+          <div class="mt-3">
+            <p class="text-xs text-slate-600 dark:text-slate-300" x-text="systemModal.message"></p>
           </div>
-          <div class="modal-footer border-0 bg-light-subtle p-3 px-4">
-            <button type="button" class="btn btn-sm btn-primary px-4 fw-semibold rounded-3" data-bs-dismiss="modal">OK</button>
+          <div class="mt-5 flex justify-end pt-3 border-t border-slate-100 dark:border-slate-800">
+            <button 
+              @click="systemModal.open = false" 
+              type="button" 
+              class="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700"
+            >
+              OK
+            </button>
           </div>
         </div>
       </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ asset('assets/js/data/module-registry.js') }}"></script>
-    <script src="{{ asset('assets/js/core/app-shell.js') }}?v={{ @filemtime(public_path('assets/js/core/app-shell.js')) }}"></script>
-    <script src="{{ asset('assets/js/core/modal-system.js') }}?v={{ @filemtime(public_path('assets/js/core/modal-system.js')) }}"></script>
-
+    <!-- Compatibility Shim for Bootstrap Modal calls to ensure zero legacy breakage -->
     <script>
-      window.showSystemModal = function(message, title = 'System Notification', iconClass = 'ph-info') {
-        const titleEl = document.getElementById('systemModalTitle');
-        const msgEl = document.getElementById('systemModalMessage');
-        const iconEl = document.getElementById('systemModalIcon');
-        const modalEl = document.getElementById('systemAlertModal');
-
-        if (titleEl) titleEl.textContent = title;
-        if (msgEl) msgEl.textContent = message;
-        if (iconEl) iconEl.className = 'ph ' + iconClass + ' fs-4';
-
-        if (modalEl && window.bootstrap) {
-          const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-          modalInstance.show();
+      window.bootstrap = {
+        Modal: {
+          getOrCreateInstance: function(el) {
+            return {
+              show: function() {
+                if (el.id === 'idleTimeoutModal') {
+                  const root = document.querySelector('[x-data]');
+                  if (root && root._x_dataStack) root._x_dataStack[0].idleModalOpen = true;
+                } else {
+                  window.dispatchEvent(new CustomEvent('open-modal', { detail: el.id }));
+                }
+              },
+              hide: function() {
+                if (el.id === 'idleTimeoutModal') {
+                  const root = document.querySelector('[x-data]');
+                  if (root && root._x_dataStack) root._x_dataStack[0].idleModalOpen = false;
+                } else {
+                  window.dispatchEvent(new CustomEvent('close-modal', { detail: el.id }));
+                }
+              }
+            };
+          },
+          getInstance: function(el) {
+            return window.bootstrap.Modal.getOrCreateInstance(el);
+          }
         }
       };
 
-      // Override native browser alert() to turn every alert into an executive Bootstrap popup modal
+      // Global system notification replacement for alert()
+      window.showSystemModal = function(message, title = 'System Notification', icon = 'ph-info') {
+        const root = document.querySelector('[x-data]');
+        if (root && root._x_dataStack) {
+          const data = root._x_dataStack[0];
+          data.systemModal.message = message;
+          data.systemModal.title = title;
+          data.systemModal.icon = icon.startsWith('ph-') ? icon : 'ph-' + icon;
+          data.systemModal.open = true;
+        } else {
+          window.alert(message);
+        }
+      };
+
       window.alert = function(message) {
-        let title = 'System Action';
+        let title = 'System Notification';
         let icon = 'ph-info';
-        
         if (typeof message === 'string') {
           const lower = message.toLowerCase();
-          if (lower.includes('export') || lower.includes('download') || lower.includes('print') || lower.includes('report') || lower.includes('voucher') || lower.includes('manifest')) {
+          if (lower.includes('export') || lower.includes('download')) {
             title = 'Report Export';
             icon = 'ph-file-arrow-down';
-          } else if (lower.includes('success') || lower.includes('verified') || lower.includes('posted') || lower.includes('released') || lower.includes('refreshed')) {
+          } else if (lower.includes('success') || lower.includes('posted')) {
             title = 'Action Completed';
             icon = 'ph-check-circle';
-          } else if (lower.includes('warning') || lower.includes('reject') || lower.includes('lock') || lower.includes('error')) {
+          } else if (lower.includes('warning') || lower.includes('error')) {
             title = 'System Alert';
             icon = 'ph-warning';
           }
         }
-
         window.showSystemModal(message, title, icon);
       };
 
-      // Prevent browser bfcache restoration of authenticated pages on back-forward navigation
-      window.addEventListener('pageshow', function (event) {
-        if (event.persisted) {
-          window.location.reload();
-        }
-      });
-
-      // Speculative prefetch with hover-intent (250ms debounce) to prevent flooding PHP workers
-      document.addEventListener('DOMContentLoaded', function () {
-        const prefetched = new Set();
-        const prefetchLink = function (url) {
-          if (!url || prefetched.has(url) || url.startsWith('#') || url.includes('/logout') || url.includes('javascript:')) return;
-          try {
-            const link = document.createElement('link');
-            link.rel = 'prefetch';
-            link.href = url;
-            link.as = 'document';
-            document.head.appendChild(link);
-            prefetched.add(url);
-          } catch (_) {}
-        };
-
-        document.querySelectorAll('.sidebar-nav a[href], .dashboard-header a[href], .module-card a[href]').forEach(function (el) {
-          const href = el.getAttribute('href');
-          if (href && !href.startsWith('#')) {
-            let timer = null;
-            el.addEventListener('mouseenter', function () {
-              timer = setTimeout(function () { prefetchLink(href); }, 250);
-            }, { passive: true });
-            el.addEventListener('mouseleave', function () {
-              if (timer) clearTimeout(timer);
-            }, { passive: true });
-            el.addEventListener('focus', function () { prefetchLink(href); }, { passive: true });
-            el.addEventListener('touchstart', function () { prefetchLink(href); }, { passive: true });
-          }
+      window.showToast = function(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const toast = document.createElement('div');
+        const isSuccess = type === 'success';
+        const isError = type === 'error' || type === 'danger';
+        const isWarning = type === 'warning';
+        const bg = isSuccess ? 'bg-emerald-600 text-white shadow-emerald-900/30' : (isError ? 'bg-rose-600 text-white shadow-rose-900/30' : (isWarning ? 'bg-amber-600 text-white shadow-amber-900/30' : 'bg-slate-900 text-white shadow-slate-900/30'));
+        const icon = isSuccess ? 'ph-check-circle' : (isError ? 'ph-x-circle' : (isWarning ? 'ph-warning' : 'ph-info'));
+        toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-xl ring-1 ring-white/10 ${bg} transition-all duration-300 transform translate-y-2 opacity-0 text-xs font-semibold max-w-sm`;
+        toast.innerHTML = `<i class="ph-bold ${icon} text-lg flex-shrink-0"></i><span>${message}</span>`;
+        container.appendChild(toast);
+        requestAnimationFrame(() => {
+          toast.classList.remove('translate-y-2', 'opacity-0');
         });
-      });
+        setTimeout(() => {
+          toast.classList.add('opacity-0', 'translate-y-2');
+          setTimeout(() => toast.remove(), 300);
+        }, 3500);
+      };
     </script>
+
+    <!-- Session Security & Idle Timeout Monitor -->
     <script src="{{ asset('assets/js/auth/idle-monitor.js') }}"></script>
+
     @stack('scripts')
   </body>
 </html>

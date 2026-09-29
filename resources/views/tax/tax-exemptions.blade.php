@@ -1,419 +1,464 @@
 @extends('layouts.app')
 
-@section('title', 'Tax Exemptions - Tax Management | FMS')
+@section('title', 'Tax Exemptions & Statutory Relief - Tax Management | FMS')
 @section('module', 'tax')
 @section('page', 'tax-exemptions')
 
 @section('content')
-<div class="container-fluid p-4">
+<div class="space-y-6" x-data="{
+  search: '',
+  catFilter: '',
+  statusFilter: '',
+  exemptionDetailsOpen: false,
+  selectedExemption: {
+    name: '',
+    basis: '',
+    ref: '',
+    cat: '',
+    gross: '₱0.00',
+    saved: '₱0.00',
+    status: 'Enforced'
+  },
+  openDetails(exemption) {
+    this.selectedExemption = exemption;
+    this.exemptionDetailsOpen = true;
+  }
+}">
+
   <!-- Page Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <div>
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-1 fs-xs">
-          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
-          <li class="breadcrumb-item">Tax Management</li>
-          <li class="breadcrumb-item active">Tax Exemptions</li>
-        </ol>
-      </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Tax Exemptions &amp; Special Relief Register</h1>
-      <p class="text-muted fs-xs mb-0">Manage VAT and withholding tax exemptions for Senior Citizens, PWDs, government entities, and VAT-exempt prescription medications.</p>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Tax Exemptions &amp; Special Relief Register
+        </h1>
     </div>
-    <div class="d-flex gap-2">
-      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="alert('Exporting Exemption Audit Log...');"><i class="ph ph-file-arrow-down me-1"></i> Exemption Audit PDF</button>
-      <button id="btnRegisterExemption" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#registerExemptionModal"><i class="ph ph-plus-circle me-1"></i> Register Exemption Rule</button>
+
+    <div class="flex items-center gap-2.5 flex-wrap">
+      <button 
+        type="button" 
+        onclick="alert('Exporting Exemption Audit Log...')"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50 shadow-sm transition-all dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700"
+      >
+        <i class="ph-bold ph-file-arrow-down"></i>
+        <span>Exemption Audit PDF</span>
+      </button>
+      <button 
+        type="button" 
+        id="btnRegisterExemption"
+        @click="$dispatch('open-modal', 'registerExemptionModal')"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-purple-700 ring-1 ring-purple-600/20 transition-all"
+      >
+        <i class="ph-bold ph-plus-circle"></i>
+        <span>Register Exemption Rule</span>
+      </button>
     </div>
   </div>
 
   <!-- Metric Summary Cards -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Active Exemption Records</span>
-          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-shield-check fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ ($certificates ?? collect())->count() }} Certificates</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Tax Base Amount</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-currency-circle-dollar fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($certificates ?? collect())->sum(fn($c) => $c->tax_base_amount ?? $c->gross_income ?? 0), 2) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Tax Withheld / Waived</span>
-          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-piggy-bank fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-success">₱{{ number_format((float) ($certificates ?? collect())->sum('tax_withheld'), 2) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Audit Compliance</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-square fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">100% Valid</h4>
-      </div>
-    </div>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+    <x-stat-card 
+      title="Active Exemption Records" 
+      :value="($certificates ?? collect())->count()" 
+      :isCurrency="false"
+      icon="ph-shield-check" 
+      color="purple" 
+      subtitle="Statutory legal basis active"
+    />
+
+    <x-stat-card 
+      title="Total Tax Base Amount" 
+      :value="(float) (($certificates ?? collect())->sum(fn($c) => $c->tax_base_amount ?? $c->gross_income ?? 0))" 
+      icon="ph-currency-circle-dollar" 
+      color="blue" 
+      subtitle="Exempted transactions base"
+    />
+
+    <x-stat-card 
+      title="Total Tax Withheld / Waived" 
+      :value="(float) (($certificates ?? collect())->sum('tax_withheld'))" 
+      icon="ph-piggy-bank" 
+      color="emerald" 
+      subtitle="Public relief & tax savings"
+    />
+
+    <x-stat-card 
+      title="Audit Compliance" 
+      value="100% Valid" 
+      :isCurrency="false"
+      icon="ph-check-square" 
+      color="teal" 
+      subtitle="BIR verified statutory rules"
+    />
   </div>
 
-  <!-- Data Table Card -->
-  <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-transparent border-bottom p-3">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <div class="d-flex align-items-center gap-2">
-          <label for="exemptionCatSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Category:</label>
-          <select id="exemptionCatSelect" class="form-select form-select-sm bg-light" style="min-width: 220px;">
-            <option value="" selected>All Exemption Categories</option>
+  <!-- Main Table Card -->
+  
+  <!-- Sub-Module Category Navigation Bar -->
+  @include('partials.submodule-nav')
+
+  <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 overflow-hidden dark:bg-slate-900 dark:ring-slate-800">
+    <!-- Filter Toolbar -->
+    <div class="border-b border-slate-200 p-4 dark:border-slate-800">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 flex-wrap">
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="flex items-center gap-1.5 text-xs text-slate-500">
+            <i class="ph-bold ph-funnel"></i>
+            <span>Category:</span>
+          </div>
+          <select 
+            id="exemptionCatSelect"
+            x-model="catFilter"
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-purple-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
+            <option value="">All Exemption Categories</option>
             <option value="meds">Essential Medicine (RA 11534)</option>
             <option value="senior">Senior Citizen &amp; PWD (RA 9994)</option>
           </select>
-        </div>
-        <div class="d-flex align-items-center gap-2">
-          <label for="exemptionStatusSelect" class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap">Status:</label>
-          <select id="exemptionStatusSelect" class="form-select form-select-sm bg-light" style="min-width: 180px;">
-            <option value="" selected>All Statuses</option>
+
+          <div class="flex items-center gap-1.5 text-xs text-slate-500 ml-2">
+            <span>Status:</span>
+          </div>
+          <select 
+            id="exemptionStatusSelect"
+            x-model="statusFilter"
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-purple-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
+            <option value="">All Statuses</option>
             <option value="enforced">Active &amp; Enforced</option>
             <option value="review">Under Review</option>
           </select>
         </div>
-        <div class="search-box ms-auto" style="width: 260px;">
-          <i class="ph ph-magnifying-glass"></i>
-          <input type="search" id="exemptionSearchInput" class="form-control form-control-sm" placeholder="Search exemption class, legal basis...">
+
+        <div class="flex items-center gap-2">
+          <div class="relative w-full sm:w-72">
+            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+              <i class="ph ph-magnifying-glass text-sm"></i>
+            </div>
+            <input 
+              type="search" 
+              id="exemptionSearchInput"
+              x-model="search"
+              placeholder="Search exemption class, legal basis..." 
+              class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-purple-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+            >
+          </div>
+          <button 
+            type="button" 
+            x-show="search || catFilter || statusFilter"
+            @click="search = ''; catFilter = ''; statusFilter = '';"
+            class="rounded-xl px-2 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-300"
+          >
+            Reset
+          </button>
         </div>
       </div>
     </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table id="exemptionTable" class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Exemption Class</th>
-              <th>Legal Basis / Statutory Authority</th>
-              <th>Certificate Ref</th>
-              <th class="text-end">YTD Exempt Gross (₱)</th>
-              <th class="text-end">Tax Saved (₱)</th>
-              <th>Status</th>
-              <th class="text-end">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($exemptions ?? [] as $e)
-            <tr class="exemption-row" style="cursor: pointer;" data-cat="{{ is_array($e) ? $e['cat'] : '' }}" data-status="{{ strtolower(is_array($e) ? $e['status'] : $e->status) }}" onclick="openExemptionDetailsModal({{ json_encode($e) }})">
-              <td>
-                <div class="fw-bold text-dark">{{ is_array($e) ? $e['name'] : $e->name }}</div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto custom-scrollbar">
+      <table id="exemptionTable" class="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+        <thead class="border-b border-slate-200 bg-slate-50/75 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+          <tr>
+            <th class="py-3 px-4">Exemption Class</th>
+            <th class="py-3 px-4">Legal Basis / Statutory Authority</th>
+            <th class="py-3 px-4 font-mono">Certificate Ref</th>
+            <th class="py-3 px-4 text-right font-mono">YTD Exempt Gross (₱)</th>
+            <th class="py-3 px-4 text-right font-mono">Tax Saved (₱)</th>
+            <th class="py-3 px-4 text-center">Status</th>
+            <th class="py-3 px-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          @forelse($exemptions ?? [] as $e)
+            @php
+              $name = is_array($e) ? $e['name'] : $e->name;
+              $basis = is_array($e) ? $e['basis'] : ($e->legal_basis ?? 'N/A');
+              $ref = is_array($e) ? $e['ref'] : ($e->reference_number ?? 'N/A');
+              $cat = is_array($e) ? ($e['cat'] ?? '') : '';
+              $status = is_array($e) ? ($e['status'] ?? 'Enforced') : ($e->status ?? 'Enforced');
+              $gross = is_array($e) ? $e['gross'] : ('₱' . number_format($e->exempt_gross, 2));
+              $saved = is_array($e) ? $e['saved'] : ('₱' . number_format($e->tax_saved, 2));
+              $searchString = strtolower($name . ' ' . $basis . ' ' . $ref);
+              $payload = [
+                'name' => $name,
+                'basis' => $basis,
+                'ref' => $ref,
+                'cat' => $cat,
+                'gross' => $gross,
+                'saved' => $saved,
+                'status' => $status,
+              ];
+            @endphp
+            <tr 
+              class="exemption-row transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/40 cursor-pointer"
+              data-cat="{{ $cat }}"
+              data-status="{{ strtolower($status) }}"
+              @click="openDetails({{ json_encode($payload) }})"
+              x-show="(!search || '{{ $searchString }}'.includes(search.toLowerCase())) && (!catFilter || '{{ $cat }}'.includes(catFilter.toLowerCase())) && (!statusFilter || '{{ strtolower($status) }}'.includes(statusFilter.toLowerCase()))"
+            >
+              <td class="py-3.5 px-4">
+                <div class="font-bold text-slate-900 dark:text-white">{{ $name }}</div>
               </td>
-              <td class="fs-xs text-muted">{{ is_array($e) ? $e['basis'] : ($e->legal_basis ?? 'N/A') }}</td>
-              <td><span class="font-monospace text-primary fw-bold">{{ is_array($e) ? $e['ref'] : $e->reference_number }}</span></td>
-              <td class="text-end font-monospace fw-semibold">{{ is_array($e) ? $e['gross'] : ('₱' . number_format($e->exempt_gross, 2)) }}</td>
-              <td class="text-end text-success fw-bold font-monospace">{{ is_array($e) ? $e['saved'] : ('₱' . number_format($e->tax_saved, 2)) }}</td>
-              <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> {{ is_array($e) ? $e['status'] : $e->status }}</span></td>
-              <td class="text-end" onclick="event.stopPropagation();">
-                <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Exemption Details" onclick="openExemptionDetailsModal({{ json_encode($e) }})"><i class="ph ph-eye"></i></button>
+              <td class="py-3.5 px-4 text-xs text-slate-500 dark:text-slate-400">
+                {{ $basis }}
+              </td>
+              <td class="py-3.5 px-4 font-mono font-bold text-purple-600 dark:text-purple-400 text-xs">
+                {{ $ref }}
+              </td>
+              <td class="py-3.5 px-4 text-right font-mono font-semibold text-slate-900 dark:text-white">
+                {{ $gross }}
+              </td>
+              <td class="py-3.5 px-4 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                {{ $saved }}
+              </td>
+              <td class="py-3.5 px-4 text-center">
+                <x-status-badge :status="$status" />
+              </td>
+              <td class="py-3.5 px-4 text-right" @click.stop>
+                <button 
+                  type="button" 
+                  @click="openDetails({{ json_encode($payload) }})"
+                  class="inline-flex items-center gap-1 rounded-lg bg-purple-50 px-2.5 py-1 text-xs font-semibold text-purple-700 ring-1 ring-purple-600/20 hover:bg-purple-100 transition-all dark:bg-purple-950/40 dark:text-purple-300"
+                  title="View Exemption Details"
+                >
+                  <i class="ph-bold ph-eye"></i>
+                  <span>Inspect</span>
+                </button>
               </td>
             </tr>
-            @empty
+          @empty
             <tr>
-              <td colspan="7" class="text-center py-4 text-muted">No tax exemptions registered in database.</td>
+              <td colspan="7" class="py-12 text-center text-sm text-slate-400">
+                <i class="ph ph-shield-check text-3xl mb-2 block mx-auto text-slate-300"></i>
+                No tax exemptions registered in database.
+              </td>
             </tr>
-            @endforelse
-          </tbody>
-        </table>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Table Footer -->
+    <div class="border-t border-slate-200 p-4 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900/50">
+      <span id="exemptionSummaryText">Showing {{ count($exemptions ?? []) }} Tax Exemptions</span>
+      <div class="flex items-center gap-2">
+        <span class="inline-flex items-center gap-1 text-[11px] text-slate-400">
+          <i class="ph-bold ph-shield-check text-purple-600"></i>
+          <span>RA 9994 &bull; RA 10754 &bull; RA 11534 Compliant</span>
+        </span>
       </div>
     </div>
-    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs" id="exemptionSummaryText">Showing {{ count($exemptions ?? []) }} Tax Exemptions</span>
-      <nav aria-label="Exemption Pagination">
-        <ul class="pagination pagination-sm mb-0">
-          <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
-          <li class="page-item active"><a class="page-link" href="#">1</a></li>
-          <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
-        </ul>
-      </nav>
+  </div>
+
+  <!-- Slide-Over Drawer: In-Depth Exemption Details -->
+  <div 
+    x-show="exemptionDetailsOpen" 
+    x-cloak 
+    class="fixed inset-0 z-50 overflow-hidden" 
+    role="dialog" 
+    aria-modal="true"
+  >
+    <div 
+      x-show="exemptionDetailsOpen" 
+      x-transition.opacity.duration.300ms 
+      class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
+    ></div>
+
+    <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
+      <div 
+        x-show="exemptionDetailsOpen" 
+        x-transition:enter="transform transition ease-in-out duration-300"
+        x-transition:enter-start="translate-x-full"
+        x-transition:enter-end="translate-x-0"
+        x-transition:leave="transform transition ease-in-out duration-300"
+        x-transition:leave-start="translate-x-0"
+        x-transition:leave-end="translate-x-full"
+        @click.outside="exemptionDetailsOpen = false" 
+        class="w-screen max-w-xl bg-white shadow-2xl ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800 flex flex-col justify-between"
+      >
+        <!-- Header -->
+        <div class="p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-2 mb-1">
+              <span class="font-mono text-xs font-bold text-purple-600 dark:text-purple-400" id="detailExemptionRef" x-text="selectedExemption.ref"></span>
+              <span class="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-600/20" id="detailExemptionStatus" x-text="selectedExemption.status"></span>
+            </div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white" id="detailExemptionName" x-text="selectedExemption.name"></h3>
+          </div>
+          <button 
+            type="button" 
+            @click="exemptionDetailsOpen = false" 
+            class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+          >
+            <i class="ph-bold ph-x text-lg"></i>
+          </button>
+        </div>
+
+        <!-- Body -->
+        <div class="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-6 text-xs">
+          <!-- Metrics -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-200/80 dark:bg-slate-800/60 dark:ring-slate-700 text-center">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1">YTD Exempt Gross</span>
+              <div class="font-mono text-lg font-bold text-slate-900 dark:text-white" id="detailExemptionGross" x-text="selectedExemption.gross"></div>
+            </div>
+            <div class="rounded-2xl bg-emerald-50 p-4 ring-1 ring-emerald-200/80 dark:bg-emerald-950/40 dark:ring-emerald-800/60 text-center">
+              <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 block mb-1">Total Tax Saved</span>
+              <div class="font-mono text-lg font-bold text-emerald-700 dark:text-emerald-300" id="detailExemptionSaved" x-text="selectedExemption.saved"></div>
+            </div>
+          </div>
+
+          <!-- Legal Basis -->
+          <div class="rounded-2xl bg-slate-50 p-5 ring-1 ring-slate-200/80 dark:bg-slate-800/60 dark:ring-slate-700 space-y-3">
+            <h4 class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 uppercase text-[11px] tracking-wider text-slate-500">
+              <i class="ph-bold ph-scales text-purple-600"></i>
+              <span>Legal Basis &amp; Statutory Authority</span>
+            </h4>
+            
+            <div class="space-y-2 pt-1 divide-y divide-slate-200 dark:divide-slate-700">
+              <div class="flex justify-between items-center pt-2">
+                <span class="text-slate-500">Implementing Circular / Basis:</span>
+                <span class="font-mono font-bold text-slate-900 dark:text-white" id="detailExemptionBasis" x-text="selectedExemption.basis"></span>
+              </div>
+              <div class="flex justify-between items-center pt-2">
+                <span class="text-slate-500">Scope of Medical Exemption:</span>
+                <span class="font-medium text-slate-800 dark:text-slate-200" id="detailExemptionDesc" x-text="'Essential Healthcare Relief • VAT-Exempt'"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Audit Stamp -->
+          <div class="rounded-2xl bg-white p-5 ring-1 ring-slate-200/80 dark:bg-slate-800 dark:ring-slate-700 space-y-3">
+            <h4 class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 uppercase text-[11px] tracking-wider text-slate-500">
+              <i class="ph-bold ph-shield-check text-emerald-600"></i>
+              <span>Audit Trail &amp; BIR Verification</span>
+            </h4>
+
+            <div class="space-y-2 pt-1 text-[11px]">
+              <div class="flex items-center justify-between">
+                <span class="text-slate-500">Statutory Ruling Status:</span>
+                <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-600/20">
+                  <i class="ph-bold ph-check"></i> Verified by BIR Tax Auditor
+                </span>
+              </div>
+              <div class="flex items-center justify-between text-slate-400 font-mono">
+                <span>System Audit Stamp:</span>
+                <span x-text="'LOG-EX-2026 • ' + '{{ date('Y-m-d H:i:s') }} PST'"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
+          <button 
+            type="button" 
+            @click="exemptionDetailsOpen = false" 
+            class="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300"
+          >
+            Close
+          </button>
+          <button 
+            type="button" 
+            onclick="alert('Exporting Tax Exemption Ruling Brief...');"
+            class="inline-flex items-center gap-1.5 rounded-xl bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-purple-700 ring-1 ring-purple-600/20"
+          >
+            <i class="ph-bold ph-file-text"></i>
+            <span>Export Exemption Audit</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- Modal: In-Depth Exemption Details (Executive Design) -->
-<div class="modal fade" id="exemptionDetailsModal" tabindex="-1" aria-labelledby="exemptionDetailsModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-      <div class="modal-header bg-white border-bottom p-4 pb-3">
+  <!-- Modal: Register Tax Exemption Rule -->
+  <x-modal 
+    id="registerExemptionModal" 
+    title="Register Statutory Tax Exemption" 
+    subtitle="Add exemption authority under NIRC, CREATE Act, or statutory circular" 
+    icon="ph-shield-check" 
+    iconVariant="purple" 
+    size="lg" 
+    :showFooter="false"
+  >
+    <form id="registerExemptionForm" @submit.prevent="
+      alert('Statutory exemption rule recorded in CAS masterfile.');
+      $dispatch('close-modal', 'registerExemptionModal');
+    " class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <div class="d-flex align-items-center gap-2 mb-1">
-            <span class="badge bg-secondary-subtle text-secondary font-monospace px-2 py-1" id="detailExemptionRef">BIR-CERT-2026-EX01</span>
-            <span class="badge bg-success-subtle text-success" id="detailExemptionStatus"><i class="ph ph-check-circle me-1"></i> Enforced</span>
-          </div>
-          <h4 class="modal-title fw-bold text-dark mb-0" id="detailExemptionName">RA 11534 (CREATE Act - Essential Medicines)</h4>
-        </div>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-
-      <div class="modal-body p-4 bg-light-subtle">
-        <div class="row g-3 mb-4">
-          <div class="col-md-6">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">YTD Exempt Gross Amount</span>
-              <h4 class="fw-bold text-dark mb-0 font-monospace" id="detailExemptionGross">₱1,450,000.00</h4>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="bg-white border rounded-3 p-3 text-center">
-              <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Total Tax Waived / Saved</span>
-              <h4 class="fw-bold text-success mb-0 font-monospace" id="detailExemptionSaved">₱174,000.00</h4>
-            </div>
-          </div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            Exemption Class Title <span class="text-rose-500">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="modalExemptionName" 
+            class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-purple-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700" 
+            placeholder="e.g. Non-Profit Hospital Income Exemption" 
+            required
+          >
         </div>
 
-        <div class="bg-white border rounded-3 p-3 mb-4">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-primary"></i> Legal Basis &amp; Statutory Authority</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Government Implementing Circular</span>
-              <span class="font-monospace fw-bold text-dark" id="detailExemptionBasis">BIR Revenue Regulation 04-2021</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">Scope of Medical Exemption</span>
-              <span class="text-muted" id="detailExemptionDesc">Diabetes, Hypertension &amp; Oncology Drugs</span>
-            </div>
-          </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            Legal Basis / Statutory Law <span class="text-rose-500">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="modalExemptionBasis" 
+            class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-purple-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700" 
+            placeholder="e.g. NIRC Section 30(E)" 
+            required
+          >
         </div>
 
-        <!-- Audit Trail & Segregation of Duties -->
-        <div class="bg-white border rounded-3 p-3">
-          <h6 class="fw-bold text-dark mb-3 fs-xs text-uppercase"><i class="ph ph-shield-check me-1 text-success"></i> Audit Trail &amp; BIR Legal Basis Verification</h6>
-          <div class="d-flex flex-column gap-2 fs-xs">
-            <div class="d-flex justify-content-between border-bottom pb-2">
-              <span class="text-muted">Statutory Ruling Status:</span>
-              <span class="badge bg-success-subtle text-success"><i class="ph ph-check me-1"></i> Verified by BIR Tax Auditor</span>
-            </div>
-            <div class="d-flex justify-content-between pt-1">
-              <span class="text-muted">System Audit Stamp:</span>
-              <span class="font-monospace text-muted">LOG-EX-2026-001 | {{ date('Y-m-d H:i:s') }} PST</span>
-            </div>
-          </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            BIR Exemption Certificate Ref <span class="text-rose-500">*</span>
+          </label>
+          <input 
+            type="text" 
+            id="modalExemptionRef" 
+            class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs font-mono text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-purple-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700" 
+            placeholder="e.g. BIR-CERT-2026-EX03" 
+            required
+          >
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+            YTD Exempt Gross Base (₱) <span class="text-rose-500">*</span>
+          </label>
+          <input 
+            type="number" 
+            id="modalExemptionGross" 
+            step="0.01" 
+            min="0" 
+            class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs font-mono text-right text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-purple-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700" 
+            value="500000.00" 
+            required
+          >
         </div>
       </div>
 
-      <div class="modal-footer bg-white border-top p-3">
-        <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-sm btn-primary" onclick="alert('Exporting Tax Exemption Ruling Brief...');"><i class="ph ph-file-text me-1"></i> Export Exemption Audit</button>
+      <div class="flex items-center justify-end gap-2 pt-4 border-t border-slate-200 dark:border-slate-800">
+        <button 
+          type="button" 
+          @click="$dispatch('close-modal', 'registerExemptionModal')" 
+          class="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300"
+        >
+          Cancel
+        </button>
+        <button 
+          type="submit" 
+          class="inline-flex items-center gap-1.5 rounded-xl bg-purple-600 px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-purple-700 ring-1 ring-purple-600/20"
+        >
+          <i class="ph-bold ph-check"></i>
+          <span>Register Exemption Rule</span>
+        </button>
       </div>
-    </div>
-  </div>
-</div>
+    </form>
+  </x-modal>
 
-<!-- Modal: Register Tax Exemption Rule -->
-<div class="modal fade" id="registerExemptionModal" tabindex="-1" aria-labelledby="registerExemptionModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered">
-    <div class="modal-content border-0 shadow">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title font-weight-bold" id="registerExemptionModalLabel"><i class="ph ph-shield-check me-2 text-primary"></i>Register Statutory Tax Exemption</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body p-4">
-        <form id="registerExemptionForm">
-          <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Exemption Class Title <span class="text-danger">*</span></label>
-              <input type="text" id="modalExemptionName" class="form-control form-control-sm" placeholder="e.g. Non-Profit Hospital Income Exemption" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Legal Basis / Statutory Law <span class="text-danger">*</span></label>
-              <input type="text" id="modalExemptionBasis" class="form-control form-control-sm" placeholder="e.g. NIRC Section 30(E)" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">BIR Exemption Certificate Ref No. <span class="text-danger">*</span></label>
-              <input type="text" id="modalExemptionRef" class="form-control form-control-sm font-monospace" placeholder="e.g. BIR-CERT-2026-EX03" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">YTD Exempt Gross Base (₱) <span class="text-danger">*</span></label>
-              <input type="number" id="modalExemptionGross" step="0.01" min="0" class="form-control form-control-sm text-end font-monospace" value="500000.00" required>
-            </div>
-          </div>
-          <div class="d-flex justify-content-end gap-2 mt-4">
-            <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-check me-1"></i> Register Exemption Rule</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
 </div>
 @endsection
-
-@push('scripts')
-<script>
-function openExemptionDetailsModal(e) {
-  if (!e) return;
-
-  document.getElementById('detailExemptionName').textContent = e.name || 'Exemption Name';
-  document.getElementById('detailExemptionRef').textContent = e.ref || 'BIR-CERT-000';
-  document.getElementById('detailExemptionBasis').textContent = e.basis || '-';
-  document.getElementById('detailExemptionDesc').textContent = e.desc || '-';
-  document.getElementById('detailExemptionGross').textContent = e.gross || '₱0.00';
-  document.getElementById('detailExemptionSaved').textContent = e.saved || '₱0.00';
-
-  const statusEl = document.getElementById('detailExemptionStatus');
-  if (statusEl) {
-    statusEl.textContent = e.status;
-    statusEl.className = 'badge ' + (e.status_badge || 'bg-success-subtle text-success');
-  }
-
-  const modalEl = document.getElementById('exemptionDetailsModal');
-  if (modalEl && window.bootstrap) {
-    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-    modalInstance.show();
-  }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  const searchInput = document.getElementById('exemptionSearchInput');
-  const catSelect = document.getElementById('exemptionCatSelect');
-  const statusSelect = document.getElementById('exemptionStatusSelect');
-  const summaryText = document.getElementById('exemptionSummaryText');
-  const btnRegisterExemption = document.getElementById('btnRegisterExemption');
-
-  if (btnRegisterExemption) {
-    btnRegisterExemption.addEventListener('click', function() {
-      const modalEl = document.getElementById('registerExemptionModal');
-      if (modalEl && window.bootstrap) {
-        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
-        modalInstance.show();
-      }
-    });
-  }
-
-  function filterExemptions() {
-    const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
-    const selectedCat = catSelect ? catSelect.value.toLowerCase() : '';
-    const selectedStatus = statusSelect ? statusSelect.value.toLowerCase() : '';
-    const rows = document.querySelectorAll('.exemption-row');
-    let visibleCount = 0;
-
-    rows.forEach(function(row) {
-      const rowCat = row.getAttribute('data-cat') || '';
-      const rowStatus = row.getAttribute('data-status') || '';
-      const rowText = row.textContent.toLowerCase();
-
-      const matchCat = !selectedCat || rowCat.includes(selectedCat);
-      const matchStatus = !selectedStatus || rowStatus.includes(selectedStatus);
-      const matchSearch = !searchQuery || rowText.includes(searchQuery);
-
-      if (matchCat && matchStatus && matchSearch) {
-        row.style.display = '';
-        visibleCount++;
-      } else {
-        row.style.display = 'none';
-      }
-    });
-
-    if (summaryText) {
-      summaryText.textContent = `Showing ${visibleCount} Tax Exemption${visibleCount !== 1 ? 's' : ''}`;
-    }
-
-    let emptyRow = document.getElementById('noExemptionRow');
-    const tbody = document.querySelector('#exemptionTable tbody');
-    if (visibleCount === 0) {
-      if (!emptyRow && tbody) {
-        emptyRow = document.createElement('tr');
-        emptyRow.id = 'noExemptionRow';
-        emptyRow.innerHTML = `<td colspan="7" class="text-center py-4 text-muted"><i class="ph ph-magnifying-glass fs-3 d-block mb-2"></i>No exemptions found matching the current filter.</td>`;
-        tbody.appendChild(emptyRow);
-      }
-      if (emptyRow) emptyRow.style.display = '';
-    } else if (emptyRow) {
-      emptyRow.style.display = 'none';
-    }
-  }
-
-  if (searchInput) {
-    searchInput.addEventListener('input', filterExemptions);
-    searchInput.addEventListener('keyup', filterExemptions);
-  }
-  if (catSelect) catSelect.addEventListener('change', filterExemptions);
-  if (statusSelect) statusSelect.addEventListener('change', filterExemptions);
-
-  const registerExemptionForm = document.getElementById('registerExemptionForm');
-  if (registerExemptionForm) {
-    registerExemptionForm.addEventListener('submit', function(ex) {
-      ex.preventDefault();
-
-      const nameVal = document.getElementById('modalExemptionName').value;
-      const basisVal = document.getElementById('modalExemptionBasis').value;
-      const refVal = document.getElementById('modalExemptionRef').value;
-      const rawGross = parseFloat(document.getElementById('modalExemptionGross').value || 0);
-      const rawSaved = rawGross * 0.12;
-
-      const formattedGross = '₱' + rawGross.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      const formattedSaved = '₱' + rawSaved.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-      const exObj = {
-        name: nameVal,
-        desc: 'Statutory VAT Exemption Category',
-        cat: 'meds',
-        basis: basisVal,
-        ref: refVal,
-        gross: formattedGross,
-        saved: formattedSaved,
-        status: 'Enforced',
-        status_badge: 'bg-success-subtle text-success'
-      };
-
-      const tbody = document.querySelector('#exemptionTable tbody');
-      if (tbody) {
-        const newRow = document.createElement('tr');
-        newRow.className = 'exemption-row';
-        newRow.style.cursor = 'pointer';
-        newRow.setAttribute('data-cat', 'meds');
-        newRow.setAttribute('data-status', 'enforced');
-
-        newRow.onclick = function() { openExemptionDetailsModal(exObj); };
-
-        newRow.innerHTML = `
-          <td>
-            <div class="fw-bold text-dark">${nameVal}</div>
-            <span class="fs-xs text-muted">Statutory VAT Exemption Category</span>
-          </td>
-          <td class="fs-xs text-muted">${basisVal}</td>
-          <td><span class="font-monospace text-primary fw-bold">${refVal}</span></td>
-          <td class="text-end font-monospace fw-semibold">${formattedGross}</td>
-          <td class="text-end text-success fw-bold font-monospace">${formattedSaved}</td>
-          <td><span class="badge bg-success-subtle text-success"><i class="ph ph-check-circle me-1"></i> Enforced</span></td>
-          <td class="text-end" onclick="event.stopPropagation();">
-            <button class="btn btn-sm btn-icon btn-outline-secondary" title="View Exemption Details"><i class="ph ph-eye"></i></button>
-          </td>
-        `;
-
-        const eyeBtn = newRow.querySelector('button[title="View Exemption Details"]');
-        if (eyeBtn) {
-          eyeBtn.onclick = function(e) {
-            e.stopPropagation();
-            openExemptionDetailsModal(exObj);
-          };
-        }
-
-        tbody.insertBefore(newRow, tbody.firstChild);
-      }
-
-      const modalEl = document.getElementById('registerExemptionModal');
-      const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-      if (modalInstance) modalInstance.hide();
-
-      registerExemptionForm.reset();
-      filterExemptions();
-    });
-  }
-
-  filterExemptions();
-});
-</script>
-@endpush

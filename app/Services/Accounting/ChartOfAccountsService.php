@@ -97,13 +97,13 @@ final class ChartOfAccountsService
     }
 
     /**
-     * Retrieve all accounts with eager-loaded relations and optional filtering.
+     * Retrieve accounts with eager-loaded relations and optional filtering, paginated.
      *
-     * @return Collection<int, Account>
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator<\App\Models\Account>
      */
-    public function getAccountsList(?string $category = null, ?bool $isActive = null, ?string $search = null): Collection
+    public function getAccountsList(?string $category = null, ?bool $isActive = null, ?string $search = null, int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
-        $query = Account::with(['journalEntryLines.journalEntry' => function ($q) {
+        $query = Account::with(['journalEntryLines.journalEntry' => function ($q): void {
             $q->where('status', 'POSTED');
         }])->orderBy('code');
 
@@ -116,13 +116,13 @@ final class ChartOfAccountsService
         }
 
         if ($search) {
-            $query->where(function ($q) use ($search) {
+            $query->where(function ($q) use ($search): void {
                 $q->where('code', 'LIKE', "%{$search}%")
                   ->orWhere('name', 'LIKE', "%{$search}%")
                   ->orWhere('department', 'LIKE', "%{$search}%");
             });
         }
 
-        return $query->get();
+        return $query->paginate($perPage)->withQueryString();
     }
 }

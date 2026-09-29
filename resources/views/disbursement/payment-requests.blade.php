@@ -5,120 +5,122 @@
 @section('page', 'payment-requests')
 
 @section('content')
-<div class="container-fluid p-4">
-  <!-- Alerts -->
+<div class="space-y-6">
+  <!-- Executive Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+    <div>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Disbursement Vouchers &amp; Payment Requisitions
+        </h1>
+    </div>
+
+    <div class="flex items-center gap-2.5 flex-wrap">
+      <button 
+        type="button" 
+        id="btnEncodePayroll"
+        @click="$dispatch('open-modal', 'encodePayrollModal')"
+        class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+      >
+        <i class="ph-bold ph-users-three text-emerald-600"></i>
+        <span>Encode Payroll Cutoff</span>
+      </button>
+      <button 
+        type="button" 
+        id="btnCreateRequest"
+        @click="$dispatch('open-modal', 'createRequestModal')"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20 transition-all cursor-pointer"
+      >
+        <i class="ph-bold ph-plus-circle"></i>
+        <span>New Payment Request</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Session Alerts -->
   @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm rounded-3 mb-4" role="alert">
-      <div class="d-flex align-items-center">
-        <i class="ph ph-check-circle fs-4 me-2"></i>
+    <div class="rounded-xl bg-emerald-50 p-4 text-xs font-semibold text-emerald-800 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-check-circle text-lg text-emerald-600"></i>
         <span>{{ session('success') }}</span>
       </div>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   @endif
 
   @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-3 mb-4" role="alert">
-      <div class="d-flex align-items-center">
-        <i class="ph ph-warning-circle fs-4 me-2"></i>
+    <div class="rounded-xl bg-rose-50 p-4 text-xs font-semibold text-rose-800 ring-1 ring-rose-600/20 dark:bg-rose-950/40 dark:text-rose-300 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <i class="ph-bold ph-warning-circle text-lg text-rose-600"></i>
         <span>{{ session('error') }}</span>
       </div>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   @endif
 
   @if($errors->any())
-    <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm rounded-3 mb-4" role="alert">
-      <div class="d-flex align-items-start">
-        <i class="ph ph-warning-circle fs-4 me-2 mt-1"></i>
+    <div class="rounded-xl bg-rose-50 p-4 text-xs text-rose-800 ring-1 ring-rose-600/20 dark:bg-rose-950/40 dark:text-rose-300">
+      <div class="flex items-start gap-2">
+        <i class="ph-bold ph-warning-circle text-lg text-rose-600 mt-0.5 flex-shrink-0"></i>
         <div>
-          <strong class="d-block mb-1">Validation Errors Encountered:</strong>
-          <ul class="mb-0 ps-3">
+          <strong class="block font-semibold mb-1">Validation Errors Encountered:</strong>
+          <ul class="list-disc list-inside space-y-0.5 text-xs">
             @foreach($errors->all() as $err)
               <li>{{ $err }}</li>
             @endforeach
           </ul>
         </div>
       </div>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
   @endif
 
-  <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-1 fs-xs">
-          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
-          <li class="breadcrumb-item">Disbursement Management</li>
-          <li class="breadcrumb-item active">Disbursement Vouchers &amp; Requests</li>
-        </ol>
-      </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Disbursement Vouchers &amp; Payment Requisitions</h1>
-      <p class="text-muted fs-xs mb-0">Create and monitor payment requests for departmental operating expenses, physician honorariums, supplier bills, and employee reimbursements.</p>
-    </div>
-    <div class="d-flex align-items-center gap-2">
-      <x-integration-badge 
-          type="external" 
-          :systems="['HRMS (Payroll Runs)', 'Vendor Invoices']" 
-          description="Ingests payroll obligations and operational payment requests." 
-      />
-      <button id="btnEncodePayroll" class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#encodePayrollModal">
-        <i class="ph ph-users-three me-1"></i> Encode Payroll Cutoff Run
-      </button>
-      <button id="btnCreateRequest" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#createRequestModal">
-        <i class="ph ph-plus me-1"></i> New Payment Request
-      </button>
-    </div>
-  </div>
-
   <!-- Metric Summary Cards -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Total Requisitions</span>
-          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-file-text fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ $totalRequests ?? 0 }} Vouchers</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Pending Audit / Approval</span>
-          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-clock fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-warning font-monospace">₱{{ number_format((float) ($pendingApproval ?? 0), 2) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Approved for Release</span>
-          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-stamp fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-info font-monospace">₱{{ number_format((float) ($approvedAmount ?? 0), 2) }}</h4>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small">Total Released Payments</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-check-circle fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-success font-monospace">₱{{ number_format((float) ($totalReleased ?? 0), 2) }}</h4>
-      </div>
-    </div>
+  <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+    <x-stat-card 
+      title="Total Requisitions" 
+      :value="$totalRequests ?? 0" 
+      icon="ph-file-text" 
+      color="slate" 
+      subtitle="Cumulative disbursement vouchers"
+    />
+    <x-stat-card 
+      title="Pending Audit / Approval" 
+      :value="$pendingApproval ?? 0" 
+      icon="ph-clock" 
+      color="amber" 
+      subtitle="Awaiting internal audit or release"
+    />
+    <x-stat-card 
+      title="Approved for Release" 
+      :value="$approvedAmount ?? 0" 
+      icon="ph-stamp" 
+      color="blue" 
+      subtitle="Authorized for check / EFT release"
+    />
+    <x-stat-card 
+      title="Total Released Payments" 
+      :value="$totalReleased ?? 0" 
+      icon="ph-check-circle" 
+      color="emerald" 
+      subtitle="Fully cleared bank disbursements"
+    />
   </div>
 
-  <!-- Requisitions Table Card -->
-  <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-transparent border-bottom p-3">
-      <form method="GET" action="{{ route('disbursement.payment-requests') }}" class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-        <div class="d-flex align-items-center gap-2">
-          <label class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap"><i class="ph ph-funnel me-1"></i> Status:</label>
-          <select name="status" class="form-select form-select-sm bg-light" onchange="this.form.submit()">
+  <!-- Sub-Module Category Navigation Bar -->
+  @include('partials.submodule-nav')
+
+  <!-- Requisitions Data Table Card -->
+  <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 overflow-hidden dark:bg-slate-900 dark:ring-slate-800">
+    <!-- Filter Toolbar -->
+    <div class="border-b border-slate-200 p-4 dark:border-slate-800">
+      <form method="GET" action="{{ route('disbursement.payment-requests') }}" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <i class="ph-bold ph-funnel"></i>
+            <span>Status:</span>
+          </div>
+          <select 
+            name="status" 
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700" 
+            onchange="this.form.submit()"
+          >
             <option value="" {{ request('status') === null || request('status') === '' ? 'selected' : '' }}>All Statuses</option>
             <option value="PREPARED" {{ request('status') === 'PREPARED' ? 'selected' : '' }}>Prepared (Pending Audit)</option>
             <option value="AUDITED" {{ request('status') === 'AUDITED' ? 'selected' : '' }}>Audited (Ready for Approval)</option>
@@ -127,104 +129,142 @@
             <option value="VOIDED" {{ request('status') === 'VOIDED' ? 'selected' : '' }}>Voided</option>
           </select>
         </div>
-        <div class="search-box" style="width: 280px;">
-          <input type="search" name="search" class="form-control form-control-sm" placeholder="Search voucher #, payee, desc..." value="{{ request('search') }}">
+
+        <div class="relative w-full sm:w-72">
+          <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+            <i class="ph ph-magnifying-glass text-sm"></i>
+          </div>
+          <input 
+            type="search" 
+            name="search" 
+            class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700" 
+            placeholder="Search voucher #, payee, desc..." 
+            value="{{ request('search') }}"
+          >
         </div>
       </form>
     </div>
 
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Voucher Ref #</th>
-              <th>Payee &amp; Particulars</th>
-              <th>Bank Account</th>
-              <th>Payment Method</th>
-              <th>Voucher Date</th>
-              <th class="text-end">Amount (₱)</th>
-              <th>Status</th>
-              <th>Preparer</th>
-              <th class="text-end">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($vouchers as $v)
-            @php
-              $amt = (float) $v->net_disbursed_amount;
-              $statusBadge = match($v->status) {
-                'RELEASED' => 'bg-success-subtle text-success',
-                'APPROVED' => 'bg-info-subtle text-info',
-                'AUDITED'  => 'bg-primary-subtle text-primary',
-                'VOIDED'   => 'bg-secondary-subtle text-secondary',
-                default    => 'bg-warning-subtle text-warning',
-              };
-            @endphp
-            <tr>
-              <td>
-                <span class="font-monospace fw-bold text-primary">{{ $v->voucher_number }}</span>
-                @if($v->check_or_eft_ref)
-                  <div class="fs-xs text-muted font-monospace">Ref: {{ $v->check_or_eft_ref }}</div>
+    <!-- Table -->
+    <div class="overflow-x-auto custom-scrollbar">
+      <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+        <thead class="bg-slate-50/75 border-b border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:bg-slate-800/50 dark:border-slate-800 dark:text-slate-400">
+          <tr>
+            <th class="px-4 py-3.5">Voucher Ref #</th>
+            <th class="px-4 py-3.5">Payee &amp; Particulars</th>
+            <th class="px-4 py-3.5">Bank Account</th>
+            <th class="px-4 py-3.5">Payment Method</th>
+            <th class="px-4 py-3.5">Voucher Date</th>
+            <th class="px-4 py-3.5 text-right">Amount (₱)</th>
+            <th class="px-4 py-3.5 text-center">Status</th>
+            <th class="px-4 py-3.5">Preparer</th>
+            <th class="px-4 py-3.5 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+          @forelse($vouchers as $v)
+          @php
+            $amt = (float) $v->net_disbursed_amount;
+          @endphp
+          <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+            <td class="px-4 py-3">
+              <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400">{{ $v->voucher_number }}</span>
+              @if($v->check_or_eft_ref)
+                <div class="text-[11px] text-slate-400 font-mono">Ref: {{ $v->check_or_eft_ref }}</div>
+              @endif
+            </td>
+            <td class="px-4 py-3">
+              <div class="font-semibold text-slate-900 dark:text-white">{{ $v->payee_name }}</div>
+              <div class="text-[11px] text-slate-500 dark:text-slate-400">
+                {{ $v->description ?? ($v->purchaseBill ? "Bill {$v->purchaseBill->bill_number}" : 'Departmental Requisition') }}
+              </div>
+            </td>
+            <td class="px-4 py-3">
+              <div class="font-medium text-slate-900 dark:text-white">{{ $v->bankAccount?->bank_name ?? 'Operating Bank' }}</div>
+              <div class="text-[11px] text-slate-400 font-mono">{{ $v->bankAccount?->account_number ?? 'Acc' }}</div>
+            </td>
+            <td class="px-4 py-3">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-mono font-medium bg-slate-100 text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
+                {{ str_replace('_', ' ', $v->payment_method) }}
+              </span>
+            </td>
+            <td class="px-4 py-3 text-slate-600 dark:text-slate-300">
+              {{ $v->voucher_date ? $v->voucher_date->format('M d, Y') : '—' }}
+            </td>
+            <td class="px-4 py-3 text-right font-mono font-bold tabular-nums text-slate-900 dark:text-white">
+              ₱{{ number_format($amt, 2) }}
+            </td>
+            <td class="px-4 py-3 text-center">
+              @if($v->status === 'RELEASED')
+                <x-status-badge status="active" label="RELEASED" size="sm" />
+              @elseif($v->status === 'APPROVED')
+                <x-status-badge status="blue" label="APPROVED" size="sm" />
+              @elseif($v->status === 'AUDITED')
+                <x-status-badge status="indigo" label="AUDITED" size="sm" />
+              @elseif($v->status === 'VOIDED')
+                <x-status-badge status="inactive" label="VOIDED" size="sm" />
+              @else
+                <x-status-badge status="pending" label="{{ $v->status }}" size="sm" />
+              @endif
+            </td>
+            <td class="px-4 py-3 text-slate-500 dark:text-slate-400 text-[11px]">
+              {{ $v->preparer?->name ?? 'Staff' }}
+            </td>
+            <td class="px-4 py-3 text-right">
+              <div class="flex items-center justify-end gap-1.5">
+                @if($v->status === 'PREPARED' || $v->status === 'DRAFT')
+                  <form method="POST" action="{{ route('disbursement.payment-requests.audit', $v->id) }}" onsubmit="return confirm('Audit and verify voucher {{ $v->voucher_number }}?');" class="inline">
+                    @csrf
+                    <button 
+                      type="submit" 
+                      class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer" 
+                      title="Internal Audit Verification"
+                    >
+                      <i class="ph-bold ph-magnifying-glass text-emerald-600"></i>
+                      <span>Audit</span>
+                    </button>
+                  </form>
+                  <form method="POST" action="{{ route('disbursement.payment-requests.void', $v->id) }}" onsubmit="return confirm('Void voucher {{ $v->voucher_number }}?');" class="inline">
+                    @csrf
+                    <button 
+                      type="submit" 
+                      class="inline-flex items-center rounded-lg border border-rose-200 bg-white px-2 py-1 text-xs font-semibold text-rose-600 shadow-sm hover:bg-rose-50 dark:border-rose-900/50 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-rose-950/30 cursor-pointer" 
+                      title="Void Request"
+                    >
+                      <i class="ph-bold ph-x"></i>
+                    </button>
+                  </form>
+                @elseif($v->status === 'AUDITED' || $v->status === 'APPROVED')
+                  <a 
+                    href="{{ route('disbursement.disbursement-approval') }}" 
+                    class="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-all cursor-pointer"
+                  >
+                    <i class="ph-bold ph-shield-check"></i>
+                    <span>Workstation</span>
+                  </a>
+                @else
+                  <span class="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:ring-slate-700">
+                    <i class="ph-bold ph-check-circle text-emerald-500"></i> Disbursed
+                  </span>
                 @endif
-              </td>
-              <td>
-                <div class="fw-semibold text-dark">{{ $v->payee_name }}</div>
-                <div class="fs-xs text-muted">{{ $v->description ?? ($v->purchaseBill ? "Bill {$v->purchaseBill->bill_number}" : 'Departmental Requisition') }}</div>
-              </td>
-              <td>
-                <div class="fs-xs fw-medium text-dark">{{ $v->bankAccount?->bank_name ?? 'Operating Bank' }}</div>
-                <div class="fs-xs text-muted font-monospace">{{ $v->bankAccount?->account_number ?? 'Acc' }}</div>
-              </td>
-              <td>
-                <span class="badge bg-light text-dark border font-monospace">{{ str_replace('_', ' ', $v->payment_method) }}</span>
-              </td>
-              <td>{{ $v->voucher_date ? $v->voucher_date->format('M d, Y') : '—' }}</td>
-              <td class="text-end font-monospace fw-bold text-dark fs-6">₱{{ number_format($amt, 2) }}</td>
-              <td>
-                <span class="badge {{ $statusBadge }}">{{ $v->status }}</span>
-              </td>
-              <td>
-                <span class="fs-xs text-muted">{{ $v->preparer?->name ?? 'Staff' }}</span>
-              </td>
-              <td class="text-end">
-                <div class="d-flex justify-content-end gap-1">
-                  @if($v->status === 'PREPARED' || $v->status === 'DRAFT')
-                    <form method="POST" action="{{ route('disbursement.payment-requests.audit', $v->id) }}" onsubmit="return confirm('Audit and verify voucher {{ $v->voucher_number }}?');">
-                      @csrf
-                      <button type="submit" class="btn btn-sm btn-outline-primary py-1 px-2 fs-xs" title="Internal Audit Verification">
-                        <i class="ph ph-magnifying-glass me-1"></i> Audit
-                      </button>
-                    </form>
-                    <form method="POST" action="{{ route('disbursement.payment-requests.void', $v->id) }}" onsubmit="return confirm('Void voucher {{ $v->voucher_number }}?');">
-                      @csrf
-                      <button type="submit" class="btn btn-sm btn-outline-danger py-1 px-2 fs-xs" title="Void Request">
-                        <i class="ph ph-x"></i>
-                      </button>
-                    </form>
-                  @elseif($v->status === 'AUDITED' || $v->status === 'APPROVED')
-                    <a href="{{ route('disbursement.disbursement-approval') }}" class="btn btn-sm btn-primary py-1 px-2 fs-xs">
-                      <i class="ph ph-shield-check me-1"></i> Workstation
-                    </a>
-                  @else
-                    <span class="badge bg-light text-muted border">
-                      <i class="ph ph-check-double text-success me-1"></i> Disbursed
-                    </span>
-                  @endif
-                </div>
-              </td>
-            </tr>
-            @empty
-            <tr>
-              <td colspan="9" class="text-center py-4 text-muted">No disbursement vouchers found matching filter.</td>
-            </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
+              </div>
+            </td>
+          </tr>
+          @empty
+          <tr>
+            <td colspan="9" class="px-4 py-12 text-center text-slate-500 dark:text-slate-400">
+              <i class="ph ph-receipt text-3xl mb-2 text-slate-400"></i>
+              <p>No disbursement vouchers found matching current filter.</p>
+            </td>
+          </tr>
+          @endforelse
+        </tbody>
+      </table>
     </div>
-    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs">Showing {{ $vouchers->firstItem() ?? 0 }} - {{ $vouchers->lastItem() ?? 0 }} of {{ $vouchers->total() }} Requisitions</span>
+
+    <!-- Pagination & Meta -->
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
+      <span>Showing {{ $vouchers->firstItem() ?? 0 }} - {{ $vouchers->lastItem() ?? 0 }} of {{ $vouchers->total() }} Requisitions</span>
       <div>
         {{ $vouchers->links() }}
       </div>
@@ -238,7 +278,7 @@
     title="Create Payment Request / Voucher"
     subtitle="Requisition payment for operating expenses, professional honorariums, or supplier bills."
     icon="ph-receipt"
-    iconVariant="primary"
+    iconVariant="emerald"
     size="lg"
     :scrollable="true"
     :centered="true"
@@ -247,82 +287,145 @@
     submitText="Submit Payment Voucher"
     submitIcon="ph-check"
 >
-  <div class="row g-3 mb-3">
-    <div class="col-md-6">
-      <label class="form-label small fw-semibold">Disbursing Bank Account <span class="text-danger">*</span></label>
-      <select name="bank_account_id" class="form-select form-select-sm" required>
-        <option value="">-- Choose Operating Bank --</option>
-        @foreach($bankAccounts as $b)
-          <option value="{{ $b->id }}">{{ $b->bank_name }} ({{ $b->account_number }}) - Bal: ₱{{ number_format((float) $b->balance, 2) }}</option>
-        @endforeach
-      </select>
-    </div>
-    <div class="col-md-6">
-      <label class="form-label small fw-semibold">Payment Method <span class="text-danger">*</span></label>
-      <select name="payment_method" class="form-select form-select-sm" required>
-        <option value="CHECK" selected>Bank Check (Standard)</option>
-        <option value="PESONET_EFT">PESONet Electronic Bank Transfer</option>
-        <option value="INSTAPAY">InstaPay Real-Time Transfer</option>
-        <option value="TELEGRAPHIC_TRANSFER">Telegraphic Transfer (TT / Wire)</option>
-        <option value="PETTY_CASH">Petty Cash Voucher</option>
-      </select>
-    </div>
-  </div>
-
-  <div class="row g-3 mb-3">
-    <div class="col-md-6">
-      <label class="form-label small fw-semibold">Payee Legal Name <span class="text-danger">*</span></label>
-      <input type="text" name="payee_name" class="form-control form-control-sm" placeholder="e.g. Metro Medical Supplies Inc" required>
-    </div>
-    <div class="col-md-6">
-      <label class="form-label small fw-semibold">Voucher Date <span class="text-danger">*</span></label>
-      <input type="date" name="voucher_date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
-    </div>
-  </div>
-
-  <div class="row g-3 mb-3">
-    <div class="col-md-6">
-      <label class="form-label small fw-semibold">Gross Amount (₱) <span class="text-danger">*</span></label>
-      <div class="input-group input-group-sm">
-        <span class="input-group-text">₱</span>
-        <input type="number" step="0.01" name="gross_amount" class="form-control font-monospace" placeholder="0.00" required>
-      </div>
-    </div>
-    <div class="col-md-6">
-      <label class="form-label small fw-semibold">Withheld Tax Amount (EWT / 1601-C)</label>
-      <div class="input-group input-group-sm">
-        <span class="input-group-text">₱</span>
-        <input type="number" step="0.01" name="withheld_tax_amount" class="form-control font-monospace" placeholder="0.00" value="0.00">
-      </div>
-    </div>
-  </div>
-
-  <div class="mb-3">
-    <label class="form-label small fw-semibold">Particulars / Payment Purpose</label>
-    <input type="text" name="description" class="form-control form-control-sm" placeholder="e.g. Biomedical equipment quarterly maintenance payment">
-  </div>
-
-  <!-- Link to AP Purchase Bill or Payroll Run -->
-  <div class="p-3 bg-light rounded-3 mb-1">
-    <h6 class="fw-bold text-dark mb-2 fs-xs text-uppercase"><i class="ph ph-link me-1 text-primary"></i> Link to AP Bill or Payroll (Optional)</h6>
-    <div class="row g-2">
-      <div class="col-md-6">
-        <label class="form-label small text-muted mb-0">Link Purchase Bill</label>
-        <select name="purchase_bill_id" class="form-select form-select-sm">
-          <option value="">-- None (Manual Request) --</option>
-          @foreach($openBills as $ob)
-            <option value="{{ $ob->id }}">{{ $ob->bill_number }} - {{ $ob->vendor?->name }} (Due: ₱{{ number_format((float) $ob->balance_due, 2) }})</option>
+  <div class="space-y-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Disbursing Bank Account <span class="text-rose-500">*</span>
+        </label>
+        <select 
+          name="bank_account_id" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          required
+        >
+          <option value="">-- Choose Operating Bank --</option>
+          @foreach($bankAccounts as $b)
+            <option value="{{ $b->id }}">{{ $b->bank_name }} ({{ $b->account_number }}) - Bal: ₱{{ number_format((float) $b->balance, 2) }}</option>
           @endforeach
         </select>
       </div>
-      <div class="col-md-6">
-        <label class="form-label small text-muted mb-0">Link Payroll Run</label>
-        <select name="payroll_run_id" class="form-select form-select-sm">
-          <option value="">-- None --</option>
-          @foreach($openPayrolls as $pr)
-            <option value="{{ $pr->id }}">{{ $pr->payroll_run_number }} (Net Pay: ₱{{ number_format((float) $pr->total_net_pay, 2) }})</option>
-          @endforeach
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Payment Method <span class="text-rose-500">*</span>
+        </label>
+        <select 
+          name="payment_method" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          required
+        >
+          <option value="CHECK" selected>Bank Check (Standard)</option>
+          <option value="PESONET_EFT">PESONet Electronic Bank Transfer</option>
+          <option value="INSTAPAY">InstaPay Real-Time Transfer</option>
+          <option value="TELEGRAPHIC_TRANSFER">Telegraphic Transfer (TT / Wire)</option>
+          <option value="PETTY_CASH">Petty Cash Voucher</option>
         </select>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Payee Legal Name <span class="text-rose-500">*</span>
+        </label>
+        <input 
+          type="text" 
+          name="payee_name" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 placeholder-slate-400 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          placeholder="e.g. Metro Medical Supplies Inc" 
+          required
+        >
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Voucher Date <span class="text-rose-500">*</span>
+        </label>
+        <input 
+          type="date" 
+          name="voucher_date" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          value="{{ date('Y-m-d') }}" 
+          required
+        >
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Gross Amount (₱) <span class="text-rose-500">*</span>
+        </label>
+        <div class="relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 font-mono font-bold text-slate-400 text-xs">₱</span>
+          <input 
+            type="number" 
+            step="0.01" 
+            name="gross_amount" 
+            class="w-full rounded-xl border-slate-200 bg-slate-50 py-2 pl-7 pr-3 text-xs font-mono font-bold text-slate-900 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white" 
+            placeholder="0.00" 
+            required
+          >
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+          Withheld Tax Amount (EWT / 1601-C)
+        </label>
+        <div class="relative">
+          <span class="absolute left-3 top-1/2 -translate-y-1/2 font-mono font-bold text-slate-400 text-xs">₱</span>
+          <input 
+            type="number" 
+            step="0.01" 
+            name="withheld_tax_amount" 
+            class="w-full rounded-xl border-slate-200 bg-slate-50 py-2 pl-7 pr-3 text-xs font-mono font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+            placeholder="0.00" 
+            value="0.00"
+          >
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+        Particulars / Payment Purpose
+      </label>
+      <input 
+        type="text" 
+        name="description" 
+        class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 placeholder-slate-400 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+        placeholder="e.g. Biomedical equipment quarterly maintenance payment"
+      >
+    </div>
+
+    <!-- Link to AP Purchase Bill or Payroll Run -->
+    <div class="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200/60 dark:bg-slate-800/40 dark:ring-slate-800">
+      <h2 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5">
+        <i class="ph-bold ph-link text-emerald-600"></i> Link to AP Bill or Payroll (Optional)
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">Link Purchase Bill</label>
+          <select 
+            name="purchase_bill_id" 
+            class="w-full rounded-xl border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+          >
+            <option value="">-- None (Manual Request) --</option>
+            @foreach($openBills as $ob)
+              <option value="{{ $ob->id }}">{{ $ob->bill_number }} - {{ $ob->vendor?->name }} (Due: ₱{{ number_format((float) $ob->balance_due, 2) }})</option>
+            @endforeach
+          </select>
+        </div>
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">Link Payroll Run</label>
+          <select 
+            name="payroll_run_id" 
+            class="w-full rounded-xl border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+          >
+            <option value="">-- None --</option>
+            @foreach($openPayrolls as $pr)
+              <option value="{{ $pr->id }}">{{ $pr->payroll_run_number }} (Net Pay: ₱{{ number_format((float) $pr->total_net_pay, 2) }})</option>
+            @endforeach
+          </select>
+        </div>
       </div>
     </div>
   </div>
@@ -332,118 +435,157 @@
 <x-modal 
     id="encodePayrollModal" 
     title="Encode Employee Payroll Cutoff Run"
-    subtitle="Standalone hospital compensation entry with automated statutory deductions (SSS, PhilHealth, Pag-IBIG, 1601-C) & PFRS GL posting."
+    subtitle="Hospital compensation entry with automated statutory deductions (SSS, PhilHealth, Pag-IBIG, 1601-C) & PFRS GL posting."
     icon="ph-users-three"
-    iconVariant="primary"
+    iconVariant="emerald"
     size="xl"
     :scrollable="true"
     :centered="true"
     formAction="{{ route('disbursement.payroll.store') }}"
     formId="formEncodePayroll"
     formMethod="POST"
-    submitText="Post & Disburse Payroll Run"
+    submitText="Post &amp; Disburse Payroll Run"
     submitIcon="ph-check-circle"
 >
-  <!-- Cutoff Period & Disbursing Bank -->
-  <div class="card border border-light-subtle rounded-3 p-3 mb-3 bg-light-subtle">
-    <div class="fw-bold text-uppercase fs-xs text-secondary mb-2 border-bottom pb-1">
-      <i class="ph ph-calendar-check me-1"></i> Payroll Cutoff Schedule &amp; Disbursing Bank
+  <div class="space-y-4">
+    <!-- Cutoff Period & Disbursing Bank -->
+    <div class="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200/60 dark:bg-slate-800/40 dark:ring-slate-800">
+      <div class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5 pb-2 border-b border-slate-200 dark:border-slate-700">
+        <i class="ph-bold ph-calendar-check text-emerald-600"></i> Payroll Cutoff Schedule &amp; Disbursing Bank
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Cutoff Start <span class="text-rose-500">*</span></label>
+          <input 
+            type="date" 
+            name="cutoff_start" 
+            id="payrollCutoffStart" 
+            class="w-full rounded-xl border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+            value="{{ old('cutoff_start', date('Y-m-01')) }}" 
+            required
+          >
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Cutoff End <span class="text-rose-500">*</span></label>
+          <input 
+            type="date" 
+            name="cutoff_end" 
+            id="payrollCutoffEnd" 
+            class="w-full rounded-xl border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+            value="{{ old('cutoff_end', date('Y-m-15')) }}" 
+            required
+          >
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Payout Date <span class="text-rose-500">*</span></label>
+          <input 
+            type="date" 
+            name="payout_date" 
+            id="payrollPayoutDate" 
+            class="w-full rounded-xl border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+            value="{{ old('payout_date', date('Y-m-15')) }}" 
+            required
+          >
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Disbursing Bank Account <span class="text-rose-500">*</span></label>
+          <select 
+            name="disbursement_bank_account_id" 
+            id="payrollBankSelect" 
+            class="w-full rounded-xl border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+            required 
+            onchange="updatePayrollBankBalance()"
+          >
+            <option value="">-- Choose Bank Account --</option>
+            @foreach($bankAccounts as $b)
+              <option value="{{ $b->id }}" data-balance="{{ $b->balance }}" {{ old('disbursement_bank_account_id') == $b->id ? 'selected' : ($loop->first ? 'selected' : '') }}>
+                {{ $b->bank_name }} ({{ $b->account_number }}) - ₱{{ number_format((float) $b->balance, 2) }}
+              </option>
+            @endforeach
+          </select>
+        </div>
+      </div>
     </div>
-    <div class="row g-3">
-      <div class="col-md-3">
-        <label class="form-label small fw-semibold text-dark">Cutoff Start <span class="text-danger">*</span></label>
-        <input type="date" name="cutoff_start" id="payrollCutoffStart" class="form-control form-control-sm" value="{{ old('cutoff_start', date('Y-m-01')) }}" required>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label small fw-semibold text-dark">Cutoff End <span class="text-danger">*</span></label>
-        <input type="date" name="cutoff_end" id="payrollCutoffEnd" class="form-control form-control-sm" value="{{ old('cutoff_end', date('Y-m-15')) }}" required>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label small fw-semibold text-dark">Payout Date <span class="text-danger">*</span></label>
-        <input type="date" name="payout_date" id="payrollPayoutDate" class="form-control form-control-sm" value="{{ old('payout_date', date('Y-m-15')) }}" required>
-      </div>
-      <div class="col-md-3">
-        <label class="form-label small fw-semibold text-dark">Disbursing Bank Account <span class="text-danger">*</span></label>
-        <select name="disbursement_bank_account_id" id="payrollBankSelect" class="form-select form-select-sm" required onchange="updatePayrollBankBalance()">
-          <option value="">-- Choose Bank Account --</option>
-          @foreach($bankAccounts as $b)
-            <option value="{{ $b->id }}" data-balance="{{ $b->balance }}" {{ old('disbursement_bank_account_id') == $b->id ? 'selected' : ($loop->first ? 'selected' : '') }}>
-              {{ $b->bank_name }} ({{ $b->account_number }}) - ₱{{ number_format((float) $b->balance, 2) }}
-            </option>
-          @endforeach
-        </select>
-      </div>
-    </div>
-  </div>
 
-  <!-- Statutory Deduction Notice -->
-  <div class="alert alert-info py-2 px-3 fs-xs rounded-3 mb-3 d-flex align-items-center">
-    <i class="ph ph-info me-2 fs-5 flex-shrink-0"></i>
+    <!-- Statutory Deduction Notice -->
+    <div class="rounded-xl bg-blue-50 p-3 text-xs text-blue-900 ring-1 ring-blue-300/70 dark:bg-blue-950/40 dark:text-blue-200 dark:ring-blue-800 flex items-start gap-2.5">
+      <i class="ph-bold ph-info text-blue-600 text-lg flex-shrink-0 mt-0.5"></i>
+      <div>
+        <strong>Automated Double-Entry Posting:</strong> Submitting this run automatically calculates Philippine statutory contributions (SSS EE/ER, PhilHealth EE/ER, Pag-IBIG EE/ER), BIR Form 1601-C withholding tax, and posts balanced journal lines (Salaries Expense <code class="font-mono bg-blue-100 dark:bg-blue-900/60 px-1 py-0.5 rounded">6010</code>, Statutory Payables <code class="font-mono bg-blue-100 dark:bg-blue-900/60 px-1 py-0.5 rounded">2120-2150</code>, Cash in Bank <code class="font-mono bg-blue-100 dark:bg-blue-900/60 px-1 py-0.5 rounded">1020</code>).
+      </div>
+    </div>
+
+    <!-- Employees Table Section -->
     <div>
-      <strong>Automated Double-Entry Posting:</strong> Submitting this run automatically calculates Philippine statutory contributions (SSS EE/ER, PhilHealth EE/ER, Pag-IBIG EE/ER), BIR Form 1601-C withholding tax, and posts balanced journal lines (Salaries Expense <code>6010</code>, Statutory Payables <code>2120-2150</code>, Cash in Bank <code>1020</code>).
-    </div>
-  </div>
-
-  <!-- Employees Table Section -->
-  <div class="d-flex justify-content-between align-items-center mb-2">
-    <h6 class="fw-bold mb-0 text-dark fs-xs text-uppercase">
-      <i class="ph ph-user-list me-1 text-primary"></i> Personnel Compensation Roster
-    </h6>
-    <div class="d-flex gap-2">
-      <button type="button" class="btn btn-xs btn-outline-secondary" onclick="loadHospitalSampleRoster()">
-        <i class="ph ph-arrows-clockwise me-1"></i> Reset Sample Roster
-      </button>
-      <button type="button" class="btn btn-xs btn-outline-primary" onclick="addPayrollEmployeeRow()">
-        <i class="ph ph-user-plus me-1"></i> Add Personnel Line
-      </button>
-    </div>
-  </div>
-
-  <div class="table-responsive border rounded-3 mb-3" style="max-height: 380px;">
-    <table class="table table-sm table-hover align-middle mb-0" id="payrollEmployeesTable">
-      <thead class="table-light text-muted fs-xs text-uppercase sticky-top">
-        <tr>
-          <th style="width: 40px;">#</th>
-          <th style="min-width: 130px;">Employee ID <span class="text-danger">*</span></th>
-          <th style="min-width: 180px;">Employee Full Name <span class="text-danger">*</span></th>
-          <th style="min-width: 160px;">Department <span class="text-danger">*</span></th>
-          <th style="min-width: 120px;">Basic Salary (₱) <span class="text-danger">*</span></th>
-          <th style="min-width: 100px;">Overtime (₱)</th>
-          <th style="min-width: 100px;">Allowances (₱)</th>
-          <th style="min-width: 110px;" class="text-end">Est. Gross (₱)</th>
-          <th style="min-width: 130px;">Bank / Ref #</th>
-          <th style="width: 50px;" class="text-center">Action</th>
-        </tr>
-      </thead>
-      <tbody id="payrollEmployeesBody">
-        <!-- Dynamically populated via JS -->
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Payroll Run Financial Summary -->
-  <div class="card border rounded-3 p-3 bg-light">
-    <div class="row g-2 text-center text-md-start align-items-center">
-      <div class="col-md-3">
-        <span class="text-muted fs-xs text-uppercase d-block">Personnel Count</span>
-        <span class="fw-bold fs-6 text-dark font-monospace" id="displayPersonnelCount">0</span>
-        <span class="text-muted fs-xs">staff</span>
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+          <i class="ph-bold ph-user-list text-emerald-600"></i> Personnel Compensation Roster
+        </h3>
+        <div class="flex items-center gap-2">
+          <button 
+            type="button" 
+            class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" 
+            onclick="loadHospitalSampleRoster()"
+          >
+            <i class="ph-bold ph-arrows-clockwise text-emerald-600"></i> Reset Sample Roster
+          </button>
+          <button 
+            type="button" 
+            class="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 cursor-pointer" 
+            onclick="addPayrollEmployeeRow()"
+          >
+            <i class="ph-bold ph-user-plus"></i> Add Personnel Line
+          </button>
+        </div>
       </div>
-      <div class="col-md-3">
-        <span class="text-muted fs-xs text-uppercase d-block">Total Basic Salary</span>
-        <span class="fw-bold fs-6 text-dark font-monospace" id="displayTotalBasic">₱0.00</span>
-      </div>
-      <div class="col-md-3">
-        <span class="text-muted fs-xs text-uppercase d-block">Total Gross Compensation</span>
-        <span class="fw-bold fs-6 text-primary font-monospace" id="displayTotalGross">₱0.00</span>
-      </div>
-      <div class="col-md-3">
-        <span class="text-muted fs-xs text-uppercase d-block">Selected Bank Available Bal.</span>
-        <span class="fw-bold fs-6 font-monospace text-dark" id="displayBankBalance">₱0.00</span>
+
+      <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800" style="max-height: 380px;">
+        <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300" id="payrollEmployeesTable">
+          <thead class="bg-slate-50 border-b border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-500 sticky top-0 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400">
+            <tr>
+              <th class="px-2.5 py-2.5 text-center w-10">#</th>
+              <th class="px-2.5 py-2.5 min-w-[130px]">Employee ID <span class="text-rose-500">*</span></th>
+              <th class="px-2.5 py-2.5 min-w-[170px]">Employee Full Name <span class="text-rose-500">*</span></th>
+              <th class="px-2.5 py-2.5 min-w-[150px]">Department <span class="text-rose-500">*</span></th>
+              <th class="px-2.5 py-2.5 min-w-[110px] text-right">Basic (₱) <span class="text-rose-500">*</span></th>
+              <th class="px-2.5 py-2.5 min-w-[90px] text-right">Overtime</th>
+              <th class="px-2.5 py-2.5 min-w-[90px] text-right">Allowances</th>
+              <th class="px-2.5 py-2.5 min-w-[110px] text-right">Est. Gross (₱)</th>
+              <th class="px-2.5 py-2.5 min-w-[120px]">Bank / Ref</th>
+              <th class="px-2.5 py-2.5 text-center w-12">Action</th>
+            </tr>
+          </thead>
+          <tbody id="payrollEmployeesBody" class="divide-y divide-slate-100 dark:divide-slate-800/60">
+            <!-- Dynamically populated via JS -->
+          </tbody>
+        </table>
       </div>
     </div>
-    <div id="payrollBalanceWarning" class="alert alert-danger py-1 px-2 mt-2 mb-0 fs-xs d-none">
-      <i class="ph ph-warning-circle me-1"></i> <strong>Warning:</strong> Total gross payroll exceeds the available balance of the selected bank account!
+
+    <!-- Payroll Run Financial Summary -->
+    <div class="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200/60 dark:bg-slate-800/40 dark:ring-slate-800">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center sm:text-left">
+        <div>
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">Personnel Count</span>
+          <span class="font-mono font-bold text-slate-900 dark:text-white text-base" id="displayPersonnelCount">0</span>
+          <span class="text-xs text-slate-400 ml-1">staff</span>
+        </div>
+        <div>
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">Total Basic Salary</span>
+          <span class="font-mono font-bold text-slate-900 dark:text-white text-base tabular-nums" id="displayTotalBasic">₱0.00</span>
+        </div>
+        <div>
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">Total Gross Comp.</span>
+          <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-base tabular-nums" id="displayTotalGross">₱0.00</span>
+        </div>
+        <div>
+          <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-0.5">Bank Available Bal.</span>
+          <span class="font-mono font-bold text-slate-900 dark:text-white text-base tabular-nums" id="displayBankBalance">₱0.00</span>
+        </div>
+      </div>
+      <div id="payrollBalanceWarning" class="rounded-lg bg-rose-50 p-2.5 text-xs text-rose-800 ring-1 ring-rose-500/20 dark:bg-rose-950/40 dark:text-rose-300 mt-3 hidden">
+        <i class="ph-bold ph-warning-circle text-rose-600 mr-1"></i> <strong>Warning:</strong> Total gross payroll exceeds the available balance of the selected bank account!
+      </div>
     </div>
   </div>
 </x-modal>
@@ -516,38 +658,38 @@ function addPayrollEmployeeRow(data = null) {
   };
 
   const tr = document.createElement('tr');
-  tr.className = 'payroll-emp-row';
+  tr.className = 'payroll-emp-row hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors';
   tr.innerHTML = `
-    <td class="text-center text-muted fs-xs row-num">${rowIndex + 1}</td>
-    <td>
-      <input type="text" name="employees[${rowIndex}][employee_id_number]" class="form-control form-control-sm font-monospace emp-id-input" value="${d.id}" placeholder="EMP-001" required>
+    <td class="text-center text-slate-400 font-mono text-[11px] row-num py-2 px-2">${rowIndex + 1}</td>
+    <td class="p-1.5">
+      <input type="text" name="employees[${rowIndex}][employee_id_number]" class="w-full rounded-lg border-slate-200 bg-white py-1 px-2 text-xs font-mono font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 emp-id-input" value="${d.id}" placeholder="EMP-001" required>
     </td>
-    <td>
-      <input type="text" name="employees[${rowIndex}][employee_name]" class="form-control form-control-sm emp-name-input" value="${d.name}" placeholder="Full Name" required>
+    <td class="p-1.5">
+      <input type="text" name="employees[${rowIndex}][employee_name]" class="w-full rounded-lg border-slate-200 bg-white py-1 px-2 text-xs font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 emp-name-input" value="${d.name}" placeholder="Full Name" required>
     </td>
-    <td>
-      <select name="employees[${rowIndex}][department]" class="form-select form-select-sm emp-dept-input" required>
+    <td class="p-1.5">
+      <select name="employees[${rowIndex}][department]" class="w-full rounded-lg border-slate-200 bg-white py-1 px-2 text-xs font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 emp-dept-input" required>
         ${buildDeptOptions(d.dept)}
       </select>
     </td>
-    <td>
-      <input type="number" step="0.01" min="0" name="employees[${rowIndex}][basic_salary]" class="form-control form-control-sm font-monospace text-end emp-basic-input" value="${Number(d.basic).toFixed(2)}" required oninput="calcPayrollTotals()">
+    <td class="p-1.5">
+      <input type="number" step="0.01" min="0" name="employees[${rowIndex}][basic_salary]" class="w-full rounded-lg border-slate-200 bg-white py-1 px-2 text-xs font-mono text-right font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 emp-basic-input" value="${Number(d.basic).toFixed(2)}" required oninput="calcPayrollTotals()">
     </td>
-    <td>
-      <input type="number" step="0.01" min="0" name="employees[${rowIndex}][overtime_pay]" class="form-control form-control-sm font-monospace text-end emp-ot-input" value="${Number(d.ot || 0).toFixed(2)}" oninput="calcPayrollTotals()">
+    <td class="p-1.5">
+      <input type="number" step="0.01" min="0" name="employees[${rowIndex}][overtime_pay]" class="w-full rounded-lg border-slate-200 bg-white py-1 px-2 text-xs font-mono text-right font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 emp-ot-input" value="${Number(d.ot || 0).toFixed(2)}" oninput="calcPayrollTotals()">
     </td>
-    <td>
-      <input type="number" step="0.01" min="0" name="employees[${rowIndex}][allowances]" class="form-control form-control-sm font-monospace text-end emp-allowance-input" value="${Number(d.allowances || 0).toFixed(2)}" oninput="calcPayrollTotals()">
+    <td class="p-1.5">
+      <input type="number" step="0.01" min="0" name="employees[${rowIndex}][allowances]" class="w-full rounded-lg border-slate-200 bg-white py-1 px-2 text-xs font-mono text-right font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 emp-allowance-input" value="${Number(d.allowances || 0).toFixed(2)}" oninput="calcPayrollTotals()">
     </td>
-    <td class="text-end font-monospace fw-bold fs-xs emp-gross-cell">
+    <td class="text-right font-mono font-bold text-xs tabular-nums text-slate-900 dark:text-white px-2 emp-gross-cell">
       ₱0.00
     </td>
-    <td>
-      <input type="text" name="employees[${rowIndex}][bank_account_number]" class="form-control form-control-sm font-monospace emp-bank-input" value="${d.bank || ''}" placeholder="Account / Ref">
+    <td class="p-1.5">
+      <input type="text" name="employees[${rowIndex}][bank_account_number]" class="w-full rounded-lg border-slate-200 bg-white py-1 px-2 text-xs font-mono font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 emp-bank-input" value="${d.bank || ''}" placeholder="Account / Ref">
     </td>
-    <td class="text-center">
-      <button type="button" class="btn btn-link text-danger p-0" onclick="removePayrollEmployeeRow(this)" title="Remove line">
-        <i class="ph ph-trash fs-5"></i>
+    <td class="text-center p-1.5">
+      <button type="button" class="text-rose-500 hover:text-rose-700 transition-colors cursor-pointer" onclick="removePayrollEmployeeRow(this)" title="Remove line">
+        <i class="ph-bold ph-trash text-base"></i>
       </button>
     </td>
   `;
@@ -638,7 +780,6 @@ function calcPayrollTotals() {
     grossDisplay.textContent = '₱' + totalGross.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
-  // Check against selected bank balance
   updatePayrollBankBalance(totalGross);
 }
 
@@ -661,9 +802,9 @@ function updatePayrollBankBalance(totalGross = null) {
 
   if (warning) {
     if (balance > 0 && totalGross > balance) {
-      warning.classList.remove('d-none');
+      warning.classList.remove('hidden');
     } else {
-      warning.classList.add('d-none');
+      warning.classList.add('hidden');
     }
   }
 }

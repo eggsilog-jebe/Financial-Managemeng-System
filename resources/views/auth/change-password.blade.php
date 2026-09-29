@@ -1,156 +1,192 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Change Password — Hospital Financial Management System</title>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>Change Password &mdash; Hospital Financial Management System (HIMS &bull; FMS)</title>
   <link rel="icon" href="{{ asset('favicon.ico') }}">
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
-  <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
-  <link rel="stylesheet" href="{{ asset('assets/css/components/typography-accessibility.css') }}">
-  <style>
-    body {
-      background-color: #f8fafc;
-      font-family: 'Poppins', sans-serif;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0;
-      padding: 1.5rem;
-    }
-    .auth-card {
-      width: 100%;
-      max-width: 460px;
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 16px;
-      box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
-      padding: 2.25rem;
-    }
-    .hospital-header-seal {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding-bottom: 16px;
-      margin-bottom: 20px;
-      border-bottom: 1px solid #f1f5f9;
-    }
-    .hospital-seal-icon {
-      width: 42px;
-      height: 42px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #059669 0%, #047857 100%);
-      color: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.35rem;
-      flex-shrink: 0;
-      box-shadow: 0 4px 6px -1px rgba(5, 150, 105, 0.25);
-    }
-    .hospital-seal-text h4 {
-      margin: 0;
-      font-size: 0.88rem;
-      font-weight: 700;
-      color: #0f172a;
-      letter-spacing: -0.01em;
-    }
-    .hospital-seal-text p {
-      margin: 0;
-      font-size: 0.7rem;
-      font-weight: 600;
-      color: #64748b;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Immediate Theme Boot (Default: Light, Synced with fms_theme & colorScheme) -->
+  <script>
+    (function() {
+      const savedTheme = localStorage.getItem('fms_theme');
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.style.colorScheme = 'dark';
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.style.colorScheme = 'light';
+      }
+    })();
+  </script>
+
+  <!-- Tailwind CSS v4 & Alpine.js Asset Bundle -->
+  @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body>
+<body 
+  x-data="{ 
+    helpdeskOpen: false,
+    darkMode: document.documentElement.classList.contains('dark')
+  }" 
+  class="h-full bg-slate-50 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-100 antialiased selection:bg-emerald-500 selection:text-white"
+>
 
-<div class="auth-card">
-  <!-- Hospital Seal Header -->
-  <div class="hospital-header-seal">
-    <div class="hospital-seal-icon">
-      <i class="ph ph-shield-check"></i>
-    </div>
-    <div class="hospital-seal-text">
-      <h4>Hospital Financial Management System</h4>
-      <p>Security Credential Management</p>
-    </div>
-  </div>
+  <div class="min-h-screen flex flex-col lg:flex-row">
+    
+    <!-- Left Hero & Security Authority Column (Universal Standard) -->
+    <x-auth-hero />
 
-  <div class="text-center mb-4">
-    <div class="rounded-circle d-inline-flex align-items-center justify-content-center bg-warning-subtle mb-2"
-         style="width:52px;height:52px;">
-      <i class="ph ph-key fs-3 text-warning"></i>
-    </div>
-    <h1 class="h4 fw-bold mb-1 text-dark">Password Reset Required</h1>
-    <p class="text-muted fs-xs mb-0">
-      Your account password has been updated by an administrator. Please establish a new secure password to continue.
-    </p>
-  </div>
+    <!-- Right Change Password Panel Column -->
+    <div class="relative flex-1 flex flex-col justify-between p-6 sm:p-10 lg:p-16">
+      
+      <!-- Top Actions (Theme Toggle & Helpdesk trigger) -->
+      <div class="flex items-center justify-end gap-3">
+        <button 
+          type="button" 
+          @click="
+            darkMode = !darkMode;
+            if (darkMode) {
+              document.documentElement.classList.add('dark');
+              document.documentElement.style.colorScheme = 'dark';
+              localStorage.setItem('fms_theme', 'dark');
+            } else {
+              document.documentElement.classList.remove('dark');
+              document.documentElement.style.colorScheme = 'light';
+              localStorage.setItem('fms_theme', 'light');
+            }
+          " 
+          class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition-colors cursor-pointer"
+          :title="darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+        >
+          <i class="ph-bold ph-moon text-base block dark:hidden"></i>
+          <i class="ph-bold ph-sun text-base hidden dark:block"></i>
+        </button>
 
-  @if(session('warning'))
-    <div class="alert alert-warning border-0 rounded-3 fs-xs mb-3 py-2 px-3 d-flex align-items-center gap-2">
-      <i class="ph ph-warning fs-5"></i>
-      <span>{{ session('warning') }}</span>
-    </div>
-  @endif
+        <button 
+          type="button" 
+          @click="helpdeskOpen = true" 
+          class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+        >
+          <i class="ph-bold ph-headset text-sm text-emerald-600 dark:text-emerald-400"></i>
+          <span>IT Helpdesk</span>
+        </button>
+      </div>
 
-  @if(session('error'))
-    <div class="alert alert-danger border-0 rounded-3 fs-xs mb-3 py-2 px-3 d-flex align-items-center gap-2">
-      <i class="ph ph-warning-circle fs-5"></i>
-      <span>{{ session('error') }}</span>
-    </div>
-  @endif
+      <!-- Center Auth Form Container -->
+      <div class="my-auto mx-auto w-full max-w-md py-6">
+        
+        <!-- Hospital Header Seal & Department Badge -->
+        <div class="flex items-center gap-3 pb-4 mb-5 border-b border-slate-200 dark:border-slate-800">
+          <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-500/30">
+            <i class="ph-bold ph-hospital text-lg"></i>
+          </div>
+          <div>
+            <h2 class="text-xs font-bold text-slate-900 dark:text-white tracking-wide uppercase">Republic of the Philippines</h2>
+            <p class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Department of Health &bull; Hospital Network</p>
+          </div>
+        </div>
 
-  <form method="POST" action="{{ route('password.change.update') }}" id="form-change-password">
-    @csrf
+        <!-- Top Badge -->
+        <div class="mb-3">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 ring-1 ring-amber-600/20 dark:bg-amber-950/60 dark:text-amber-300 font-mono tracking-wider uppercase">
+            <i class="ph-bold ph-shield-warning text-xs"></i>
+            SECURITY CREDENTIAL UPDATE
+          </span>
+        </div>
 
-    <div class="mb-3">
-      <label for="password" class="form-label fw-semibold fs-xs text-dark">
-        New Password <span class="text-danger">*</span>
-      </label>
-      <input type="password" class="form-control form-control-sm @error('password') is-invalid @enderror"
-             id="password" name="password" required autocomplete="new-password"
-             placeholder="Min 8 characters, mixed case, numbers">
-      @error('password')
-        <div class="invalid-feedback fs-xs">{{ $message }}</div>
-      @enderror
-      <div class="form-text fs-xxs text-muted mt-1">
-        Must contain uppercase, lowercase, numbers, and be at least 8 characters long.
+        <!-- Title & Instructions -->
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Password Reset Required</h1>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+            Your temporary credentials must be updated before accessing clinical billing and ledger modules.
+          </p>
+        </div>
+
+        @if(session('warning'))
+          <div class="mt-4 rounded-xl border border-amber-200/80 bg-amber-50/80 p-3 text-xs text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300 flex items-center gap-2">
+            <i class="ph-fill ph-warning text-base text-amber-600 dark:text-amber-400 shrink-0"></i>
+            <span>{{ session('warning') }}</span>
+          </div>
+        @endif
+
+        @if(session('error'))
+          <div class="mt-4 rounded-xl border border-rose-200/80 bg-rose-50/80 p-3 text-xs text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300 flex items-center gap-2">
+            <i class="ph-fill ph-warning-circle text-base text-rose-600 dark:text-rose-400 shrink-0"></i>
+            <span>{{ session('error') }}</span>
+          </div>
+        @endif
+
+        <form method="POST" action="{{ route('password.change.update') }}" id="form-change-password" class="mt-5 space-y-4">
+          @csrf
+
+          <div>
+            <label for="password" class="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+              New Password <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                <i class="ph-bold ph-lock-key"></i>
+              </div>
+              <input type="password" class="block w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-xs text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-600 @error('password') border-rose-500 focus:border-rose-500 @enderror"
+                     id="password" name="password" required autocomplete="new-password"
+                     placeholder="Min 8 characters, alpha-numeric">
+            </div>
+            @error('password')
+              <p class="mt-1 text-xs text-rose-500 flex items-center gap-1"><i class="ph-bold ph-warning-circle"></i> {{ $message }}</p>
+            @enderror
+            <span class="block text-[11px] text-slate-400 mt-1">Must contain mixed case, numbers, and at least 8 characters.</span>
+          </div>
+
+          <div>
+            <label for="password_confirmation" class="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+              Confirm New Password <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+              <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                <i class="ph-bold ph-check-square-offset"></i>
+              </div>
+              <input type="password" class="block w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-xs text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-600"
+                     id="password_confirmation" name="password_confirmation" required autocomplete="new-password"
+                     placeholder="Re-enter your new password">
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3 px-4 text-xs font-semibold text-white shadow-sm ring-1 ring-emerald-600/20 hover:bg-emerald-700 active:bg-emerald-800 transition-all cursor-pointer" id="btn-change-password">
+              <i class="ph-bold ph-lock-key text-base"></i>
+              <span>Set New Password &amp; Continue</span>
+            </button>
+          </div>
+        </form>
+
+        <div class="text-center mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <form method="POST" action="{{ route('logout') }}" class="inline">
+            @csrf
+            <button type="submit" class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer">
+              <i class="ph-bold ph-sign-out"></i>
+              <span>Log out instead</span>
+            </button>
+          </form>
+        </div>
+
+      </div>
+
+      <!-- Bottom Mini Footer -->
+      <div class="text-center text-xs text-slate-400 dark:text-slate-500">
+        Hospital Financial Management System &bull; Secure Terminal Gateway
       </div>
     </div>
 
-    <div class="mb-4">
-      <label for="password_confirmation" class="form-label fw-semibold fs-xs text-dark">
-        Confirm New Password <span class="text-danger">*</span>
-      </label>
-      <input type="password" class="form-control form-control-sm"
-             id="password_confirmation" name="password_confirmation" required autocomplete="new-password"
-             placeholder="Re-enter your new password">
-    </div>
-
-    <button type="submit" class="btn btn-primary w-100 fw-semibold py-2" id="btn-change-password">
-      <i class="ph ph-lock-key me-1"></i> Set New Password &amp; Continue
-    </button>
-  </form>
-
-  <div class="text-center mt-3 pt-3 border-top">
-    <form method="POST" action="{{ route('logout') }}" class="d-inline">
-      @csrf
-      <button type="submit" class="btn btn-link text-muted fs-xs p-0 border-0 text-decoration-none">
-        <i class="ph ph-sign-out me-1"></i> Log out instead
-      </button>
-    </form>
   </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- IT Helpdesk Support Directory Modal -->
+  <x-auth-helpdesk-modal />
+
 </body>
 </html>

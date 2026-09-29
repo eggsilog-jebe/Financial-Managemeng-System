@@ -61,8 +61,18 @@ use App\Http\Controllers\UserSecurity\UserManagementController;
 use App\Http\Controllers\Auth\ChangePasswordController;
 
 // ─── External Subsystem Integration API Endpoints ──────────────────────────────
-Route::post('/ingest-encounter-billing', \App\Http\Controllers\Api\V1\Ingestion\SimulateEncounterBillingApiController::class)->name('ingest-encounter-billing');
-Route::post('/api/v1/ingest/encounter-billing', \App\Http\Controllers\Api\V1\Ingestion\SimulateEncounterBillingApiController::class)->name('api.v1.ingest.encounter-billing');
+// CSRF excluded for api/* in bootstrap/app.php. The bare /ingest-encounter-billing
+// is an internal sidecar-only endpoint; throttled + idempotency-protected.
+Route::post('/ingest-encounter-billing', \App\Http\Controllers\Api\V1\Ingestion\SimulateEncounterBillingApiController::class)
+    ->middleware(['throttle:30,1', 'idempotency'])
+    ->name('ingest-encounter-billing');
+Route::post('/api/v1/ingest/encounter-billing', \App\Http\Controllers\Api\V1\Ingestion\SimulateEncounterBillingApiController::class)
+    ->middleware('idempotency')
+    ->name('api.v1.ingest.encounter-billing');
+
+// ─── Public: Legal & Regulatory Compliance Framework ────────────────────────
+Route::get('/terms', [\App\Http\Controllers\LegalComplianceController::class, 'terms'])->name('legal.terms');
+Route::get('/privacy', [\App\Http\Controllers\LegalComplianceController::class, 'privacy'])->name('legal.privacy');
 
 // ─── Public: Authentication Routes (no auth required) ────────────────────────
 Route::middleware('guest')->group(function () {
@@ -134,11 +144,17 @@ Route::middleware(['auth'])->group(function () {
 
         // Journal Entries
         Route::get('/journal-entries', [JournalEntryController::class, 'index'])->name('journal-entries');
-        Route::post('/journal-entries', [JournalEntryController::class, 'store'])->name('journal-entries.store');
-        Route::post('/post-entry', PostJournalEntryController::class)->name('post-entry');
+        Route::post('/journal-entries', [JournalEntryController::class, 'store'])
+            ->middleware('idempotency')
+            ->name('journal-entries.store');
+        Route::post('/post-entry', PostJournalEntryController::class)
+            ->middleware('idempotency')
+            ->name('post-entry');
 
         Route::middleware(['role:FinanceManager,CFO,FinanceDirector'])->group(function () {
-            Route::post('/journal-entries/{id}/post', [JournalEntryController::class, 'post'])->name('journal-entries.post');
+            Route::post('/journal-entries/{id}/post', [JournalEntryController::class, 'post'])
+                ->middleware('idempotency')
+                ->name('journal-entries.post');
             Route::post('/journal-entries/{id}/reverse', [JournalEntryController::class, 'reverse'])->name('journal-entries.reverse');
         });
 
@@ -166,6 +182,7 @@ Route::middleware(['auth'])->group(function () {
         // Vendor Management
         Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector,Auditor,BillingClerk'])->group(function () {
             Route::get('/vendors', [VendorController::class, 'index'])->name('vendors.index');
+            // Backward-compat alias — sidebar links use this; do not remove.
             Route::get('/vendor-management', [VendorController::class, 'index'])->name('vendors');
             Route::get('/vendors/export', [VendorController::class, 'exportVendors'])->name('vendors.export');
         });
@@ -208,6 +225,7 @@ Route::middleware(['auth'])->group(function () {
         // AP Payment Approvals & Disbursement
         Route::middleware(['role:StaffAccountant,FinanceManager,CFO,FinanceDirector,Auditor'])->group(function () {
             Route::get('/payment-approvals', [PaymentApprovalController::class, 'index'])->name('payment-approvals.index');
+            // Backward-compat alias — do not remove; used by AP sidebar link.
             Route::get('/ap-payment-approvals', [PaymentApprovalController::class, 'index'])->name('ap-approvals');
             Route::get('/payment-approvals/export-bank-batch', [PaymentApprovalController::class, 'exportBankBatch'])->name('payment-approvals.export-bank-batch');
         });
@@ -239,8 +257,12 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/invoices/{id}/print', [PatientInvoiceController::class, 'print'])->name('invoices.print');
         });
         Route::middleware(['role:StaffAccountant,BillingClerk,FinanceManager,CFO,FinanceDirector'])->group(function () {
-            Route::post('/invoices', [PatientInvoiceController::class, 'store'])->name('invoices.store');
-            Route::post('/ingest-billables', IngestClinicalBillablesController::class)->name('ingest-billables');
+            Route::post('/invoices', [PatientInvoiceController::class, 'store'])
+                ->middleware('idempotency')
+                ->name('invoices.store');
+            Route::post('/ingest-billables', IngestClinicalBillablesController::class)
+                ->middleware('idempotency')
+                ->name('ingest-billables');
         });
 
         // Receivable Aging Schedule
@@ -287,7 +309,9 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/payment-requests/export', [PaymentRequestController::class, 'export'])->name('payment-requests.export');
         });
         Route::middleware(['role:StaffAccountant,BillingClerk,FinanceManager,CFO,FinanceDirector'])->group(function () {
-            Route::post('/payment-requests', [PaymentRequestController::class, 'store'])->name('payment-requests.store');
+            Route::post('/payment-requests', [PaymentRequestController::class, 'store'])
+                ->middleware('idempotency')
+                ->name('payment-requests.store');
         });
         Route::middleware(['role:Auditor,FinanceManager,CFO,FinanceDirector'])->group(function () {
             Route::post('/payment-requests/{id}/audit', [PaymentRequestController::class, 'audit'])->name('payment-requests.audit');
@@ -365,7 +389,9 @@ Route::middleware(['auth'])->group(function () {
         Route::middleware(['role:FinanceManager,CFO,FinanceDirector'])->group(function () {
             Route::post('/payment-receipts/{id}/void', [PaymentReceiptController::class, 'voidReceipt'])->name('receipts.void');
         });
-        Route::post('/process-payment', ProcessPaymentController::class)->name('process-payment');
+        Route::post('/process-payment', ProcessPaymentController::class)
+            ->middleware('idempotency')
+            ->name('process-payment');
 
         // Deposit Slips & Batching
         Route::middleware(['role:Cashier,StaffAccountant,FinanceManager,CFO,FinanceDirector,Auditor'])->group(function () {
@@ -590,5 +616,14 @@ Route::middleware(['auth'])->group(function () {
     // Change Password (for users with must_change_password flag)
     Route::get('/change-password', [ChangePasswordController::class, 'show'])->name('password.change');
     Route::post('/change-password', [ChangePasswordController::class, 'update'])->name('password.change.update');
+
+    // Account Settings & Appearance Theme (All Authenticated Users)
+    Route::prefix('account-settings')->name('account.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Profile\AccountSettingsController::class, 'index'])->name('settings');
+        Route::post('/profile', [\App\Http\Controllers\Profile\AccountSettingsController::class, 'updateProfile'])->name('profile.update');
+        Route::post('/photo', [\App\Http\Controllers\Profile\AccountSettingsController::class, 'updatePhoto'])->name('photo.update');
+        Route::post('/photo/remove', [\App\Http\Controllers\Profile\AccountSettingsController::class, 'removePhoto'])->name('photo.remove');
+        Route::post('/theme', [\App\Http\Controllers\Profile\AccountSettingsController::class, 'updateTheme'])->name('theme.update');
+    });
 
 }); // end auth middleware group

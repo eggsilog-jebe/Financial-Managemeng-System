@@ -5,302 +5,417 @@
 @section('page', 'ar-aging')
 
 @section('content')
-<div class="container-fluid p-4">
-  <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="space-y-6" x-data="{ activeDrawer: null }">
+
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <div>
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-1 fs-xs">
-          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
-          <li class="breadcrumb-item">Accounts Receivable</li>
-          <li class="breadcrumb-item active">Receivable Aging</li>
-        </ol>
-      </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Patient &amp; HMO Receivable Aging</h1>
-      <p class="text-muted fs-xs mb-0">Track all unpaid patient balances and pending HMO insurance claims categorized by aging brackets (Current, 31–60 Days, 61–90 Days, 90+ Days).</p>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Patient &amp; HMO Receivable Aging
+        </h1>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <x-integration-badge 
-          type="internal" 
-          :internalModules="['Invoicing & Billing', 'Credit Notes']" 
-          :tables="['invoices', 'hmo_claims', 'credit_notes']"
-          description="Scans open patient bills and claims to calculate aging intervals (<30d, 31-60d, 61-90d, 90d+)." 
-      />
-      <a href="{{ route('ar.ar-aging.export', ['as_of_date' => $asOfDate ?? date('Y-m-d')]) }}" class="btn btn-outline-secondary btn-sm">
-        <i class="ph ph-download-simple me-1"></i> Export Aging CSV
+
+    <div class="flex items-center gap-2.5 flex-wrap">
+      <a 
+        href="{{ route('ar.ar-aging.export', ['as_of_date' => $asOfDate ?? date('Y-m-d')]) }}" 
+        class="inline-flex items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700 transition-all"
+      >
+        <i class="ph-bold ph-download-simple"></i>
+        <span>Export Aging CSV</span>
       </a>
     </div>
   </div>
 
-  <!-- Summary KPI Cards -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-2">
-      <div class="card border-0 shadow-sm rounded-3 p-3 text-center">
-        <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">Current (&lt;30 Days)</span>
-        <h5 class="fw-bold mb-0 text-success font-monospace">₱{{ number_format((float) ($totalCurrent ?? 0), 2) }}</h5>
+  <!-- 5 Aging Buckets + Grand Total AR -->
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
+    <!-- Current <30d -->
+    <x-stat-card 
+      title="Current (<30d)" 
+      :value="$totalCurrent ?? 0" 
+      icon="ph-clock" 
+      color="emerald" 
+      subtitle="Within payment terms"
+    />
+
+    <!-- 31 - 60 Days -->
+    <x-stat-card 
+      title="31 - 60 Days" 
+      :value="$total31To60 ?? 0" 
+      icon="ph-warning-circle" 
+      color="blue" 
+      subtitle="Initial follow-up"
+    />
+
+    <!-- 61 - 90 Days -->
+    <x-stat-card 
+      title="61 - 90 Days" 
+      :value="$total61To90 ?? 0" 
+      icon="ph-hourglass-high" 
+      color="amber" 
+      subtitle="Overdue notice active"
+    />
+
+    <!-- 91 - 120 Days -->
+    <x-stat-card 
+      title="91 - 120 Days" 
+      :value="$total91To120 ?? 0" 
+      icon="ph-shield-warning" 
+      color="rose" 
+      subtitle="Final demand review"
+    />
+
+    <!-- 120+ Days -->
+    <x-stat-card 
+      title="> 120 Days" 
+      :value="$total120Plus ?? 0" 
+      icon="ph-skull" 
+      color="rose" 
+      badge="Bad Debt"
+      subtitle="Candidate for write-off"
+    />
+
+    <!-- Grand Total AR -->
+    <div class="relative overflow-hidden rounded-2xl bg-slate-900 p-5 shadow-sm ring-1 ring-slate-800 transition-all hover:shadow-md dark:bg-slate-950">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Grand Total AR</span>
+        <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-rose-500/20 text-rose-300 ring-1 ring-rose-500/30">
+          <i class="ph-bold ph-coins text-lg"></i>
+        </span>
       </div>
-    </div>
-    <div class="col-md-2">
-      <div class="card border-0 shadow-sm rounded-3 p-3 text-center">
-        <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">31 - 60 Days Overdue</span>
-        <h5 class="fw-bold mb-0 text-primary font-monospace">₱{{ number_format((float) ($total31To60 ?? 0), 2) }}</h5>
+      <div class="mt-4 font-mono text-2xl font-bold tracking-tight text-white tabular-nums">
+        ₱{{ number_format((float) ($grandTotalAR ?? 0), 2) }}
       </div>
-    </div>
-    <div class="col-md-2">
-      <div class="card border-0 shadow-sm rounded-3 p-3 text-center">
-        <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">61 - 90 Days Overdue</span>
-        <h5 class="fw-bold mb-0 text-warning font-monospace">₱{{ number_format((float) ($total61To90 ?? 0), 2) }}</h5>
-      </div>
-    </div>
-    <div class="col-md-2">
-      <div class="card border-0 shadow-sm rounded-3 p-3 text-center">
-        <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">91 - 120 Days</span>
-        <h5 class="fw-bold mb-0 text-danger font-monospace">₱{{ number_format((float) ($total91To120 ?? 0), 2) }}</h5>
-      </div>
-    </div>
-    <div class="col-md-2">
-      <div class="card border-0 shadow-sm rounded-3 p-3 text-center">
-        <span class="text-muted fs-xs text-uppercase fw-semibold d-block mb-1">120+ Days Overdue</span>
-        <h5 class="fw-bold mb-0 text-danger font-monospace">₱{{ number_format((float) ($total120Plus ?? 0), 2) }}</h5>
-      </div>
-    </div>
-    <div class="col-md-2">
-      <div class="card border-0 shadow-sm rounded-3 p-3 text-center bg-danger-subtle">
-        <span class="text-danger fs-xs text-uppercase fw-bold d-block mb-1">Grand Total AR</span>
-        <h5 class="fw-bold mb-0 text-danger font-monospace">₱{{ number_format((float) ($grandTotalAR ?? 0), 2) }}</h5>
-      </div>
+      <p class="mt-1 text-xs text-slate-400">Gross outstanding claims</p>
     </div>
   </div>
 
-  <!-- Payor Type Segment Tabs -->
-  <div class="mb-3">
-    <div class="btn-group btn-group-sm w-100 shadow-sm rounded-3 overflow-hidden" role="group">
-      <a href="{{ route('ar.ar-aging', array_merge(request()->query(), ['payor_type' => 'ALL'])) }}" 
-         class="btn py-2 {{ ($payorType ?? 'ALL') === 'ALL' ? 'btn-primary fw-bold' : 'btn-white text-secondary border-light-subtle' }}">
-        <i class="ph ph-squares-four me-1"></i> All Receivables
+  <!-- Segment Filter Tabs -->
+  <div class="inline-flex p-1.5 rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 w-full sm:w-auto overflow-x-auto">
+    <div class="flex items-center gap-1 min-w-max">
+      <a 
+        href="{{ route('ar.ar-aging', array_merge(request()->query(), ['payor_type' => 'ALL'])) }}" 
+        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all {{ ($payorType ?? 'ALL') === 'ALL' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800' }}"
+      >
+        <i class="ph-bold ph-squares-four"></i> All Receivables
       </a>
-      <a href="{{ route('ar.ar-aging', array_merge(request()->query(), ['payor_type' => 'PATIENT'])) }}" 
-         class="btn py-2 {{ ($payorType ?? '') === 'PATIENT' ? 'btn-primary fw-bold' : 'btn-white text-secondary border-light-subtle' }}">
-        <i class="ph ph-user me-1"></i> Patient Copays
+      <a 
+        href="{{ route('ar.ar-aging', array_merge(request()->query(), ['payor_type' => 'PATIENT'])) }}" 
+        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all {{ ($payorType ?? '') === 'PATIENT' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800' }}"
+      >
+        <i class="ph-bold ph-user"></i> Patient Copays
       </a>
-      <a href="{{ route('ar.ar-aging', array_merge(request()->query(), ['payor_type' => 'HMO'])) }}" 
-         class="btn py-2 {{ ($payorType ?? '') === 'HMO' ? 'btn-primary fw-bold' : 'btn-white text-secondary border-light-subtle' }}">
-        <i class="ph ph-shield me-1"></i> HMO Corporate Guarantees
+      <a 
+        href="{{ route('ar.ar-aging', array_merge(request()->query(), ['payor_type' => 'HMO'])) }}" 
+        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all {{ ($payorType ?? '') === 'HMO' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800' }}"
+      >
+        <i class="ph-bold ph-shield"></i> HMO Guarantees
       </a>
-      <a href="{{ route('ar.ar-aging', array_merge(request()->query(), ['payor_type' => 'PHILHEALTH'])) }}" 
-         class="btn py-2 {{ ($payorType ?? '') === 'PHILHEALTH' ? 'btn-primary fw-bold' : 'btn-white text-secondary border-light-subtle' }}">
-        <i class="ph ph-crosshair me-1"></i> PhilHealth Claims
+      <a 
+        href="{{ route('ar.ar-aging', array_merge(request()->query(), ['payor_type' => 'PHILHEALTH'])) }}" 
+        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all {{ ($payorType ?? '') === 'PHILHEALTH' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800' }}"
+      >
+        <i class="ph-bold ph-crosshair"></i> PhilHealth Claims
       </a>
     </div>
   </div>
 
   <!-- Aging Schedule Table Card -->
-  <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-transparent border-bottom p-3">
-      <form method="GET" action="{{ route('ar.ar-aging') }}" class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+  
+  <!-- Sub-Module Category Navigation Bar -->
+  @include('partials.submodule-nav')
+
+  <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 overflow-hidden dark:bg-slate-900 dark:ring-slate-800">
+    <!-- Filter Toolbar -->
+    <div class="border-b border-slate-200 p-4 dark:border-slate-800">
+      <form method="GET" action="{{ route('ar.ar-aging') }}" class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
         <input type="hidden" name="payor_type" value="{{ $payorType ?? 'ALL' }}">
         
-        <div class="d-flex flex-wrap align-items-center gap-2 flex-grow-1" style="max-width: 820px;">
-          <div style="min-width: 220px;" class="flex-grow-1">
-            <input type="search" name="search" class="form-control form-control-sm" placeholder="Search MRN, Patient, or HMO..." value="{{ request('search') }}">
+        <div class="flex flex-wrap items-center gap-2.5 flex-1">
+          <div class="relative w-full sm:w-64">
+            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+              <i class="ph ph-magnifying-glass text-sm"></i>
+            </div>
+            <input 
+              type="search" 
+              name="search" 
+              value="{{ request('search') }}" 
+              placeholder="Search MRN, Patient, or HMO..." 
+              class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+            >
           </div>
 
-          <div style="min-width: 170px;">
-            <select name="admission_type" class="form-select form-select-sm" onchange="this.form.submit()">
-              <option value="ALL" {{ request('admission_type', 'ALL') === 'ALL' ? 'selected' : '' }}>All Admission Types</option>
+          <div class="w-full sm:w-44">
+            <select 
+              name="admission_type" 
+              onchange="this.form.submit()" 
+              class="w-full rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+            >
+              <option value="ALL" {{ request('admission_type', 'ALL') === 'ALL' ? 'selected' : '' }}>All Admissions</option>
               <option value="INPATIENT" {{ request('admission_type') === 'INPATIENT' ? 'selected' : '' }}>Inpatient</option>
               <option value="OUTPATIENT" {{ request('admission_type') === 'OUTPATIENT' ? 'selected' : '' }}>Outpatient</option>
               <option value="EMERGENCY" {{ request('admission_type') === 'EMERGENCY' ? 'selected' : '' }}>Emergency</option>
             </select>
           </div>
 
-          <div class="d-flex align-items-center gap-2">
-            <label class="form-label mb-0 fs-xs text-muted fw-semibold text-nowrap">As-Of Date:</label>
-            <input type="date" name="as_of_date" class="form-control form-control-sm" value="{{ $asOfDate ?? date('Y-m-d') }}" onchange="this.form.submit()" style="width: 140px;">
-            <button type="submit" class="btn btn-sm btn-primary px-3 text-nowrap">
-              <i class="ph ph-magnifying-glass me-1"></i> Filter
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-500 font-medium">As-Of:</span>
+            <input 
+              type="date" 
+              name="as_of_date" 
+              value="{{ $asOfDate ?? date('Y-m-d') }}" 
+              onchange="this.form.submit()" 
+              class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 dark:bg-slate-800 dark:text-white dark:ring-slate-700 font-mono"
+            >
+            <button 
+              type="submit" 
+              class="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition-all"
+            >
+              <i class="ph-bold ph-funnel text-xs"></i>
+              <span>Filter</span>
             </button>
           </div>
         </div>
 
-        <div class="text-muted fs-xs text-nowrap ms-auto">
-          Showing <strong>{{ $totalDebtors ?? count($debtors ?? []) }}</strong> Debtor Accounts
+        <div class="text-xs font-medium text-slate-500 dark:text-slate-400">
+          Showing <span class="font-bold text-slate-900 dark:text-white">{{ $totalDebtors ?? count($debtors ?? []) }}</span> Debtor Accounts
         </div>
       </form>
     </div>
 
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Patient MRN &amp; Name</th>
-              <th>Admission Type</th>
-              <th>HMO Provider</th>
-              <th class="text-end">Current (&lt;30d)</th>
-              <th class="text-end">31 - 60 Days</th>
-              <th class="text-end">61 - 90 Days</th>
-              <th class="text-end">91 - 120 Days</th>
-              <th class="text-end">120+ Days</th>
-              <th class="text-end">Total Due (₱)</th>
-              <th class="text-end">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($debtors as $d)
-            <tr>
-              <td>
-                <div class="fw-bold text-dark">{{ $d['debtor_name'] }}</div>
-                <div class="fs-xs text-muted font-monospace">{{ $d['debtor_code'] }} &bull; <span class="text-primary fw-semibold">{{ $d['debtor_type'] }}</span></div>
+    <!-- Table -->
+    <div class="overflow-x-auto custom-scrollbar">
+      <table class="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+        <thead class="border-b border-slate-200 bg-slate-50/75 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+          <tr>
+            <th class="py-3 px-4">Patient MRN &amp; Name</th>
+            <th class="py-3 px-4">Admission</th>
+            <th class="py-3 px-4">HMO Provider</th>
+            <th class="py-3 px-4 text-right font-mono">Current (&lt;30d)</th>
+            <th class="py-3 px-4 text-right font-mono">31 - 60 Days</th>
+            <th class="py-3 px-4 text-right font-mono">61 - 90 Days</th>
+            <th class="py-3 px-4 text-right font-mono">91 - 120 Days</th>
+            <th class="py-3 px-4 text-right font-mono">120+ Days</th>
+            <th class="py-3 px-4 text-right font-mono font-bold">Total Due (₱)</th>
+            <th class="py-3 px-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+          @forelse($debtors as $d)
+            <tr class="transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+              <td class="py-3.5 px-4">
+                <div class="font-bold text-slate-900 dark:text-white">{{ $d['debtor_name'] }}</div>
+                <div class="font-mono text-[11px] text-slate-400">{{ $d['debtor_code'] }} &bull; <span class="font-semibold text-emerald-600 dark:text-emerald-400">{{ $d['debtor_type'] }}</span></div>
               </td>
-              <td>
-                <span class="badge bg-light text-dark border">{{ $d['admission'] }}</span>
+              <td class="py-3.5 px-4">
+                <span class="rounded bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">{{ $d['admission'] }}</span>
                 @if(isset($d['statutory_category']))
                   @if($d['statutory_category'] === 'SENIOR_CITIZEN')
-                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle ms-1"><i class="ph ph-identification-card me-1"></i>Senior 20%</span>
+                    <span class="inline-flex items-center gap-1 rounded bg-purple-50 px-2 py-0.5 text-[10px] font-semibold text-purple-700 ring-1 ring-purple-600/20 ms-1">
+                      <i class="ph-bold ph-identification-card"></i> Senior 20%
+                    </span>
                   @elseif($d['statutory_category'] === 'PWD')
-                    <span class="badge bg-teal-subtle text-teal border border-teal-subtle ms-1" style="background-color: #e6fffa; color: #0d9488; border-color: #99f6e4 !important;"><i class="ph ph-wheelchair me-1"></i>PWD 20%</span>
-                  @elseif($d['statutory_category'] === 'EMPLOYEE' || $d['statutory_category'] === 'EMPLOYEE_SUBSIDY')
-                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1">Employee</span>
-                  @elseif($d['statutory_category'] === 'CHARITY' || $d['statutory_category'] === 'CHARITY_SUBSIDY')
-                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle ms-1">Charity</span>
+                    <span class="inline-flex items-center gap-1 rounded bg-teal-50 px-2 py-0.5 text-[10px] font-semibold text-teal-700 ring-1 ring-teal-600/20 ms-1">
+                      <i class="ph-bold ph-wheelchair"></i> PWD 20%
+                    </span>
                   @endif
                 @endif
               </td>
-              <td>
+              <td class="py-3.5 px-4">
                 @if($d['hmo'] !== 'Self-Pay' && $d['hmo'] !== 'None')
-                  <span class="badge bg-info-subtle text-info border border-info-subtle">{{ $d['hmo'] }}</span>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-sky-50 text-sky-700 ring-1 ring-sky-600/20 dark:bg-sky-950/40 dark:text-sky-300">{{ $d['hmo'] }}</span>
                 @else
-                  <span class="badge bg-light text-muted border">Self-Pay</span>
+                  <span class="text-slate-400 text-xs">Self-Pay</span>
                 @endif
               </td>
-              <td class="text-end font-monospace">{{ (float)$d['current'] > 0 ? '₱' . number_format((float)$d['current'], 2) : '—' }}</td>
-              <td class="text-end font-monospace text-primary">{{ (float)$d['days_31_60'] > 0 ? '₱' . number_format((float)$d['days_31_60'], 2) : '—' }}</td>
-              <td class="text-end font-monospace text-warning">{{ (float)$d['days_61_90'] > 0 ? '₱' . number_format((float)$d['days_61_90'], 2) : '—' }}</td>
-              <td class="text-end font-monospace text-danger">{{ (float)$d['days_91_120'] > 0 ? '₱' . number_format((float)$d['days_91_120'], 2) : '—' }}</td>
-              <td class="text-end font-monospace text-danger fw-bold">{{ (float)$d['days_120_plus'] > 0 ? '₱' . number_format((float)$d['days_120_plus'], 2) : '—' }}</td>
-              <td class="text-end font-monospace fw-bold text-danger fs-6">₱{{ number_format((float)$d['total_due'], 2) }}</td>
-              <td class="text-end">
-                <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2 fs-xs text-nowrap" 
-                        data-bs-toggle="offcanvas" data-bs-target="#breakdownDrawer{{ $loop->index }}" title="View Invoice Breakdown">
-                  <i class="ph ph-eye me-1"></i> View Breakdown
+              <td class="py-3.5 px-4 text-right font-mono tabular-nums text-slate-700 dark:text-slate-300">
+                {{ (float)$d['current'] > 0 ? '₱' . number_format((float)$d['current'], 2) : '—' }}
+              </td>
+              <td class="py-3.5 px-4 text-right font-mono tabular-nums text-blue-600 dark:text-blue-400">
+                {{ (float)$d['days_31_60'] > 0 ? '₱' . number_format((float)$d['days_31_60'], 2) : '—' }}
+              </td>
+              <td class="py-3.5 px-4 text-right font-mono tabular-nums text-amber-600 dark:text-amber-400">
+                {{ (float)$d['days_61_90'] > 0 ? '₱' . number_format((float)$d['days_61_90'], 2) : '—' }}
+              </td>
+              <td class="py-3.5 px-4 text-right font-mono tabular-nums text-orange-600 dark:text-orange-400">
+                {{ (float)$d['days_91_120'] > 0 ? '₱' . number_format((float)$d['days_91_120'], 2) : '—' }}
+              </td>
+              <td class="py-3.5 px-4 text-right font-mono tabular-nums font-bold text-rose-600 dark:text-rose-400">
+                {{ (float)$d['days_120_plus'] > 0 ? '₱' . number_format((float)$d['days_120_plus'], 2) : '—' }}
+              </td>
+              <td class="py-3.5 px-4 text-right font-mono tabular-nums font-bold text-slate-900 dark:text-white">
+                ₱{{ number_format((float)$d['total_due'], 2) }}
+              </td>
+              <td class="py-3.5 px-4 text-right">
+                <button 
+                  type="button" 
+                  @click="activeDrawer = {{ $loop->index }}" 
+                  class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 ring-1 ring-inset ring-emerald-600/20 hover:bg-emerald-100 transition-all dark:bg-emerald-950/40 dark:text-emerald-300"
+                >
+                  <i class="ph-bold ph-eye"></i> Breakdown
                 </button>
-
-                <!-- Invoice Breakdown Slide-Over Drawer -->
-                <div class="offcanvas offcanvas-end border-0 shadow-lg" tabindex="-1" id="breakdownDrawer{{ $loop->index }}" style="width: 750px; max-width: 90vw;">
-                  <div class="offcanvas-header bg-dark text-white py-3 px-4">
-                    <div>
-                      <h6 class="offcanvas-title fw-bold mb-0 text-white d-flex align-items-center gap-2">
-                        <i class="ph ph-receipt fs-4 text-primary"></i> {{ $d['debtor_name'] }}
-                      </h6>
-                      <span class="fs-xs text-muted font-monospace">{{ $d['debtor_code'] }} &bull; {{ $d['debtor_type'] }}</span>
-                    </div>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-                  </div>
-
-                  <div class="offcanvas-body p-4 text-start">
-                    <!-- Summary Header Card -->
-                    <div class="card border border-light-subtle rounded-3 p-3 mb-4 bg-light-subtle">
-                      <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                          <span class="text-muted fs-xs d-block">Debtor Classification:</span>
-                          <strong class="text-dark fs-sm">{{ $d['debtor_type'] }}</strong>
-                        </div>
-                        <div class="text-end">
-                          <span class="text-muted fs-xs d-block">Total Debt Outstanding:</span>
-                          <strong class="text-danger font-monospace fs-5">₱{{ number_format((float)$d['total_due'], 2) }}</strong>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Itemized Invoices Table -->
-                    <div class="fw-bold text-uppercase fs-xs text-secondary mb-2 d-flex justify-content-between align-items-center">
-                      <span><i class="ph ph-list-numbers me-1"></i> Itemized Unpaid Invoices ({{ count($d['invoices'] ?? []) }})</span>
-                      <span class="badge bg-light text-muted border">As-Of: {{ $asOfDate }}</span>
-                    </div>
-
-                    <div class="table-responsive border rounded-3 bg-white mb-4">
-                      <table class="table table-sm table-hover align-middle mb-0 fs-xs">
-                        <thead class="table-light">
-                          <tr>
-                            <th>Invoice #</th>
-                            <th>Date</th>
-                            <th>Overdue</th>
-                            <th class="text-end">Amount (₱)</th>
-                            <th class="text-end">Action</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          @forelse($d['invoices'] ?? [] as $inv)
-                            <tr>
-                              <td>
-                                <div class="font-monospace fw-bold text-primary">{{ $inv['invoice_number'] }}</div>
-                                <div class="fs-xs text-muted">{{ $inv['claim_type'] }}</div>
-                              </td>
-                              <td class="text-muted">{{ $inv['invoice_date'] }}</td>
-                              <td>
-                                @if($inv['days_overdue'] <= 30)
-                                  <span class="badge bg-success-subtle text-success fs-xs"><i class="ph ph-clock me-1"></i> {{ $inv['days_overdue'] }}d (Current)</span>
-                                @elseif($inv['days_overdue'] <= 60)
-                                  <span class="badge bg-primary-subtle text-primary fs-xs"><i class="ph ph-clock me-1"></i> {{ $inv['days_overdue'] }}d (31-60d)</span>
-                                @elseif($inv['days_overdue'] <= 90)
-                                  <span class="badge bg-warning-subtle text-warning-emphasis fs-xs"><i class="ph ph-clock me-1"></i> {{ $inv['days_overdue'] }}d (61-90d)</span>
-                                @else
-                                  <span class="badge bg-danger-subtle text-danger fs-xs"><i class="ph ph-warning me-1"></i> {{ $inv['days_overdue'] }}d (90d+)</span>
-                                @endif
-                              </td>
-                              <td class="text-end font-monospace fw-bold text-dark">
-                                ₱{{ number_format((float) $inv['amount_due'], 2) }}
-                              </td>
-                              <td class="text-end">
-                                <a href="{{ route('collection.cashier-desk') }}" class="btn btn-xs btn-outline-success py-1 px-2" title="Settle at Cashier Desk">
-                                  <i class="ph ph-cash-register me-1"></i> Settle
-                                </a>
-                              </td>
-                            </tr>
-                          @empty
-                            <tr>
-                              <td colspan="5" class="text-center py-3 text-muted">No itemized invoices found.</td>
-                            </tr>
-                          @endforelse
-                        </tbody>
-                      </table>
-                    </div>
-
-                    <!-- Quick Action Footer inside Drawer -->
-                    <div class="d-flex justify-content-between gap-2 pt-2 border-top">
-                      <a href="{{ route('ar.credit-notes') }}" class="btn btn-sm btn-outline-danger w-50 fw-medium">
-                        <i class="ph ph-minus-circle me-1"></i> Issue Credit Note / Write-Off
-                      </a>
-                      <a href="{{ route('collection.cashier-desk') }}" class="btn btn-sm btn-primary w-50 fw-medium">
-                        <i class="ph ph-check-circle me-1"></i> Cashier Settlement Desk
-                      </a>
-                    </div>
-                  </div>
-                </div>
               </td>
             </tr>
-            @empty
+          @empty
             <tr>
-              <td colspan="10" class="text-center py-4 text-muted">No outstanding accounts receivable found for this cutoff date.</td>
+              <td colspan="10" class="py-12 text-center text-sm text-slate-400">No outstanding accounts receivable found for this cutoff date.</td>
             </tr>
-            @endforelse
-          </tbody>
-          <tfoot class="table-light fw-bold font-monospace">
-            <tr>
-              <td colspan="3">TOTALS:</td>
-              <td class="text-end text-success">₱{{ number_format((float) ($totalCurrent ?? 0), 2) }}</td>
-              <td class="text-end text-primary">₱{{ number_format((float) ($total31To60 ?? 0), 2) }}</td>
-              <td class="text-end text-warning">₱{{ number_format((float) ($total61To90 ?? 0), 2) }}</td>
-              <td class="text-end text-danger">₱{{ number_format((float) ($total91To120 ?? 0), 2) }}</td>
-              <td class="text-end text-danger">₱{{ number_format((float) ($total120Plus ?? 0), 2) }}</td>
-              <td class="text-end text-danger fs-6">₱{{ number_format((float) ($grandTotalAR ?? 0), 2) }}</td>
-              <td></td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+          @endforelse
+        </tbody>
+        <tfoot class="border-t-2 border-slate-200 bg-slate-50/75 text-xs font-bold uppercase font-mono tabular-nums dark:border-slate-800 dark:bg-slate-800/50">
+          <tr>
+            <td colspan="3" class="py-3.5 px-4 text-slate-900 dark:text-white">TOTALS:</td>
+            <td class="px-4 py-3.5 text-right text-emerald-600 dark:text-emerald-400">₱{{ number_format((float) ($totalCurrent ?? 0), 2) }}</td>
+            <td class="px-4 py-3.5 text-right text-blue-600 dark:text-blue-400">₱{{ number_format((float) ($total31To60 ?? 0), 2) }}</td>
+            <td class="px-4 py-3.5 text-right text-amber-600 dark:text-amber-400">₱{{ number_format((float) ($total61To90 ?? 0), 2) }}</td>
+            <td class="px-4 py-3.5 text-right text-orange-600 dark:text-orange-400">₱{{ number_format((float) ($total91To120 ?? 0), 2) }}</td>
+            <td class="px-4 py-3.5 text-right text-rose-600 dark:text-rose-400">₱{{ number_format((float) ($total120Plus ?? 0), 2) }}</td>
+            <td class="px-4 py-3.5 text-right text-rose-600 dark:text-rose-400 text-sm">₱{{ number_format((float) ($grandTotalAR ?? 0), 2) }}</td>
+            <td class="py-3.5 px-4"></td>
+          </tr>
+        </tfoot>
+      </table>
     </div>
   </div>
+
+  <!-- Itemized Invoices Slide-Over Drawers (Alpine.js) -->
+  @foreach($debtors as $d)
+    <div 
+      x-show="activeDrawer === {{ $loop->index }}" 
+      x-cloak 
+      class="fixed inset-0 z-50 overflow-hidden" 
+      aria-labelledby="slide-over-title" 
+      role="dialog" 
+      aria-modal="true"
+    >
+      <div 
+        x-show="activeDrawer === {{ $loop->index }}" 
+        x-transition.opacity.duration.300ms 
+        class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
+      ></div>
+
+      <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
+        <div 
+          x-show="activeDrawer === {{ $loop->index }}" 
+          x-transition:enter="transform transition ease-in-out duration-300"
+          x-transition:enter-start="translate-x-full"
+          x-transition:enter-end="translate-x-0"
+          x-transition:leave="transform transition ease-in-out duration-300"
+          x-transition:leave-start="translate-x-0"
+          x-transition:leave-end="translate-x-full"
+          @click.outside="activeDrawer = null" 
+          class="w-screen max-w-xl bg-white shadow-2xl ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800 flex flex-col justify-between"
+        >
+          <!-- Drawer Header -->
+          <div class="p-6 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <i class="ph-bold ph-receipt text-emerald-600"></i>
+                <span>{{ $d['debtor_name'] }}</span>
+              </h3>
+              <p class="text-xs text-slate-500 font-mono mt-0.5">{{ $d['debtor_code'] }} &bull; {{ $d['debtor_type'] }}</p>
+            </div>
+            <button 
+              type="button" 
+              @click="activeDrawer = null" 
+              class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+            >
+              <i class="ph-bold ph-x text-lg"></i>
+            </button>
+          </div>
+
+          <!-- Drawer Body -->
+          <div class="p-6 overflow-y-auto custom-scrollbar flex-1 space-y-5">
+            <div class="rounded-xl bg-slate-50 p-4 ring-1 ring-slate-200 dark:bg-slate-800/60 dark:ring-slate-700 flex justify-between items-center">
+              <div>
+                <span class="text-xs text-slate-500 block">Debtor Category:</span>
+                <strong class="text-xs font-semibold text-slate-900 dark:text-white">{{ $d['debtor_type'] }}</strong>
+              </div>
+              <div class="text-right">
+                <span class="text-xs text-slate-500 block">Total Due:</span>
+                <strong class="font-mono text-xl font-bold text-rose-600 dark:text-rose-400 tabular-nums">₱{{ number_format((float)$d['total_due'], 2) }}</strong>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">
+                  Itemized Unpaid Invoices ({{ count($d['invoices'] ?? []) }})
+                </span>
+                <span class="text-[11px] text-slate-400 font-mono">Cutoff: {{ $asOfDate }}</span>
+              </div>
+
+              <div class="rounded-xl ring-1 ring-slate-200 overflow-hidden dark:ring-slate-800">
+                <table class="w-full text-left text-xs">
+                  <thead class="border-b border-slate-200 bg-slate-50 text-[11px] font-semibold uppercase text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+                    <tr>
+                      <th class="py-2.5 px-3">Invoice #</th>
+                      <th class="py-2.5 px-3">Date</th>
+                      <th class="py-2.5 px-3">Overdue</th>
+                      <th class="py-2.5 px-3 text-right font-mono">Amount (₱)</th>
+                      <th class="py-2.5 px-3 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                    @forelse($d['invoices'] ?? [] as $inv)
+                      <tr>
+                        <td class="py-2.5 px-3">
+                          <div class="font-mono font-bold text-emerald-700 dark:text-emerald-400">{{ $inv['invoice_number'] }}</div>
+                          <div class="text-[10px] text-slate-400">{{ $inv['claim_type'] }}</div>
+                        </td>
+                        <td class="py-2.5 px-3 text-slate-500">{{ $inv['invoice_date'] }}</td>
+                        <td class="py-2.5 px-3">
+                          @if($inv['days_overdue'] <= 30)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20">{{ $inv['days_overdue'] }}d</span>
+                          @elseif($inv['days_overdue'] <= 60)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 ring-1 ring-blue-600/20">{{ $inv['days_overdue'] }}d</span>
+                          @elseif($inv['days_overdue'] <= 90)
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 ring-1 ring-amber-600/20">{{ $inv['days_overdue'] }}d</span>
+                          @else
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-50 text-rose-700 ring-1 ring-rose-600/20">{{ $inv['days_overdue'] }}d</span>
+                          @endif
+                        </td>
+                        <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-900 dark:text-white tabular-nums">
+                          ₱{{ number_format((float) $inv['amount_due'], 2) }}
+                        </td>
+                        <td class="py-2.5 px-3 text-right">
+                          <a 
+                            href="{{ route('collection.cashier-desk') }}" 
+                            class="inline-flex items-center gap-1 rounded-lg bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-600/20 hover:bg-emerald-100"
+                          >
+                            <i class="ph-bold ph-coins"></i> Settle
+                          </a>
+                        </td>
+                      </tr>
+                    @empty
+                      <tr>
+                        <td colspan="5" class="py-4 text-center text-slate-400">No itemized invoices found.</td>
+                      </tr>
+                    @endforelse
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Drawer Footer -->
+          <div class="p-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 grid grid-cols-2 gap-3">
+            <a 
+              href="{{ route('ar.credit-notes') }}" 
+              class="inline-flex items-center justify-center gap-1.5 rounded-xl bg-white px-3.5 py-2.5 text-xs font-semibold text-rose-700 shadow-sm ring-1 ring-inset ring-rose-300 hover:bg-rose-50 dark:bg-slate-800 dark:text-rose-400 dark:ring-rose-800 transition-all text-center"
+            >
+              <i class="ph-bold ph-minus-circle"></i> Issue Credit Note
+            </a>
+            <a 
+              href="{{ route('collection.cashier-desk') }}" 
+              class="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20 transition-all text-center"
+            >
+              <i class="ph-bold ph-check-circle"></i> Cashier Settlement Desk
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  @endforeach
+
 </div>
 @endsection

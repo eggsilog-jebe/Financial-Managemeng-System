@@ -5,156 +5,173 @@
 @section('page', 'cash-flow-forecast')
 
 @section('content')
-<div class="container-fluid p-4">
-  <!-- Page Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="space-y-6">
+  <!-- Executive Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <div>
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-1 fs-xs">
-          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
-          <li class="breadcrumb-item">Cash Management</li>
-          <li class="breadcrumb-item active">Cash Flow Forecasting</li>
-        </ol>
-      </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Hospital Cash Flow Forecasting Engine</h1>
-      <p class="text-muted fs-xs mb-0">Project 30, 60, and 90-day cash positions by combining expected patient collections, HMO reimbursements, supplier payables, and payroll.</p>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Hospital Cash Flow Forecasting Engine
+        </h1>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <x-integration-badge 
-          type="internal" 
-          :systems="['AR Invoices', 'HMO Claims', 'AP Bills', 'Payroll Runs']" 
-          description="Predicts 30/60/90-day cash liquidity curves." 
-      />
-      <a href="{{ route('cash.cash-flow-forecast.export', ['horizon' => $horizon_days ?? 30]) }}" class="btn btn-outline-secondary btn-sm">
-        <i class="ph ph-file-csv me-1"></i> Export 30-Day Schedule (CSV)
+
+    <div class="flex items-center gap-2.5">
+      <a 
+        href="{{ route('cash.cash-flow-forecast.export', ['horizon' => $horizon_days ?? 30]) }}" 
+        class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+      >
+        <i class="ph-bold ph-file-csv text-blue-600"></i>
+        <span>Export Schedule (CSV)</span>
       </a>
-      <a href="{{ route('cash.liquidity') }}" class="btn btn-primary btn-sm">
-        <i class="ph ph-chart-line-up me-1"></i> Liquidity Ratios
+      <a 
+        href="{{ route('cash.liquidity') }}" 
+        class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 ring-1 ring-blue-600/20 transition-all cursor-pointer"
+      >
+        <i class="ph-bold ph-gauge"></i>
+        <span>Liquidity Ratios</span>
       </a>
     </div>
   </div>
 
   <!-- Metric Summary Cards -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Available Liquid Cash</span>
-          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-vault fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($available_cash ?? 0), 2) }}</h4>
-        <span class="fs-xs text-muted">Across {{ count($bank_accounts ?? []) }} Active Bank Accounts</span>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Projected 30-Day Inflows</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-arrow-down-left fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-success">₱{{ number_format((float) ($total_projected_inflows ?? 0), 2) }}</h4>
-        <span class="fs-xs text-muted">Patient: ₱{{ number_format((float) ($patient_inflows ?? 0), 2) }} | HMO: ₱{{ number_format((float) ($hmo_inflows ?? 0), 2) }}</span>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Committed 30-Day Outflows</span>
-          <span class="badge bg-danger-subtle text-danger p-2 rounded-2"><i class="ph ph-arrow-up-right fs-5"></i></span>
-        </div>
-        <h4 class="fw-bold mb-0 text-danger">₱{{ number_format((float) ($total_committed_outflows ?? 0), 2) }}</h4>
-        <span class="fs-xs text-muted">AP: ₱{{ number_format((float) ($ap_outflows ?? 0), 2) }} | Payroll: ₱{{ number_format((float) ($payroll_outflows ?? 0), 2) }}</span>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Projected Ending Position</span>
-          <span class="badge bg-info-subtle text-info p-2 rounded-2"><i class="ph ph-trend-up fs-5"></i></span>
-        </div>
-        @php
-          $isPositive = (bccomp((string) ($net_operating_position ?? 0), '0.0000', 4) >= 0);
-        @endphp
-        <h4 class="fw-bold mb-0 text-primary">₱{{ number_format((float) ($projected_ending_cash ?? 0), 2) }}</h4>
-        <span class="fs-xs {{ $isPositive ? 'text-success' : 'text-danger' }}">
-          Net Flow: {{ $isPositive ? '+' : '' }}₱{{ number_format((float) ($net_operating_position ?? 0), 2) }}
-        </span>
-      </div>
-    </div>
+  <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+    <x-stat-card 
+      title="Available Liquid Cash" 
+      :value="$available_cash ?? 0" 
+      icon="ph-vault" 
+      color="blue" 
+      subtitle="Across {{ count($bank_accounts ?? []) }} active bank accounts"
+    />
+    <x-stat-card 
+      title="Projected Inflows" 
+      :value="$total_projected_inflows ?? 0" 
+      icon="ph-arrow-down-left" 
+      color="emerald" 
+      subtitle="Patient: ₱{{ number_format((float) ($patient_inflows ?? 0), 2) }} | HMO: ₱{{ number_format((float) ($hmo_inflows ?? 0), 2) }}"
+    />
+    <x-stat-card 
+      title="Committed Outflows" 
+      :value="$total_committed_outflows ?? 0" 
+      icon="ph-arrow-up-right" 
+      color="rose" 
+      subtitle="AP: ₱{{ number_format((float) ($ap_outflows ?? 0), 2) }} | Payroll: ₱{{ number_format((float) ($payroll_outflows ?? 0), 2) }}"
+    />
+    @php
+      $isPositive = (bccomp((string) ($net_operating_position ?? 0), '0.0000', 4) >= 0);
+    @endphp
+    <x-stat-card 
+      title="Projected Ending Cash" 
+      :value="$projected_ending_cash ?? 0" 
+      icon="ph-trend-up" 
+      color="{{ $isPositive ? 'emerald' : 'rose' }}" 
+      subtitle="Net flow: {{ $isPositive ? '+' : '' }}₱{{ number_format((float) ($net_operating_position ?? 0), 2) }}"
+    />
   </div>
 
-  <!-- Forecasting Horizon Filter -->
-  <div class="card border-0 shadow-sm rounded-3 mb-4">
-    <div class="card-body p-3">
-      <form method="GET" action="{{ route('cash.cash-flow-forecast') }}" class="row g-2 align-items-center">
-        <div class="col-md-4">
-          <label class="form-label mb-0 fs-xs text-muted fw-semibold">Forecasting Window Horizon:</label>
-          <select name="horizon" class="form-select form-select-sm" onchange="this.form.submit()">
+  <!-- Chronological Cash Events Schedule Grid -->
+  
+  <!-- Sub-Module Category Navigation Bar -->
+  @include('partials.submodule-nav')
+
+  <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 overflow-hidden dark:bg-slate-900 dark:ring-slate-800">
+    <!-- Filter Toolbar Header -->
+    <div class="border-b border-slate-200 p-4 dark:border-slate-800">
+      <form method="GET" action="{{ route('cash.cash-flow-forecast') }}" class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <div class="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <i class="ph-bold ph-calendar-blank"></i>
+            <span>Forecasting Horizon:</span>
+          </div>
+          <select 
+            name="horizon" 
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-blue-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+            onchange="this.form.submit()"
+          >
             <option value="15" {{ request('horizon') == 15 ? 'selected' : '' }}>Next 15 Days (Bi-Weekly Cash Runway)</option>
             <option value="30" {{ request('horizon', 30) == 30 ? 'selected' : '' }}>Next 30 Days (Monthly Operational Forecast)</option>
             <option value="60" {{ request('horizon') == 60 ? 'selected' : '' }}>Next 60 Days (Two-Month Horizon)</option>
             <option value="90" {{ request('horizon') == 90 ? 'selected' : '' }}>Next 90 Days (Quarterly Liquidity Outlook)</option>
           </select>
         </div>
+
+        <div class="flex items-center gap-3">
+          <span class="text-xs text-slate-400">
+            Active window: <span class="font-semibold text-slate-700 dark:text-slate-300">{{ request('horizon', 30) }} Days</span>
+          </span>
+          <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+            {{ count($events ?? []) }} Scheduled Events
+          </span>
+        </div>
       </form>
     </div>
-  </div>
 
-  <!-- Chronological Cash Events Schedule Grid -->
-  <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-transparent border-bottom p-3 d-flex justify-content-between align-items-center">
-      <h6 class="fw-bold mb-0 text-dark"><i class="ph ph-calendar-blank me-2 text-primary"></i>Chronological Inflows vs. Outflows Schedule</h6>
-      <span class="badge bg-primary-subtle text-primary">{{ count($events ?? []) }} Scheduled Events</span>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="border-b border-slate-200 bg-slate-50/75 dark:border-slate-800 dark:bg-slate-800/60 sticky top-0">
+          <tr>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Event Type</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Category</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Reference #</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Counterparty / Entity</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Expected Due Date</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 text-right">Projected Amount</th>
+            <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 text-center">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+          @forelse($events ?? [] as $evt)
+          @php
+            $isInflow = ($evt['type'] === 'INFLOW');
+          @endphp
+          <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+            <td class="py-3 px-4">
+              @if($isInflow)
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                  <i class="ph-bold ph-arrow-down-left"></i> INFLOW
+                </span>
+              @else
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                  <i class="ph-bold ph-arrow-up-right"></i> OUTFLOW
+                </span>
+              @endif
+            </td>
+            <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200">
+              {{ $evt['category'] }}
+            </td>
+            <td class="py-3 px-4 font-mono font-bold text-blue-600 dark:text-blue-400">
+              {{ $evt['reference'] }}
+            </td>
+            <td class="py-3 px-4 text-slate-700 dark:text-slate-300">
+              {{ $evt['counterparty'] }}
+            </td>
+            <td class="py-3 px-4 font-mono text-slate-500 dark:text-slate-400">
+              {{ date('M d, Y', strtotime($evt['due_date'])) }}
+            </td>
+            <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold {{ $isInflow ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400' }}">
+              {{ $isInflow ? '+' : '-' }}₱{{ number_format((float) $evt['amount'], 2) }}
+            </td>
+            <td class="py-3 px-4 text-center">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                {{ $evt['status'] }}
+              </span>
+            </td>
+          </tr>
+          @empty
+          <tr>
+            <td colspan="7" class="py-12 text-center text-slate-400 dark:text-slate-500">
+              <i class="ph ph-calendar-blank text-3xl block mb-2 text-slate-300 dark:text-slate-600"></i>
+              No scheduled cash events within the selected horizon.
+            </td>
+          </tr>
+          @endforelse
+        </tbody>
+      </table>
     </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Event Type</th>
-              <th>Category</th>
-              <th>Reference #</th>
-              <th>Counterparty / Entity</th>
-              <th>Expected Due Date</th>
-              <th class="text-end">Projected Amount (₱)</th>
-              <th class="text-center">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($events ?? [] as $evt)
-            @php
-              $isInflow = ($evt['type'] === 'INFLOW');
-            @endphp
-            <tr>
-              <td>
-                @if($isInflow)
-                  <span class="badge bg-success-subtle text-success"><i class="ph ph-arrow-down-left me-1"></i> INFLOW</span>
-                @else
-                  <span class="badge bg-danger-subtle text-danger"><i class="ph ph-arrow-up-right me-1"></i> OUTFLOW</span>
-                @endif
-              </td>
-              <td class="fw-semibold text-dark">{{ $evt['category'] }}</td>
-              <td><span class="font-monospace text-primary fw-bold">{{ $evt['reference'] }}</span></td>
-              <td><span class="text-dark">{{ $evt['counterparty'] }}</span></td>
-              <td class="font-monospace fs-xs">{{ date('M d, Y', strtotime($evt['due_date'])) }}</td>
-              <td class="text-end font-monospace fw-bold {{ $isInflow ? 'text-success' : 'text-danger' }}">
-                {{ $isInflow ? '+' : '-' }}₱{{ number_format((float) $evt['amount'], 2) }}
-              </td>
-              <td class="text-center">
-                <span class="badge bg-light text-dark border">{{ $evt['status'] }}</span>
-              </td>
-            </tr>
-            @empty
-            <tr>
-              <td colspan="7" class="text-center py-4 text-muted">No scheduled cash events within the selected horizon.</td>
-            </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
-    </div>
-    <div class="card-footer bg-transparent border-top p-3 d-flex align-items-center justify-content-between">
-      <span class="text-muted fs-xs">Showing {{ count($events ?? []) }} chronological cash forecasting line items</span>
+
+    <!-- Table Footer -->
+    <div class="flex items-center justify-between border-t border-slate-200 px-4 py-3 dark:border-slate-800">
+      <span class="text-xs text-slate-500 dark:text-slate-400">
+        Showing {{ count($events ?? []) }} chronological cash forecasting line items
+      </span>
     </div>
   </div>
 </div>

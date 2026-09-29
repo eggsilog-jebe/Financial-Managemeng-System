@@ -1,118 +1,163 @@
 @extends('layouts.app')
 
-@section('title', 'Financial Reports Hub')
+@section('title', 'Financial Reports Hub - Financial Reporting | FMS')
 @section('module', 'financial-reporting')
 @section('page', 'reports-hub')
 
 @section('content')
-<div class="container-fluid p-4">
-  <!-- Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="space-y-6">
+  <!-- Executive Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <div>
-      <h1 class="h3 mb-1 font-weight-bold">Financial Reports &amp; Statements Hub</h1>
-      <p class="text-muted mb-0">Real-Time Trial Balance &bull; Profit &amp; Loss &bull; Balance Sheet &bull; BIR Schedules</p>
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+          Financial Reports &amp; Statements Hub
+        </h1>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <x-integration-badge 
-          type="internal" 
-          :internalModules="['Financial Reporting', 'General Ledger', 'Tax Management', 'Cash Management']"
-          :tables="['journal_entries', 'journal_entry_lines', 'accounts', 'tax_transactions', 'fiscal_periods']"
-          glImpact="Calculates Trial Balance, Income Statement (Revenues - Expenses), and Balance Sheet"
-          description="Generates real-time financial statements, BIR 2307/tax compliance schedules, and board-ready reports from posted GL records."
-      />
-      <a href="{{ route('reporting.equity') }}" class="btn btn-outline-primary btn-sm">
-        <i class="ph ph-arrows-left-right me-1"></i> Changes in Equity (PFRS)
+
+    <div class="flex flex-wrap items-center gap-2.5">
+      <a 
+        href="{{ route('reporting.equity') }}" 
+        class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+      >
+        <i class="ph-bold ph-arrows-left-right text-blue-600"></i>
+        <span>Changes in Equity (PFRS)</span>
       </a>
-      <a href="{{ route('accounting.export.trial-balance-csv') }}" class="btn btn-outline-success btn-sm">
-        <i class="ph ph-file-csv me-1"></i> Export Trial Balance CSV
+      <a 
+        href="{{ route('accounting.export.trial-balance-csv') }}" 
+        class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+      >
+        <i class="ph-bold ph-file-csv text-emerald-600"></i>
+        <span>Export TB (CSV)</span>
       </a>
-      <a href="{{ route('accounting.export.general-ledger-csv') }}" class="btn btn-outline-info btn-sm">
-        <i class="ph ph-file-csv me-1"></i> Export GL Book (CAS Audit)
+      <a 
+        href="{{ route('accounting.export.general-ledger-csv') }}" 
+        class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+      >
+        <i class="ph-bold ph-file-csv text-purple-600"></i>
+        <span>GL Book (CAS)</span>
       </a>
-      <button class="btn btn-outline-secondary btn-sm" onclick="window.print()"><i class="ph ph-printer me-1"></i> Print Report</button>
-      <a href="{{ route('accounting.dashboard') }}" class="btn btn-outline-secondary btn-sm">
-        <i class="ph ph-arrow-left me-1"></i> Dashboard
+      <button 
+        type="button" 
+        onclick="window.print()" 
+        class="inline-flex items-center gap-1.5 rounded-xl bg-slate-800 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 transition-all cursor-pointer"
+      >
+        <i class="ph-bold ph-printer"></i>
+        <span>Print</span>
+      </button>
+    </div>
+  </div>
+
+    <!-- Sub-Module Category Navigation Bar -->
+  @include('partials.submodule-nav')
+
+<!-- Navigation Tabs -->
+  <div class="rounded-2xl bg-white p-2 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+    <div class="flex flex-wrap items-center gap-1.5">
+      <a 
+        href="{{ route('accounting.reports.index', ['tab' => 'trial-balance']) }}"
+        class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all {{ $tab === 'trial-balance' ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-600/20' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800' }}"
+      >
+        <i class="ph-bold ph-scales"></i>
+        <span>Trial Balance</span>
+      </a>
+      <a 
+        href="{{ route('accounting.reports.index', ['tab' => 'pnl']) }}"
+        class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all {{ $tab === 'pnl' ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-600/20' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800' }}"
+      >
+        <i class="ph-bold ph-chart-line-up"></i>
+        <span>Income Statement (P&amp;L)</span>
+      </a>
+      <a 
+        href="{{ route('accounting.reports.index', ['tab' => 'balance-sheet']) }}"
+        class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all {{ $tab === 'balance-sheet' ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-600/20' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800' }}"
+      >
+        <i class="ph-bold ph-shield-check"></i>
+        <span>Balance Sheet</span>
+      </a>
+      <a 
+        href="{{ route('accounting.reports.index', ['tab' => 'bir-schedules']) }}"
+        class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all {{ $tab === 'bir-schedules' ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-600/20' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800' }}"
+      >
+        <i class="ph-bold ph-file-text"></i>
+        <span>BIR Tax Returns</span>
       </a>
     </div>
   </div>
 
-  <!-- Navigation Tabs -->
-  <ul class="nav nav-pills mb-4 bg-white p-2 rounded-3 shadow-sm" id="reportTabs" role="tablist">
-    <li class="nav-item" role="presentation">
-      <a class="nav-link {{ $tab === 'trial-balance' ? 'active' : '' }} fw-semibold" 
-         href="{{ route('accounting.reports.index', ['tab' => 'trial-balance']) }}">
-        <i class="ph ph-scales me-1"></i> Trial Balance
-      </a>
-    </li>
-    <li class="nav-item" role="presentation">
-      <a class="nav-link {{ $tab === 'pnl' ? 'active' : '' }} fw-semibold" 
-         href="{{ route('accounting.reports.index', ['tab' => 'pnl']) }}">
-        <i class="ph ph-chart-line-up me-1"></i> Income Statement (P&amp;L)
-      </a>
-    </li>
-    <li class="nav-item" role="presentation">
-      <a class="nav-link {{ $tab === 'balance-sheet' ? 'active' : '' }} fw-semibold" 
-         href="{{ route('accounting.reports.index', ['tab' => 'balance-sheet']) }}">
-        <i class="ph ph-shield-check me-1"></i> Balance Sheet
-      </a>
-    </li>
-    <li class="nav-item" role="presentation">
-      <a class="nav-link {{ $tab === 'bir-schedules' ? 'active' : '' }} fw-semibold" 
-         href="{{ route('accounting.reports.index', ['tab' => 'bir-schedules']) }}">
-        <i class="ph ph-file-text me-1"></i> BIR Tax Returns
-      </a>
-    </li>
-  </ul>
-
   <!-- TAB 1: TRIAL BALANCE -->
   @if($tab === 'trial-balance')
-    <div class="card border-0 shadow-sm rounded-3 bg-white">
-      <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+    <div class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-200 p-5 dark:border-slate-800">
         <div>
-          <h5 class="fw-bold mb-0 text-dark">General Ledger Trial Balance</h5>
-          <small class="text-muted">Real-time balances across all Chart of Accounts</small>
+          <h5 class="text-base font-bold text-slate-900 dark:text-white">General Ledger Trial Balance</h5>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Real-time balances across all Chart of Accounts (COA)</p>
         </div>
         <div>
-          <span class="badge {{ $trialBalance['is_balanced'] ? 'bg-success fs-6 py-2 px-3' : 'bg-danger fs-6 py-2 px-3' }}">
-            <i class="ph {{ $trialBalance['is_balanced'] ? 'ph-check-circle' : 'ph-warning' }} me-1"></i>
-            {{ $trialBalance['is_balanced'] ? 'DOUBLE-ENTRY BALANCED' : 'OUT OF BALANCE' }}
-          </span>
+          @if($trialBalance['is_balanced'])
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+              <i class="ph-bold ph-check-circle text-base"></i>
+              <span>DOUBLE-ENTRY BALANCED</span>
+            </span>
+          @else
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+              <i class="ph-bold ph-warning text-base"></i>
+              <span>OUT OF BALANCE</span>
+            </span>
+          @endif
         </div>
       </div>
 
-      <div class="table-responsive p-3">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr class="fs-xs text-muted text-uppercase">
-              <th style="width: 120px;">Code</th>
-              <th>Account Title</th>
-              <th>Classification</th>
-              <th>Normal Balance</th>
-              <th class="text-end" style="width: 180px;">Debit (DR)</th>
-              <th class="text-end" style="width: 180px;">Credit (CR)</th>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="border-b border-slate-200 bg-slate-50/75 dark:border-slate-800 dark:bg-slate-800/60 sticky top-0">
+            <tr>
+              <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 w-28">Code</th>
+              <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Account Title</th>
+              <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Classification</th>
+              <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300">Normal Balance</th>
+              <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 text-right w-44">Debit (DR)</th>
+              <th class="py-3 px-4 font-semibold text-slate-700 dark:text-slate-300 text-right w-44">Credit (CR)</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
             @foreach($trialBalance['accounts'] as $acc)
-              <tr>
-                <td><span class="badge bg-light text-dark font-monospace border">{{ $acc['code'] }}</span></td>
-                <td><strong class="text-dark">{{ $acc['name'] }}</strong></td>
-                <td><span class="badge bg-secondary-subtle text-secondary">{{ $acc['category'] }}</span></td>
-                <td><small class="text-muted font-monospace">{{ $acc['normal_balance'] }}</small></td>
-                <td class="text-end font-monospace {{ (float) $acc['debit'] > 0 ? 'fw-bold text-dark' : 'text-muted' }}">
+              <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                <td class="py-3 px-4">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-semibold bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                    {{ $acc['code'] }}
+                  </span>
+                </td>
+                <td class="py-3 px-4 font-semibold text-slate-900 dark:text-white">
+                  {{ $acc['name'] }}
+                </td>
+                <td class="py-3 px-4">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                    {{ $acc['category'] }}
+                  </span>
+                </td>
+                <td class="py-3 px-4 font-mono text-slate-400 text-xs">
+                  {{ $acc['normal_balance'] }}
+                </td>
+                <td class="py-3 px-4 text-right font-mono tabular-nums {{ (float) $acc['debit'] > 0 ? 'font-bold text-slate-900 dark:text-white' : 'text-slate-400' }}">
                   {{ (float) $acc['debit'] > 0 ? '₱' . number_format((float) $acc['debit'], 2) : '-' }}
                 </td>
-                <td class="text-end font-monospace {{ (float) $acc['credit'] > 0 ? 'fw-bold text-dark' : 'text-muted' }}">
+                <td class="py-3 px-4 text-right font-mono tabular-nums {{ (float) $acc['credit'] > 0 ? 'font-bold text-slate-900 dark:text-white' : 'text-slate-400' }}">
                   {{ (float) $acc['credit'] > 0 ? '₱' . number_format((float) $acc['credit'], 2) : '-' }}
                 </td>
               </tr>
             @endforeach
           </tbody>
-          <tfoot class="table-dark">
-            <tr class="fw-bold font-monospace fs-6">
-              <td colspan="4" class="text-uppercase text-end">Grand Total Balances:</td>
-              <td class="text-end text-success">₱{{ number_format((float) $trialBalance['total_debit'], 2) }}</td>
-              <td class="text-end text-success">₱{{ number_format((float) $trialBalance['total_credit'], 2) }}</td>
+          <tfoot class="border-t-2 border-slate-300 bg-slate-100 dark:border-slate-700 dark:bg-slate-800/80 font-mono font-bold text-xs">
+            <tr>
+              <td colspan="4" class="py-3 px-4 uppercase text-right tracking-wider text-slate-700 dark:text-slate-300">
+                Grand Total Balances:
+              </td>
+              <td class="py-3 px-4 text-right tabular-nums text-emerald-600 dark:text-emerald-400 text-sm">
+                ₱{{ number_format((float) $trialBalance['total_debit'], 2) }}
+              </td>
+              <td class="py-3 px-4 text-right tabular-nums text-emerald-600 dark:text-emerald-400 text-sm">
+                ₱{{ number_format((float) $trialBalance['total_credit'], 2) }}
+              </td>
             </tr>
           </tfoot>
         </table>
@@ -122,87 +167,112 @@
 
   <!-- TAB 2: INCOME STATEMENT (P&L) -->
   @if($tab === 'pnl')
-    <div class="row g-4">
-      <div class="col-lg-6">
-        <div class="card border-0 shadow-sm rounded-3 bg-white h-100">
-          <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
-            <h5 class="fw-bold mb-0 text-success"><i class="ph ph-trend-up me-2"></i>Operating Revenues</h5>
-          </div>
-          <div class="table-responsive p-3">
-            <table class="table table-hover align-middle mb-0">
-              <thead class="table-light">
-                <tr class="fs-xs text-muted text-uppercase">
-                  <th>Code</th>
-                  <th>Revenue Account</th>
-                  <th class="text-end">Amount</th>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Revenues Column -->
+      <div class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 flex flex-col">
+        <div class="flex items-center gap-2 border-b border-slate-200 p-4 dark:border-slate-800">
+          <i class="ph-bold ph-trend-up text-emerald-600"></i>
+          <h5 class="text-sm font-bold uppercase text-slate-800 dark:text-slate-200">
+            Operating Revenues
+          </h5>
+        </div>
+        <div class="overflow-x-auto flex-1">
+          <table class="w-full text-left text-xs">
+            <thead class="border-b border-slate-200 bg-slate-50/75 dark:border-slate-800 dark:bg-slate-800/60">
+              <tr>
+                <th class="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300">Code</th>
+                <th class="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300">Revenue Account</th>
+                <th class="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300 text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+              @forelse($pnl['revenues'] as $rev)
+                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                  <td class="py-3 px-4">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-semibold bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                      {{ $rev['code'] }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">{{ $rev['name'] }}</td>
+                  <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">
+                    ₱{{ number_format((float) $rev['balance'], 2) }}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                @forelse($pnl['revenues'] as $rev)
-                  <tr>
-                    <td><span class="badge bg-light text-dark font-monospace border">{{ $rev['code'] }}</span></td>
-                    <td>{{ $rev['name'] }}</td>
-                    <td class="text-end font-monospace fw-bold text-success">₱{{ number_format((float) $rev['balance'], 2) }}</td>
-                  </tr>
-                @empty
-                  <tr><td colspan="3" class="text-center py-3 text-muted">No revenues recorded.</td></tr>
-                @endforelse
-              </tbody>
-              <tfoot class="table-light">
-                <tr class="fw-bold font-monospace">
-                  <td colspan="2">Total Gross Revenues:</td>
-                  <td class="text-end text-success fs-5">₱{{ number_format((float) $pnl['total_revenue'], 2) }}</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
+              @empty
+                <tr><td colspan="3" class="py-8 text-center text-slate-400">No revenues recorded.</td></tr>
+              @endforelse
+            </tbody>
+            <tfoot class="border-t border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60 font-semibold">
+              <tr>
+                <td colspan="2" class="py-3 px-4 text-slate-700 dark:text-slate-300">Total Gross Revenues:</td>
+                <td class="py-3 px-4 text-right font-mono tabular-nums font-bold text-emerald-600 dark:text-emerald-400 text-sm">
+                  ₱{{ number_format((float) $pnl['total_revenue'], 2) }}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
       </div>
 
-      <div class="col-lg-6">
-        <div class="card border-0 shadow-sm rounded-3 bg-white h-100">
-          <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
-            <h5 class="fw-bold mb-0 text-danger"><i class="ph ph-trend-down me-2"></i>Operating &amp; Direct Expenses</h5>
-          </div>
-          <div class="table-responsive p-3">
-            <table class="table table-hover align-middle mb-0">
-              <thead class="table-light">
-                <tr class="fs-xs text-muted text-uppercase">
-                  <th>Code</th>
-                  <th>Expense Account</th>
-                  <th class="text-end">Amount</th>
+      <!-- Expenses Column -->
+      <div class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 flex flex-col">
+        <div class="flex items-center gap-2 border-b border-slate-200 p-4 dark:border-slate-800">
+          <i class="ph-bold ph-trend-down text-rose-600"></i>
+          <h5 class="text-sm font-bold uppercase text-slate-800 dark:text-slate-200">
+            Operating &amp; Direct Expenses
+          </h5>
+        </div>
+        <div class="overflow-x-auto flex-1">
+          <table class="w-full text-left text-xs">
+            <thead class="border-b border-slate-200 bg-slate-50/75 dark:border-slate-800 dark:bg-slate-800/60">
+              <tr>
+                <th class="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300">Code</th>
+                <th class="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300">Expense Account</th>
+                <th class="py-2.5 px-4 font-semibold text-slate-700 dark:text-slate-300 text-right">Amount</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+              @forelse($pnl['expenses'] as $exp)
+                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                  <td class="py-3 px-4">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-semibold bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                      {{ $exp['code'] }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 font-medium text-slate-800 dark:text-slate-200">{{ $exp['name'] }}</td>
+                  <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-rose-600 dark:text-rose-400">
+                    ₱{{ number_format((float) $exp['balance'], 2) }}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                @forelse($pnl['expenses'] as $exp)
-                  <tr>
-                    <td><span class="badge bg-light text-dark font-monospace border">{{ $exp['code'] }}</span></td>
-                    <td>{{ $exp['name'] }}</td>
-                    <td class="text-end font-monospace fw-bold text-danger">₱{{ number_format((float) $exp['balance'], 2) }}</td>
-                  </tr>
-                @empty
-                  <tr><td colspan="3" class="text-center py-3 text-muted">No expenses recorded.</td></tr>
-                @endforelse
-              </tbody>
-              <tfoot class="table-light">
-                <tr class="fw-bold font-monospace">
-                  <td colspan="2">Total Operating Expenses:</td>
-                  <td class="text-end text-danger fs-5">₱{{ number_format((float) $pnl['total_expense'], 2) }}</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
+              @empty
+                <tr><td colspan="3" class="py-8 text-center text-slate-400">No expenses recorded.</td></tr>
+              @endforelse
+            </tbody>
+            <tfoot class="border-t border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60 font-semibold">
+              <tr>
+                <td colspan="2" class="py-3 px-4 text-slate-700 dark:text-slate-300">Total Operating Expenses:</td>
+                <td class="py-3 px-4 text-right font-mono tabular-nums font-bold text-rose-600 dark:text-rose-400 text-sm">
+                  ₱{{ number_format((float) $pnl['total_expense'], 2) }}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
       </div>
 
-      <div class="col-12">
-        <div class="card border-0 shadow-sm rounded-3 p-4 bg-primary text-white">
-          <div class="d-flex justify-content-between align-items-center">
-            <div>
-              <h4 class="fw-bold mb-1">Net Hospital Margin / Net Income</h4>
-              <p class="mb-0 opacity-75">Gross Clinical Revenue less Operating &amp; Direct Medical Expenses</p>
-            </div>
-            <h2 class="fw-bold mb-0 font-monospace">₱{{ number_format((float) $pnl['net_income'], 2) }}</h2>
+      <!-- Net Income Banner -->
+      <div class="lg:col-span-2">
+        <div class="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-700 p-6 text-white shadow-lg flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-wider text-blue-200">Summary Bottomline</span>
+            <h4 class="text-xl sm:text-2xl font-bold mt-1">Net Hospital Margin / Net Income</h4>
+            <p class="text-xs text-blue-100 mt-0.5">Gross Clinical Revenue less Operating &amp; Direct Medical Expenses</p>
+          </div>
+          <div class="sm:text-right">
+            <span class="text-xs text-blue-200 font-semibold uppercase">Net Operating Profit</span>
+            <h2 class="text-3xl font-extrabold font-mono tracking-tight text-white mt-1">
+              ₱{{ number_format((float) $pnl['net_income'], 2) }}
+            </h2>
           </div>
         </div>
       </div>
@@ -211,80 +281,119 @@
 
   <!-- TAB 3: BALANCE SHEET -->
   @if($tab === 'balance-sheet')
-    <div class="card border-0 shadow-sm rounded-3 bg-white">
-      <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center">
+    <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 overflow-hidden">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-200 p-5 dark:border-slate-800">
         <div>
-          <h5 class="fw-bold mb-0 text-dark">Statement of Financial Position (Balance Sheet)</h5>
-          <small class="text-muted">Assets = Liabilities + Owner's Equity + Current Net Income</small>
+          <h5 class="text-base font-bold text-slate-900 dark:text-white">Statement of Financial Position (Balance Sheet)</h5>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Assets = Liabilities + Owner's Equity + Current Net Income</p>
         </div>
-        <span class="badge {{ $balanceSheet['is_balanced'] ? 'bg-success fs-6 py-2 px-3' : 'bg-danger fs-6 py-2 px-3' }}">
-          {{ $balanceSheet['is_balanced'] ? 'A = L + E (BALANCED)' : 'EQUATION DISCREPANCY' }}
-        </span>
+        <div>
+          @if($balanceSheet['is_balanced'])
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+              <i class="ph-bold ph-check-circle text-base"></i>
+              <span>A = L + E (BALANCED)</span>
+            </span>
+          @else
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+              <i class="ph-bold ph-warning text-base"></i>
+              <span>EQUATION DISCREPANCY</span>
+            </span>
+          @endif
+        </div>
       </div>
 
-      <div class="card-body p-4">
-        <div class="row g-4">
+      <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
           <!-- Assets Column -->
-          <div class="col-md-6 border-end">
-            <h6 class="fw-bold text-primary mb-3 text-uppercase"><i class="ph ph-bank me-2"></i>Assets</h6>
-            <ul class="list-group list-group-flush mb-3">
+          <div class="space-y-4">
+            <div class="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+              <i class="ph-bold ph-vault text-blue-600"></i>
+              <h6 class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Assets</h6>
+            </div>
+            <ul class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
               @foreach($balanceSheet['assets'] as $asset)
-                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 border-0">
-                  <div>
-                    <span class="badge bg-light text-dark font-monospace me-2">{{ $asset['code'] }}</span>
-                    <span>{{ $asset['name'] }}</span>
+                <li class="flex items-center justify-between py-2.5">
+                  <div class="flex items-center gap-2">
+                    <span class="font-mono text-xs text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">{{ $asset['code'] }}</span>
+                    <span class="font-medium text-slate-800 dark:text-slate-200">{{ $asset['name'] }}</span>
                   </div>
-                  <strong class="font-monospace text-dark">₱{{ number_format((float) $asset['balance'], 2) }}</strong>
+                  <span class="font-mono tabular-nums font-semibold text-slate-900 dark:text-white">
+                    ₱{{ number_format((float) $asset['balance'], 2) }}
+                  </span>
                 </li>
               @endforeach
             </ul>
-            <div class="p-3 bg-light rounded-3 d-flex justify-content-between align-items-center fw-bold">
-              <span>Total Assets:</span>
-              <span class="font-monospace text-primary fs-5">₱{{ number_format((float) $balanceSheet['total_assets'], 2) }}</span>
+            <div class="rounded-xl bg-blue-50/60 p-4 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40 flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">Total Assets:</span>
+              <span class="font-mono font-bold text-blue-600 dark:text-blue-400 text-base">
+                ₱{{ number_format((float) $balanceSheet['total_assets'], 2) }}
+              </span>
             </div>
           </div>
 
           <!-- Liabilities & Equity Column -->
-          <div class="col-md-6">
-            <h6 class="fw-bold text-danger mb-3 text-uppercase"><i class="ph ph-receipt me-2"></i>Liabilities</h6>
-            <ul class="list-group list-group-flush mb-3">
-              @foreach($balanceSheet['liabilities'] as $liab)
-                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 border-0">
-                  <div>
-                    <span class="badge bg-light text-dark font-monospace me-2">{{ $liab['code'] }}</span>
-                    <span>{{ $liab['name'] }}</span>
-                  </div>
-                  <strong class="font-monospace text-dark">₱{{ number_format((float) $liab['balance'], 2) }}</strong>
-                </li>
-              @endforeach
-            </ul>
-            <div class="p-3 bg-light rounded-3 d-flex justify-content-between align-items-center fw-bold mb-4">
-              <span>Total Liabilities:</span>
-              <span class="font-monospace text-danger">₱{{ number_format((float) $balanceSheet['total_liabilities'], 2) }}</span>
+          <div class="space-y-6">
+            <!-- Liabilities -->
+            <div class="space-y-4">
+              <div class="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+                <i class="ph-bold ph-bank text-rose-600"></i>
+                <h6 class="text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">Liabilities</h6>
+              </div>
+              <ul class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                @foreach($balanceSheet['liabilities'] as $liab)
+                  <li class="flex items-center justify-between py-2.5">
+                    <div class="flex items-center gap-2">
+                      <span class="font-mono text-xs text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">{{ $liab['code'] }}</span>
+                      <span class="font-medium text-slate-800 dark:text-slate-200">{{ $liab['name'] }}</span>
+                    </div>
+                    <span class="font-mono tabular-nums font-semibold text-rose-600 dark:text-rose-400">
+                      ₱{{ number_format((float) $liab['balance'], 2) }}
+                    </span>
+                  </li>
+                @endforeach
+              </ul>
+              <div class="rounded-xl bg-slate-50 p-3.5 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-600 dark:text-slate-400">Total Liabilities:</span>
+                <span class="font-mono font-bold text-rose-600 dark:text-rose-400">
+                  ₱{{ number_format((float) $balanceSheet['total_liabilities'], 2) }}
+                </span>
+              </div>
             </div>
 
-            <h6 class="fw-bold text-info mb-3 text-uppercase"><i class="ph ph-buildings me-2"></i>Equity &amp; Earnings</h6>
-            <ul class="list-group list-group-flush mb-3">
-              @foreach($balanceSheet['equity'] as $eq)
-                <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 border-0">
-                  <div>
-                    <span class="badge bg-light text-dark font-monospace me-2">{{ $eq['code'] }}</span>
-                    <span>{{ $eq['name'] }}</span>
+            <!-- Equity -->
+            <div class="space-y-4">
+              <div class="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+                <i class="ph-bold ph-buildings text-emerald-600"></i>
+                <h6 class="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Equity &amp; Earnings</h6>
+              </div>
+              <ul class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                @foreach($balanceSheet['equity'] as $eq)
+                  <li class="flex items-center justify-between py-2.5">
+                    <div class="flex items-center gap-2">
+                      <span class="font-mono text-xs text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">{{ $eq['code'] }}</span>
+                      <span class="font-medium text-slate-800 dark:text-slate-200">{{ $eq['name'] }}</span>
+                    </div>
+                    <span class="font-mono tabular-nums font-semibold text-slate-900 dark:text-white">
+                      ₱{{ number_format((float) $eq['balance'], 2) }}
+                    </span>
+                  </li>
+                @endforeach
+                <li class="flex items-center justify-between py-2.5">
+                  <div class="flex items-center gap-2">
+                    <span class="font-mono text-xs text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">NET-INC</span>
+                    <span class="font-medium text-slate-800 dark:text-slate-200">Current Period Net Income (Retained)</span>
                   </div>
-                  <strong class="font-monospace text-dark">₱{{ number_format((float) $eq['balance'], 2) }}</strong>
+                  <span class="font-mono tabular-nums font-bold text-emerald-600 dark:text-emerald-400">
+                    ₱{{ number_format((float) $balanceSheet['current_period_net_income'], 2) }}
+                  </span>
                 </li>
-              @endforeach
-              <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 border-0">
-                <div>
-                  <span class="badge bg-light text-dark font-monospace me-2">NET-INC</span>
-                  <span>Current Period Net Income (Retained)</span>
-                </div>
-                <strong class="font-monospace text-success">₱{{ number_format((float) $balanceSheet['current_period_net_income'], 2) }}</strong>
-              </li>
-            </ul>
-            <div class="p-3 bg-light rounded-3 d-flex justify-content-between align-items-center fw-bold">
-              <span>Total Liabilities &amp; Equity:</span>
-              <span class="font-monospace text-primary fs-5">₱{{ number_format((float) $balanceSheet['total_liabilities_and_equity'], 2) }}</span>
+              </ul>
+              <div class="rounded-xl bg-emerald-50/60 p-4 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">Total Liabilities &amp; Equity:</span>
+                <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400 text-base">
+                  ₱{{ number_format((float) $balanceSheet['total_liabilities_and_equity'], 2) }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -294,52 +403,64 @@
 
   <!-- TAB 4: BIR TAX RETURNS -->
   @if($tab === 'bir-schedules')
-    <div class="row g-4">
-      <div class="col-md-6">
-        <div class="card border-0 shadow-sm rounded-3 bg-white p-4 h-100">
-          <div class="d-flex align-items-center justify-content-between mb-3">
-            <h5 class="fw-bold text-dark mb-0"><i class="ph ph-file-text text-primary me-2"></i>BIR Form 1601-EQ</h5>
-            <span class="badge bg-primary-subtle text-primary">Expanded Withholding Tax</span>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h5 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <i class="ph-bold ph-file-text text-blue-600"></i>
+              BIR Form 1601-EQ
+            </h5>
+            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+              Expanded Withholding Tax
+            </span>
           </div>
-          <p class="text-muted small">Quarterly creditable income taxes withheld from medical suppliers and doctor fees.</p>
-          <div class="p-3 bg-light rounded-3 mb-3">
-            <div class="d-flex justify-content-between mb-1">
-              <span>Total Tax Base:</span>
-              <strong class="font-monospace">₱{{ number_format((float) $bir1601eq['total_tax_base'], 2) }}</strong>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
+            Quarterly creditable income taxes withheld from medical suppliers and doctor professional fees.
+          </p>
+          <div class="rounded-xl bg-slate-50 p-4 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-slate-500 dark:text-slate-400">Total Tax Base:</span>
+              <strong class="font-mono tabular-nums text-slate-800 dark:text-slate-200">₱{{ number_format((float) $bir1601eq['total_tax_base'], 2) }}</strong>
             </div>
-            <div class="d-flex justify-content-between mb-1">
-              <span>Total Form 2307 Certificates:</span>
-              <strong class="font-monospace">{{ $bir1601eq['total_forms'] }} Issued</strong>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-500 dark:text-slate-400">Form 2307 Certificates:</span>
+              <strong class="font-mono text-slate-800 dark:text-slate-200">{{ $bir1601eq['total_forms'] }} Issued</strong>
             </div>
-            <hr class="my-2">
-            <div class="d-flex justify-content-between fs-6 fw-bold">
-              <span>Total Creditable Tax Withheld:</span>
-              <span class="text-primary font-monospace">₱{{ number_format((float) $bir1601eq['total_withheld'], 2) }}</span>
+            <div class="border-t border-slate-200 dark:border-slate-700 pt-2 flex items-center justify-between font-bold">
+              <span class="text-slate-700 dark:text-slate-300">Total Creditable Tax Withheld:</span>
+              <span class="font-mono text-blue-600 dark:text-blue-400 text-sm">₱{{ number_format((float) $bir1601eq['total_withheld'], 2) }}</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="col-md-6">
-        <div class="card border-0 shadow-sm rounded-3 bg-white p-4 h-100">
-          <div class="d-flex align-items-center justify-content-between mb-3">
-            <h5 class="fw-bold text-dark mb-0"><i class="ph ph-percent text-success me-2"></i>BIR Form 2550M / 2550Q</h5>
-            <span class="badge bg-success-subtle text-success">Value-Added Tax (VAT)</span>
+      <div class="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h5 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <i class="ph-bold ph-percent text-emerald-600"></i>
+              BIR Form 2550M / 2550Q
+            </h5>
+            <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+              Value-Added Tax (VAT)
+            </span>
           </div>
-          <p class="text-muted small">Monthly and quarterly VAT declaration summaries on hospital gross receipts.</p>
-          <div class="p-3 bg-light rounded-3 mb-3">
-            <div class="d-flex justify-content-between mb-1">
-              <span>Total Official Receipts Count:</span>
-              <strong class="font-monospace">{{ $birVat['total_receipts_count'] ?? $birVat['receipts_count'] ?? 0 }} Receipts</strong>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
+            Monthly and quarterly VAT declaration summaries on hospital gross receipts and exemptions.
+          </p>
+          <div class="rounded-xl bg-slate-50 p-4 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2 text-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-slate-500 dark:text-slate-400">Total Official Receipts Count:</span>
+              <strong class="font-mono text-slate-800 dark:text-slate-200">{{ $birVat['total_receipts_count'] ?? $birVat['receipts_count'] ?? 0 }} Receipts</strong>
             </div>
-            <div class="d-flex justify-content-between mb-1">
-              <span>Total Gross Cashier Collections:</span>
-              <strong class="font-monospace">₱{{ number_format((float) ($birVat['total_collections'] ?? 0), 2) }}</strong>
+            <div class="flex items-center justify-between">
+              <span class="text-slate-500 dark:text-slate-400">Total Gross Cashier Collections:</span>
+              <strong class="font-mono tabular-nums text-slate-800 dark:text-slate-200">₱{{ number_format((float) ($birVat['total_collections'] ?? 0), 2) }}</strong>
             </div>
-            <hr class="my-2">
-            <div class="d-flex justify-content-between fs-6 fw-bold">
-              <span>Output VAT Relief / Exempt Status:</span>
-              <span class="text-success font-monospace">RA 9994 / RA 10754 Applied</span>
+            <div class="border-t border-slate-200 dark:border-slate-700 pt-2 flex items-center justify-between font-bold">
+              <span class="text-slate-700 dark:text-slate-300">Output VAT Relief Status:</span>
+              <span class="font-mono text-emerald-600 dark:text-emerald-400 text-xs">RA 9994 / RA 10754 Applied</span>
             </div>
           </div>
         </div>

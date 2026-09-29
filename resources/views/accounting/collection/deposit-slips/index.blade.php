@@ -5,235 +5,325 @@
 @section('page', 'deposit-slips')
 
 @section('content')
-<div class="container-fluid p-4">
-  <!-- Page Header -->
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="space-y-6" x-data="{
+  createSlipOpen: false,
+  slipShiftId: '',
+  slipCashAmount: '0.00',
+  prepareDepositForShift(shiftId, shiftCode, amount) {
+    this.slipShiftId = shiftId;
+    this.slipCashAmount = parseFloat(amount).toFixed(2);
+    this.createSlipOpen = true;
+  },
+  openNewSlip() {
+    this.slipShiftId = '';
+    this.slipCashAmount = '0.00';
+    this.createSlipOpen = true;
+  },
+  closeSlip() {
+    this.createSlipOpen = false;
+  }
+}" @keydown.escape.window="closeSlip()">
+
+  {{-- Page Header --}}
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
-      <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-1 fs-xs">
-          <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Overview</a></li>
-          <li class="breadcrumb-item">Collection Management</li>
-          <li class="breadcrumb-item active">Deposit Slips</li>
-        </ol>
-      </nav>
-      <h1 class="h3 mb-0 font-weight-bold">Batch Deposit Slips &amp; Custody Handover</h1>
+      <div class="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">
+        <a href="{{ route('accounting.dashboard') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Overview</a>
+        <i class="ph ph-caret-right text-[10px]"></i>
+        <a href="{{ route('collection.receipts') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">Collection</a>
+        <i class="ph ph-caret-right text-[10px]"></i>
+        <span class="text-slate-900 dark:text-slate-200 font-semibold">Deposit Slips</span>
+      </div>
+      <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+        Batch Deposit Slips &amp; Custody Handover
+      </h1>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      <x-integration-badge 
-          type="internal" 
-          :internalModules="['Cashier Desk (Shift Turnover)', 'Bank Deposits']" 
-          :tables="['cashier_shifts', 'bank_deposits']"
-          description="Batches closed shift collections into sealed custody bags for bank deposit pickup." 
-      />
-      <button class="btn btn-outline-secondary btn-sm" type="button" onclick="window.print()"><i class="ph ph-printer me-1"></i> Print Turnover Manifest</button>
-      <button id="btnCreateSlip" class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#createDepositSlipModal"><i class="ph ph-plus-circle me-1"></i> Create Deposit Slip</button>
+    <div class="flex flex-wrap items-center gap-2.5">
+      <button class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 transition-all" type="button" onclick="window.print()">
+        <i class="ph ph-printer"></i>
+        Print Manifest
+      </button>
+      <button id="btnCreateSlip" @click="openNewSlip()" class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-all" type="button">
+        <i class="ph ph-plus-circle"></i>
+        Create Deposit Slip
+      </button>
     </div>
   </div>
 
   @if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show mb-4 d-flex align-items-center" role="alert">
-      <i class="ph ph-check-circle fs-4 me-2"></i>
-      <div>{{ session('success') }}</div>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div x-data="{ show: true }" x-show="show" x-transition class="flex items-center justify-between gap-3 rounded-2xl border border-emerald-200/80 bg-emerald-50/80 p-4 text-xs text-emerald-800 shadow-sm dark:border-emerald-800/40 dark:bg-emerald-950/40 dark:text-emerald-300">
+      <div class="flex items-center gap-2.5">
+        <i class="ph-fill ph-check-circle text-lg text-emerald-600 dark:text-emerald-400 shrink-0"></i>
+        <span>{{ session('success') }}</span>
+      </div>
+      <button @click="show = false" type="button" class="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-200 transition-colors">
+        <i class="ph ph-x text-sm"></i>
+      </button>
     </div>
   @endif
 
   @if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show mb-4 d-flex align-items-center" role="alert">
-      <i class="ph ph-warning-circle fs-4 me-2"></i>
-      <div>{{ session('error') }}</div>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div x-data="{ show: true }" x-show="show" x-transition class="flex items-center justify-between gap-3 rounded-2xl border border-rose-200/80 bg-rose-50/80 p-4 text-xs text-rose-800 shadow-sm dark:border-rose-800/40 dark:bg-rose-950/40 dark:text-rose-300">
+      <div class="flex items-center gap-2.5">
+        <i class="ph-fill ph-warning-circle text-lg text-rose-600 dark:text-rose-400 shrink-0"></i>
+        <span>{{ session('error') }}</span>
+      </div>
+      <button @click="show = false" type="button" class="text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-200 transition-colors">
+        <i class="ph ph-x text-sm"></i>
+      </button>
     </div>
   @endif
 
-  <!-- Metric Summary Cards -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-4">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Prepared Deposit Slips</span>
-          <span class="badge bg-primary-subtle text-primary p-2 rounded-2"><i class="ph ph-path fs-5"></i></span>
+  {{-- Metric Summary Cards --}}
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    {{-- Prepared Slips --}}
+    <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Prepared Deposit Slips</span>
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400">
+          <i class="ph-duotone ph-path text-lg"></i>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ count($deposits ?? []) }} Batch Slips</h4>
       </div>
+      <div class="mt-2">
+        <span class="text-2xl font-bold font-mono text-slate-900 dark:text-white">{{ count($deposits ?? []) }}</span>
+      </div>
+      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Batch deposit slips generated</p>
     </div>
-    <div class="col-md-4">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Total Vault Deposits</span>
-          <span class="badge bg-success-subtle text-success p-2 rounded-2"><i class="ph ph-money fs-5"></i></span>
+
+    {{-- Total Vault Deposits --}}
+    <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Vault Deposits</span>
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
+          <i class="ph-duotone ph-money text-lg"></i>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">₱{{ number_format((float) ($totalDeposits ?? 0), 2) }}</h4>
       </div>
+      <div class="mt-2">
+        <span class="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">₱{{ number_format((float) ($totalDeposits ?? 0), 2) }}</span>
+      </div>
+      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Cash &amp; checks prepared</p>
     </div>
-    <div class="col-md-4">
-      <div class="card border-0 shadow-sm rounded-3 p-3">
-        <div class="d-flex align-items-center justify-content-between mb-1">
-          <span class="text-muted small fw-medium">Closed Shifts Pending Remittance</span>
-          <span class="badge bg-warning-subtle text-warning p-2 rounded-2"><i class="ph ph-vault fs-5"></i></span>
+
+    {{-- Closed Shifts Pending Remittance --}}
+    <div class="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Closed Shifts Pending</span>
+        <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400">
+          <i class="ph-duotone ph-vault text-lg"></i>
         </div>
-        <h4 class="fw-bold mb-0 text-dark">{{ count($closedShifts ?? []) }} Shifts</h4>
       </div>
+      <div class="mt-2">
+        <span class="text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">{{ count($closedShifts ?? []) }}</span>
+      </div>
+      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Shifts awaiting deposit batching</p>
     </div>
   </div>
 
-  <!-- Section: Closed Shifts Ready for Custody Handover -->
-  <div class="card border-0 shadow-sm rounded-3 mb-4">
-    <div class="card-header bg-transparent border-bottom p-3 d-flex justify-content-between align-items-center">
-      <h6 class="fw-bold mb-0 text-dark"><i class="ph ph-vault me-2 text-warning"></i>Closed Shifts Ready for Bank Remittance</h6>
-      <span class="badge bg-warning-subtle text-warning">{{ count($closedShifts ?? []) }} Awaiting Deposit</span>
+    <!-- Sub-Module Category Navigation Bar -->
+  @include('partials.submodule-nav')
+
+{{-- Section: Closed Shifts Ready for Custody Handover --}}
+  <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 overflow-hidden">
+    <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+      <div>
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <i class="ph-fill ph-vault text-amber-500"></i>
+          Closed Shifts Ready for Bank Remittance
+        </h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Terminal cashiers with finalized physical counts awaiting batch deposit custody slip.</p>
+      </div>
+      <span class="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-mono font-semibold text-amber-800 dark:bg-amber-900/60 dark:text-amber-200">
+        {{ count($closedShifts ?? []) }} Awaiting
+      </span>
     </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Shift Code</th>
-              <th>Terminal</th>
-              <th>Cashier Officer</th>
-              <th>Closed Timestamp</th>
-              <th class="text-end">Actual Cash Counted</th>
-              <th class="text-end">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($closedShifts ?? [] as $cs)
-            <tr>
-              <td><span class="font-monospace text-primary fw-bold">{{ $cs->shift_code }}</span></td>
-              <td>{{ $cs->terminal_name }}</td>
-              <td>{{ $cs->cashier?->name ?? 'Cashier' }}</td>
-              <td class="font-monospace fs-xs">{{ $cs->closed_at ? $cs->closed_at->format('M d, Y h:i A') : '-' }}</td>
-              <td class="text-end font-monospace fw-bold text-success">₱{{ number_format((float) $cs->actual_cash_counted, 2) }}</td>
-              <td class="text-end">
-                <button class="btn btn-sm btn-outline-primary" type="button" onclick="prepareDepositForShift('{{ $cs->id }}', '{{ $cs->shift_code }}', '{{ $cs->actual_cash_counted }}')">
-                  <i class="ph ph-plus-circle me-1"></i> Prepare Deposit
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-xs">
+        <thead>
+          <tr class="border-b border-slate-200/80 bg-slate-50/75 dark:border-slate-800 dark:bg-slate-950/50">
+            <th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-[11px]">Shift Code</th>
+            <th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-[11px]">Terminal</th>
+            <th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-[11px]">Cashier Officer</th>
+            <th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-[11px]">Closed Timestamp</th>
+            <th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-[11px] text-right">Actual Cash Counted</th>
+            <th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-[11px] text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+          @forelse($closedShifts ?? [] as $cs)
+            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="py-3 px-4 font-mono font-semibold text-emerald-600 dark:text-emerald-400">{{ $cs->shift_code }}</td>
+              <td class="py-3 px-4 text-slate-900 dark:text-white font-medium">{{ $cs->terminal_name }}</td>
+              <td class="py-3 px-4 text-slate-700 dark:text-slate-300">{{ $cs->cashier?->name ?? 'Cashier' }}</td>
+              <td class="py-3 px-4 font-mono text-slate-500 dark:text-slate-400">{{ $cs->closed_at ? $cs->closed_at->format('M d, Y h:i A') : '-' }}</td>
+              <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">₱{{ number_format((float) $cs->actual_cash_counted, 2) }}</td>
+              <td class="py-3 px-4 text-right">
+                <button @click="prepareDepositForShift('{{ $cs->id }}', '{{ $cs->shift_code }}', '{{ $cs->actual_cash_counted }}')" class="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-all" type="button">
+                  <i class="ph ph-plus-circle"></i>
+                  Prepare Deposit
                 </button>
               </td>
             </tr>
-            @empty
+          @empty
             <tr>
-              <td colspan="6" class="text-center py-3 text-muted">No closed cashier shifts pending deposit.</td>
+              <td colspan="6" class="text-center py-6 text-slate-500 dark:text-slate-400">
+                No closed cashier shifts pending deposit.
+              </td>
             </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
+          @endforelse
+        </tbody>
+      </table>
     </div>
   </div>
 
-  <!-- Section: Prepared Batch Deposit Slips -->
-  <div class="card border-0 shadow-sm rounded-3">
-    <div class="card-header bg-transparent border-bottom p-3">
-      <h6 class="fw-bold mb-0 text-dark"><i class="ph ph-receipt me-2 text-primary"></i>Batch Deposit Slips History</h6>
+  {{-- Section: Prepared Batch Deposit Slips --}}
+  <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 overflow-hidden">
+    <div class="p-5 border-b border-slate-100 dark:border-slate-800">
+      <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <i class="ph ph-receipt text-emerald-600 dark:text-emerald-400"></i>
+        Batch Deposit Slips History
+      </h3>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Historical records of prepared bank deposit slips and custody handovers.</p>
     </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Deposit Ref #</th>
-              <th>Date</th>
-              <th>Depository Bank</th>
-              <th>Shift Ref</th>
-              <th class="text-end">Cash Amount (₱)</th>
-              <th class="text-end">Check Amount (₱)</th>
-              <th class="text-end">Total Deposited (₱)</th>
-              <th class="text-center">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($deposits ?? [] as $d)
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse text-xs">
+        <thead>
+          <tr class="border-b border-slate-200/80 bg-slate-50/75 dark:border-slate-800 dark:bg-slate-950/50">
+            <th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-[11px]">Deposit Ref #</th>
+            <th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-[11px]">Date</th>
+            <th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-[11px]">Depository Bank</th>
+            <th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-[11px]">Shift Ref</th>
+            <th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-[11px] text-right">Cash Amount</th>
+            <th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-[11px] text-right">Check Amount</th>
+            <th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-[11px] text-right">Total Deposited</th>
+            <th class="py-3 px-4 font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider text-[11px] text-center">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+          @forelse($deposits ?? [] as $d)
             @php
               $st = $d->status;
               $badge = match($st) {
-                  'PREPARED' => 'bg-secondary-subtle text-secondary',
-                  'IN_TRANSIT' => 'bg-warning-subtle text-warning',
-                  'DEPOSITED', 'CLEARED' => 'bg-success-subtle text-success',
-                  'RECONCILED' => 'bg-primary-subtle text-primary',
-                  default => 'bg-light text-dark'
+                'PREPARED' => 'bg-slate-100 text-slate-700 ring-slate-700/10 dark:bg-slate-800 dark:text-slate-300',
+                'IN_TRANSIT' => 'bg-amber-50 text-amber-700 ring-amber-700/10 dark:bg-amber-950/60 dark:text-amber-400',
+                'DEPOSITED', 'CLEARED' => 'bg-emerald-50 text-emerald-700 ring-emerald-700/10 dark:bg-emerald-950/60 dark:text-emerald-400',
+                'RECONCILED' => 'bg-blue-50 text-blue-700 ring-blue-700/10 dark:bg-blue-950/60 dark:text-blue-400',
+                default => 'bg-slate-100 text-slate-700 dark:bg-slate-800'
               };
             @endphp
-            <tr>
-              <td><span class="font-monospace text-primary fw-bold">{{ $d->deposit_reference }}</span></td>
-              <td class="font-monospace fs-xs">{{ $d->deposit_date ? $d->deposit_date->format('M d, Y') : '-' }}</td>
-              <td>
-                <div class="fw-semibold text-dark">{{ $d->bankAccount?->bank_name ?? 'Operational Bank' }}</div>
-                <span class="fs-xs text-muted font-monospace">{{ $d->bankAccount?->account_number }}</span>
+            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="py-3 px-4 font-mono font-semibold text-emerald-600 dark:text-emerald-400">{{ $d->deposit_reference }}</td>
+              <td class="py-3 px-4 font-mono text-slate-600 dark:text-slate-300 whitespace-nowrap">{{ $d->deposit_date ? $d->deposit_date->format('M d, Y') : '-' }}</td>
+              <td class="py-3 px-4">
+                <div class="font-semibold text-slate-900 dark:text-white">{{ $d->bankAccount?->bank_name ?? 'Operational Bank' }}</div>
+                <div class="text-[10px] text-slate-400 font-mono">{{ $d->bankAccount?->account_number }}</div>
               </td>
-              <td><span class="font-monospace fs-xs text-muted">{{ $d->cashierShift?->shift_code ?? 'Manual' }}</span></td>
-              <td class="text-end font-monospace text-muted">₱{{ number_format((float) $d->cash_amount, 2) }}</td>
-              <td class="text-end font-monospace text-muted">₱{{ number_format((float) $d->check_amount, 2) }}</td>
-              <td class="text-end font-monospace fw-bold text-success">₱{{ number_format((float) $d->total_deposited, 2) }}</td>
-              <td class="text-center"><span class="badge {{ $badge }}">{{ $st }}</span></td>
+              <td class="py-3 px-4 font-mono text-slate-500 dark:text-slate-400 text-[11px]">{{ $d->cashierShift?->shift_code ?? 'Manual' }}</td>
+              <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-600 dark:text-slate-300">₱{{ number_format((float) $d->cash_amount, 2) }}</td>
+              <td class="py-3 px-4 text-right font-mono tabular-nums text-slate-600 dark:text-slate-300">₱{{ number_format((float) $d->check_amount, 2) }}</td>
+              <td class="py-3 px-4 text-right font-mono tabular-nums font-semibold text-emerald-600 dark:text-emerald-400">₱{{ number_format((float) $d->total_deposited, 2) }}</td>
+              <td class="py-3 px-4 text-center">
+                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset {{ $badge }}">
+                  {{ $st }}
+                </span>
+              </td>
             </tr>
-            @empty
+          @empty
             <tr>
-              <td colspan="8" class="text-center py-4 text-muted">No deposit slips generated yet.</td>
+              <td colspan="8" class="text-center py-8 text-slate-500 dark:text-slate-400">
+                No deposit slips generated yet.
+              </td>
             </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
+          @endforelse
+        </tbody>
+      </table>
     </div>
-  </div>
-</div>
 
-<!-- Modal: Create Deposit Slip -->
-<div class="modal fade" id="createDepositSlipModal" tabindex="-1" aria-labelledby="createDepositSlipModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content border-0 shadow">
-      <div class="modal-header border-0 pb-0">
-        <h5 class="modal-title font-weight-bold" id="createDepositSlipModalLabel"><i class="ph ph-plus-circle me-2 text-primary"></i>Create Bank Deposit Slip</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    @if(method_exists($deposits, 'links'))
+      <div class="p-4 border-t border-slate-100 dark:border-slate-800">
+        {{ $deposits->links() }}
       </div>
-      <div class="modal-body p-4">
+    @endif
+  </div>
+
+  {{-- Modal: Create Deposit Slip --}}
+  <div x-show="createSlipOpen" x-cloak class="relative z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div x-show="createSlipOpen" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity"></div>
+
+    <div class="fixed inset-0 z-10 w-screen overflow-y-auto p-4 sm:p-6 md:p-20">
+      <div x-show="createSlipOpen" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" @click.away="closeSlip()" class="relative mx-auto max-w-lg transform rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 transition-all text-left">
+
         <form method="POST" action="{{ route('collection.bank-deposits.store') }}" id="createSlipForm">
           @csrf
-          <input type="hidden" name="cashier_shift_id" id="slipShiftId">
+          <input type="hidden" name="cashier_shift_id" :value="slipShiftId">
 
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Depository Bank Account <span class="text-danger">*</span></label>
-            <select name="bank_account_id" class="form-select form-select-sm" required>
-              @foreach($bankAccounts ?? [] as $ba)
-                <option value="{{ $ba->id }}">{{ $ba->bank_name }} - {{ $ba->account_name }} ({{ $ba->account_number }})</option>
-              @endforeach
-            </select>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label small fw-semibold">Deposit Date <span class="text-danger">*</span></label>
-            <input type="date" name="deposit_date" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
-          </div>
-
-          <div class="row g-2 mb-3">
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Cash Amount (₱) <span class="text-danger">*</span></label>
-              <input type="number" step="0.01" min="0" name="cash_amount" id="slipCashAmount" class="form-control form-control-sm text-end font-monospace" value="0.00" required>
+          <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div class="flex items-center gap-2.5">
+              <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
+                <i class="ph-duotone ph-plus-circle text-xl"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white" id="modal-title">
+                  Create Bank Deposit Slip
+                </h3>
+                <p class="text-[11px] text-slate-400">Sealed cash/check custody remittance</p>
+              </div>
             </div>
-            <div class="col-md-6">
-              <label class="form-label small fw-semibold">Check Amount (₱)</label>
-              <input type="number" step="0.01" min="0" name="check_amount" id="slipCheckAmount" class="form-control form-control-sm text-end font-monospace" value="0.00">
+            <button @click="closeSlip()" type="button" class="rounded-lg p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+              <i class="ph ph-x text-base"></i>
+            </button>
+          </div>
+
+          <div class="py-4 space-y-4">
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                Depository Bank Account <span class="text-rose-500">*</span>
+              </label>
+              <select name="bank_account_id" class="block w-full rounded-xl border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-800 dark:bg-slate-950 dark:text-white" required>
+                @foreach($bankAccounts ?? [] as $ba)
+                  <option value="{{ $ba->id }}">{{ $ba->bank_name }} - {{ $ba->account_name }} ({{ $ba->account_number }})</option>
+                @endforeach
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                Deposit Date <span class="text-rose-500">*</span>
+              </label>
+              <input type="date" name="deposit_date" class="block w-full rounded-xl border border-slate-200 bg-white py-2 px-3 text-xs text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-800 dark:bg-slate-950 dark:text-white" value="{{ date('Y-m-d') }}" required>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                  Cash Amount (₱) <span class="text-rose-500">*</span>
+                </label>
+                <input type="number" step="0.01" min="0" name="cash_amount" x-model="slipCashAmount" class="block w-full rounded-xl border border-slate-200 bg-white py-2 px-3 text-xs font-mono text-right text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-800 dark:bg-slate-950 dark:text-white" required>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                  Check Amount (₱)
+                </label>
+                <input type="number" step="0.01" min="0" name="check_amount" class="block w-full rounded-xl border border-slate-200 bg-white py-2 px-3 text-xs font-mono text-right text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-800 dark:bg-slate-950 dark:text-white" value="0.00">
+              </div>
             </div>
           </div>
 
-          <div class="d-flex justify-content-end gap-2 mt-4">
-            <button type="button" class="btn btn-sm btn-light border" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-sm btn-primary"><i class="ph ph-check me-1"></i> Save Deposit Slip</button>
+          <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <button @click="closeSlip()" type="button" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 transition-all">
+              Cancel
+            </button>
+            <button type="submit" class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-all">
+              <i class="ph ph-check"></i>
+              Save Deposit Slip
+            </button>
           </div>
         </form>
+
       </div>
     </div>
   </div>
+
 </div>
 @endsection
-
-@push('scripts')
-<script>
-function prepareDepositForShift(shiftId, shiftCode, amount) {
-  document.getElementById('slipShiftId').value = shiftId;
-  document.getElementById('slipCashAmount').value = parseFloat(amount).toFixed(2);
-  const modal = new bootstrap.Modal(document.getElementById('createDepositSlipModal'));
-  modal.show();
-}
-</script>
-@endpush

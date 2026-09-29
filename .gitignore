@@ -14,7 +14,7 @@
 /.zed
 /auth.json
 /node_modules
-/public/build
+# /public/build — committed for production deployment (Hostforge does not run Vite)
 /public/fonts-manifest.dev.json
 /public/hot
 /public/storage

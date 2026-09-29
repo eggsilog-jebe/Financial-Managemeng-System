@@ -100,6 +100,7 @@ final class TwoFactorSetupController extends Controller
         // Mark 2FA as passed for this session immediately after enrollment
         $request->session()->put('auth.2fa_passed', true);
         $request->session()->put('auth.last_activity_at', now()->toIso8601String());
+        $request->session()->forget(['auth.pending_workstation_id', 'auth.pending_device_uuid']);
 
         $cookie = $this->twoFactorRememberService->forgetCookie($user);
 

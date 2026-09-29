@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Models\UserWorkstation;
 use App\Services\Auth\TwoFactorRememberService;
 use Closure;
 use Illuminate\Http\Request;
@@ -64,13 +65,22 @@ final class EnsureTwoFactorAuthenticated
             return $next($request);
         }
 
-        // If workstation authorization is pending, hold user at workstation.pending until approved
+        // If workstation authorization is pending, verify status; clear if already approved
         if ($request->session()->has('auth.pending_workstation_id')) {
-            if ($request->expectsJson()) {
-                return response()->json(['message' => 'Workstation authorization pending.'], 403);
-            }
+            $pendingWorkstationId = $request->session()->get('auth.pending_workstation_id');
+            /** @var UserWorkstation|null $pendingWorkstation */
+            $pendingWorkstation = UserWorkstation::find($pendingWorkstationId);
 
-            return redirect()->route('workstation.pending');
+            if ($pendingWorkstation && $pendingWorkstation->isApproved()) {
+                $request->session()->forget(['auth.pending_workstation_id', 'auth.pending_device_uuid']);
+                $request->session()->put('auth.workstation_id', $pendingWorkstation->id);
+            } else {
+                if ($request->expectsJson()) {
+                    return response()->json(['message' => 'Workstation authorization pending.'], 403);
+                }
+
+                return redirect()->route('workstation.pending');
+            }
         }
 
         // 1. If the user has NOT completed 2FA enrollment yet → gate and force setup

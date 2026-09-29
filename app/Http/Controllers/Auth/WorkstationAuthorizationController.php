@@ -51,6 +51,7 @@ final class WorkstationAuthorizationController extends Controller
         if ($workstation->isApproved()) {
             $this->sessionManager->registerSession($user, $request->session()->getId(), $workstation, $request);
             $request->session()->put('auth.workstation_id', $workstation->id);
+            $request->session()->forget(['auth.pending_workstation_id', 'auth.pending_device_uuid']);
 
             return redirect()->route(
                 $user->hasTwoFactorEnabled() ? 'two-factor.challenge' : 'two-factor.setup'
@@ -98,6 +99,7 @@ final class WorkstationAuthorizationController extends Controller
             // Register single active session upon approval
             $this->sessionManager->registerSession($user, $request->session()->getId(), $workstation, $request);
             $request->session()->put('auth.workstation_id', $workstation->id);
+            $request->session()->forget(['auth.pending_workstation_id', 'auth.pending_device_uuid']);
 
             $target = $user->hasTwoFactorEnabled()
                 ? route('two-factor.challenge')

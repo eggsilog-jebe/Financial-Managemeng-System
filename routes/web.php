@@ -587,6 +587,7 @@ Route::middleware(['auth'])->group(function () {
         // System Audit Trail & Compliance (CFO and Auditor only)
         Route::middleware(['role:CFO,FinanceDirector,Auditor'])->group(function () {
             Route::get('/audit-log', [AuditLogController::class, 'index'])->name('audit-log');
+            Route::post('/audit-log/acknowledge', [AuditLogController::class, 'acknowledgeAlert'])->name('audit-log.acknowledge');
         });
     });
 
@@ -603,6 +604,8 @@ Route::middleware(['auth'])->group(function () {
 
         // System Audit Trail (alias - same controller)
         Route::get('/audit-trail', [AuditLogController::class, 'index'])->name('audit-trail');
+        Route::post('/audit-trail/acknowledge', [AuditLogController::class, 'acknowledgeAlert'])->name('audit-trail.acknowledge');
+
 
         // Workstation Binding & Active Session Security
         Route::get('/workstations', [\App\Http\Controllers\UserSecurity\WorkstationSecurityController::class, 'index'])->name('workstations');

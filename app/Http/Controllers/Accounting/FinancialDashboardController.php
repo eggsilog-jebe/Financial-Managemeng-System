@@ -159,6 +159,8 @@ final class FinancialDashboardController extends Controller
             ->get();
 
         // ─── 4. Security Telemetry (single-trip, live) ────────────────────────────────
+        $acknowledgedAt = session('security_alert_acknowledged_at');
+
         $activityStats = ActivityLog::query()
             ->whereDate('created_at', now()->toDateString())
             ->selectRaw("
@@ -170,12 +172,22 @@ final class FinancialDashboardController extends Controller
         $failedLoginsToday = (int) ($activityStats->failed_logins ?? 0);
         $mutationsToday    = (int) ($activityStats->mutations ?? 0);
 
-        // Security alert level: 0 = green, 1 = amber (pending ws), 2 = rose (failed logins)
+        // Check if there are failed logins that occurred after user's last acknowledgment
+        $unacknowledgedFailedLogins = $failedLoginsToday;
+        if ($acknowledgedAt) {
+            $unacknowledgedFailedLogins = ActivityLog::where('event', 'failed_login')
+                ->whereDate('created_at', now()->toDateString())
+                ->where('created_at', '>', $acknowledgedAt)
+                ->count();
+        }
+
+        // Security alert level: 0 = green, 1 = amber (pending ws), 2 = rose (unacknowledged failed logins >= 5)
         $securityAlertLevel = match (true) {
-            $failedLoginsToday >= 5 => 2,
-            $failedLoginsToday > 0  => 1,
-            default                 => 0,
+            $unacknowledgedFailedLogins >= 5 => 2,
+            $unacknowledgedFailedLogins > 0  => 1,
+            default                          => 0,
         };
+
 
         $recentAuditLogs = ActivityLog::query()
             ->latest('id')

@@ -18,6 +18,82 @@
   }
 }" @keydown.escape.window="closeDiff()">
 
+  {{-- Flash Messages --}}
+  @if(session('success'))
+    <div x-data="{ show: true }" x-show="show" x-transition class="flex items-center justify-between gap-3 rounded-2xl border border-emerald-200/80 bg-emerald-50/80 p-4 text-xs text-emerald-800 shadow-sm dark:border-emerald-800/40 dark:bg-emerald-950/40 dark:text-emerald-300">
+      <div class="flex items-center gap-2.5">
+        <i class="ph-fill ph-check-circle text-lg text-emerald-600 dark:text-emerald-400 shrink-0"></i>
+        <span>{!! session('success') !!}</span>
+      </div>
+      <button @click="show = false" type="button" class="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-200 transition-colors">
+        <i class="ph ph-x text-sm"></i>
+      </button>
+    </div>
+  @endif
+
+  @if(session('warning'))
+    <div x-data="{ show: true }" x-show="show" x-transition class="flex items-center justify-between gap-3 rounded-2xl border border-amber-200/80 bg-amber-50/80 p-4 text-xs text-amber-800 shadow-sm dark:border-amber-800/40 dark:bg-amber-950/40 dark:text-amber-300">
+      <div class="flex items-center gap-2.5">
+        <i class="ph-fill ph-warning text-lg text-amber-600 dark:text-amber-400 shrink-0"></i>
+        <span>{!! session('warning') !!}</span>
+      </div>
+      <button @click="show = false" type="button" class="text-amber-600 hover:text-amber-800 dark:text-amber-400 dark:hover:text-amber-200 transition-colors">
+        <i class="ph ph-x text-sm"></i>
+      </button>
+    </div>
+  @endif
+
+  {{-- Security Incident Banner with Acknowledge Action --}}
+  @if(($stats['failed_logins'] ?? 0) >= 5)
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl p-4 shadow-sm transition-all
+                {{ ($unacknowledgedFailedLogins ?? 0) > 0 
+                    ? 'bg-rose-50 ring-1 ring-rose-300/70 dark:bg-rose-950/30 dark:ring-rose-800/60' 
+                    : 'bg-emerald-50/60 ring-1 ring-emerald-200/80 dark:bg-emerald-950/20 dark:ring-emerald-800/40' }}">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl
+                     {{ ($unacknowledgedFailedLogins ?? 0) > 0 
+                         ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-300' 
+                         : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-300' }}">
+          <i class="ph-bold {{ ($unacknowledgedFailedLogins ?? 0) > 0 ? 'ph-warning' : 'ph-check-circle' }} text-base"></i>
+        </span>
+        <div>
+          <p class="text-sm font-semibold {{ ($unacknowledgedFailedLogins ?? 0) > 0 ? 'text-rose-900 dark:text-rose-200' : 'text-emerald-900 dark:text-emerald-200' }}">
+            @if(($unacknowledgedFailedLogins ?? 0) > 0)
+              Active Security Incident — {{ $stats['failed_logins'] }} Failed Login Attempts Today
+            @else
+              Security Incident Reviewed &amp; Acknowledged
+            @endif
+          </p>
+          <p class="text-xs {{ ($unacknowledgedFailedLogins ?? 0) > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400' }}">
+            @if(($unacknowledgedFailedLogins ?? 0) > 0)
+              These attempts triggered high-priority security telemetry across the portal.
+            @else
+              Incident was acknowledged at {{ \Carbon\Carbon::parse($acknowledgedAt)->format('h:i A') }}. Dashboard warning has been dismissed.
+            @endif
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 self-start sm:self-auto">
+        @if(($unacknowledgedFailedLogins ?? 0) > 0)
+          <form method="POST" action="{{ route('accounting.audit-log.acknowledge') }}">
+            @csrf
+            <button type="submit"
+                    class="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-rose-500/50">
+              <i class="ph-bold ph-check-circle"></i>
+              Acknowledge Incident
+            </button>
+          </form>
+        @else
+          <span class="inline-flex items-center gap-1 rounded-xl bg-emerald-100/80 dark:bg-emerald-900/40 px-3 py-1.5 text-xs font-medium text-emerald-800 dark:text-emerald-300">
+            <i class="ph-bold ph-check text-xs"></i>
+            Acknowledged for this session
+          </span>
+        @endif
+      </div>
+    </div>
+  @endif
+
   {{-- Header --}}
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>

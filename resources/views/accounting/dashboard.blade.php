@@ -66,14 +66,28 @@
           </p>
         </div>
       </div>
-      <a href="{{ $securityAlertLevel >= 2 ? route('accounting.audit-log') : route('user-security.workstations') }}"
-         class="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold text-white shadow-sm self-start sm:self-auto transition-colors
-                {{ $securityAlertLevel >= 2 ? 'bg-rose-600 hover:bg-rose-700' : 'bg-amber-600 hover:bg-amber-700' }}">
-        <i class="ph-bold {{ $securityAlertLevel >= 2 ? 'ph-magnifying-glass' : 'ph-check-circle' }}"></i>
-        {{ $securityAlertLevel >= 2 ? 'View Audit Hub' : 'Review Requests' }}
-      </a>
+      <div class="flex items-center gap-2 self-start sm:self-auto">
+        @if($securityAlertLevel >= 2)
+          <form method="POST" action="{{ route('accounting.audit-log.acknowledge') }}">
+            @csrf
+            <button type="submit" 
+                    title="Acknowledge this security alert for your session"
+                    class="inline-flex items-center gap-1.5 rounded-xl border border-rose-300/80 bg-white/90 px-3.5 py-2 text-xs font-semibold text-rose-700 shadow-sm hover:bg-white dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-200 dark:hover:bg-rose-900/60 transition-colors">
+              <i class="ph-bold ph-check"></i>
+              Acknowledge
+            </button>
+          </form>
+        @endif
+        <a href="{{ $securityAlertLevel >= 2 ? route('accounting.audit-log') : route('user-security.workstations') }}"
+           class="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors
+                  {{ $securityAlertLevel >= 2 ? 'bg-rose-600 hover:bg-rose-700' : 'bg-amber-600 hover:bg-amber-700' }}">
+          <i class="ph-bold {{ $securityAlertLevel >= 2 ? 'ph-magnifying-glass' : 'ph-check-circle' }}"></i>
+          {{ $securityAlertLevel >= 2 ? 'View Audit Hub' : 'Review Requests' }}
+        </a>
+      </div>
     </div>
   @endif
+
 
   {{-- ─── TIER 1: Page Header ─────────────────────────────────────────────────── --}}
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

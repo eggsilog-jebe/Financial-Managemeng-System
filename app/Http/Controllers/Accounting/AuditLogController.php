@@ -48,6 +48,9 @@ final class AuditLogController extends Controller
             ];
         }, ['audit'], 30);
 
+        $acknowledgedAt = session('security_alert_acknowledged_at');
+
+
         // Curated, structured event categories for high-signal auditing
         $definedEventGroups = [
             'Security & Authentication' => [
@@ -124,6 +127,11 @@ final class AuditLogController extends Controller
             }
         }
 
+        $unacknowledgedFailedLogins = ActivityLog::where('event', 'failed_login')
+            ->whereDate('created_at', $today)
+            ->when($acknowledgedAt, fn ($q) => $q->where('created_at', '>', $acknowledgedAt))
+            ->count();
+
         return view('accounting.audit-log', compact(
             'logs',
             'stats',
@@ -135,7 +143,20 @@ final class AuditLogController extends Controller
             'role',
             'search',
             'dateFrom',
-            'dateTo'
+            'dateTo',
+            'acknowledgedAt',
+            'unacknowledgedFailedLogins'
         ));
     }
+
+    /**
+     * Acknowledge the failed logins / security alerts for the current session.
+     */
+    public function acknowledgeAlert(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        $request->session()->put('security_alert_acknowledged_at', now()->toIso8601String());
+
+        return back()->with('success', 'Security alert acknowledged. The dashboard and audit trail warnings have been dismissed.');
+    }
 }
+

@@ -9,8 +9,21 @@ jobs:
     name: Deploy to HostForge VPS
     runs-on: ubuntu-latest
     steps:
+      - name: Check HostForge VPS Credentials
+        id: check_vps
+        run: |
+          if [ -n "${{ secrets.VPS_HOST }}" ]; then
+            echo "configured=true" >> $GITHUB_OUTPUT
+            echo "HostForge VPS secrets found. Proceeding with deployment."
+          else
+            echo "configured=false" >> $GITHUB_OUTPUT
+            echo "HostForge VPS secrets (VPS_HOST) not configured on GitHub. Skipping HostForge deployment."
+          fi
+
       - name: SSH and Deploy to Server
+        if: steps.check_vps.outputs.configured == 'true'
         uses: appleboy/ssh-action@v1.2.5
+        continue-on-error: true
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}

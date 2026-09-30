@@ -5,6 +5,8 @@ providers = ['php', 'node']
 nixPkgs = [
   'php83',
   'php83Extensions.bcmath',
+  'php83Extensions.pdo_mysql',
+  'php83Extensions.mysqli',
   'php83Extensions.pdo_pgsql',
   'php83Extensions.pgsql',
   'php83Extensions.mbstring',

@@ -22,7 +22,7 @@ jobs:
 
       - name: SSH and Deploy to Server
         if: steps.check_vps.outputs.configured == 'true'
-        uses: appleboy/ssh-action@v1.2.5
+        uses: appleboy/ssh-action@v1.2.0
         continue-on-error: true
         with:
           host: ${{ secrets.VPS_HOST }}

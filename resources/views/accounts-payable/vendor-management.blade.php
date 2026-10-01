@@ -84,12 +84,13 @@
     </div>
 
     <x-stat-card 
-      title="Total Tax Withheld (EWT)" 
-      :value="$totalEwt ?? 0" 
-      icon="ph-percent" 
-      color="indigo" 
-      subtitle="Tracked for BIR Form 1601-EQ"
-      badge="BIR 2307"
+      title="EFT Settlement Ready" 
+      :value="$vendors->whereNotNull('bank_account_number')->count()" 
+      :isCurrency="false" 
+      icon="ph-bank" 
+      color="blue" 
+      subtitle="Direct electronic bank transfer configured"
+      badge="EFT Ready"
     />
   </div>
 
@@ -126,7 +127,7 @@
             type="search" 
             name="search" 
             value="{{ request('search') }}" 
-            placeholder="Search vendor name, TIN, code..." 
+            placeholder="Search vendor name, code, contact..." 
             class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
           >
         </div>
@@ -140,8 +141,8 @@
           <tr>
             <th scope="col" class="py-3.5 pl-5 pr-3 w-28">Vendor Code</th>
             <th scope="col" class="px-3 py-3.5">Supplier Legal Name</th>
-            <th scope="col" class="px-3 py-3.5">TIN &amp; Tax Type</th>
-            <th scope="col" class="px-3 py-3.5">Default EWT (2307)</th>
+            <th scope="col" class="px-3 py-3.5">Settlement Bank &amp; EFT</th>
+            <th scope="col" class="px-3 py-3.5">Business Address</th>
             <th scope="col" class="px-3 py-3.5">Contact Person</th>
             <th scope="col" class="px-3 py-3.5">Phone / Email</th>
             <th scope="col" class="px-3 py-3.5 text-right font-mono">Current Balance</th>
@@ -156,10 +157,6 @@
                 'id' => $vendor->id,
                 'code' => $vendor->code,
                 'name' => $vendor->name,
-                'tin' => $vendor->tin,
-                'tax_type' => $vendor->tax_type,
-                'default_ewt_rate' => $vendor->default_ewt_rate,
-                'default_atc_code' => $vendor->default_atc_code,
                 'payment_terms' => $vendor->payment_terms,
                 'bank_name' => $vendor->bank_name,
                 'bank_account_number' => $vendor->bank_account_number,
@@ -181,17 +178,19 @@
                 <div class="font-semibold text-slate-900 dark:text-white text-xs sm:text-sm">{{ $vendor->name }}</div>
                 <div class="text-[11px] text-slate-500">{{ $vendor->payment_terms ?? 'Net 30' }} credit terms</div>
               </td>
-              <td class="px-3 py-3.5 text-xs font-mono">
-                <div class="text-slate-800 dark:text-slate-200 font-semibold">{{ $vendor->tin ?: 'NO-TIN' }}</div>
-                <span class="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] {{ $vendor->tax_type === 'VAT_REGISTERED' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/20' : 'bg-slate-100 text-slate-600' }}">
-                  {{ $vendor->tax_type === 'VAT_REGISTERED' ? '12% VAT' : 'NON-VAT' }}
-                </span>
-              </td>
               <td class="px-3 py-3.5 text-xs">
-                <span class="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-0.5 font-semibold text-indigo-700 ring-1 ring-indigo-600/20 dark:bg-indigo-950/40 dark:text-indigo-300">
-                  <span>{{ number_format((float) $vendor->default_ewt_rate, 0) }}%</span>
-                  <span class="font-mono text-[10px]">({{ $vendor->default_atc_code ?: 'WC158' }})</span>
-                </span>
+                @if($vendor->bank_name)
+                  <div class="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1">
+                    <i class="ph-bold ph-bank text-blue-600 text-xs"></i>
+                    <span>{{ $vendor->bank_name }}</span>
+                  </div>
+                  <div class="font-mono text-[11px] text-slate-500">{{ $vendor->bank_account_number ?: 'No Account #' }}</div>
+                @else
+                  <span class="text-slate-400 text-xs">—</span>
+                @endif
+              </td>
+              <td class="px-3 py-3.5 text-xs text-slate-500 dark:text-slate-400 max-w-[200px] truncate" title="{{ $vendor->registered_address }}">
+                {{ $vendor->registered_address ?: '—' }}
               </td>
               <td class="px-3 py-3.5 text-xs text-slate-700 dark:text-slate-300">
                 {{ $vendor->contact_person ?: '—' }}
@@ -254,7 +253,7 @@
 <x-modal 
   id="addVendorModal" 
   title="Register New Accredited Supplier" 
-  subtitle="Masterfile profile, BIR Form 2307 EWT classification & bank disbursement details" 
+  subtitle="Masterfile profile, credit terms, and bank disbursement details" 
   icon="ph-buildings" 
   iconVariant="emerald" 
   size="2xl" 
@@ -263,25 +262,8 @@
   submitText="Save Vendor Master"
   submitIcon="ph-check"
 >
-  <div 
-    x-data="{
-      ewtRate: '1.00',
-      atcCode: 'WC158',
-      taxType: 'VAT_REGISTERED',
-      syncAtc() {
-        const map = {
-          '1.00': 'WC158',
-          '2.00': 'WC160',
-          '5.00': 'WC100',
-          '10.00': 'WI010',
-          '0.00': 'EXEMPT'
-        };
-        this.atcCode = map[this.ewtRate] || 'WC158';
-      }
-    }" 
-    class="space-y-4"
-  >
-    <!-- Section 1: Identification -->
+  <div class="space-y-4">
+    <!-- Section 1: Identification & Business Address -->
     <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 ring-1 ring-slate-200 dark:ring-slate-700">
       <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5">
         <i class="ph-bold ph-identification-card text-emerald-600"></i>
@@ -296,16 +278,9 @@
           <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Supplier Legal Name <span class="text-rose-500">*</span></label>
           <input type="text" name="name" placeholder="e.g. Metro Pharma Medical Supplies Inc." required class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
         </div>
-        <div class="sm:col-span-4">
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">BIR Tax ID (TIN) <span class="text-rose-500">*</span></label>
-          <input type="text" name="tin" placeholder="000-000-000-000" required class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs font-mono text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
-        </div>
-        <div class="sm:col-span-4">
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">VAT Classification <span class="text-rose-500">*</span></label>
-          <select name="tax_type" x-model="taxType" required class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
-            <option value="VAT_REGISTERED">VAT-Registered (12% VAT Applied)</option>
-            <option value="NON_VAT">Non-VAT / VAT-Exempt Entity</option>
-          </select>
+        <div class="sm:col-span-8">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Registered Business Address</label>
+          <input type="text" name="registered_address" placeholder="Physical business address / office location" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
         </div>
         <div class="sm:col-span-4">
           <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Credit Payment Terms</label>
@@ -314,32 +289,7 @@
       </div>
     </div>
 
-    <!-- Section 2: BIR 2307 Tax Defaults -->
-    <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 ring-1 ring-slate-200 dark:ring-slate-700">
-      <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5">
-        <i class="ph-bold ph-receipt text-indigo-600"></i>
-        <span>BIR Form 2307 Withholding Defaults</span>
-      </h4>
-      <div class="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
-        <div class="sm:col-span-6">
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Default EWT Rate <span class="text-rose-500">*</span></label>
-          <select name="default_ewt_rate" x-model="ewtRate" @change="syncAtc()" required class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
-            <option value="1.00">1% — Purchase of Goods (WC 158)</option>
-            <option value="2.00">2% — Purchase of Services (WC 160)</option>
-            <option value="5.00">5% — Space &amp; Equipment Rental (WC 100)</option>
-            <option value="10.00">10% — Doctor Retainers / Professional (WI 010)</option>
-            <option value="0.00">0% — Exempt / Non-Taxable</option>
-          </select>
-          <input type="hidden" name="default_atc_code" :value="atcCode">
-        </div>
-        <div class="sm:col-span-6">
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Registered Business Address</label>
-          <input type="text" name="registered_address" placeholder="Official BIR registration address" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
-        </div>
-      </div>
-    </div>
-
-    <!-- Section 3: Bank Disbursement Details -->
+    <!-- Section 2: Bank Disbursement Details -->
     <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 ring-1 ring-slate-200 dark:ring-slate-700">
       <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5">
         <i class="ph-bold ph-bank text-blue-600"></i>
@@ -361,7 +311,7 @@
       </div>
     </div>
 
-    <!-- Section 4: Contact Representative -->
+    <!-- Section 3: Contact Representative -->
     <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 ring-1 ring-slate-200 dark:ring-slate-700">
       <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5">
         <i class="ph-bold ph-user text-teal-600"></i>
@@ -389,7 +339,7 @@
 <x-modal 
   id="editVendorModal" 
   title="Edit Vendor Master Record" 
-  subtitle="Update accreditation parameters, withholding tax codes, and contact details" 
+  subtitle="Update accreditation parameters, credit terms, and banking details" 
   icon="ph-pencil-simple" 
   iconVariant="blue" 
   size="2xl" 
@@ -415,7 +365,12 @@
   >
     <input type="hidden" name="_method" value="PUT">
 
+    <!-- Section 1: Identification & Business Address -->
     <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 ring-1 ring-slate-200 dark:ring-slate-700">
+      <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5">
+        <i class="ph-bold ph-identification-card text-blue-600"></i>
+        <span>Supplier Legal Identity</span>
+      </h4>
       <div class="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
         <div class="sm:col-span-4">
           <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Vendor Code</label>
@@ -425,48 +380,57 @@
           <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Supplier Name <span class="text-rose-500">*</span></label>
           <input type="text" name="name" x-model="vendor.name" required class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
         </div>
-        <div class="sm:col-span-4">
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">TIN</label>
-          <input type="text" name="tin" x-model="vendor.tin" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs font-mono text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+        <div class="sm:col-span-8">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Registered Business Address</label>
+          <input type="text" name="registered_address" x-model="vendor.registered_address" placeholder="Physical business address / office location" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
         </div>
         <div class="sm:col-span-4">
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">VAT Type</label>
-          <select name="tax_type" x-model="vendor.tax_type" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
-            <option value="VAT_REGISTERED">VAT-Registered (12%)</option>
-            <option value="NON_VAT">Non-VAT / Exempt</option>
-          </select>
-        </div>
-        <div class="sm:col-span-4">
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Default EWT Rate</label>
-          <select name="default_ewt_rate" x-model="vendor.default_ewt_rate" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
-            <option value="1.00">1% (WC 158)</option>
-            <option value="2.00">2% (WC 160)</option>
-            <option value="5.00">5% (WC 100)</option>
-            <option value="10.00">10% (WI 010)</option>
-            <option value="0.00">0% Exempt</option>
-          </select>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Credit Payment Terms</label>
+          <input type="text" name="payment_terms" x-model="vendor.payment_terms" placeholder="e.g. Net 30 Days" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
         </div>
       </div>
     </div>
 
-    <!-- Contact & Address -->
+    <!-- Section 2: Bank Disbursement Details -->
     <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 ring-1 ring-slate-200 dark:ring-slate-700">
+      <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5">
+        <i class="ph-bold ph-bank text-blue-600"></i>
+        <span>Bank Disbursement &amp; EFT Details</span>
+      </h4>
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
+        <div class="sm:col-span-4">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Settlement Bank Name</label>
+          <input type="text" name="bank_name" x-model="vendor.bank_name" placeholder="e.g. BDO, BPI, Landbank" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+        </div>
+        <div class="sm:col-span-4">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Account Number</label>
+          <input type="text" name="bank_account_number" x-model="vendor.bank_account_number" placeholder="e.g. 0012-3456-7890" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs font-mono text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+        </div>
+        <div class="sm:col-span-4">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Account Holder Name</label>
+          <input type="text" name="bank_account_name" x-model="vendor.bank_account_name" placeholder="e.g. Metro Pharma Med Inc." class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Contact Representative -->
+    <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 ring-1 ring-slate-200 dark:ring-slate-700">
+      <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5">
+        <i class="ph-bold ph-user text-teal-600"></i>
+        <span>Contact Representative</span>
+      </h4>
       <div class="grid grid-cols-1 sm:grid-cols-12 gap-3.5">
         <div class="sm:col-span-4">
           <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Contact Person</label>
-          <input type="text" name="contact_person" x-model="vendor.contact_person" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+          <input type="text" name="contact_person" x-model="vendor.contact_person" placeholder="e.g. Maria Santos" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
         </div>
         <div class="sm:col-span-4">
           <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Phone</label>
-          <input type="text" name="phone" x-model="vendor.phone" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+          <input type="text" name="phone" x-model="vendor.phone" placeholder="e.g. +63 (02) 8842-1090" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
         </div>
         <div class="sm:col-span-4">
           <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Email</label>
-          <input type="email" name="email" x-model="vendor.email" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
-        </div>
-        <div class="sm:col-span-12">
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Registered Business Address</label>
-          <input type="text" name="registered_address" x-model="vendor.registered_address" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
+          <input type="email" name="email" x-model="vendor.email" placeholder="e.g. billing@supplier.ph" class="w-full rounded-xl border-0 bg-white py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 dark:bg-slate-800 dark:text-white dark:ring-slate-600">
         </div>
       </div>
     </div>

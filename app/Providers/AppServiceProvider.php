@@ -45,6 +45,32 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
+        // Share live system alerts data with headbar bell notification
+        view()->composer('partials.headbar', function ($view): void {
+            if (auth()->check()) {
+                try {
+                    $alertService = app(\App\Services\Security\SystemAlertService::class);
+                    $acknowledgedAt = session('security_alert_acknowledged_at');
+                    $alertsData = $alertService->getLiveAlertsForUser(auth()->user(), $acknowledgedAt);
+                    $view->with('systemAlertsData', $alertsData);
+                } catch (\Throwable) {
+                    $view->with('systemAlertsData', [
+                        'alerts'           => [],
+                        'count'            => 0,
+                        'has_alerts'       => false,
+                        'highest_severity' => 'none',
+                    ]);
+                }
+            } else {
+                $view->with('systemAlertsData', [
+                    'alerts'           => [],
+                    'count'            => 0,
+                    'has_alerts'       => false,
+                    'highest_severity' => 'none',
+                ]);
+            }
+        });
+
         // Define Gates for Financial Segregation of Duties (SoD)
         \Illuminate\Support\Facades\Gate::before(function ($user, string $ability): ?bool {
             // In local development or demo exploration without login, allow full visibility

@@ -129,13 +129,21 @@
             <label for="password" class="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
               New Password <span class="text-rose-500">*</span>
             </label>
-            <div class="relative">
+            <div class="relative" x-data="{ show: false }">
               <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
                 <i class="ph-bold ph-lock-key"></i>
               </div>
-              <input type="password" class="block w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-xs text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-600 @error('password') border-rose-500 focus:border-rose-500 @enderror"
+              <input :type="show ? 'text' : 'password'" class="block w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-10 text-xs text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-600 @error('password') border-rose-500 focus:border-rose-500 @enderror"
                      id="password" name="password" required autocomplete="new-password"
                      placeholder="Min 8 characters, alpha-numeric">
+              <button 
+                type="button" 
+                @click="show = !show" 
+                :aria-label="show ? 'Hide password' : 'Show password'"
+                class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+              >
+                <i class="ph-bold text-base" :class="show ? 'ph-eye-slash' : 'ph-eye'"></i>
+              </button>
             </div>
             @error('password')
               <p class="mt-1 text-xs text-rose-500 flex items-center gap-1"><i class="ph-bold ph-warning-circle"></i> {{ $message }}</p>
@@ -147,13 +155,21 @@
             <label for="password_confirmation" class="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
               Confirm New Password <span class="text-rose-500">*</span>
             </label>
-            <div class="relative">
+            <div class="relative" x-data="{ show: false }">
               <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
                 <i class="ph-bold ph-check-square-offset"></i>
               </div>
-              <input type="password" class="block w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-xs text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-600"
+              <input :type="show ? 'text' : 'password'" class="block w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-10 text-xs text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-800 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-600"
                      id="password_confirmation" name="password_confirmation" required autocomplete="new-password"
                      placeholder="Re-enter your new password">
+              <button 
+                type="button" 
+                @click="show = !show" 
+                :aria-label="show ? 'Hide password' : 'Show password'"
+                class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+              >
+                <i class="ph-bold text-base" :class="show ? 'ph-eye-slash' : 'ph-eye'"></i>
+              </button>
             </div>
           </div>
 

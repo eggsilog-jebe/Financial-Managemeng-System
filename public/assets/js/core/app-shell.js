@@ -740,15 +740,7 @@
       { name: "Profit & Loss (P&L)", category: "Financial Reporting", url: "/financial-reporting/profit-loss", icon: "ph-trend-up", desc: "Hospital operating revenue, medical costs, and EBITDA margins." },
       { name: "Cash Flow Statement", category: "Financial Reporting", url: "/financial-reporting/cash-flow-statement", icon: "ph-currency-dollar", desc: "Operating, Investing, and Financing cash movement analysis." },
       { name: "Financial KPI Dashboard", category: "Financial Reporting", url: "/financial-reporting/financial-kpi-dashboard", icon: "ph-gauge", desc: "Healthcare indicators: DSO, Occupancy Revenue, ARPOB, Working Ratio." },
-      { name: "Executive Reports", category: "Financial Reporting", url: "/financial-reporting/executive-reports", icon: "ph-file-pdf", desc: "Compiled quarterly executive packs for Board of Directors." },
-
-      // 9. Tax Management
-      { name: "Tax Management", category: "Core Module", url: "/tax-management/tax-configuration", icon: "ph-percent", desc: "Tax rules, withholding compliance, Form 2307, and statutory filings." },
-      { name: "Tax Configuration", category: "Tax Management", url: "/tax-management/tax-configuration", icon: "ph-gear", desc: "Tax codes setup for VAT (12%), EWT, and hospital service exemptions." },
-      { name: "Withholding Tax (EWT/VAT)", category: "Tax Management", url: "/tax-management/withholding-tax", icon: "ph-file-text", desc: "BIR Form 2307 / 2306 certificates for doctors and suppliers." },
-      { name: "Tax Returns & Filings", category: "Tax Management", url: "/tax-management/tax-returns", icon: "ph-paperclip", desc: "Statutory tax returns (BIR Form 2550Q, 1601EQ, Corporate Tax)." },
-      { name: "Tax Exemptions", category: "Tax Management", url: "/tax-management/tax-exemptions", icon: "ph-shield-check", desc: "VAT-exempt prescription medicines and Senior Citizen/PWD logs." },
-      { name: "Tax Audit Trail", category: "Tax Management", url: "/tax-management/tax-audit-trail", icon: "ph-magnifying-glass-plus", desc: "Immutable audit trail logs for internal and external tax audits." }
+      { name: "Executive Reports", category: "Financial Reporting", url: "/financial-reporting/executive-reports", icon: "ph-file-pdf", desc: "Compiled quarterly executive packs for Board of Directors." }
     ];
 
     const closeSearch = () => {

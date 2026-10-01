@@ -79,7 +79,7 @@
           <form method="POST" action="{{ route('accounting.audit-log.acknowledge') }}">
             @csrf
             <button type="submit"
-                    class="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-rose-500/50">
+                    class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/50">
               <i class="ph-bold ph-check-circle"></i>
               Acknowledge Incident
             </button>

@@ -39,55 +39,6 @@
 @section('content')
 <div class="space-y-5 pb-8">
 
-  {{-- ─── TIER 0: Urgent Alerts (conditional, non-intrusive) ─────────────────── --}}
-  @if(($pendingWorkstationsCount ?? 0) > 0 || $securityAlertLevel >= 2)
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3
-                {{ $securityAlertLevel >= 2 ? 'rounded-2xl bg-rose-50 ring-1 ring-rose-300/70 dark:bg-rose-950/30 dark:ring-rose-800/60' : 'rounded-2xl bg-amber-50 ring-1 ring-amber-300/70 dark:bg-amber-950/30 dark:ring-amber-800/60' }}
-                p-4 shadow-sm">
-      <div class="flex items-center gap-3">
-        <span class="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl
-                     {{ $securityAlertLevel >= 2 ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-300' : 'bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-300' }}">
-          <i class="ph-bold {{ $securityAlertLevel >= 2 ? 'ph-warning' : 'ph-broadcast' }} text-base"></i>
-        </span>
-        <div>
-          <p class="text-sm font-semibold {{ $securityAlertLevel >= 2 ? 'text-rose-900 dark:text-rose-200' : 'text-amber-900 dark:text-amber-200' }}">
-            @if($securityAlertLevel >= 2)
-              Security Alert — {{ $failedLoginsToday }} Failed Login Attempt{{ $failedLoginsToday !== 1 ? 's' : '' }} Today
-            @else
-              {{ $pendingWorkstationsCount }} Workstation Authorization Request{{ $pendingWorkstationsCount !== 1 ? 's' : '' }} Pending
-            @endif
-          </p>
-          <p class="text-xs {{ $securityAlertLevel >= 2 ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400' }}">
-            @if($securityAlertLevel >= 2)
-              Review the Audit Hub immediately for suspicious authentication patterns.
-            @else
-              Unauthorized terminals are requesting access to the hospital financial system.
-            @endif
-          </p>
-        </div>
-      </div>
-      <div class="flex items-center gap-2 self-start sm:self-auto">
-        @if($securityAlertLevel >= 2)
-          <form method="POST" action="{{ route('accounting.audit-log.acknowledge') }}">
-            @csrf
-            <button type="submit" 
-                    title="Acknowledge this security alert for your session"
-                    class="inline-flex items-center gap-1.5 rounded-xl border border-rose-300/80 bg-white/90 px-3.5 py-2 text-xs font-semibold text-rose-700 shadow-sm hover:bg-white dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-200 dark:hover:bg-rose-900/60 transition-colors">
-              <i class="ph-bold ph-check"></i>
-              Acknowledge
-            </button>
-          </form>
-        @endif
-        <a href="{{ $securityAlertLevel >= 2 ? route('accounting.audit-log') : route('user-security.workstations') }}"
-           class="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors
-                  {{ $securityAlertLevel >= 2 ? 'bg-rose-600 hover:bg-rose-700' : 'bg-amber-600 hover:bg-amber-700' }}">
-          <i class="ph-bold {{ $securityAlertLevel >= 2 ? 'ph-magnifying-glass' : 'ph-check-circle' }}"></i>
-          {{ $securityAlertLevel >= 2 ? 'View Audit Hub' : 'Review Requests' }}
-        </a>
-      </div>
-    </div>
-  @endif
-
 
   {{-- ─── TIER 1: Page Header ─────────────────────────────────────────────────── --}}
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -111,8 +62,8 @@
     </div>
   </div>
 
-  {{-- ─── TIER 1: KPI Stat Cards (5 cards) ──────────────────────────────────── --}}
-  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+  {{-- ─── TIER 1: KPI Stat Cards (4 cards) ──────────────────────────────────── --}}
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
 
     {{-- Hospital Revenue --}}
     <x-stat-card
@@ -149,35 +100,6 @@
       color="{{ $isCoaIntactCompliant ? 'teal' : 'rose' }}"
       subtitle="{{ $isCoaIntactCompliant ? 'COA 2021-014 Compliant' : 'Remittance Overdue' }}"
     />
-
-    {{-- Security Status (traffic-light card) --}}
-    <div class="relative overflow-hidden rounded-2xl bg-white p-5 ring-1 ring-slate-200/80 transition-all hover:shadow-sm dark:bg-slate-900 dark:ring-slate-800">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Security</span>
-        @php
-          $dotClass = match($securityAlertLevel) {
-            2 => 'bg-rose-500 pulse-rose',
-            1 => 'bg-amber-400 pulse-amber',
-            default => 'bg-emerald-500 pulse-green',
-          };
-        @endphp
-        <span class="h-3 w-3 rounded-full {{ $dotClass }}"></span>
-      </div>
-      <div class="mt-4">
-        <p class="text-lg font-bold text-slate-900 dark:text-white">
-          @if($securityAlertLevel === 0) All Clear
-          @elseif($securityAlertLevel === 1) Warning
-          @else Alert
-          @endif
-        </p>
-        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-          {{ $failedLoginsToday === 0 ? 'No failed logins today' : $failedLoginsToday . ' failed login' . ($failedLoginsToday !== 1 ? 's' : '') . ' today' }}
-        </p>
-      </div>
-      <a href="{{ route('accounting.audit-log') }}" class="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400">
-        Audit Hub <i class="ph-bold ph-arrow-right text-[10px]"></i>
-      </a>
-    </div>
 
   </div>
 

@@ -66,13 +66,56 @@
 
   </style>
 </head>
+@php
+  $lockoutSeconds = (int) (session('lockout_seconds') ?? 0);
+  if ($lockoutSeconds === 0 && $errors->has('email')) {
+    $firstEmailError = $errors->first('email');
+    if (preg_match('/(?:try again in|locked for)\s+(\d+)\s+seconds/i', $firstEmailError, $matches)) {
+      $lockoutSeconds = (int) $matches[1];
+    }
+  }
+@endphp
 <body 
   x-data="{ 
     helpdeskOpen: false,
     legalModalOpen: false,
     legalActiveTab: 'terms',
-    darkMode: document.documentElement.classList.contains('dark')
+    darkMode: document.documentElement.classList.contains('dark'),
+    lockoutRemaining: {{ $lockoutSeconds }},
+    lockoutTotal: {{ $lockoutSeconds > 0 ? $lockoutSeconds : 60 }},
+    isLocked: {{ $lockoutSeconds > 0 ? 'true' : 'false' }},
+    cooldownExpired: false,
+    formatCooldown(sec) {
+      if (sec <= 0) return '0s';
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      if (m > 0) {
+        return `${m}m ${s < 10 ? '0' : ''}${s}s`;
+      }
+      return `${s}s`;
+    },
+    initLockout() {
+      if (this.lockoutRemaining > 0) {
+        const interval = setInterval(() => {
+          this.lockoutRemaining--;
+          if (this.lockoutRemaining <= 0) {
+            clearInterval(interval);
+            this.isLocked = false;
+            this.cooldownExpired = true;
+            this.$nextTick(() => {
+              const passField = document.getElementById('login-password');
+              if (passField) {
+                passField.disabled = false;
+                passField.value = '';
+                passField.focus();
+              }
+            });
+          }
+        }, 1000);
+      }
+    }
   }" 
+  x-init="initLockout()"
   class="h-full bg-slate-50 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-100 antialiased selection:bg-emerald-500 selection:text-white"
 >
 
@@ -166,8 +209,77 @@
           </div>
         @endif
 
-        <!-- General Validation Errors -->
-        @if($errors->any() && !session('displacement_warning'))
+        <!-- Rate Limit & Cooldown Protection Alert (Dynamic Live Countdown) -->
+        <template x-if="lockoutTotal > 0 && (isLocked || cooldownExpired)">
+          <div 
+            class="mt-5 rounded-2xl border p-4 shadow-sm transition-all duration-300"
+            :class="isLocked 
+              ? 'border-rose-200/90 bg-gradient-to-br from-rose-50/90 via-amber-50/60 to-rose-50/90 text-rose-950 dark:border-rose-900/60 dark:from-rose-950/40 dark:via-amber-950/20 dark:to-rose-950/40 dark:text-rose-200' 
+              : 'border-emerald-200/90 bg-emerald-50/80 text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200'"
+            role="alert"
+          >
+            <!-- Active Lockout State -->
+            <div x-show="isLocked" class="space-y-3">
+              <div class="flex items-start gap-3">
+                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-rose-500/15 text-rose-600 dark:bg-rose-400/10 dark:text-rose-400 ring-1 ring-rose-500/25">
+                  <i class="ph-fill ph-shield-warning text-lg animate-pulse"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between gap-2">
+                    <strong class="font-bold text-xs uppercase tracking-wider text-rose-800 dark:text-rose-300">
+                      Security Cooldown Active
+                    </strong>
+                    <!-- Live Countdown Badge -->
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-rose-200/80 text-rose-900 dark:bg-rose-900/60 dark:text-rose-200 border border-rose-300/60 dark:border-rose-700/60 shadow-xs">
+                      <i class="ph-bold ph-timer text-[13px]"></i>
+                      <span x-text="formatCooldown(lockoutRemaining)"></span>
+                    </span>
+                  </div>
+                  <p class="mt-1 text-[11.5px] leading-relaxed text-rose-800/90 dark:text-rose-300/85">
+                    Too many unsuccessful authentication attempts. Terminal access is temporarily paused to protect hospital financial records.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Animated Progress Bar -->
+              <div class="w-full bg-rose-200/60 dark:bg-rose-950/80 rounded-full h-1.5 overflow-hidden">
+                <div 
+                  class="bg-rose-500 dark:bg-rose-400 h-1.5 rounded-full transition-all duration-1000 ease-linear"
+                  :style="`width: ${Math.max(0, Math.min(100, (lockoutRemaining / lockoutTotal) * 100))}%`"
+                ></div>
+              </div>
+
+              <div class="flex items-center justify-between pt-1 text-[11px] text-rose-800/90 dark:text-rose-300/90">
+                <span>Hospital security protocol enforced.</span>
+                <button 
+                  type="button" 
+                  @click="helpdeskOpen = true" 
+                  class="font-semibold underline hover:text-rose-950 dark:hover:text-white cursor-pointer"
+                >
+                  Contact IT Helpdesk
+                </button>
+              </div>
+            </div>
+
+            <!-- Lockout Expired State -->
+            <div x-show="!isLocked && cooldownExpired" x-cloak class="flex items-start gap-3">
+              <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-600 dark:bg-emerald-400/10 dark:text-emerald-400 ring-1 ring-emerald-500/20">
+                <i class="ph-fill ph-check-circle text-lg"></i>
+              </div>
+              <div class="flex-1">
+                <strong class="font-bold text-xs uppercase tracking-wider text-emerald-800 dark:text-emerald-300 block">
+                  Cooldown Period Elapsed
+                </strong>
+                <p class="mt-0.5 text-[11.5px] leading-relaxed text-emerald-700 dark:text-emerald-300/90">
+                  You may now attempt to sign in again. Please verify your hospital credentials.
+                </p>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <!-- General Validation Errors (Shown when NOT in lockout mode) -->
+        @if($errors->any() && !$lockoutSeconds && !session('displacement_warning'))
           <div class="mt-5 rounded-2xl border border-rose-200/80 bg-rose-50/80 p-4 text-xs text-rose-800 shadow-sm dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300" role="alert">
             <div class="flex items-center gap-2.5">
               <i class="ph-bold ph-warning-circle text-lg text-rose-600 dark:text-rose-400 shrink-0"></i>
@@ -225,7 +337,8 @@
                 placeholder="Enter authorized password" 
                 maxlength="128" 
                 required
-                class="autofill-fix w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 py-2.5 pl-10 pr-11 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/25 shadow-sm transition-all"
+                :disabled="isLocked"
+                class="autofill-fix w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 py-2.5 pl-10 pr-11 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-600/25 shadow-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:bg-slate-100 dark:disabled:bg-slate-800"
               >
               <button 
                 type="button" 
@@ -260,10 +373,21 @@
           <div class="pt-2">
             <button 
               type="submit" 
-              class="login-submit w-full inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-2.5 px-4 text-sm font-semibold text-white shadow-md shadow-emerald-900/20 hover:bg-emerald-700 transition-all focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2 dark:focus:ring-offset-slate-900 cursor-pointer"
+              :disabled="isLocked"
+              :class="isLocked 
+                ? 'bg-slate-300 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed border border-slate-300/80 dark:border-slate-700 shadow-none' 
+                : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-900/20 focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2 dark:focus:ring-offset-slate-900 cursor-pointer'"
+              class="login-submit w-full inline-flex items-center justify-center gap-2 rounded-xl py-2.5 px-4 text-sm font-semibold transition-all focus:outline-none"
             >
-              <i class="ph-bold ph-sign-in text-base"></i>
-              <span>Sign in</span>
+              <span x-show="!isLocked" class="inline-flex items-center gap-2">
+                <i class="ph-bold ph-sign-in text-base"></i>
+                <span>Sign in</span>
+              </span>
+
+              <span x-show="isLocked" x-cloak class="inline-flex items-center gap-2">
+                <i class="ph-bold ph-lock-key text-base animate-pulse"></i>
+                <span>Temporarily Locked (<span x-text="formatCooldown(lockoutRemaining)"></span>)</span>
+              </span>
             </button>
           </div>
         </form>
@@ -382,11 +506,14 @@
       const form = document.getElementById('login-form');
       const submitBtn = document.querySelector('.login-submit');
       if (form && submitBtn) {
-        form.addEventListener('submit', () => {
+        form.addEventListener('submit', (e) => {
+          if (submitBtn.disabled || submitBtn.hasAttribute('disabled')) {
+            e.preventDefault();
+            return false;
+          }
           if (form.checkValidity()) {
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<span class="inline-block animate-spin mr-2"><i class="ph-bold ph-spinner"></i></span>Authenticating...';
-            form.submit();
           }
         });
       }

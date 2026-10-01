@@ -154,14 +154,6 @@
           'route' => route('reporting.balance-sheet')
         ],
         [
-          'title' => 'Tax & BIR Compliance', 
-          'desc' => 'BIR Form 2307, 10%/15% EWT Withholding, VAT Returns & CAS Audit Trails',
-          'icon' => 'ph-percent', 
-          'badge' => 'Compliance', 
-          'color' => 'indigo',
-          'route' => route('tax.tax-config')
-        ],
-        [
           'title' => 'User Security & CAS Audit', 
           'desc' => 'Workstation Binding, Role Authorization, 2FA TOTP & Tamper-proof CAS Logs',
           'icon' => 'ph-shield-check', 

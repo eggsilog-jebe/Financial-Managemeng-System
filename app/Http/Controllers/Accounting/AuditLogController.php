@@ -152,9 +152,16 @@ final class AuditLogController extends Controller
     /**
      * Acknowledge the failed logins / security alerts for the current session.
      */
-    public function acknowledgeAlert(Request $request): \Illuminate\Http\RedirectResponse
+    public function acknowledgeAlert(Request $request): \Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
     {
         $request->session()->put('security_alert_acknowledged_at', now()->toIso8601String());
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Security alert acknowledged.',
+            ]);
+        }
 
         return back()->with('success', 'Security alert acknowledged. The dashboard and audit trail warnings have been dismissed.');
     }

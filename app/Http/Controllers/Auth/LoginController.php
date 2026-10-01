@@ -14,6 +14,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
@@ -65,12 +66,13 @@ final class LoginController extends Controller
 
             return back()->withErrors([
                 'email' => "Too many authentication attempts. Please try again in {$seconds} seconds.",
-            ])->onlyInput('email');
+            ])->with('lockout_seconds', $seconds)->onlyInput('email');
         }
 
         // 4. Primary Credential Authentication Attempt
         if (Auth::attempt($credentials, false)) {
             RateLimiter::clear($throttleKey);
+            Cache::forget('auth_streak:' . $throttleKey);
 
             $request->session()->regenerate();
             $request->session()->save();
@@ -188,13 +190,34 @@ final class LoginController extends Controller
                 ->with('info', '🔐 For your hospital account security, please set up Google Authenticator before continuing.');
         }
 
-        // 8. Failed Credential Handling
-        RateLimiter::hit($throttleKey, 60);
+        // 8. Failed Credential Handling with Progressive Exponential Backoff
+        $streakKey     = 'auth_streak:' . $throttleKey;
+        $failureStreak = (int) Cache::get($streakKey, 0) + 1;
+        Cache::put($streakKey, $failureStreak, now()->addHour());
+
+        // Progressive decay duration:
+        // - 1-5 failures: 60 seconds (1 minute window)
+        // - 6-7 failures: 300 seconds (5 minutes cooldown)
+        // - 8+ failures: 900 seconds (15 minutes cooldown)
+        $decaySeconds = match (true) {
+            $failureStreak >= 8 => 900,
+            $failureStreak > 5  => 300,
+            default             => 60,
+        };
+
+        RateLimiter::hit($throttleKey, $decaySeconds);
+
+        // If in escalated failure streak, immediately enforce lockout threshold
+        if ($failureStreak > 5) {
+            while (RateLimiter::attempts($throttleKey) < 5) {
+                RateLimiter::hit($throttleKey, $decaySeconds);
+            }
+        }
 
         ActivityLog::logAuth(
             event:       'failed_login',
             user:        null,
-            description: "Failed login attempt for email [{$credentials['email']}].",
+            description: "Failed login attempt for email [{$credentials['email']}]. Recorded consecutive failure streak [{$failureStreak}].",
             ip:          $request->ip(),
             userAgent:   $request->userAgent()
         );

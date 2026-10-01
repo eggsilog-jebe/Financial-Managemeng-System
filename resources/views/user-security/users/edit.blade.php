@@ -50,6 +50,23 @@
       </div>
     </div>
 
+    {{-- Validation Errors Summary Alert --}}
+    @if($errors->any())
+      <div class="rounded-xl border border-rose-200 bg-rose-50/90 p-4 text-xs text-rose-800 shadow-sm dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300 mb-6" role="alert">
+        <div class="flex items-start gap-3">
+          <i class="ph-bold ph-warning-circle text-lg text-rose-600 dark:text-rose-400 shrink-0 mt-0.5"></i>
+          <div class="space-y-1">
+            <strong class="font-bold text-sm block">Unable to update user profile:</strong>
+            <ul class="list-disc list-inside space-y-0.5 text-xs text-rose-700 dark:text-rose-300">
+              @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+              @endforeach
+            </ul>
+          </div>
+        </div>
+      </div>
+    @endif
+
     <form method="POST" action="{{ route('user-security.users.update', $user) }}" id="form-edit-user" class="space-y-5">
       @csrf
       @method('PATCH')

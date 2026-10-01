@@ -629,4 +629,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/theme', [\App\Http\Controllers\Profile\AccountSettingsController::class, 'updateTheme'])->name('theme.update');
     });
 
+    // Live System Alerts Notification Hub
+    Route::prefix('system-alerts')->name('system-alerts.')->group(function () {
+        Route::get('/feed', [\App\Http\Controllers\Security\SystemAlertController::class, 'feed'])->name('feed');
+        Route::post('/acknowledge', [\App\Http\Controllers\Security\SystemAlertController::class, 'acknowledge'])->name('acknowledge');
+    });
+
 }); // end auth middleware group

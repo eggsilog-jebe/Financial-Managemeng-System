@@ -8,7 +8,6 @@
   $isBudget = request()->routeIs('budget.*');
   $isCash = request()->routeIs('cash.*');
   $isReporting = request()->routeIs('reporting.*') || request()->routeIs('accounting.reports.*');
-  $isTax = request()->routeIs('tax.*');
   $isUserSecurity = request()->routeIs('user-security.*') || request()->routeIs('accounting.audit-log');
 @endphp
 
@@ -197,23 +196,7 @@
     </a>
     @endcan
 
-    <!-- 9. Tax & Compliance -->
-    @can('access-tax-management')
-    <a 
-      href="{{ route('tax.tax-config') }}" 
-      class="group flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all {{ $isTax ? 'bg-emerald-50 text-emerald-800 font-semibold ring-1 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50' }}"
-    >
-      <div class="flex items-center gap-3 min-w-0">
-        <i class="ph-bold ph-percent text-lg shrink-0 {{ $isTax ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300' }}"></i>
-        <span class="truncate">Tax &amp; Compliance</span>
-      </div>
-      @if($isTax)
-        <span class="h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 shrink-0"></span>
-      @endif
-    </a>
-    @endcan
-
-    <!-- 10. User & Security -->
+    <!-- 9. User & Security -->
     @can('access-user-management')
     <a 
       href="{{ route('user-security.users') }}" 

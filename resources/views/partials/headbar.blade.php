@@ -62,10 +62,239 @@
 
   <!-- Right: Shift Status, Workstation Indicator, Theme Toggle, Profile -->
   <div class="flex items-center gap-2 sm:gap-3">
-    <!-- Workstation Security Indicator -->
-    <div class="hidden xl:flex items-center gap-1.5 rounded-xl bg-slate-100 px-2.5 py-1.5 text-xs text-slate-600 ring-1 ring-slate-200/80 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
-      <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-      <span class="font-mono text-[11px] font-medium">TERMINAL-ACTIVE</span>
+    <!-- Live System Alerts Bell Notification Hub -->
+    <div 
+      class="relative" 
+      x-data="{
+        alertsOpen: false,
+        alerts: {{ \Illuminate\Support\Js::from($systemAlertsData['alerts'] ?? []) }},
+        alertCount: {{ (int) ($systemAlertsData['count'] ?? 0) }},
+        severity: '{{ $systemAlertsData['highest_severity'] ?? 'none' }}',
+        isSyncing: false,
+        lastSynced: 'Just now',
+        pollingInterval: null,
+
+        init() {
+          this.pollingInterval = setInterval(() => {
+            this.fetchLiveAlerts();
+          }, 30000);
+        },
+
+        async fetchLiveAlerts() {
+          try {
+            const res = await fetch('{{ route('system-alerts.feed') }}', {
+              headers: { 
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+              }
+            });
+            if (!res.ok) return;
+            const data = await res.json();
+            if (data.success && data.data) {
+              this.alerts = data.data.alerts || [];
+              this.alertCount = data.data.count || 0;
+              this.severity = data.data.highest_severity || 'none';
+              const now = new Date();
+              this.lastSynced = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+          } catch (e) {
+            // Silently handle offline/network blips
+          }
+        },
+
+        async dismissAlert(alertId, ackUrl) {
+          this.isSyncing = true;
+          try {
+            const res = await fetch(ackUrl || '{{ route('system-alerts.acknowledge') }}', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+              }
+            });
+            if (res.ok) {
+              const data = await res.json();
+              if (data.data) {
+                this.alerts = data.data.alerts || [];
+                this.alertCount = data.data.count || 0;
+                this.severity = data.data.highest_severity || 'none';
+              } else {
+                this.alerts = this.alerts.filter(a => a.id !== alertId);
+                this.alertCount = this.alerts.length;
+                this.severity = this.alerts.some(a => a.severity === 'critical') ? 'critical' : (this.alerts.length > 0 ? 'warning' : 'none');
+              }
+            }
+          } catch (e) {
+            console.error('Error acknowledging alert:', e);
+          } finally {
+            this.isSyncing = false;
+          }
+        }
+      }"
+      @click.outside="alertsOpen = false"
+      @keydown.escape.window="alertsOpen = false"
+    >
+      <!-- Bell Notification Trigger with Mild Glow if Updates Exist -->
+      <button 
+        type="button" 
+        @click="alertsOpen = !alertsOpen" 
+        class="relative inline-flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-200 focus:outline-none"
+        :class="{
+          'animate-mild-glow-rose text-rose-600 bg-rose-50/90 dark:bg-rose-950/40 dark:text-rose-300 ring-1 ring-rose-400/50 shadow-sm': alertCount > 0 && severity === 'critical',
+          'animate-mild-glow-amber text-amber-600 bg-amber-50/90 dark:bg-amber-950/40 dark:text-amber-300 ring-1 ring-amber-400/50 shadow-sm': alertCount > 0 && severity !== 'critical',
+          'text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white': alertCount === 0
+        }"
+        :title="alertCount > 0 ? (alertCount + ' active system alert' + (alertCount > 1 ? 's' : '')) : 'Live system alerts: all systems normal'"
+        :aria-label="alertCount > 0 ? (alertCount + ' active system alerts') : 'Live system alerts'"
+        :aria-expanded="alertsOpen.toString()"
+      >
+        <!-- Bell Icon -->
+        <i class="ph-bold text-lg" :class="alertCount > 0 ? 'ph-bell-ringing' : 'ph-bell'" aria-hidden="true"></i>
+
+        <!-- Mild Ping / Indicator Badge if updates exist -->
+        <template x-if="alertCount > 0">
+          <span class="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full px-1 text-[9px] font-extrabold text-white shadow-sm ring-2 ring-white dark:ring-slate-900"
+                :class="severity === 'critical' ? 'bg-rose-600' : 'bg-amber-500'">
+            <span class="absolute inline-flex h-full w-full rounded-full opacity-75 animate-ping"
+                  :class="severity === 'critical' ? 'bg-rose-400' : 'bg-amber-400'"></span>
+            <span class="relative" x-text="alertCount"></span>
+          </span>
+        </template>
+      </button>
+
+      <!-- Dropdown Popover Panel -->
+      <div 
+        x-show="alertsOpen" 
+        x-cloak
+        x-transition:enter="transition ease-out duration-150"
+        x-transition:enter-start="transform opacity-0 scale-95 -translate-y-1"
+        x-transition:enter-end="transform opacity-100 scale-100 translate-y-0"
+        x-transition:leave="transition ease-in duration-100"
+        x-transition:leave-start="transform opacity-100 scale-100 translate-y-0"
+        x-transition:leave-end="transform opacity-0 scale-95 -translate-y-1"
+        class="absolute right-0 mt-2 w-80 sm:w-96 max-w-sm sm:max-w-md origin-top-right rounded-2xl bg-white p-3.5 shadow-2xl ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 z-50 divide-y divide-slate-100 dark:divide-slate-800"
+      >
+        <!-- Header -->
+        <div class="flex items-center justify-between pb-2.5">
+          <div class="flex items-center gap-2">
+            <span class="inline-flex h-2 w-2 rounded-full"
+                  :class="alertCount > 0 ? (severity === 'critical' ? 'bg-rose-500 animate-pulse' : 'bg-amber-500 animate-pulse') : 'bg-emerald-500'"></span>
+            <div>
+              <p class="text-xs font-bold text-slate-900 dark:text-white leading-tight">Live System Alerts</p>
+              <p class="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">Hospital Security &amp; Ledger Hub</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <template x-if="alertCount > 0">
+              <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold"
+                    :class="severity === 'critical' ? 'bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300'"
+                    x-text="alertCount + ' Active'">
+              </span>
+            </template>
+            <template x-if="alertCount === 0">
+              <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300">
+                <i class="ph-bold ph-check text-[10px]"></i>
+                <span>Normal</span>
+              </span>
+            </template>
+            <button 
+              type="button" 
+              @click="fetchLiveAlerts()" 
+              title="Refresh alerts"
+              class="inline-flex h-6 w-6 items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:text-white dark:hover:bg-slate-800 transition-colors"
+            >
+              <i class="ph-bold ph-arrows-clockwise text-xs" :class="{ 'animate-spin': isSyncing }"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Alert Items List -->
+        <div class="py-2.5 space-y-2.5 max-h-[340px] overflow-y-auto custom-scrollbar">
+          <!-- Active Alerts -->
+          <template x-for="item in alerts" :key="item.id">
+            <div 
+              class="rounded-xl p-3 transition-all"
+              :class="{
+                'bg-rose-50/80 border border-rose-200/80 dark:bg-rose-950/30 dark:border-rose-900/60': item.severity === 'critical',
+                'bg-amber-50/80 border border-amber-200/80 dark:bg-amber-950/30 dark:border-amber-900/60': item.severity === 'warning',
+                'bg-slate-50 border border-slate-200/80 dark:bg-slate-800/50 dark:border-slate-700': item.severity !== 'critical' && item.severity !== 'warning'
+              }"
+            >
+              <div class="flex items-start gap-2.5">
+                <span 
+                  class="inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-xs"
+                  :class="{
+                    'bg-rose-100 text-rose-600 dark:bg-rose-900/50 dark:text-rose-300': item.severity === 'critical',
+                    'bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-300': item.severity === 'warning',
+                    'bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200': item.severity !== 'critical' && item.severity !== 'warning'
+                  }"
+                >
+                  <i class="ph-bold" :class="item.icon || 'ph-warning'"></i>
+                </span>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between gap-1">
+                    <p 
+                      class="text-xs font-bold truncate leading-tight"
+                      :class="item.severity === 'critical' ? 'text-rose-950 dark:text-rose-200' : 'text-amber-950 dark:text-amber-200'"
+                      x-text="item.title"
+                    ></p>
+                    <span class="text-[10px] text-slate-400 dark:text-slate-500 shrink-0" x-text="item.time"></span>
+                  </div>
+                  <p 
+                    class="mt-1 text-[11px] leading-relaxed"
+                    :class="item.severity === 'critical' ? 'text-rose-700/90 dark:text-rose-300/90' : 'text-amber-700/90 dark:text-amber-300/90'"
+                    x-text="item.description"
+                  ></p>
+
+                  <!-- Quick Action Buttons -->
+                  <div class="mt-2.5 flex items-center gap-1.5 flex-wrap">
+                    <template x-if="item.can_acknowledge">
+                      <button 
+                        type="button" 
+                        @click="dismissAlert(item.id, item.acknowledge_url)"
+                        :disabled="isSyncing"
+                        class="inline-flex items-center gap-1 rounded-lg border border-emerald-300/90 bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold text-emerald-700 shadow-xs hover:bg-emerald-100 hover:border-emerald-400 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 dark:hover:bg-emerald-900/60 transition-colors"
+                      >
+                        <i class="ph-bold ph-check text-[11px] text-emerald-600 dark:text-emerald-400"></i>
+                        <span>Acknowledge</span>
+                      </button>
+                    </template>
+                    <template x-if="item.action_url">
+                      <a 
+                        :href="item.action_url" 
+                        class="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[10px] font-semibold text-white shadow-xs transition-colors"
+                        :class="item.severity === 'critical' ? 'bg-rose-600 hover:bg-rose-700' : 'bg-amber-600 hover:bg-amber-700'"
+                      >
+                        <i class="ph-bold ph-arrow-square-out"></i>
+                        <span x-text="item.action_text"></span>
+                      </a>
+                    </template>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <!-- Empty State when 0 alerts -->
+          <template x-if="alertCount === 0">
+            <div class="py-6 px-4 text-center">
+              <span class="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300 mx-auto">
+                <i class="ph-bold ph-shield-check text-2xl"></i>
+              </span>
+              <p class="mt-2.5 text-xs font-bold text-slate-800 dark:text-white">All Systems Operational</p>
+              <p class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400 max-w-[240px] mx-auto">
+                No active security incidents, unauthorized terminals, or critical budget exceptions.
+              </p>
+              <div class="mt-3 inline-flex items-center gap-1 text-[10px] text-slate-400 dark:text-slate-500">
+                <i class="ph-bold ph-clock text-[10px]"></i>
+                <span>Synced: <span x-text="lastSynced"></span></span>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
     </div>
 
     <!-- Theme Toggle Button (Light by default) -->

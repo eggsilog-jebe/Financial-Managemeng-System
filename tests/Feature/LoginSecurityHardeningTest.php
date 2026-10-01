@@ -107,12 +107,28 @@ final class LoginSecurityHardeningTest extends TestCase
 
         $blockedResponse->assertRedirect('/login');
         $blockedResponse->assertSessionHasErrors('email');
+        $blockedResponse->assertSessionHas('lockout_seconds');
+        $this->assertGreaterThan(0, session('lockout_seconds'));
 
         // Verify security event is audited in activity_logs
         $this->assertDatabaseHas('activity_logs', [
             'module' => 'Authentication',
             'event'  => 'rate_limited',
         ]);
+    }
+
+    public function test_login_page_renders_live_countdown_timer_when_rate_limited(): void
+    {
+        $response = $this->withSession([
+            'lockout_seconds' => 45,
+            'errors'          => new \Illuminate\Support\ViewErrorBag(),
+        ])->get('/login');
+
+        $response->assertStatus(200);
+        $response->assertSee('Security Cooldown Active');
+        $response->assertSee('formatCooldown');
+        $response->assertSee('Contact IT Helpdesk');
+        $response->assertSee('lockoutRemaining');
     }
 
     public function test_unauthenticated_request_to_role_guarded_route_is_redirected_to_login_not_auto_logged_in(): void

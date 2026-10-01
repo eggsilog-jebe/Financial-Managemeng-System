@@ -47,8 +47,10 @@ final class UserManagementController extends Controller
     /** Store a new hospital system user. */
     public function store(StoreUserRequest $request): RedirectResponse
     {
+        Gate::authorize('access-user-management');
+
         $user = User::create([
-            'name'                 => $request->name,
+            'name'                 => trim($request->name),
             'email'                => strtolower(trim($request->email)),
             'role'                 => $request->role,
             'password'             => Hash::make($request->password),
@@ -58,7 +60,7 @@ final class UserManagementController extends Controller
 
         return redirect()
             ->route('user-security.users')
-            ->with('success', "User [{$user->name}] created successfully. They must change their password on first login.");
+            ->with('success', "Personnel user [{$user->name}] ({$user->email}) created successfully with role [{$user->roleLabel()}]. They must change their temporary password on initial login.");
     }
 
     /** Show the edit user form. */

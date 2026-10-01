@@ -1,0 +1,33 @@
+providers = ['php', 'node']
+
+[phases.setup]
+nixPkgs = [
+  'php83',
+  'php83Extensions.bcmath',
+  'php83Extensions.pdo_mysql',
+  'php83Extensions.mysqli',
+  'php83Extensions.pdo_pgsql',
+  'php83Extensions.pgsql',
+  'php83Extensions.mbstring',
+  'php83Extensions.tokenizer',
+  'php83Extensions.xml',
+  'php83Extensions.curl',
+  'php83Extensions.gd',
+  'php83Extensions.zip',
+  'php83Packages.composer',
+  'nodejs_20'
+]
+
+[phases.install]
+cmds = [
+  'composer install --ignore-platform-reqs --no-dev --optimize-autoloader',
+  'npm ci || npm install'
+]
+
+[phases.build]
+cmds = [
+  'npm run build'
+]
+
+[start]
+cmd = 'php artisan migrate --force --seed && php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan serve --host=0.0.0.0 --port=$PORT'

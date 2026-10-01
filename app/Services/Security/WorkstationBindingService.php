@@ -6,6 +6,7 @@ namespace App\Services\Security;
 
 use App\Models\ActivityLog;
 use App\Models\User;
+use App\Models\UserActiveSession;
 use App\Models\UserWorkstation;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
@@ -353,5 +354,55 @@ final class WorkstationBindingService
         }
 
         return $query->get();
+    }
+
+    /**
+     * Super Admin action: Permanently delete a workstation binding record.
+     */
+    public function deleteWorkstation(UserWorkstation $workstation, User $admin): void
+    {
+        $user = $workstation->user;
+        $name = $workstation->workstation_name;
+
+        // Terminate any active sessions connected to this workstation
+        $workstation->activeSessions()
+            ->where('is_terminated', false)
+            ->each(function ($session): void {
+                $session->terminate(UserActiveSession::REASON_WORKSTATION_REVOKED);
+            });
+
+        $workstation->delete();
+
+        ActivityLog::logAuth(
+            event:       'workstation_deleted',
+            user:        $user,
+            description: "Super Admin [{$admin->name}] permanently removed workstation binding [{$name}] for user [{$user?->name}].",
+            ip:          request()->ip(),
+            userAgent:   request()->userAgent()
+        );
+    }
+
+    /**
+     * Super Admin action: Reset and wipe all workstation bindings for a fresh system start.
+     */
+    public function resetAllWorkstations(User $admin): int
+    {
+        $count = UserWorkstation::count();
+
+        // Unlink active sessions from workstations
+        UserActiveSession::whereNotNull('workstation_id')
+            ->update(['workstation_id' => null]);
+
+        UserWorkstation::query()->delete();
+
+        ActivityLog::logAuth(
+            event:       'workstations_reset_all',
+            user:        $admin,
+            description: "Super Admin [{$admin->name}] cleared all ({$count}) workstation bindings for a fresh system reset.",
+            ip:          request()->ip(),
+            userAgent:   request()->userAgent()
+        );
+
+        return $count;
     }
 }

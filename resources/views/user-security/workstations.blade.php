@@ -30,7 +30,7 @@
     </div>
   @endif
 
-  @if($errors->any())
+  @if(isset($errors) && $errors->any())
     <div x-data="{ show: true }" x-show="show" x-transition class="flex items-center justify-between gap-3 rounded-2xl border border-rose-200/80 bg-rose-50/80 p-4 text-xs text-rose-800 shadow-sm dark:border-rose-800/40 dark:bg-rose-950/40 dark:text-rose-300">
       <div class="flex items-center gap-2.5">
         <i class="ph-fill ph-warning-circle text-lg text-rose-600 dark:text-rose-400 shrink-0"></i>
@@ -241,12 +241,24 @@
 
   {{-- Section 2: Bound Workstations Registry --}}
   <div class="rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 overflow-hidden">
-    <div class="p-5 border-b border-slate-100 dark:border-slate-800">
-      <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-        <i class="ph-fill ph-desktop text-emerald-500"></i>
-        Bound Workstations Registry
-      </h3>
-      <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Authorized hospital computers locked to specific personnel accounts.</p>
+    <div class="p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div>
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <i class="ph-fill ph-desktop text-emerald-500"></i>
+          Bound Workstations Registry
+          <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-mono font-semibold text-slate-800 dark:bg-slate-800 dark:text-slate-200">{{ $boundWorkstations->count() }}</span>
+        </h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Authorized hospital computers locked to specific personnel accounts.</p>
+      </div>
+      @if($boundWorkstations->isNotEmpty())
+        <form method="POST" action="{{ route('user-security.workstations.reset-all') }}" onsubmit="return confirm('⚠️ Reset ALL workstation bindings? This will wipe the registry and all personnel will register fresh workstations on their next login.');">
+          @csrf
+          <button type="submit" class="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-950/70 transition-all shadow-sm">
+            <i class="ph ph-trash"></i>
+            Reset All Workstations
+          </button>
+        </form>
+      @endif
     </div>
 
     <div class="overflow-x-auto">
@@ -306,30 +318,47 @@
                 {{ $bw->last_seen_at?->diffForHumans() ?? 'Never' }}
               </td>
               <td class="py-3 px-4 text-right">
-                @if($bw->status === 'approved')
-                  <form method="POST" action="{{ route('user-security.workstations.revoke', $bw) }}" class="inline" onsubmit="return confirm('Revoke authorization for this workstation? Any active sessions on this computer will be terminated immediately.');">
+                <div class="inline-flex items-center gap-1.5 justify-end">
+                  @if($bw->status === 'approved')
+                    <form method="POST" action="{{ route('user-security.workstations.revoke', $bw) }}" class="inline" onsubmit="return confirm('Revoke authorization for this workstation? Any active sessions on this computer will be terminated immediately.');">
+                      @csrf
+                      @method('DELETE')
+                      <button type="submit" class="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-white px-2.5 py-1 text-xs font-semibold text-amber-700 shadow-sm hover:bg-amber-50 dark:border-amber-900/50 dark:bg-slate-900 dark:text-amber-400 dark:hover:bg-amber-950/30 transition-all" title="Revoke binding">
+                        <i class="ph ph-prohibit"></i>
+                        Revoke
+                      </button>
+                    </form>
+                  @else
+                    <form method="POST" action="{{ route('user-security.workstations.approve', $bw) }}" class="inline">
+                      @csrf
+                      <button type="submit" class="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-white px-2.5 py-1 text-xs font-semibold text-emerald-600 shadow-sm hover:bg-emerald-50 dark:border-emerald-900/50 dark:bg-slate-900 dark:text-emerald-400 dark:hover:bg-emerald-950/30 transition-all" title="Re-authorize workstation">
+                        <i class="ph ph-arrows-clockwise"></i>
+                        Re-authorize
+                      </button>
+                    </form>
+                  @endif
+
+                  {{-- Permanent Delete Action --}}
+                  <form method="POST" action="{{ route('user-security.workstations.destroy', $bw) }}" class="inline" onsubmit="return confirm('Permanently remove this workstation record from the system?');">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-white px-2.5 py-1 text-xs font-semibold text-rose-600 shadow-sm hover:bg-rose-50 dark:border-rose-900/50 dark:bg-slate-900 dark:text-rose-400 dark:hover:bg-rose-950/30 transition-all" title="Revoke binding">
-                      <i class="ph ph-prohibit"></i>
-                      Revoke
+                    <button type="submit" class="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-white p-1.5 text-xs font-semibold text-rose-600 shadow-sm hover:bg-rose-50 dark:border-rose-900/50 dark:bg-slate-900 dark:text-rose-400 dark:hover:bg-rose-950/30 transition-all" title="Permanently delete workstation">
+                      <i class="ph ph-trash"></i>
                     </button>
                   </form>
-                @else
-                  <form method="POST" action="{{ route('user-security.workstations.approve', $bw) }}" class="inline">
-                    @csrf
-                    <button type="submit" class="inline-flex items-center gap-1 rounded-lg border border-emerald-200 bg-white px-2.5 py-1 text-xs font-semibold text-emerald-600 shadow-sm hover:bg-emerald-50 dark:border-emerald-900/50 dark:bg-slate-900 dark:text-emerald-400 dark:hover:bg-emerald-950/30 transition-all" title="Re-authorize workstation">
-                      <i class="ph ph-arrows-clockwise"></i>
-                      Re-authorize
-                    </button>
-                  </form>
-                @endif
+                </div>
               </td>
             </tr>
           @empty
             <tr>
-              <td colspan="7" class="text-center py-6 text-slate-500 dark:text-slate-400">
-                No bound workstations found.
+              <td colspan="7" class="text-center py-10 text-slate-500 dark:text-slate-400">
+                <div class="flex flex-col items-center justify-center">
+                  <div class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 mb-2">
+                    <i class="ph ph-desktop text-xl"></i>
+                  </div>
+                  <span class="font-medium text-xs text-slate-700 dark:text-slate-300">No bound workstations registered</span>
+                  <span class="text-[11px] text-slate-400 mt-0.5">The workstation registry is completely clean. New authorized hospital devices will appear here.</span>
+                </div>
               </td>
             </tr>
           @endforelse

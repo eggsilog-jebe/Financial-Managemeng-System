@@ -238,28 +238,41 @@
     const pollUrl = '{{ route('workstation.status') }}';
     const pollText = document.getElementById('polling-text');
     let pollInterval = null;
+    let pollFailCount = 0;
 
     async function checkApprovalStatus() {
       try {
         const response = await fetch(pollUrl, {
+          method: 'GET',
+          credentials: 'include',
           headers: {
             'Accept': 'application/json',
             'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
           }
         });
 
-        if (!response.ok) return;
+        if (!response.ok) {
+          pollFailCount++;
+          if (pollFailCount >= 5) {
+            // After 5 consecutive failures, try a full page reload to re-establish session
+            window.location.reload();
+          }
+          return;
+        }
 
+        pollFailCount = 0; // reset on success
         const data = await response.json();
 
         if (data.status === 'approved') {
           clearInterval(pollInterval);
           pollText.textContent = '✅ Workstation authorized! Redirecting...';
-          pollText.parentElement.classList.remove('bg-emerald-50/70', 'border-emerald-200/80');
+          pollText.parentElement.classList.remove('bg-emerald-50/70', 'border-emerald-200/80', 'dark:border-emerald-900/50', 'dark:bg-emerald-950/30');
           pollText.parentElement.classList.add('bg-emerald-100', 'border-emerald-300');
+          // Use replace to prevent going back to pending page
           setTimeout(() => {
-            window.location.href = data.redirect_url;
-          }, 800);
+            window.location.replace(data.redirect_url || '{{ route('two-factor.challenge') }}');
+          }, 600);
         } else if (data.status === 'rejected') {
           clearInterval(pollInterval);
           const rejAlert = document.getElementById('rejection-alert');
@@ -274,14 +287,20 @@
         } else if (data.status === 'revoked') {
           clearInterval(pollInterval);
           window.location.href = '{{ route('login') }}';
+        } else if (data.status === 'unauthenticated') {
+          clearInterval(pollInterval);
+          window.location.href = '{{ route('login') }}';
         }
+        // status === 'pending' or 'unknown': keep polling
       } catch (err) {
-        // network retry
+        // network error — keep retrying silently
       }
     }
 
     // Poll every 2.5 seconds
     pollInterval = setInterval(checkApprovalStatus, 2500);
+    // Also fire immediately on load
+    checkApprovalStatus();
   </script>
 </body>
 </html>

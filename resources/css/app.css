@@ -43,6 +43,24 @@
     display: none !important;
 }
 
+/* Universal Focus Outline Reset: Eliminates browser native black focus outline rectangles */
+input:focus,
+input:focus-visible,
+input[type="search"]:focus,
+input[type="search"]:focus-visible,
+input[type="text"]:focus,
+input[type="text"]:focus-visible,
+select:focus,
+select:focus-visible,
+textarea:focus,
+textarea:focus-visible,
+button:focus,
+button:focus-visible {
+    outline: none !important;
+    outline-offset: 0 !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
 /* Custom scrollbars for high-density financial tables */
 .custom-scrollbar::-webkit-scrollbar {
     width: 6px;

@@ -613,6 +613,8 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/workstations/{workstation}/approve', [\App\Http\Controllers\UserSecurity\WorkstationSecurityController::class, 'approve'])->name('workstations.approve');
         Route::post('/workstations/{workstation}/reject', [\App\Http\Controllers\UserSecurity\WorkstationSecurityController::class, 'reject'])->name('workstations.reject');
         Route::delete('/workstations/{workstation}', [\App\Http\Controllers\UserSecurity\WorkstationSecurityController::class, 'revoke'])->name('workstations.revoke');
+        Route::delete('/workstations/{workstation}/delete', [\App\Http\Controllers\UserSecurity\WorkstationSecurityController::class, 'destroy'])->name('workstations.destroy');
+        Route::post('/workstations/reset-all', [\App\Http\Controllers\UserSecurity\WorkstationSecurityController::class, 'resetAll'])->name('workstations.reset-all');
         Route::post('/active-sessions/{session}/terminate', [\App\Http\Controllers\UserSecurity\WorkstationSecurityController::class, 'terminateSession'])->name('sessions.terminate');
     });
 
@@ -634,5 +636,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/feed', [\App\Http\Controllers\Security\SystemAlertController::class, 'feed'])->name('feed');
         Route::post('/acknowledge', [\App\Http\Controllers\Security\SystemAlertController::class, 'acknowledge'])->name('acknowledge');
     });
+
+    // Global & Contextual Search Endpoint (Omnibar & Submodule Scope)
+    Route::get('/global-search', [\App\Http\Controllers\GlobalSearchController::class, 'search'])->name('global.search');
 
 }); // end auth middleware group

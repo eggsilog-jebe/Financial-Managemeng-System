@@ -17,11 +17,32 @@ use Illuminate\Support\Facades\Hash;
 final class UserManagementController extends Controller
 {
     /** List all hospital system users. */
-    public function index(): View
+    public function index(Request $request): View
     {
         Gate::authorize('access-user-management');
 
-        $users = User::orderBy('role')
+        $search = $request->query('search');
+        $role = $request->query('role');
+        $status = $request->query('status');
+
+        $query = User::query();
+
+        if ($search) {
+            $query->where(function ($q) use ($search): void {
+                $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('email', 'LIKE', "%{$search}%");
+            });
+        }
+
+        if ($role) {
+            $query->where('role', $role);
+        }
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        $users = $query->orderBy('role')
             ->orderBy('name')
             ->paginate(15)
             ->withQueryString();
@@ -33,7 +54,7 @@ final class UserManagementController extends Controller
             'pending_reset' => User::where('must_change_password', true)->count(),
         ];
 
-        return view('user-security.users.index', compact('users', 'metrics'));
+        return view('user-security.users.index', compact('users', 'metrics', 'search', 'role', 'status'));
     }
 
     /** Show the create user form. */

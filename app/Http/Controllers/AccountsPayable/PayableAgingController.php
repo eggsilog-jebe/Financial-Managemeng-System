@@ -21,12 +21,13 @@ final class PayableAgingController extends Controller
     {
         $asOfDate = $request->query('as_of_date', date('Y-m-d'));
         $vendorId = $request->query('vendor_id') ? (int) $request->query('vendor_id') : null;
+        $search = $request->query('search');
         $agingBasis = $request->query('aging_basis', 'due_date');
         if (! in_array($agingBasis, ['due_date', 'bill_date'], true)) {
             $agingBasis = 'due_date';
         }
 
-        $report = $this->agingService->getPayableAgingReport($asOfDate, $vendorId, $agingBasis);
+        $report = $this->agingService->getPayableAgingReport($asOfDate, $vendorId, $agingBasis, $search);
         $vendorsList = Vendor::orderBy('name')->get();
 
         return view('accounts-payable.payable-aging', [
@@ -43,6 +44,7 @@ final class PayableAgingController extends Controller
             'totalVendors'      => $report['total_vendors'],
             'allVendors'        => $vendorsList,
             'selectedVendorId'  => $vendorId,
+            'search'            => $search,
         ]);
     }
 

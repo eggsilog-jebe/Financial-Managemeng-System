@@ -93,6 +93,67 @@
 
   <!-- User Table -->
   <div class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
+    <!-- Filter Toolbar -->
+    <div class="border-b border-slate-200 p-4 dark:border-slate-800">
+      <form method="GET" action="{{ route('user-security.users') }}" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <div class="flex items-center gap-1.5 text-xs text-slate-500">
+            <i class="ph-bold ph-funnel"></i>
+            <span>Role:</span>
+          </div>
+          <select 
+            name="role" 
+            onchange="this.form.submit()" 
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
+            <option value="">All Roles</option>
+            <option value="CFO" @selected(($role ?? '') === 'CFO')>CFO</option>
+            <option value="FinanceManager" @selected(($role ?? '') === 'FinanceManager')>Finance Manager</option>
+            <option value="StaffAccountant" @selected(($role ?? '') === 'StaffAccountant')>Staff Accountant</option>
+            <option value="BillingClerk" @selected(($role ?? '') === 'BillingClerk')>Billing Clerk</option>
+            <option value="Cashier" @selected(($role ?? '') === 'Cashier')>Cashier</option>
+            <option value="Auditor" @selected(($role ?? '') === 'Auditor')>Auditor</option>
+          </select>
+
+          <div class="flex items-center gap-1.5 text-xs text-slate-500 ml-2">
+            <span>Status:</span>
+          </div>
+          <select 
+            name="status" 
+            onchange="this.form.submit()" 
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+          >
+            <option value="">All Statuses</option>
+            <option value="active" @selected(($status ?? '') === 'active')>Active</option>
+            <option value="suspended" @selected(($status ?? '') === 'suspended')>Suspended</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <div class="relative w-full sm:w-72">
+            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+              <i class="ph ph-magnifying-glass text-sm"></i>
+            </div>
+            <input 
+              type="search" 
+              name="search" 
+              value="{{ $search ?? '' }}" 
+              placeholder="Search personnel name, email..." 
+              class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-600 focus:outline-none dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+            >
+          </div>
+          <button type="submit" class="rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-colors">
+            Search
+          </button>
+          @if(!empty($search) || !empty($role) || !empty($status))
+            <a href="{{ route('user-security.users') }}" class="rounded-xl px-2 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-700 dark:text-slate-300">
+              Reset
+            </a>
+          @endif
+        </div>
+      </form>
+    </div>
+
     <div class="overflow-x-auto">
       <table class="w-full text-left text-xs">
         <thead class="border-b border-slate-200 bg-slate-50/75 dark:border-slate-800 dark:bg-slate-800/60 sticky top-0">

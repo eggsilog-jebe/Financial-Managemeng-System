@@ -45,7 +45,7 @@ jobs:
             # Check if Git repo is already initialized
             if [ ! -d ".git" ]; then
               echo "📦 Cloning repository..."
-              git clone https://github.com/eggsilog-jebe/Financial-Managemeng-System.git .
+              git clone https://github.com/eggsilog-jebe/Financial-Management-System.git .
             fi
 
             # Fetch latest commit and hard reset to match GitHub main

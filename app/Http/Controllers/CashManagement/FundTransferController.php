@@ -40,7 +40,9 @@ final class FundTransferController extends Controller
                 $q->where('reference_number', 'like', $search)
                   ->orWhere('source_account', 'like', $search)
                   ->orWhere('destination_account', 'like', $search)
-                  ->orWhere('memo', 'like', $search);
+                  ->orWhere('memo', 'like', $search)
+                  ->orWhereHas('sourceBank', fn ($sq) => $sq->where('bank_name', 'like', $search)->orWhere('name', 'like', $search))
+                  ->orWhereHas('destinationBank', fn ($dq) => $dq->where('bank_name', 'like', $search)->orWhere('name', 'like', $search));
             });
         }
 

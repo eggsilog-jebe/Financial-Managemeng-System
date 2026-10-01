@@ -25,37 +25,228 @@
     </div>
   </div>
 
-  <!-- Center: Global Search Bar with Ctrl+K shortcut -->
-  <div class="hidden md:flex flex-1 max-w-md mx-4" x-data="{
-    focused: false,
-    query: '',
-    results: [],
-    init() {
-      window.addEventListener('keydown', (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
-          e.preventDefault();
-          this.$refs.searchInput.focus();
+<script>
+  window.globalSearchEngine = function(config) {
+    return {
+      query: '',
+      isOpen: false,
+      loading: false,
+      searchUrl: config.searchUrl || '',
+      predictions: [],
+      selectedIndex: -1,
+      debounceTimer: null,
+
+      init() {
+        window.addEventListener('keydown', (e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+            e.preventDefault();
+            this.$refs.searchInput.focus();
+            this.$refs.searchInput.select();
+          }
+          if (e.key === 'Escape') {
+            this.closeSearch();
+          }
+        });
+      },
+
+      closeSearch() {
+        this.isOpen = false;
+        this.selectedIndex = -1;
+      },
+
+      clearSearch() {
+        this.query = '';
+        this.predictions = [];
+        this.selectedIndex = -1;
+        this.closeSearch();
+        this.$refs.searchInput.focus();
+      },
+
+      onInput() {
+        const clean = this.query.trim();
+        if (clean.length === 0) {
+          this.predictions = [];
+          this.selectedIndex = -1;
+          this.isOpen = false;
+          clearTimeout(this.debounceTimer);
+          return;
         }
-      });
-    }
-  }">
+
+        this.isOpen = true;
+        clearTimeout(this.debounceTimer);
+        this.debounceTimer = setTimeout(() => {
+          this.fetchPredictions(clean);
+        }, 120);
+      },
+
+      async fetchPredictions(term) {
+        if (!term) return;
+        this.loading = true;
+        try {
+          const params = new URLSearchParams({ q: term });
+          const res = await fetch(`${this.searchUrl}?${params.toString()}`, {
+            headers: {
+              'Accept': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest'
+            }
+          });
+          if (!res.ok) return;
+          const json = await res.json();
+          if (json.success && json.data) {
+            this.predictions = json.data.predictions || [];
+            this.selectedIndex = this.predictions.length > 0 ? 0 : -1;
+          }
+        } catch (e) {
+          console.error('Prediction fetch error:', e);
+        } finally {
+          this.loading = false;
+        }
+      },
+
+      navigate(step) {
+        if (!this.isOpen || this.predictions.length === 0) return;
+        this.selectedIndex = (this.selectedIndex + step + this.predictions.length) % this.predictions.length;
+        this.scrollToSelected();
+      },
+
+      scrollToSelected() {
+        this.$nextTick(() => {
+          const el = document.getElementById(`search-pred-item-${this.selectedIndex}`);
+          if (el) {
+            el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+          }
+        });
+      },
+
+      selectCurrent() {
+        if (this.selectedIndex >= 0 && this.predictions[this.selectedIndex]) {
+          window.location.href = this.predictions[this.selectedIndex].url;
+          return;
+        }
+        if (this.predictions.length > 0) {
+          window.location.href = this.predictions[0].url;
+        }
+      }
+    };
+  };
+</script>
+
+  <!-- Center: Predictive Search Bar with Ctrl+K shortcut -->
+  <div 
+    class="hidden md:flex flex-1 max-w-md mx-4 relative" 
+    x-data="globalSearchEngine({
+      searchUrl: '{{ route('global.search') }}'
+    })"
+    @click.outside="closeSearch()"
+  >
     <div class="relative w-full">
       <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
-        <i class="ph-bold ph-magnifying-glass text-base"></i>
+        <template x-if="!loading">
+          <i class="ph-bold ph-magnifying-glass text-base"></i>
+        </template>
+        <template x-if="loading">
+          <i class="ph-bold ph-spinner animate-spin text-emerald-600 dark:text-emerald-400 text-base"></i>
+        </template>
       </div>
+
       <input 
         x-ref="searchInput"
         type="search" 
         x-model="query"
-        @focus="focused = true"
-        @blur="setTimeout(() => focused = false, 200)"
-        placeholder="Quick search accounts, patient bills, vouchers..." 
-        class="w-full rounded-xl border-0 bg-slate-100/80 py-2 pl-10 pr-12 text-xs sm:text-sm text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-inset focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700 transition-all"
+        @input="onInput()"
+        @keydown.down.prevent="navigate(1)"
+        @keydown.up.prevent="navigate(-1)"
+        @keydown.enter.prevent="selectCurrent()"
+        @keydown.escape.prevent="closeSearch()"
+        placeholder="Search..." 
+        style="outline: none !important; -webkit-tap-highlight-color: transparent;"
+        class="w-full rounded-xl border-0 bg-slate-100/90 py-2 pl-10 pr-16 text-xs sm:text-sm text-slate-900 ring-1 ring-inset ring-slate-200 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-inset focus:ring-emerald-600 focus:outline-none focus:outline-0 outline-none dark:bg-slate-800 dark:text-white dark:ring-slate-700 transition-all shadow-sm"
+        autocomplete="off"
+        spellcheck="false"
       >
-      <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5">
-        <kbd class="hidden sm:inline-flex items-center rounded border border-slate-300 bg-slate-50 px-1.5 font-mono text-[10px] font-medium text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+
+      <!-- Right: Clear Button & Ctrl+K badge -->
+      <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 gap-1.5">
+        <template x-if="query.length > 0">
+          <button 
+            type="button" 
+            @click="clearSearch()"
+            class="p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors"
+            title="Clear search"
+          >
+            <i class="ph-bold ph-x text-xs"></i>
+          </button>
+        </template>
+
+        <kbd class="hidden sm:inline-flex items-center rounded border border-slate-300 bg-slate-50 px-1.5 font-mono text-[10px] font-medium text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 select-none">
           Ctrl K
         </kbd>
+      </div>
+    </div>
+
+    <!-- Predictive Autocomplete Suggestions Palette: ONLY visible when typing (query.trim().length > 0) -->
+    <div 
+      x-show="isOpen && query.trim().length > 0" 
+      x-cloak 
+      x-transition:enter="transition ease-out duration-100"
+      x-transition:enter-start="opacity-0 translate-y-1 scale-98"
+      x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+      x-transition:leave="transition ease-in duration-75"
+      x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+      x-transition:leave-end="opacity-0 translate-y-1 scale-98"
+      class="absolute top-full mt-1.5 w-full min-w-[340px] max-w-lg left-0 z-50 rounded-xl bg-white dark:bg-slate-900 shadow-xl ring-1 ring-slate-200 dark:ring-slate-800 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800"
+    >
+      <!-- Suggestions List -->
+      <div class="max-h-[320px] overflow-y-auto custom-scrollbar p-1.5 space-y-0.5">
+        <template x-for="(item, idx) in predictions" :key="'pred-' + idx">
+          <a 
+            :href="item.url" 
+            :id="'search-pred-item-' + idx"
+            @mouseenter="selectedIndex = idx"
+            class="flex items-center justify-between gap-3 px-3 py-2 rounded-lg transition-colors cursor-pointer group"
+            :class="selectedIndex === idx ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-100' : 'hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-800 dark:text-slate-200'"
+          >
+            <div class="flex items-center gap-2.5 min-w-0">
+              <div 
+                class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm transition-colors"
+                :class="selectedIndex === idx ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400'"
+              >
+                <i :class="'ph-bold ' + item.icon"></i>
+              </div>
+              <div class="min-w-0">
+                <div class="text-xs font-medium truncate" x-text="item.title"></div>
+                <div 
+                  class="text-[10px] truncate"
+                  :class="selectedIndex === idx ? 'text-emerald-700/80 dark:text-emerald-300/80' : 'text-slate-400 dark:text-slate-500'"
+                  x-text="item.subtitle"
+                ></div>
+              </div>
+            </div>
+            <div class="shrink-0 flex items-center gap-1.5">
+              <span 
+                class="rounded-md px-1.5 py-0.5 text-[10px] font-medium transition-colors"
+                :class="selectedIndex === idx ? 'bg-emerald-600/10 text-emerald-700 dark:bg-emerald-400/10 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'"
+                x-text="item.badge"
+              ></span>
+            </div>
+          </a>
+        </template>
+
+        <!-- Empty state when no predictions found -->
+        <template x-if="!loading && predictions.length === 0">
+          <div class="py-4 px-3 text-center text-xs text-slate-400 dark:text-slate-500">
+            No suggestions found for "<span class="font-medium text-slate-700 dark:text-slate-300" x-text="query"></span>"
+          </div>
+        </template>
+      </div>
+
+      <!-- Subtle bottom navigation hint -->
+      <div class="px-3 py-1.5 bg-slate-50/70 dark:bg-slate-800/40 flex items-center justify-between text-[10px] text-slate-400">
+        <span class="flex items-center gap-1.5">
+          <kbd class="px-1 py-0.5 rounded bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 font-mono text-[9px]">↑↓</kbd> navigate
+          <kbd class="px-1 py-0.5 rounded bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 font-mono text-[9px]">↵</kbd> select
+        </span>
+        <span x-text="predictions.length + ' suggestion' + (predictions.length === 1 ? '' : 's')"></span>
       </div>
     </div>
   </div>

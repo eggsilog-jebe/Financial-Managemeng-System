@@ -14,7 +14,7 @@ final class PayableAgingService
     /**
      * Compute comprehensive Payable Aging Schedule grouped by vendor with 30-day aging buckets.
      */
-    public function getPayableAgingReport(?string $asOfDate = null, ?int $vendorId = null, string $agingBasis = 'due_date'): array
+    public function getPayableAgingReport(?string $asOfDate = null, ?int $vendorId = null, string $agingBasis = 'due_date', ?string $search = null): array
     {
         $cutoff = $asOfDate ? Carbon::parse($asOfDate)->endOfDay() : now()->endOfDay();
 
@@ -24,6 +24,14 @@ final class PayableAgingService
 
         if ($vendorId) {
             $billsQuery->where('vendor_id', $vendorId);
+        }
+
+        if ($search) {
+            $billsQuery->whereHas('vendor', function ($vq) use ($search): void {
+                $vq->where('name', 'LIKE', "%{$search}%")
+                   ->orWhere('code', 'LIKE', "%{$search}%")
+                   ->orWhere('tin', 'LIKE', "%{$search}%");
+            });
         }
 
         $bills = $billsQuery->get();

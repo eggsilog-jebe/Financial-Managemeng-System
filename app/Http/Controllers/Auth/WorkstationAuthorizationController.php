@@ -49,7 +49,11 @@ final class WorkstationAuthorizationController extends Controller
 
         // If already approved, register active session and proceed to 2FA
         if ($workstation->isApproved()) {
-            $this->sessionManager->registerSession($user, $request->session()->getId(), $workstation, $request);
+            try {
+                $this->sessionManager->registerSession($user, $request->session()->getId(), $workstation, $request);
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning("workstation show: registerSession failed for user [{$user->id}]: " . $e->getMessage());
+            }
             $request->session()->put('auth.workstation_id', $workstation->id);
             $request->session()->forget(['auth.pending_workstation_id', 'auth.pending_device_uuid']);
 
@@ -89,15 +93,25 @@ final class WorkstationAuthorizationController extends Controller
             ->first();
 
         if (! $workstation) {
+            // Workstation record was deleted (e.g. admin reset). Re-submit a fresh pending request
+            // so the user doesn't get stuck permanently on the holding screen.
+            $this->workstationService->submitAuthorizationRequest($user, $deviceUuid, $request);
+
             return response()->json([
-                'status'  => 'unknown',
-                'message' => 'No authorization request found.',
+                'status'  => 'pending',
+                'message' => 'Authorization request re-submitted. Awaiting Super Administrator approval.',
             ]);
         }
 
         if ($workstation->isApproved()) {
-            // Register single active session upon approval
-            $this->sessionManager->registerSession($user, $request->session()->getId(), $workstation, $request);
+            // Register single active session upon approval (wrapped for resilience)
+            try {
+                $this->sessionManager->registerSession($user, $request->session()->getId(), $workstation, $request);
+            } catch (\Throwable $e) {
+                // Log but don't block — session will be registered on next full page load
+                \Illuminate\Support\Facades\Log::warning("checkStatus: registerSession failed for user [{$user->id}]: " . $e->getMessage());
+            }
+
             $request->session()->put('auth.workstation_id', $workstation->id);
             $request->session()->forget(['auth.pending_workstation_id', 'auth.pending_device_uuid']);
 

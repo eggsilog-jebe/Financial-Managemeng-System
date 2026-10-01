@@ -183,4 +183,40 @@ final class WorkstationSecurityController extends Controller
 
         return back()->with('success', $message);
     }
+
+    /**
+     * Super Admin: Permanently delete a workstation binding record.
+     */
+    public function destroy(Request $request, UserWorkstation $workstation): RedirectResponse|JsonResponse
+    {
+        $name = $workstation->workstation_name;
+        $userName = $workstation->user?->name ?? 'User';
+
+        $this->workstationService->deleteWorkstation($workstation, Auth::user());
+
+        $message = "🗑️ Workstation [{$name}] for [{$userName}] was permanently removed from the registry.";
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => $message]);
+        }
+
+        return back()->with('success', $message);
+    }
+
+    /**
+     * Super Admin: Reset / wipe all workstation bindings for a fresh start.
+     */
+    public function resetAll(Request $request): RedirectResponse|JsonResponse
+    {
+        $clearedCount = $this->workstationService->resetAllWorkstations(Auth::user());
+
+        $message = "✨ All workstation bindings ({$clearedCount} records) have been successfully wiped. The registry has been reset for a fresh start.";
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => $message, 'cleared_count' => $clearedCount]);
+        }
+
+        return back()->with('success', $message);
+    }
 }
+

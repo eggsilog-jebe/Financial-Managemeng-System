@@ -387,4 +387,51 @@ final class WorkstationAndSessionSecurityTest extends TestCase
         $this->assertTrue($activeSession1->fresh()->is_terminated);
         $this->assertSame(UserActiveSession::REASON_DISPLACED, $activeSession1->fresh()->termination_reason);
     }
+
+    public function test_super_admin_can_permanently_delete_workstation(): void
+    {
+        $admin = User::factory()->create(['role' => 'CFO']);
+        $user  = User::factory()->create(['role' => 'BillingClerk']);
+
+        $workstation = UserWorkstation::create([
+            'user_id'          => $user->id,
+            'device_uuid'      => 'ws-delete-test',
+            'workstation_name' => 'Old Obsolete Terminal',
+            'status'           => UserWorkstation::STATUS_REVOKED,
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->delete(route('user-security.workstations.destroy', $workstation));
+
+        $response->assertSessionHas('success');
+        $this->assertDatabaseMissing('user_workstations', ['id' => $workstation->id]);
+    }
+
+    public function test_super_admin_can_reset_all_workstations(): void
+    {
+        $admin = User::factory()->create(['role' => 'CFO']);
+        $user  = User::factory()->create(['role' => 'BillingClerk']);
+
+        UserWorkstation::create([
+            'user_id'          => $user->id,
+            'device_uuid'      => 'ws-reset-1',
+            'workstation_name' => 'Desk 1',
+            'status'           => UserWorkstation::STATUS_APPROVED,
+        ]);
+        UserWorkstation::create([
+            'user_id'          => $user->id,
+            'device_uuid'      => 'ws-reset-2',
+            'workstation_name' => 'Desk 2',
+            'status'           => UserWorkstation::STATUS_PENDING,
+        ]);
+
+        $this->assertSame(2, UserWorkstation::count());
+
+        $response = $this->actingAs($admin)
+            ->post(route('user-security.workstations.reset-all'));
+
+        $response->assertSessionHas('success');
+        $this->assertSame(0, UserWorkstation::count());
+    }
 }
+

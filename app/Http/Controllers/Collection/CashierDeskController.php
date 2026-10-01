@@ -23,7 +23,7 @@ final class CashierDeskController extends Controller
 
     public function index(Request $request): View
     {
-        $search = $request->query('q');
+        $search = $request->query('q') ?? $request->query('search');
         $admissionType = $request->query('admission_type');
         $hideZero = $request->boolean('hide_zero', true);
 

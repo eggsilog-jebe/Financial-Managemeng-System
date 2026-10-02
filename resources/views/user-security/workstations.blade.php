@@ -79,7 +79,7 @@
         </div>
       </div>
       <div class="mt-2 flex items-baseline gap-2">
-        <span class="text-2xl font-bold font-mono text-amber-600 dark:text-amber-400" id="stat-pending-count">{{ $metrics['pending_count'] }}</span>
+        <span class="text-2xl font-bold font-sans kpi-value tabular-nums text-amber-600 dark:text-amber-400" id="stat-pending-count">{{ $metrics['pending_count'] }}</span>
         @if($metrics['pending_count'] > 0)
           <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800 dark:bg-amber-900/60 dark:text-amber-200 animate-pulse">
             Action Required
@@ -98,7 +98,7 @@
         </div>
       </div>
       <div class="mt-2">
-        <span class="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">{{ $metrics['approved_count'] }}</span>
+        <span class="text-2xl font-bold font-sans kpi-value tabular-nums text-emerald-600 dark:text-emerald-400">{{ $metrics['approved_count'] }}</span>
       </div>
       <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Active authorized computers</p>
     </div>
@@ -112,7 +112,7 @@
         </div>
       </div>
       <div class="mt-2">
-        <span class="text-2xl font-bold font-mono text-blue-600 dark:text-blue-400" id="stat-active-count">{{ $metrics['active_sessions'] }}</span>
+        <span class="text-2xl font-bold font-sans kpi-value tabular-nums text-blue-600 dark:text-blue-400" id="stat-active-count">{{ $metrics['active_sessions'] }}</span>
       </div>
       <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Enforcing single active session</p>
     </div>
@@ -126,7 +126,7 @@
         </div>
       </div>
       <div class="mt-2 flex items-baseline gap-1.5">
-        <span class="text-2xl font-bold font-mono text-slate-900 dark:text-white">1–3</span>
+        <span class="text-2xl font-bold font-sans kpi-value tabular-nums text-slate-900 dark:text-white">1–3</span>
         <span class="text-xs text-slate-500 dark:text-slate-400 font-medium">per user</span>
       </div>
       <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Max 3 bound terminals / personnel</p>

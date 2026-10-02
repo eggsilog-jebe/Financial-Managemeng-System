@@ -228,7 +228,7 @@
       ];
   } elseif ($isCollection) {
       $moduleData = [
-          'title' => 'Collection & Treasury',
+          'title' => 'Collection Management',
           'subtitle' => 'Cashier Shift Desks, Official Receipts & Deposit Batches',
           'icon' => 'ph-hand-coins',
           'categories' => [

@@ -67,7 +67,7 @@
         </span>
     </div>
     <div class="mt-4 flex items-baseline justify-between gap-2">
-        <div class="font-mono text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
+        <div class="kpi-value font-sans text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
             @if($isCurrency)
                 {{ $prefix }}{{ is_numeric($value) ? number_format((float) $value, 2) : $value }}
             @else

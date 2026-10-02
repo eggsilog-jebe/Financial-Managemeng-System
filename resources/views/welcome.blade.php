@@ -122,7 +122,7 @@
           'route' => route('disbursement.payment-requests')
         ],
         [
-          'title' => 'Collection & Cashier Desk', 
+          'title' => 'Collection Management', 
           'desc' => 'Cashier Shifts, POS Settlement, Official Receipts (OR) & Bank Deposits',
           'icon' => 'ph-vault', 
           'badge' => 'Collections', 

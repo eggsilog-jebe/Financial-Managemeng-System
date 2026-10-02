@@ -39,6 +39,13 @@
     --color-statutory-tax: #6366f1;
 }
 
+/* Executive Financial KPI Metric Numbers: Crisp, modern sans-serif typography */
+.kpi-value {
+    font-family: var(--font-sans);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.025em;
+}
+
 [x-cloak] {
     display: none !important;
 }

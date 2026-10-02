@@ -1,10 +1,10 @@
 <header class="sticky top-0 z-30 flex h-14 sm:h-16 w-full items-center justify-between border-b border-slate-200/80 bg-white/90 px-6 lg:px-8 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90 transition-colors">
-  <!-- Left: Mobile Toggle & App Identity -->
+  <!-- Left: Mobile Toggle (Mobile Only) & App Identity -->
   <div class="flex items-center gap-3">
     <button 
       @click="sidebarOpen = !sidebarOpen" 
       type="button" 
-      class="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900 lg:hidden dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
+      class="inline-flex h-9 w-9 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-900 lg:hidden dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white transition-colors"
       aria-label="Toggle navigation drawer"
     >
       <i class="ph-bold ph-list text-xl"></i>

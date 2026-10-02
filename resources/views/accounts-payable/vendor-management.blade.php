@@ -73,7 +73,7 @@
         </span>
       </div>
       <div class="mt-4 flex items-baseline justify-between gap-2">
-        <div class="font-mono text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+        <div class="kpi-value font-sans text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
           Net 30 Days
         </div>
         <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
@@ -166,6 +166,7 @@
                 'email' => $vendor->email,
                 'registered_address' => $vendor->registered_address,
                 'status' => $vendor->status,
+                'default_atc_code' => $vendor->default_atc_code,
               ];
             @endphp
             <tr class="transition-colors hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
@@ -176,7 +177,15 @@
               </td>
               <td class="px-3 py-3.5">
                 <div class="font-semibold text-slate-900 dark:text-white text-xs sm:text-sm">{{ $vendor->name }}</div>
-                <div class="text-[11px] text-slate-500">{{ $vendor->payment_terms ?? 'Net 30' }} credit terms</div>
+                <div class="flex items-center gap-1.5 mt-0.5 text-[11px] text-slate-500">
+                  <span>{{ $vendor->payment_terms ?? 'Net 30' }} credit terms</span>
+                  @if($vendor->default_atc_code)
+                    <span>•</span>
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 ring-1 ring-slate-200 dark:ring-slate-700" title="BIR ATC Code">
+                      {{ $vendor->default_atc_code }}
+                    </span>
+                  @endif
+                </div>
               </td>
               <td class="px-3 py-3.5 text-xs">
                 @if($vendor->bank_name)

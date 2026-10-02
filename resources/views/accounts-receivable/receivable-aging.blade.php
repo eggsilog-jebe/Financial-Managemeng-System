@@ -82,7 +82,7 @@
           <i class="ph-bold ph-coins text-lg"></i>
         </span>
       </div>
-      <div class="mt-4 font-mono text-2xl font-bold tracking-tight text-white tabular-nums">
+      <div class="mt-4 kpi-value font-sans text-2xl font-bold tracking-tight text-white tabular-nums">
         ₱{{ number_format((float) ($grandTotalAR ?? 0), 2) }}
       </div>
       <p class="mt-1 text-xs text-slate-400">Gross outstanding claims</p>

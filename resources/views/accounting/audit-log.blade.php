@@ -131,7 +131,7 @@
         </div>
       </div>
       <div class="mt-2">
-        <span class="text-2xl font-bold font-mono text-slate-900 dark:text-white">{{ number_format($stats['total_logs']) }}</span>
+        <span class="text-2xl font-bold font-sans kpi-value tabular-nums text-slate-900 dark:text-white">{{ number_format($stats['total_logs']) }}</span>
       </div>
       <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Immutable ledger events</p>
     </div>
@@ -145,7 +145,7 @@
         </div>
       </div>
       <div class="mt-2">
-        <span class="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">{{ number_format($stats['logins_today']) }}</span>
+        <span class="text-2xl font-bold font-sans kpi-value tabular-nums text-emerald-600 dark:text-emerald-400">{{ number_format($stats['logins_today']) }}</span>
       </div>
       <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Authorized personnel sessions</p>
     </div>
@@ -159,7 +159,7 @@
         </div>
       </div>
       <div class="mt-2">
-        <span class="text-2xl font-bold font-mono text-rose-600 dark:text-rose-400">{{ number_format($stats['failed_logins']) }}</span>
+        <span class="text-2xl font-bold font-sans kpi-value tabular-nums text-rose-600 dark:text-rose-400">{{ number_format($stats['failed_logins']) }}</span>
       </div>
       <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Security challenge rejections</p>
     </div>
@@ -173,7 +173,7 @@
         </div>
       </div>
       <div class="mt-2">
-        <span class="text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">{{ number_format($stats['mutations_today']) }}</span>
+        <span class="text-2xl font-bold font-sans kpi-value tabular-nums text-amber-600 dark:text-amber-400">{{ number_format($stats['mutations_today']) }}</span>
       </div>
       <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Transactions &amp; mutations logged</p>
     </div>

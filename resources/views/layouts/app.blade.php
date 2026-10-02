@@ -61,6 +61,13 @@
           }
           window.dispatchEvent(new CustomEvent('theme-applied', { detail: { theme: theme, isDark: isDark } }));
         };
+
+        // Instant sidebar collapsed state check to prevent layout shift
+        try {
+          if (localStorage.getItem('fms_sidebar_collapsed') === 'true') {
+            document.documentElement.classList.add('sidebar-collapsed');
+          }
+        } catch (e) {}
       })();
     </script>
 
@@ -72,6 +79,28 @@
   <body 
     x-data="{
       sidebarOpen: false,
+      sidebarCollapsed: localStorage.getItem('fms_sidebar_collapsed') === 'true',
+      toggleSidebarCollapse() {
+        this.sidebarCollapsed = !this.sidebarCollapsed;
+        try {
+          localStorage.setItem('fms_sidebar_collapsed', this.sidebarCollapsed);
+          if (this.sidebarCollapsed) {
+            document.documentElement.classList.add('sidebar-collapsed');
+          } else {
+            document.documentElement.classList.remove('sidebar-collapsed');
+          }
+        } catch (e) {}
+      },
+      init() {
+        window.addEventListener('keydown', (e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+            if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
+              e.preventDefault();
+              this.toggleSidebarCollapse();
+            }
+          }
+        });
+      },
       darkMode: document.documentElement.classList.contains('dark'),
       systemModal: {
         open: false,

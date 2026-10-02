@@ -23,7 +23,8 @@ The frontend stack leverages **Tailwind CSS v4**, **Laravel Blade**, **Alpine.js
   - Card / Panel Surface: `bg-white dark:bg-slate-900 ring-1 ring-slate-200/80 dark:ring-slate-800 rounded-2xl shadow-sm`
   - Hover States: `hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors`
 - **Monetary & Tabular Integrity:**
-  - **Rule:** Every monetary figure, account code, voucher number, and balance **MUST** use `font-mono tabular-nums text-right`.
+  - **Table Rows & Ledger Books:** Every table line item, account code, voucher number, and ledger balance **MUST** use `font-mono tabular-nums text-right`.
+  - **Executive KPI Cards & Stat Cards:** Executive metric headlines **MUST** use `font-sans text-2xl font-bold tracking-tight tabular-nums` (or `kpi-value`) for modern, polished fintech presentation.
   - Always prefix Philippine Peso currency amounts with `₱` and format to two decimals:
     ```blade
     ₱{{ number_format((float) $amount, 2) }}
@@ -71,7 +72,7 @@ Use in Dashboards, AP/AR Overviews, and Cashier Summary Headers.
     </span>
   </div>
   <div class="mt-4 flex items-baseline justify-between">
-    <div class="font-mono text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+    <div class="kpi-value font-sans text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
       ₱{{ number_format((float) ($totalReceivable ?? 0), 2) }}
     </div>
     <span class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
@@ -421,35 +422,35 @@ Use for managing Patient & HMO overdue debt.
   <!-- Current (0-30 Days) -->
   <div class="rounded-2xl bg-white p-4 ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Current (0-30d)</span>
-    <div class="mt-2 font-mono text-lg font-bold text-slate-900 dark:text-white">₱{{ number_format((float) ($aging['current'] ?? 0), 2) }}</div>
+    <div class="mt-2 kpi-value font-sans text-lg font-bold text-slate-900 dark:text-white tabular-nums">₱{{ number_format((float) ($aging['current'] ?? 0), 2) }}</div>
     <span class="text-xs text-slate-500">Low Risk</span>
   </div>
 
   <!-- 31-60 Days -->
   <div class="rounded-2xl bg-white p-4 ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <span class="text-xs font-bold uppercase tracking-wider text-blue-600">31-60 Days</span>
-    <div class="mt-2 font-mono text-lg font-bold text-slate-900 dark:text-white">₱{{ number_format((float) ($aging['days_31_60'] ?? 0), 2) }}</div>
+    <div class="mt-2 kpi-value font-sans text-lg font-bold text-slate-900 dark:text-white tabular-nums">₱{{ number_format((float) ($aging['days_31_60'] ?? 0), 2) }}</div>
     <span class="text-xs text-slate-500">HMO Follow-up</span>
   </div>
 
   <!-- 61-90 Days -->
   <div class="rounded-2xl bg-white p-4 ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <span class="text-xs font-bold uppercase tracking-wider text-amber-600">61-90 Days</span>
-    <div class="mt-2 font-mono text-lg font-bold text-slate-900 dark:text-white">₱{{ number_format((float) ($aging['days_61_90'] ?? 0), 2) }}</div>
+    <div class="mt-2 kpi-value font-sans text-lg font-bold text-slate-900 dark:text-white tabular-nums">₱{{ number_format((float) ($aging['days_61_90'] ?? 0), 2) }}</div>
     <span class="text-xs text-slate-500">Billing Notice Sent</span>
   </div>
 
   <!-- 91-120 Days -->
   <div class="rounded-2xl bg-white p-4 ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <span class="text-xs font-bold uppercase tracking-wider text-orange-600">91-120 Days</span>
-    <div class="mt-2 font-mono text-lg font-bold text-slate-900 dark:text-white">₱{{ number_format((float) ($aging['days_91_120'] ?? 0), 2) }}</div>
+    <div class="mt-2 kpi-value font-sans text-lg font-bold text-slate-900 dark:text-white tabular-nums">₱{{ number_format((float) ($aging['days_91_120'] ?? 0), 2) }}</div>
     <span class="text-xs text-slate-500">Critical Stage</span>
   </div>
 
   <!-- Over 120 Days -->
   <div class="rounded-2xl bg-white p-4 ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
     <span class="text-xs font-bold uppercase tracking-wider text-rose-600">> 120 Days</span>
-    <div class="mt-2 font-mono text-lg font-bold text-slate-900 dark:text-white">₱{{ number_format((float) ($aging['over_120'] ?? 0), 2) }}</div>
+    <div class="mt-2 kpi-value font-sans text-lg font-bold text-slate-900 dark:text-white tabular-nums">₱{{ number_format((float) ($aging['over_120'] ?? 0), 2) }}</div>
     <span class="text-xs text-rose-500 font-semibold">Provision for Bad Debt</span>
   </div>
 </div>

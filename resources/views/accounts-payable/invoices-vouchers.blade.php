@@ -96,7 +96,7 @@
         </span>
       </div>
       <div class="mt-4 flex items-baseline justify-between gap-2">
-        <div class="font-mono text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+        <div class="kpi-value font-sans text-2xl font-bold tracking-tight text-slate-900 dark:text-white tabular-nums">
           30 Days
         </div>
         <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">

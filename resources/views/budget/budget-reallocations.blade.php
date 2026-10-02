@@ -253,7 +253,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-4 text-center dark:border-slate-800 dark:bg-slate-800/40">
         <span class="block text-xs font-semibold uppercase text-slate-400">Transfer Amount</span>
-        <h4 class="mt-1 text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400" id="detailRealAmount">₱150,000.00</h4>
+        <h4 class="mt-1 text-2xl font-bold font-sans kpi-value tabular-nums text-emerald-600 dark:text-emerald-400" id="detailRealAmount">₱150,000.00</h4>
       </div>
       <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-4 text-center dark:border-slate-800 dark:bg-slate-800/40">
         <span class="block text-xs font-semibold uppercase text-slate-400">Transfer Route</span>

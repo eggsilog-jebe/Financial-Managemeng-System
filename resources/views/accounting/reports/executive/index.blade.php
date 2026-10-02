@@ -90,25 +90,25 @@
       <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 text-center dark:border-slate-800 dark:bg-slate-800/40">
           <span class="block text-xs font-semibold uppercase text-slate-400">Operating Margin</span>
-          <h4 class="mt-1 text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">
+          <h4 class="mt-1 text-2xl font-bold font-sans kpi-value tabular-nums text-emerald-600 dark:text-emerald-400">
             {{ number_format((float) ($kpis['operating_margin'] ?? 0), 1) }}%
           </h4>
         </div>
         <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 text-center dark:border-slate-800 dark:bg-slate-800/40">
           <span class="block text-xs font-semibold uppercase text-slate-400">Days Sales Outstanding</span>
-          <h4 class="mt-1 text-2xl font-bold font-mono text-blue-600 dark:text-blue-400">
+          <h4 class="mt-1 text-2xl font-bold font-sans kpi-value tabular-nums text-blue-600 dark:text-blue-400">
             {{ number_format((float) ($kpis['dso'] ?? 0), 1) }} Days
           </h4>
         </div>
         <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 text-center dark:border-slate-800 dark:bg-slate-800/40">
           <span class="block text-xs font-semibold uppercase text-slate-400">Days Cash on Hand</span>
-          <h4 class="mt-1 text-2xl font-bold font-mono text-purple-600 dark:text-purple-400">
+          <h4 class="mt-1 text-2xl font-bold font-sans kpi-value tabular-nums text-purple-600 dark:text-purple-400">
             {{ number_format((float) ($kpis['days_cash_on_hand'] ?? 0), 1) }} Days
           </h4>
         </div>
         <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 text-center dark:border-slate-800 dark:bg-slate-800/40">
           <span class="block text-xs font-semibold uppercase text-slate-400">Current Working Ratio</span>
-          <h4 class="mt-1 text-2xl font-bold font-mono text-slate-900 dark:text-white">
+          <h4 class="mt-1 text-2xl font-bold font-sans kpi-value tabular-nums text-slate-900 dark:text-white">
             {{ number_format((float) ($kpis['current_ratio'] ?? 0), 2) }}x
           </h4>
         </div>

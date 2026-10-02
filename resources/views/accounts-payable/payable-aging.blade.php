@@ -43,7 +43,7 @@
           <i class="ph-bold ph-check-circle"></i>
         </span>
       </div>
-      <div class="mt-2 font-mono text-lg font-bold text-slate-900 dark:text-white tabular-nums">
+      <div class="mt-2 kpi-value font-sans text-lg font-bold text-slate-900 dark:text-white tabular-nums">
         ₱{{ number_format((float) $totalCurrent, 2) }}
       </div>
       <span class="text-[11px] text-slate-500">Within Credit Terms</span>
@@ -57,7 +57,7 @@
           <i class="ph-bold ph-clock"></i>
         </span>
       </div>
-      <div class="mt-2 font-mono text-lg font-bold text-slate-900 dark:text-white tabular-nums">
+      <div class="mt-2 kpi-value font-sans text-lg font-bold text-slate-900 dark:text-white tabular-nums">
         ₱{{ number_format((float) $total1To30, 2) }}
       </div>
       <span class="text-[11px] text-slate-500">Early Overdue</span>
@@ -71,7 +71,7 @@
           <i class="ph-bold ph-hourglass"></i>
         </span>
       </div>
-      <div class="mt-2 font-mono text-lg font-bold text-amber-600 dark:text-amber-400 tabular-nums">
+      <div class="mt-2 kpi-value font-sans text-lg font-bold text-amber-600 dark:text-amber-400 tabular-nums">
         ₱{{ number_format((float) $total31To60, 2) }}
       </div>
       <span class="text-[11px] text-slate-500">Notice Received</span>
@@ -85,7 +85,7 @@
           <i class="ph-bold ph-warning"></i>
         </span>
       </div>
-      <div class="mt-2 font-mono text-lg font-bold text-orange-600 dark:text-orange-400 tabular-nums">
+      <div class="mt-2 kpi-value font-sans text-lg font-bold text-orange-600 dark:text-orange-400 tabular-nums">
         ₱{{ number_format((float) $total61To90, 2) }}
       </div>
       <span class="text-[11px] text-slate-500">Urgent Settlement</span>
@@ -99,7 +99,7 @@
           <i class="ph-bold ph-shield-warning"></i>
         </span>
       </div>
-      <div class="mt-2 font-mono text-lg font-bold text-rose-600 dark:text-rose-400 tabular-nums">
+      <div class="mt-2 kpi-value font-sans text-lg font-bold text-rose-600 dark:text-rose-400 tabular-nums">
         ₱{{ number_format((float) $total90Plus, 2) }}
       </div>
       <span class="text-[11px] text-rose-500 font-semibold">Critical Overdue</span>
@@ -113,7 +113,7 @@
           <i class="ph-bold ph-trend-down"></i>
         </span>
       </div>
-      <div class="mt-2 font-mono text-lg font-bold text-emerald-400 tabular-nums">
+      <div class="mt-2 kpi-value font-sans text-lg font-bold text-emerald-400 tabular-nums">
         ₱{{ number_format((float) $grandTotalPayable, 2) }}
       </div>
       <span class="text-[11px] text-slate-400">All Aging Brackets</span>

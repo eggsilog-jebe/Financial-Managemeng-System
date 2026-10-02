@@ -195,46 +195,46 @@ final class GlobalSearchService
             'icon' => 'ph-vault',
             'keywords' => 'petty cash revolving custody drawer replenishment imprest expense slips',
         ],
-        // Collection & Treasury
+        // Collection Management
         [
             'title' => 'Cashier POS Settlement Desk',
-            'module' => 'Collection & Treasury',
+            'module' => 'Collection Management',
             'category' => 'Cashier Operations',
             'route' => 'collection.cashier-desk',
             'icon' => 'ph-hand-coins',
-            'keywords' => 'cashier desk pos collection tender official receipt cash shift drawer settlement',
+            'keywords' => 'cashier desk pos collection tender official receipt cash shift drawer settlement collection management',
         ],
         [
             'title' => 'Payment Receipts (OR Hub)',
-            'module' => 'Collection & Treasury',
+            'module' => 'Collection Management',
             'category' => 'Cashier Operations',
             'route' => 'collection.receipts',
             'icon' => 'ph-receipt',
-            'keywords' => 'payment receipts official receipt or hub collections cash gcash maya card',
+            'keywords' => 'payment receipts official receipt or hub collections cash gcash maya card collection management',
         ],
         [
             'title' => 'Deposit Slip Batches',
-            'module' => 'Collection & Treasury',
+            'module' => 'Collection Management',
             'category' => 'Banking & Settlement',
             'route' => 'collection.deposit-slips',
             'icon' => 'ph-newspaper-clipping',
-            'keywords' => 'deposit slips batch closed shifts bank remittance cash count',
+            'keywords' => 'deposit slips batch closed shifts bank remittance cash count collection management',
         ],
         [
             'title' => 'Bank Deposits & Clearing',
-            'module' => 'Collection & Treasury',
+            'module' => 'Collection Management',
             'category' => 'Banking & Settlement',
             'route' => 'collection.bank-deposits',
             'icon' => 'ph-building-bank',
-            'keywords' => 'bank deposits clearing teller validation cash check deposit clearing',
+            'keywords' => 'bank deposits clearing teller validation cash check deposit clearing collection management',
         ],
         [
             'title' => 'Payment Gateway Logs',
-            'module' => 'Collection & Treasury',
+            'module' => 'Collection Management',
             'category' => 'Banking & Settlement',
             'route' => 'collection.payment-gateways',
             'icon' => 'ph-cpu',
-            'keywords' => 'payment gateway logs digital gcash maya pos transaction audit stream',
+            'keywords' => 'payment gateway logs digital gcash maya pos transaction audit stream collection management',
         ],
         // Budget Management
         [
@@ -582,7 +582,7 @@ final class GlobalSearchService
                 if (! empty($vouchers)) {
                     $contextualResults = array_merge($contextualResults, $vouchers);
                 }
-            } elseif ($currentModule === 'Collection & Treasury') {
+            } elseif ($currentModule === 'Collection Management' || $currentModule === 'Collection & Treasury') {
                 if (! empty($receipts)) {
                     $contextualResults = array_merge($contextualResults, $receipts);
                 }
@@ -812,31 +812,31 @@ final class GlobalSearchService
             ],
             str_starts_with($currentRoute, 'collection.cashier') || str_starts_with($currentRoute, 'accounting.cashier') => [
                 'route'     => $currentRoute,
-                'module'    => 'Collection & Treasury',
+                'module'    => 'Collection Management',
                 'submodule' => 'Cashier POS Settlement',
                 'label'     => 'Cashier Desk',
             ],
             str_starts_with($currentRoute, 'collection.receipts') => [
                 'route'     => $currentRoute,
-                'module'    => 'Collection & Treasury',
+                'module'    => 'Collection Management',
                 'submodule' => 'Payment Receipts (OR Hub)',
                 'label'     => 'Payment Receipts',
             ],
             str_starts_with($currentRoute, 'collection.deposit-slips') => [
                 'route'     => $currentRoute,
-                'module'    => 'Collection & Treasury',
+                'module'    => 'Collection Management',
                 'submodule' => 'Deposit Slip Batches',
                 'label'     => 'Deposit Slips',
             ],
             str_starts_with($currentRoute, 'collection.bank-deposits') => [
                 'route'     => $currentRoute,
-                'module'    => 'Collection & Treasury',
+                'module'    => 'Collection Management',
                 'submodule' => 'Bank Deposits & Clearing',
                 'label'     => 'Bank Deposits',
             ],
             str_starts_with($currentRoute, 'collection.payment-gateways') => [
                 'route'     => $currentRoute,
-                'module'    => 'Collection & Treasury',
+                'module'    => 'Collection Management',
                 'submodule' => 'Payment Gateway Logs',
                 'label'     => 'Gateway Logs',
             ],

@@ -143,7 +143,7 @@
         <div class="relative h-36 w-36">
           <canvas id="payerDonutChart"></canvas>
           <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span class="font-mono text-base font-bold text-slate-900 dark:text-white tabular-nums">
+            <span class="kpi-value font-sans text-base font-bold text-slate-900 dark:text-white tabular-nums">
               ₱{{ number_format($totalFundSources, 0) }}
             </span>
             <span class="text-[10px] text-slate-400">Total</span>

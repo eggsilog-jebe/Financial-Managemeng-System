@@ -6,6 +6,12 @@
 
 @section('content')
 <div class="space-y-6" x-data="{
+  init() {
+    this.$watch('isOpen', val => {
+      document.body.classList.toggle('overflow-hidden', val);
+      document.body.classList.toggle('modal-open', val);
+    });
+  },
   isOpen: false,
   activeLog: null,
   openDiff(data) {
@@ -438,24 +444,34 @@
       </table>
     </div>
 
-    @if($logs->hasPages())
-      <div class="p-4 border-t border-slate-100 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <div class="p-4 border-t border-slate-100 dark:border-slate-800/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      @if($logs->hasPages())
         <div class="text-xs text-slate-500 dark:text-slate-400">
-          Showing {{ $logs->firstItem() }} to {{ $logs->lastItem() }} of {{ number_format($logs->total()) }} records
+          Showing <span class="font-mono font-bold text-slate-800 dark:text-slate-200">{{ $logs->firstItem() }}</span> to <span class="font-mono font-bold text-slate-800 dark:text-slate-200">{{ $logs->lastItem() }}</span> of <span class="font-mono font-bold text-slate-800 dark:text-slate-200">{{ number_format($logs->total()) }}</span> records (5 per page)
         </div>
         <div>
           {{ $logs->links() }}
         </div>
-      </div>
-    @endif
+      @else
+        <div class="flex items-center justify-between w-full text-xs text-slate-500 dark:text-slate-400">
+          <p class="font-medium">
+            Showing <span class="font-mono font-bold text-slate-800 dark:text-slate-200">{{ $logs->firstItem() ?? 0 }}</span>
+            to <span class="font-mono font-bold text-slate-800 dark:text-slate-200">{{ $logs->lastItem() ?? 0 }}</span>
+            of <span class="font-mono font-bold text-slate-800 dark:text-slate-200">{{ number_format($logs->total()) }}</span> records (5 per page)
+          </p>
+          <span class="text-[11px] font-mono text-slate-400">Page 1 of 1</span>
+        </div>
+      @endif
+    </div>
   </div>
 
   {{-- State Changes Alpine Modal --}}
-  <div x-show="isOpen" x-cloak class="relative z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div x-show="isOpen" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity"></div>
+  <template x-teleport="body">
+  <div x-show="isOpen" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div x-show="isOpen" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity" @click="closeDiff()"></div>
 
-    <div class="fixed inset-0 z-10 w-screen overflow-y-auto p-4 sm:p-6 md:p-20">
-      <div x-show="isOpen" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" @click.away="closeDiff()" class="relative mx-auto max-w-4xl transform rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 transition-all text-left">
+    <div class="fixed inset-0 z-10 w-screen overflow-y-auto p-4 sm:p-6 md:p-20 flex min-h-full items-center justify-center pointer-events-none">
+      <div x-show="isOpen" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" @click.outside="closeDiff()" class="pointer-events-auto relative mx-auto w-full max-w-4xl transform rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 transition-all text-left">
 
         <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
           <div class="flex items-center gap-2.5">
@@ -508,6 +524,7 @@
       </div>
     </div>
   </div>
+  </template>
 
 </div>
 @endsection

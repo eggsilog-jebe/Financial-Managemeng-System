@@ -9,6 +9,7 @@ use App\Models\BankAccount;
 use App\Models\Invoice;
 use App\Models\PurchaseBill;
 use App\Services\Accounting\AccountingCacheService;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 final class FinancialKpiService
@@ -122,34 +123,61 @@ final class FinancialKpiService
             : '50000.0000';
         $dcoh = (float) bcdiv($totalCash, $dailyBurnRate, 1);
 
-        // 6. 12-Month Revenue vs Expense Trajectory
+        // 6. 12-Month Revenue vs Expense Trajectory (single grouped query, overflow-safe months)
+        $firstMonth = now()->startOfMonth()->subMonthsNoOverflow(11);
+        $monthly = [];
+        for ($i = 0; $i < 12; $i++) {
+            $monthly[$firstMonth->copy()->addMonthsNoOverflow($i)->format('Y-m')] = [
+                'revenue' => '0.0000',
+                'expense' => '0.0000',
+            ];
+        }
+
+        $trajectoryRows = DB::table('journal_entry_lines')
+            ->join('journal_entries', 'journal_entry_lines.journal_entry_id', '=', 'journal_entries.id')
+            ->join('accounts', 'journal_entry_lines.account_id', '=', 'accounts.id')
+            ->where('journal_entries.status', 'POSTED')
+            ->whereBetween('journal_entries.entry_date', [
+                $firstMonth->toDateString(),
+                now()->endOfMonth()->toDateString(),
+            ])
+            ->whereIn('accounts.category', ['REVENUE', 'EXPENSE'])
+            ->groupBy('journal_entries.entry_date', 'accounts.category')
+            ->select(
+                'journal_entries.entry_date',
+                'accounts.category',
+                DB::raw('SUM(journal_entry_lines.debit) as total_debit'),
+                DB::raw('SUM(journal_entry_lines.credit) as total_credit')
+            )
+            ->get();
+
+        foreach ($trajectoryRows as $row) {
+            $key = substr((string) $row->entry_date, 0, 7);
+            if (! isset($monthly[$key])) {
+                continue;
+            }
+            if ($row->category === 'REVENUE') {
+                $monthly[$key]['revenue'] = bcadd(
+                    $monthly[$key]['revenue'],
+                    bcsub((string) $row->total_credit, (string) $row->total_debit, 4),
+                    4
+                );
+            } else {
+                $monthly[$key]['expense'] = bcadd(
+                    $monthly[$key]['expense'],
+                    bcsub((string) $row->total_debit, (string) $row->total_credit, 4),
+                    4
+                );
+            }
+        }
+
         $months = [];
-        for ($i = 11; $i >= 0; $i--) {
-            $mStart = date('Y-m-01', strtotime("-{$i} months"));
-            $mEnd = date('Y-m-t', strtotime("-{$i} months"));
-            $mLabel = date('M Y', strtotime($mStart));
-
-            $mRev = DB::table('journal_entry_lines')
-                ->join('journal_entries', 'journal_entry_lines.journal_entry_id', '=', 'journal_entries.id')
-                ->join('accounts', 'journal_entry_lines.account_id', '=', 'accounts.id')
-                ->where('journal_entries.status', 'POSTED')
-                ->whereBetween('journal_entries.entry_date', [$mStart, $mEnd])
-                ->where('accounts.category', 'REVENUE')
-                ->sum(DB::raw('journal_entry_lines.credit - journal_entry_lines.debit'));
-
-            $mExp = DB::table('journal_entry_lines')
-                ->join('journal_entries', 'journal_entry_lines.journal_entry_id', '=', 'journal_entries.id')
-                ->join('accounts', 'journal_entry_lines.account_id', '=', 'accounts.id')
-                ->where('journal_entries.status', 'POSTED')
-                ->whereBetween('journal_entries.entry_date', [$mStart, $mEnd])
-                ->where('accounts.category', 'EXPENSE')
-                ->sum(DB::raw('journal_entry_lines.debit - journal_entry_lines.credit'));
-
+        foreach ($monthly as $key => $totals) {
             $months[] = [
-                'label'   => $mLabel,
-                'revenue' => (float) $mRev,
-                'expense' => (float) $mExp,
-                'surplus' => (float) ($mRev - $mExp),
+                'label'   => Carbon::createFromFormat('!Y-m', $key)->format('M Y'),
+                'revenue' => (float) $totals['revenue'],
+                'expense' => (float) $totals['expense'],
+                'surplus' => (float) bcsub($totals['revenue'], $totals['expense'], 4),
             ];
         }
 

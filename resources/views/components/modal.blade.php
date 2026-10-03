@@ -55,6 +55,15 @@
 <div 
     x-data="{ open: false }" 
     x-init="
+        $watch('open', value => {
+            if (value) {
+                document.body.classList.add('overflow-hidden', 'modal-open');
+            } else {
+                if (!document.querySelector('[role=\'dialog\']:not([style*=\'display: none\'])')) {
+                    document.body.classList.remove('overflow-hidden', 'modal-open');
+                }
+            }
+        });
         document.querySelectorAll('[data-bs-target=\'#{{ $id }}\'], [data-target=\'#{{ $id }}\']').forEach(el => {
             el.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -73,128 +82,132 @@
         </div>
     @endif
 
-    <!-- Modal Backdrop & Dialog Container -->
-    <div 
-        x-show="open" 
-        x-cloak 
-        class="fixed inset-0 z-50 overflow-y-auto" 
-        aria-labelledby="{{ $id }}Label" 
-        role="dialog" 
-        aria-modal="true"
-    >
-        <!-- Backdrop Blur -->
+    <template x-teleport="body">
+        <!-- Modal Backdrop & Dialog Container -->
         <div 
             x-show="open" 
-            x-transition:enter="ease-out duration-300"
-            x-transition:enter-start="opacity-0"
-            x-transition:enter-end="opacity-100"
-            x-transition:leave="ease-in duration-200"
-            x-transition:leave-start="opacity-100"
-            x-transition:leave-end="opacity-0"
-            class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
-        ></div>
-
-        <!-- Window Centering Wrapper -->
-        <div class="fixed inset-0 z-10 overflow-y-auto p-4 sm:p-6 md:p-10 flex min-h-full items-center justify-center">
+            x-cloak 
+            class="fixed inset-0 z-50 overflow-y-auto" 
+            aria-labelledby="{{ $id }}Label" 
+            role="dialog" 
+            aria-modal="true"
+        >
+            <!-- Backdrop Blur Overlay -->
             <div 
                 x-show="open" 
                 x-transition:enter="ease-out duration-300"
-                x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
                 x-transition:leave="ease-in duration-200"
-                x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                @click.outside="open = false" 
-                class="w-full {{ $maxWClass }} transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl ring-1 ring-slate-200/80 transition-all dark:bg-slate-900 dark:ring-slate-800"
-            >
-                @if($formAction)
-                    <form 
-                        action="{{ $formAction }}" 
-                        method="{{ $htmlMethod }}" 
-                        @if($formId) id="{{ $formId }}" @endif
-                        @if($formEnctype) enctype="{{ $formEnctype }}" @endif
-                        class="flex flex-col h-full"
-                    >
-                        @csrf
-                        @if($spoofMethod)
-                            @method($spoofMethod)
-                        @endif
-                @endif
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                class="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity"
+                @click="open = false"
+                aria-hidden="true"
+            ></div>
 
-                <!-- Header -->
-                <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
-                    <div class="flex items-center gap-3 overflow-hidden">
-                        @if($icon)
-                            <span class="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ring-1 {{ $badgeVariantClass }}">
-                                <i class="ph-bold {{ str_starts_with($icon, 'ph-') ? $icon : 'ph-' . $icon }} text-xl"></i>
-                            </span>
-                        @endif
-                        <div class="truncate">
-                            <h3 class="text-base font-bold text-slate-900 dark:text-white truncate" id="{{ $id }}Label">
-                                {{ $title }}
-                            </h3>
-                            @if($subtitle)
-                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
-                                    {{ $subtitle }}
-                                </p>
+            <!-- Window Centering Wrapper -->
+            <div class="fixed inset-0 z-10 overflow-y-auto p-4 sm:p-6 md:p-10 flex min-h-full items-center justify-center pointer-events-none">
+                <div 
+                    x-show="open" 
+                    x-transition:enter="ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave="ease-in duration-200"
+                    x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    @click.outside="open = false" 
+                    class="pointer-events-auto w-full {{ $maxWClass }} transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl ring-1 ring-slate-200/80 transition-all dark:bg-slate-900 dark:ring-slate-800"
+                >
+                    @if($formAction)
+                        <form 
+                            action="{{ $formAction }}" 
+                            method="{{ $htmlMethod }}" 
+                            @if($formId) id="{{ $formId }}" @endif
+                            @if($formEnctype) enctype="{{ $formEnctype }}" @endif
+                            class="flex flex-col h-full"
+                        >
+                            @csrf
+                            @if($spoofMethod)
+                                @method($spoofMethod)
                             @endif
-                        </div>
-                    </div>
-                    <button 
-                        @click="open = false" 
-                        type="button" 
-                        class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors"
-                        aria-label="Close modal"
-                    >
-                        <i class="ph-bold ph-x text-lg"></i>
-                    </button>
-                </div>
+                    @endif
 
-                <!-- Body -->
-                <div class="p-6 {{ $scrollable ? 'max-h-[calc(85vh-160px)] overflow-y-auto custom-scrollbar' : '' }}">
-                    {{ $slot }}
-                </div>
-
-                <!-- Footer -->
-                @if($showFooter)
-                    <div class="flex items-center justify-between border-t border-slate-200 bg-slate-50/50 px-6 py-4 dark:border-slate-800 dark:bg-slate-900/50">
-                        <div class="flex items-center gap-2">
-                            @if(isset($footerStart))
-                                {{ $footerStart }}
+                    <!-- Header -->
+                    <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+                        <div class="flex items-center gap-3 overflow-hidden">
+                            @if($icon)
+                                <span class="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl ring-1 {{ $badgeVariantClass }}">
+                                    <i class="ph-bold {{ str_starts_with($icon, 'ph-') ? $icon : 'ph-' . $icon }} text-xl"></i>
+                                </span>
                             @endif
-                        </div>
-                        <div class="flex items-center gap-2">
-                            @if(isset($footer))
-                                {{ $footer }}
-                            @else
-                                <button 
-                                    @click="open = false" 
-                                    type="button" 
-                                    class="rounded-xl bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700 transition-all"
-                                >
-                                    {{ $cancelText }}
-                                </button>
-                                @if($formAction)
-                                    <button 
-                                        type="submit" 
-                                        @if($submitId) id="{{ $submitId }}" @endif 
-                                        class="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-all {{ $submitBtnClass }}"
-                                    >
-                                        @if($submitIcon)
-                                            <i class="ph-bold {{ str_starts_with($submitIcon, 'ph-') ? $submitIcon : 'ph-' . $submitIcon }}"></i>
-                                        @endif
-                                        <span>{{ $submitText }}</span>
-                                    </button>
+                            <div class="truncate">
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white truncate" id="{{ $id }}Label">
+                                    {{ $title }}
+                                </h3>
+                                @if($subtitle)
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
+                                        {{ $subtitle }}
+                                    </p>
                                 @endif
-                            @endif
+                            </div>
                         </div>
+                        <button 
+                            @click="open = false" 
+                            type="button" 
+                            class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors"
+                            aria-label="Close modal"
+                        >
+                            <i class="ph-bold ph-x text-lg"></i>
+                        </button>
                     </div>
-                @endif
 
-                @if($formAction)
-                    </form>
-                @endif
+                    <!-- Body -->
+                    <div class="p-6 {{ $scrollable ? 'max-h-[calc(85vh-160px)] overflow-y-auto custom-scrollbar' : '' }}">
+                        {{ $slot }}
+                    </div>
+
+                    <!-- Footer -->
+                    @if($showFooter)
+                        <div class="flex items-center justify-between border-t border-slate-200 bg-slate-50/50 px-6 py-4 dark:border-slate-800 dark:bg-slate-900/50">
+                            <div class="flex items-center gap-2">
+                                @if(isset($footerStart))
+                                    {{ $footerStart }}
+                                @endif
+                            </div>
+                            <div class="flex items-center gap-2">
+                                @if(isset($footer))
+                                    {{ $footer }}
+                                @else
+                                    <button 
+                                        @click="open = false" 
+                                        type="button" 
+                                        class="rounded-xl bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-700 transition-all"
+                                    >
+                                        {{ $cancelText }}
+                                    </button>
+                                    @if($formAction)
+                                        <button 
+                                            type="submit" 
+                                            @if($submitId) id="{{ $submitId }}" @endif 
+                                            class="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-all {{ $submitBtnClass }}"
+                                        >
+                                            @if($submitIcon)
+                                                <i class="ph-bold {{ str_starts_with($submitIcon, 'ph-') ? $submitIcon : 'ph-' . $submitIcon }}"></i>
+                                            @endif
+                                            <span>{{ $submitText }}</span>
+                                        </button>
+                                    @endif
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+
+                    @if($formAction)
+                        </form>
+                    @endif
+                </div>
             </div>
         </div>
-    </div>
+    </template>
 </div>

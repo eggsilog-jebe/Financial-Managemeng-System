@@ -84,4 +84,34 @@ final class AuditTrailTest extends TestCase
 
         $response->assertStatus(403);
     }
+
+    public function test_audit_log_viewer_paginates_at_five_records_per_page(): void
+    {
+        $cfo = User::factory()->create([
+            'email' => 'cfo@hospital.gov.ph',
+            'role'  => 'CFO',
+        ]);
+
+        // Create 12 activity logs
+        for ($i = 1; $i <= 12; $i++) {
+            ActivityLog::create([
+                'user_id'     => $cfo->id,
+                'user_name'   => $cfo->name,
+                'user_role'   => 'CFO',
+                'event'       => 'created',
+                'module'      => 'Accounting',
+                'description' => "Sample audit log event {$i}",
+                'ip_address'  => '127.0.0.1',
+            ]);
+        }
+
+        $response = $this->actingAs($cfo)->get(route('accounting.audit-log'));
+
+        $response->assertStatus(200);
+        $logs = $response->viewData('logs');
+        $this->assertInstanceOf(\Illuminate\Pagination\LengthAwarePaginator::class, $logs);
+        $this->assertSame(5, $logs->perPage());
+        $this->assertCount(5, $logs->items());
+        $response->assertSee('5 per page');
+    }
 }

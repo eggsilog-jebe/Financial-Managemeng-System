@@ -118,6 +118,14 @@ final class JournalEntryService
         $this->assertBalancedDoubleEntry($entry->lines->toArray());
 
         $result = DB::transaction(function () use ($entry, $userId): JournalEntry {
+            // Re-validate under row lock to prevent concurrent double-posting
+            JournalEntry::where('id', $entry->id)->lockForUpdate()->firstOrFail();
+            $entry->refresh();
+
+            if (in_array($entry->status, ['POSTED', 'REVERSED'], true)) {
+                throw new DomainException("Journal Entry [{$entry->reference_number}] is already {$entry->status} and cannot be posted.");
+            }
+
             $oldValues = $entry->toArray();
 
             $entry->update([
@@ -160,6 +168,14 @@ final class JournalEntryService
         $this->periodClosingService->assertPeriodIsOpen($reversalDate);
 
         $result = DB::transaction(function () use ($originalEntry, $userId, $reason, $reversalDate): JournalEntry {
+            // Re-validate under row lock to prevent concurrent double-reversal
+            JournalEntry::where('id', $originalEntry->id)->lockForUpdate()->firstOrFail();
+            $originalEntry->refresh();
+
+            if ($originalEntry->status !== 'POSTED') {
+                throw new DomainException("Only posted journal entries can be reversed.");
+            }
+
             $originalEntry->loadMissing('lines');
 
             $reversal = JournalEntry::create([
@@ -274,6 +290,10 @@ final class JournalEntryService
         foreach ($lines as $line) {
             $debit = is_array($line) ? (string) ($line['debit'] ?? '0.0000') : (string) ($line->debit ?? '0.0000');
             $credit = is_array($line) ? (string) ($line['credit'] ?? '0.0000') : (string) ($line->credit ?? '0.0000');
+
+            if (bccomp($debit, '0.0000', 4) < 0 || bccomp($credit, '0.0000', 4) < 0) {
+                throw new UnbalancedJournalEntryException("Double-Entry Error: Debit and credit amounts cannot be negative.");
+            }
 
             $totalDebit = bcadd($totalDebit, $debit, 4);
             $totalCredit = bcadd($totalCredit, $credit, 4);

@@ -214,13 +214,25 @@ input:-webkit-autofill:focus {
     }
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: none;
     }
 }
 
 .animate-fade-in {
     animation: fms-page-fade-in 160ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Universal Modal Backdrop & Scroll Lock */
+html.modal-open,
+body.modal-open {
+    overflow: hidden !important;
+}
+
+.modal-backdrop-blur {
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+}
+
 
 /* ==========================================================================
    Live System Alerts Bell Notification: Mild Breathing Glow

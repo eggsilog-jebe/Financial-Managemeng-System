@@ -17,7 +17,7 @@
   x-cloak
   @click="sidebarOpen = false" 
   x-transition.opacity.duration.200ms 
-  class="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-sm lg:hidden"
+  class="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-md lg:hidden transition-opacity"
   aria-hidden="true"
 ></div>
 

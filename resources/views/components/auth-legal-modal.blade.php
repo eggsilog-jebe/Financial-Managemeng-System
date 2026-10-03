@@ -1,4 +1,5 @@
 <!-- Hospital Legal & Regulatory Compliance Modal (Alpine.js) -->
+<template x-teleport="body">
 <div 
   x-show="legalModalOpen" 
   x-cloak 
@@ -17,11 +18,12 @@
     x-transition:leave="ease-in duration-150" 
     x-transition:leave-start="opacity-100" 
     x-transition:leave-end="opacity-0" 
-    class="fixed inset-0 bg-slate-950/75 backdrop-blur-sm"
+    class="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity"
+    @click="legalModalOpen = false"
   ></div>
 
   <!-- Modal Container -->
-  <div class="fixed inset-0 z-10 flex min-h-full items-center justify-center p-3 sm:p-6 lg:p-8">
+  <div class="fixed inset-0 z-10 flex min-h-full items-center justify-center p-3 sm:p-6 lg:p-8 pointer-events-none">
     <div 
       x-show="legalModalOpen" 
       x-transition:enter="ease-out duration-250" 
@@ -31,7 +33,7 @@
       x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" 
       x-transition:leave-end="opacity-0 translate-y-4 sm:scale-95" 
       @click.outside="legalModalOpen = false" 
-      class="w-full max-w-4xl max-h-[92vh] flex flex-col transform overflow-hidden rounded-3xl bg-white dark:bg-slate-900 shadow-2xl ring-1 ring-slate-200/90 dark:ring-slate-800 transition-all text-left"
+      class="w-full max-w-4xl max-h-[92vh] flex flex-col transform overflow-hidden rounded-3xl bg-white dark:bg-slate-900 shadow-2xl ring-1 ring-slate-200/90 dark:ring-slate-800 transition-all text-left pointer-events-auto"
     >
       
       <!-- Top Modal Header -->
@@ -187,3 +189,4 @@
     </div>
   </div>
 </div>
+</template>

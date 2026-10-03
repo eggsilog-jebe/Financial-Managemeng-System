@@ -133,6 +133,15 @@
             }
           }
         });
+        this.$watch('idleModalOpen', () => this.syncModalLock());
+        this.$watch('systemModal.open', () => this.syncModalLock());
+      },
+      syncModalLock() {
+        if (this.idleModalOpen || (this.systemModal && this.systemModal.open)) {
+          document.body.classList.add('overflow-hidden', 'modal-open');
+        } else {
+          document.body.classList.remove('overflow-hidden', 'modal-open');
+        }
       },
       darkMode: document.documentElement.classList.contains('dark'),
       systemModal: {
@@ -198,10 +207,10 @@
         x-transition:leave="ease-in duration-200"
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
-        class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm"
+        class="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity"
       ></div>
 
-      <div class="fixed inset-0 z-10 flex min-h-full items-center justify-center p-4">
+      <div class="fixed inset-0 z-10 flex min-h-full items-center justify-center p-4 pointer-events-none">
         <div 
           x-show="idleModalOpen"
           x-transition:enter="ease-out duration-300"
@@ -210,7 +219,7 @@
           x-transition:leave="ease-in duration-200"
           x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
           x-transition:leave-end="opacity-0 translate-y-4 sm:scale-95"
-          class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800"
+          class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800 pointer-events-auto"
         >
           <div class="flex items-center gap-3">
             <span class="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600 ring-1 ring-amber-500/20 dark:bg-amber-950/50 dark:text-amber-400">
@@ -282,10 +291,11 @@
         x-transition:leave="ease-in duration-200"
         x-transition:leave-start="opacity-100"
         x-transition:leave-end="opacity-0"
-        class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
+        class="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity"
+        @click="systemModal.open = false"
       ></div>
 
-      <div class="fixed inset-0 z-10 flex min-h-full items-center justify-center p-4">
+      <div class="fixed inset-0 z-10 flex min-h-full items-center justify-center p-4 pointer-events-none">
         <div 
           x-show="systemModal.open"
           x-transition:enter="ease-out duration-300"
@@ -295,7 +305,7 @@
           x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
           x-transition:leave-end="opacity-0 translate-y-4 sm:scale-95"
           @click.outside="systemModal.open = false"
-          class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800 text-left"
+          class="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800 text-left pointer-events-auto"
         >
           <div class="flex items-center gap-3">
             <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-500/20 dark:bg-emerald-950/40 dark:text-emerald-400">

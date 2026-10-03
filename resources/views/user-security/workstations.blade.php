@@ -3,7 +3,47 @@
 @section('title', 'Workstation & Session Security — User & Security Management')
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-6" x-data="{
+  init() {
+    this.$watch('confirmModal.open', val => {
+      document.body.classList.toggle('overflow-hidden', val);
+      document.body.classList.toggle('modal-open', val);
+    });
+  },
+  confirmModal: {
+    open: false,
+    title: '',
+    message: '',
+    detail: '',
+    targetName: '',
+    targetIp: '',
+    badgeText: 'Irreversible',
+    confirmText: 'Confirm',
+    confirmVariant: 'danger',
+    actionUrl: '',
+    method: 'POST',
+    isSubmitting: false,
+    openModal(config) {
+      this.title = config.title || 'Confirm Action';
+      this.message = config.message || 'Are you sure you want to proceed?';
+      this.detail = config.detail || '';
+      this.targetName = config.targetName || '';
+      this.targetIp = config.targetIp || '';
+      this.badgeText = config.badgeText || (config.confirmVariant === 'warning' ? 'Warning' : 'Irreversible');
+      this.confirmText = config.confirmText || 'Confirm';
+      this.confirmVariant = config.confirmVariant || 'danger';
+      this.actionUrl = config.actionUrl || '';
+      this.method = config.method || 'POST';
+      this.isSubmitting = false;
+      this.open = true;
+    },
+    close() {
+      if (!this.isSubmitting) {
+        this.open = false;
+      }
+    }
+  }
+}">
 
   {{-- Flash Messages --}}
   @if(session('success'))
@@ -246,18 +286,30 @@
         <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
           <i class="ph-fill ph-desktop text-emerald-500"></i>
           Bound Workstations Registry
-          <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-mono font-semibold text-slate-800 dark:bg-slate-800 dark:text-slate-200">{{ $boundWorkstations->count() }}</span>
+          <span class="inline-flex items-center rounded-full bg-slate-100 px-2 py-0.5 text-xs font-mono font-semibold text-slate-800 dark:bg-slate-800 dark:text-slate-200">{{ method_exists($boundWorkstations, 'total') ? $boundWorkstations->total() : $boundWorkstations->count() }}</span>
         </h3>
         <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Authorized hospital computers locked to specific personnel accounts.</p>
       </div>
       @if($boundWorkstations->isNotEmpty())
-        <form method="POST" action="{{ route('user-security.workstations.reset-all') }}" onsubmit="return confirm('⚠️ Reset ALL workstation bindings? This will wipe the registry and all personnel will register fresh workstations on their next login.');">
-          @csrf
-          <button type="submit" class="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-950/70 transition-all shadow-sm">
-            <i class="ph ph-trash"></i>
-            Reset All Workstations
-          </button>
-        </form>
+        <button 
+          type="button" 
+          @click="confirmModal.openModal({
+            title: 'Reset Entire Workstation Registry',
+            message: 'Reset ALL workstation bindings in the system?',
+            detail: 'This will wipe the entire registry. All medical and financial staff will be required to register fresh workstations on their next login.',
+            targetName: 'All Hospital Devices ({{ method_exists($boundWorkstations, 'total') ? $boundWorkstations->total() : $boundWorkstations->count() }} active workstations)',
+            targetIp: 'Hospital-wide',
+            badgeText: 'Critical Reset',
+            confirmText: 'Reset Registry',
+            confirmVariant: 'danger',
+            actionUrl: '{{ route('user-security.workstations.reset-all') }}',
+            method: 'POST'
+          })"
+          class="inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-950/70 transition-all shadow-sm cursor-pointer"
+        >
+          <i class="ph ph-trash"></i>
+          Reset All Workstations
+        </button>
       @endif
     </div>
 
@@ -320,14 +372,25 @@
               <td class="py-3 px-4 text-right">
                 <div class="inline-flex items-center gap-1.5 justify-end">
                   @if($bw->status === 'approved')
-                    <form method="POST" action="{{ route('user-security.workstations.revoke', $bw) }}" class="inline" onsubmit="return confirm('Revoke authorization for this workstation? Any active sessions on this computer will be terminated immediately.');">
-                      @csrf
-                      @method('DELETE')
-                      <button type="submit" class="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-white px-2.5 py-1 text-xs font-semibold text-amber-700 shadow-sm hover:bg-amber-50 dark:border-amber-900/50 dark:bg-slate-900 dark:text-amber-400 dark:hover:bg-amber-950/30 transition-all" title="Revoke binding">
-                        <i class="ph ph-prohibit"></i>
-                        Revoke
-                      </button>
-                    </form>
+                    <button 
+                      type="button" 
+                      @click="confirmModal.openModal({
+                        title: 'Revoke Workstation Authorization',
+                        message: 'Revoke authorization for this workstation?',
+                        detail: 'Any active sessions running on this computer will be terminated immediately, and users will be signed out.',
+                        targetName: '{{ addslashes($bw->workstation_name) }}',
+                        targetIp: '{{ $bw->ip_address }}',
+                        confirmText: 'Revoke Authorization',
+                        confirmVariant: 'warning',
+                        actionUrl: '{{ route('user-security.workstations.revoke', $bw) }}',
+                        method: 'DELETE'
+                      })"
+                      class="inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-white px-2.5 py-1 text-xs font-semibold text-amber-700 shadow-sm hover:bg-amber-50 dark:border-amber-900/50 dark:bg-slate-900 dark:text-amber-400 dark:hover:bg-amber-950/30 transition-all cursor-pointer" 
+                      title="Revoke binding"
+                    >
+                      <i class="ph ph-prohibit"></i>
+                      Revoke
+                    </button>
                   @else
                     <form method="POST" action="{{ route('user-security.workstations.approve', $bw) }}" class="inline">
                       @csrf
@@ -338,14 +401,25 @@
                     </form>
                   @endif
 
-                  {{-- Permanent Delete Action --}}
-                  <form method="POST" action="{{ route('user-security.workstations.destroy', $bw) }}" class="inline" onsubmit="return confirm('Permanently remove this workstation record from the system?');">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-white p-1.5 text-xs font-semibold text-rose-600 shadow-sm hover:bg-rose-50 dark:border-rose-900/50 dark:bg-slate-900 dark:text-rose-400 dark:hover:bg-rose-950/30 transition-all" title="Permanently delete workstation">
-                      <i class="ph ph-trash"></i>
-                    </button>
-                  </form>
+                  {{-- Permanent Delete Action Modal Trigger --}}
+                  <button 
+                    type="button" 
+                    @click="confirmModal.openModal({
+                      title: 'Permanently Remove Workstation',
+                      message: 'Permanently remove this workstation record from the system?',
+                      detail: 'This action is irreversible. The cryptographic device fingerprint and authorization record will be purged from the hospital registry.',
+                      targetName: '{{ addslashes($bw->workstation_name) }}',
+                      targetIp: '{{ $bw->ip_address }}',
+                      confirmText: 'Permanently Remove',
+                      confirmVariant: 'danger',
+                      actionUrl: '{{ route('user-security.workstations.destroy', $bw) }}',
+                      method: 'DELETE'
+                    })"
+                    class="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-white p-1.5 text-xs font-semibold text-rose-600 shadow-sm hover:bg-rose-50 dark:border-rose-900/50 dark:bg-slate-900 dark:text-rose-400 dark:hover:bg-rose-950/30 transition-all cursor-pointer" 
+                    title="Permanently delete workstation"
+                  >
+                    <i class="ph ph-trash"></i>
+                  </button>
                 </div>
               </td>
             </tr>
@@ -364,6 +438,22 @@
           @endforelse
         </tbody>
       </table>
+    </div>
+
+    <!-- Table Footer & Pagination -->
+    <div class="border-t border-slate-200 p-4 dark:border-slate-800">
+      @if($boundWorkstations->hasPages())
+        {{ $boundWorkstations->links() }}
+      @else
+        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+          <p class="font-medium">
+            Showing <span class="font-mono font-bold text-slate-800 dark:text-slate-200">{{ $boundWorkstations->firstItem() ?? 0 }}</span>
+            to <span class="font-mono font-bold text-slate-800 dark:text-slate-200">{{ $boundWorkstations->lastItem() ?? 0 }}</span>
+            of <span class="font-mono font-bold text-slate-800 dark:text-slate-200">{{ $boundWorkstations->total() }}</span> bound workstations (5 per page)
+          </p>
+          <span class="text-[11px] font-mono text-slate-400">Page 1 of 1</span>
+        </div>
+      @endif
     </div>
   </div>
 
@@ -417,13 +507,25 @@
                 </span>
               </td>
               <td class="py-3 px-4 text-right">
-                <form method="POST" action="{{ route('user-security.sessions.terminate', $as) }}" class="inline" onsubmit="return confirm('Forcibly disconnect this session immediately?');">
-                  @csrf
-                  <button type="submit" class="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-white px-2.5 py-1 text-xs font-semibold text-rose-600 shadow-sm hover:bg-rose-50 dark:border-rose-900/50 dark:bg-slate-900 dark:text-rose-400 dark:hover:bg-rose-950/30 transition-all" title="Force Disconnect">
-                    <i class="ph ph-sign-out"></i>
-                    Disconnect
-                  </button>
-                </form>
+                <button 
+                  type="button" 
+                  @click="confirmModal.openModal({
+                    title: 'Terminate Active Session',
+                    message: 'Forcibly disconnect this session immediately?',
+                    detail: 'The active user session will be terminated and the user will be logged out from their terminal.',
+                    targetName: '{{ addslashes($as->user?->name ?? 'User') }} ({{ addslashes($as->workstation?->workstation_name ?? 'Device') }})',
+                    targetIp: '{{ $as->ip_address }}',
+                    confirmText: 'Disconnect Session',
+                    confirmVariant: 'danger',
+                    actionUrl: '{{ route('user-security.sessions.terminate', $as) }}',
+                    method: 'POST'
+                  })"
+                  class="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-white px-2.5 py-1 text-xs font-semibold text-rose-600 shadow-sm hover:bg-rose-50 dark:border-rose-900/50 dark:bg-slate-900 dark:text-rose-400 dark:hover:bg-rose-950/30 transition-all cursor-pointer" 
+                  title="Force Disconnect"
+                >
+                  <i class="ph ph-sign-out"></i>
+                  Disconnect
+                </button>
               </td>
             </tr>
           @empty
@@ -437,6 +539,125 @@
       </table>
     </div>
   </div>
+
+  {{-- ── Security Action Confirmation Modal (Alpine.js) ──────────────────────── --}}
+  <template x-teleport="body">
+  <div 
+    x-show="confirmModal.open" 
+    x-cloak 
+    class="fixed inset-0 z-50 overflow-y-auto" 
+    role="dialog" 
+    aria-modal="true"
+    @keydown.escape.window="confirmModal.close()"
+  >
+    {{-- Backdrop with blur --}}
+    <div 
+      x-show="confirmModal.open"
+      x-transition:enter="ease-out duration-300"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="ease-in duration-200"
+      x-transition:leave-start="opacity-100"
+      x-transition:leave-end="opacity-0"
+      class="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity"
+      @click="confirmModal.close()"
+    ></div>
+
+    <div class="fixed inset-0 z-10 flex min-h-full items-center justify-center p-4 pointer-events-none">
+      <div 
+        x-show="confirmModal.open"
+        x-transition:enter="ease-out duration-300"
+        x-transition:enter-start="opacity-0 translate-y-4 sm:scale-95"
+        x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+        x-transition:leave="ease-in duration-200"
+        x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+        x-transition:leave-end="opacity-0 translate-y-4 sm:scale-95"
+        @click.outside="confirmModal.close()"
+        class="pointer-events-auto w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800 text-left transition-all"
+      >
+        {{-- Icon & Header --}}
+        <div class="flex items-start gap-3.5">
+          <div 
+            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl shadow-xs"
+            :class="confirmModal.confirmVariant === 'warning' 
+              ? 'bg-amber-50 text-amber-600 ring-1 ring-amber-500/20 dark:bg-amber-950/40 dark:text-amber-400' 
+              : 'bg-rose-50 text-rose-600 ring-1 ring-rose-500/20 dark:bg-rose-950/40 dark:text-rose-400'"
+          >
+            <i class="ph-bold text-xl" :class="confirmModal.confirmVariant === 'warning' ? 'ph-warning' : 'ph-trash'"></i>
+          </div>
+
+          <div class="flex-1 min-w-0 pt-0.5">
+            <h3 class="text-base font-bold text-slate-900 dark:text-white leading-tight" x-text="confirmModal.title"></h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 font-normal leading-relaxed" x-text="confirmModal.message"></p>
+          </div>
+        </div>
+
+        {{-- Workstation Target Info Card (if device specified) --}}
+        <template x-if="confirmModal.targetName">
+          <div class="mt-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3 ring-1 ring-slate-200/80 dark:ring-slate-700/60 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white dark:bg-slate-700 text-slate-500 dark:text-slate-300 ring-1 ring-slate-200 dark:ring-slate-600">
+                <i class="ph-bold ph-desktop text-sm"></i>
+              </div>
+              <div class="min-w-0 truncate">
+                <p class="text-xs font-semibold text-slate-900 dark:text-white truncate" x-text="confirmModal.targetName"></p>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400 font-mono truncate" x-text="confirmModal.targetIp ? ('IP: ' + confirmModal.targetIp) : ''"></p>
+              </div>
+            </div>
+            <span 
+              class="shrink-0 text-[10px] uppercase font-bold tracking-wider rounded-md px-2 py-0.5"
+              :class="confirmModal.confirmVariant === 'warning'
+                ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300'
+                : 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300'"
+              x-text="confirmModal.badgeText"
+            ></span>
+          </div>
+        </template>
+
+        {{-- Details / Consequences Text --}}
+        <template x-if="confirmModal.detail">
+          <p class="mt-3 text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed bg-amber-50/50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 rounded-xl p-2.5" x-text="confirmModal.detail"></p>
+        </template>
+
+        {{-- Hidden Form for Action Execution --}}
+        <form x-ref="confirmForm" :action="confirmModal.actionUrl" method="POST" class="hidden">
+          @csrf
+          <input type="hidden" name="_method" :value="confirmModal.method">
+        </form>
+
+        {{-- Action Buttons --}}
+        <div class="mt-5 flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <button 
+            type="button" 
+            @click="confirmModal.close()" 
+            :disabled="confirmModal.isSubmitting"
+            class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer disabled:opacity-50"
+          >
+            Cancel
+          </button>
+
+          <button 
+            type="button" 
+            @click="confirmModal.isSubmitting = true; $refs.confirmForm.submit()" 
+            :disabled="confirmModal.isSubmitting"
+            class="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold text-white shadow-sm transition-all cursor-pointer disabled:opacity-75"
+            :class="confirmModal.confirmVariant === 'warning'
+              ? 'bg-amber-600 hover:bg-amber-700 focus:ring-2 focus:ring-amber-500/20'
+              : 'bg-rose-600 hover:bg-rose-700 focus:ring-2 focus:ring-rose-500/20'"
+          >
+            <template x-if="confirmModal.isSubmitting">
+              <i class="ph-bold ph-spinner animate-spin text-sm"></i>
+            </template>
+            <template x-if="!confirmModal.isSubmitting">
+              <i class="ph-bold text-sm" :class="confirmModal.confirmVariant === 'warning' ? 'ph-prohibit' : 'ph-trash'"></i>
+            </template>
+            <span x-text="confirmModal.isSubmitting ? 'Processing...' : confirmModal.confirmText"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  </template>
 
 </div>
 

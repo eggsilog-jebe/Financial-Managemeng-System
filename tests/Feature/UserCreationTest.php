@@ -123,4 +123,24 @@ final class UserCreationTest extends TestCase
             'email' => 'juan.delacruz@hospital.gov.ph',
         ]);
     }
+
+    public function test_user_accounts_directory_paginates_at_five_users_per_page(): void
+    {
+        $cfo = User::factory()->create(['role' => 'CFO', 'email' => 'cfo-paginate@hospital.gov.ph']);
+
+        // Create 7 additional users (total 8 users)
+        User::factory()->count(7)->create();
+
+        $response = $this->actingAs($cfo)->get(route('user-security.users'));
+
+        $response->assertOk();
+        $response->assertViewHas('users');
+
+        $users = $response->viewData('users');
+        $this->assertInstanceOf(\Illuminate\Pagination\LengthAwarePaginator::class, $users);
+        $this->assertSame(5, $users->perPage());
+        $this->assertCount(5, $users->items());
+        $this->assertSame(8, $users->total());
+        $this->assertTrue($users->hasPages());
+    }
 }

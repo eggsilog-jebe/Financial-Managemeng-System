@@ -64,7 +64,7 @@ final class DisbursementVoucherService
     public function auditPaymentRequest(int $voucherId, int $auditorId): DisbursementVoucher
     {
         return DB::transaction(function () use ($voucherId, $auditorId): DisbursementVoucher {
-            $voucher = DisbursementVoucher::findOrFail($voucherId);
+            $voucher = DisbursementVoucher::where('id', $voucherId)->lockForUpdate()->firstOrFail();
 
             if ($voucher->status !== 'PREPARED' && $voucher->status !== 'DRAFT') {
                 throw new DomainException("Voucher [{$voucher->voucher_number}] cannot be audited in status [{$voucher->status}].");
@@ -97,7 +97,11 @@ final class DisbursementVoucherService
     public function voidPaymentRequest(int $voucherId, int $userId, string $reason): DisbursementVoucher
     {
         return DB::transaction(function () use ($voucherId, $userId, $reason): DisbursementVoucher {
-            $voucher = DisbursementVoucher::with('checkRegister')->findOrFail($voucherId);
+            $voucher = DisbursementVoucher::with('checkRegister')->where('id', $voucherId)->lockForUpdate()->firstOrFail();
+
+            if ($voucher->status === 'VOIDED') {
+                throw new DomainException("Disbursement voucher [{$voucher->voucher_number}] is already VOIDED.");
+            }
 
             if ($voucher->status === 'RELEASED') {
                 throw new DomainException("Released disbursement voucher cannot be voided directly. Create a reversal transaction instead.");

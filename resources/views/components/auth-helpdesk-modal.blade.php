@@ -1,4 +1,5 @@
 <!-- Hospital MIS Support Directory Modal (Alpine.js) -->
+<template x-teleport="body">
 <div 
   x-show="helpdeskOpen" 
   x-cloak 
@@ -13,10 +14,11 @@
     x-transition:leave="ease-in duration-150" 
     x-transition:leave-start="opacity-100" 
     x-transition:leave-end="opacity-0" 
-    class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
+    class="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity"
+    @click="helpdeskOpen = false"
   ></div>
 
-  <div class="fixed inset-0 z-10 flex min-h-full items-center justify-center p-4">
+  <div class="fixed inset-0 z-10 flex min-h-full items-center justify-center p-4 pointer-events-none">
     <div 
       x-show="helpdeskOpen" 
       x-transition:enter="ease-out duration-200" 
@@ -26,7 +28,7 @@
       x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" 
       x-transition:leave-end="opacity-0 translate-y-3 sm:scale-95" 
       @click.outside="helpdeskOpen = false" 
-      class="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white dark:bg-slate-900 p-6 text-left shadow-2xl ring-1 ring-slate-200 dark:ring-slate-800"
+      class="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white dark:bg-slate-900 p-6 text-left shadow-2xl ring-1 ring-slate-200 dark:ring-slate-800 pointer-events-auto"
     >
       <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
         <div class="flex items-center gap-3">
@@ -109,3 +111,4 @@
     </div>
   </div>
 </div>
+</template>

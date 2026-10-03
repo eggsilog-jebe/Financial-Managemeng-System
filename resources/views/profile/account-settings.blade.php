@@ -33,6 +33,19 @@ function accountSettingsData() {
     passwordSaving: false,
     passwordError: '',
 
+    init() {
+      this.$watch('editModalOpen', () => this.syncBodyLock());
+      this.$watch('passwordModalOpen', () => this.syncBodyLock());
+    },
+
+    syncBodyLock() {
+      if (this.editModalOpen || this.passwordModalOpen) {
+        document.body.classList.add('overflow-hidden', 'modal-open');
+      } else {
+        document.body.classList.remove('overflow-hidden', 'modal-open');
+      }
+    },
+
     openPasswordModal() {
       this.pwdCurrentPassword = '';
       this.pwdNewPassword = '';
@@ -671,36 +684,38 @@ function accountSettingsData() {
   </div>
 
   {{-- Edit Profile Modal (Exact Layout Matching Target Specs with Hospital Emerald Theme) --}}
-  <div 
-    x-show="editModalOpen" 
-    x-cloak 
-    class="fixed inset-0 z-50 overflow-y-auto" 
-    role="dialog" 
-    aria-modal="true"
-  >
+  <template x-teleport="body">
     <div 
-      x-show="editModalOpen"
-      x-transition:enter="ease-out duration-200"
-      x-transition:enter-start="opacity-0"
-      x-transition:enter-end="opacity-100"
-      x-transition:leave="ease-in duration-150"
-      x-transition:leave-start="opacity-100"
-      x-transition:leave-end="opacity-0"
-      class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
-      @click="editModalOpen = false"
-    ></div>
-
-    <div class="fixed inset-0 z-10 flex min-h-full items-center justify-center p-4">
+      x-show="editModalOpen" 
+      x-cloak 
+      class="fixed inset-0 z-50 overflow-y-auto" 
+      role="dialog" 
+      aria-modal="true"
+    >
       <div 
         x-show="editModalOpen"
         x-transition:enter="ease-out duration-200"
-        x-transition:enter-start="opacity-0 scale-95"
-        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
         x-transition:leave="ease-in duration-150"
-        x-transition:leave-start="opacity-100 scale-100"
-        x-transition:leave-end="opacity-0 scale-95"
-        class="w-full max-w-lg rounded-2xl bg-white p-6 sm:p-7 shadow-2xl ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800"
-      >
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity"
+        @click="editModalOpen = false"
+      ></div>
+
+      <div class="fixed inset-0 z-10 flex min-h-full items-center justify-center p-4 pointer-events-none">
+        <div 
+          x-show="editModalOpen"
+          x-transition:enter="ease-out duration-200"
+          x-transition:enter-start="opacity-0 scale-95"
+          x-transition:enter-end="opacity-100 scale-100"
+          x-transition:leave="ease-in duration-150"
+          x-transition:leave-start="opacity-100 scale-100"
+          x-transition:leave-end="opacity-0 scale-95"
+          @click.outside="editModalOpen = false"
+          class="w-full max-w-lg rounded-2xl bg-white p-6 sm:p-7 shadow-2xl ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 pointer-events-auto"
+        >
         {{-- Modal Header --}}
         <div class="flex items-center justify-between pb-4">
           <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
@@ -818,38 +833,41 @@ function accountSettingsData() {
       </div>
     </div>
   </div>
+  </template>
 
   {{-- Change Password Modal --}}
-  <div 
-    x-show="passwordModalOpen" 
-    x-cloak 
-    class="fixed inset-0 z-50 overflow-y-auto" 
-    role="dialog" 
-    aria-modal="true"
-  >
+  <template x-teleport="body">
     <div 
-      x-show="passwordModalOpen"
-      x-transition:enter="ease-out duration-200"
-      x-transition:enter-start="opacity-0"
-      x-transition:enter-end="opacity-100"
-      x-transition:leave="ease-in duration-150"
-      x-transition:leave-start="opacity-100"
-      x-transition:leave-end="opacity-0"
-      class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
-      @click="passwordModalOpen = false"
-    ></div>
-
-    <div class="fixed inset-0 z-10 flex min-h-full items-center justify-center p-4">
+      x-show="passwordModalOpen" 
+      x-cloak 
+      class="fixed inset-0 z-50 overflow-y-auto" 
+      role="dialog" 
+      aria-modal="true"
+    >
       <div 
         x-show="passwordModalOpen"
         x-transition:enter="ease-out duration-200"
-        x-transition:enter-start="opacity-0 scale-95"
-        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:enter-start="opacity-0"
+        x-transition:enter-end="opacity-100"
         x-transition:leave="ease-in duration-150"
-        x-transition:leave-start="opacity-100 scale-100"
-        x-transition:leave-end="opacity-0 scale-95"
-        class="w-full max-w-md rounded-2xl bg-white p-6 sm:p-7 shadow-2xl ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800"
-      >
+        x-transition:leave-start="opacity-100"
+        x-transition:leave-end="opacity-0"
+        class="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity"
+        @click="passwordModalOpen = false"
+      ></div>
+
+      <div class="fixed inset-0 z-10 flex min-h-full items-center justify-center p-4 pointer-events-none">
+        <div 
+          x-show="passwordModalOpen"
+          x-transition:enter="ease-out duration-200"
+          x-transition:enter-start="opacity-0 scale-95"
+          x-transition:enter-end="opacity-100 scale-100"
+          x-transition:leave="ease-in duration-150"
+          x-transition:leave-start="opacity-100 scale-100"
+          x-transition:leave-end="opacity-0 scale-95"
+          @click.outside="passwordModalOpen = false"
+          class="w-full max-w-md rounded-2xl bg-white p-6 sm:p-7 shadow-2xl ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 pointer-events-auto"
+        >
         {{-- Modal Header --}}
         <div class="flex items-center justify-between pb-4">
           <div class="flex items-center gap-2.5">
@@ -950,6 +968,7 @@ function accountSettingsData() {
       </div>
     </div>
   </div>
+  </template>
 
 </div>
 @endsection

@@ -39,14 +39,14 @@ final class WorkstationSecurityController extends Controller
     public function index(Request $request): View
     {
         $pendingWorkstations = $this->workstationService->getPendingRequests();
-        $boundWorkstations   = $this->workstationService->getBoundWorkstations();
+        $boundWorkstations   = $this->workstationService->getPaginatedBoundWorkstations(5);
         $activeSessions      = $this->sessionManager->getActiveSessions();
         $users               = User::where('status', 'active')->orderBy('name')->get();
 
         $metrics = [
             'pending_count'    => $pendingWorkstations->count(),
-            'approved_count'   => $boundWorkstations->where('status', UserWorkstation::STATUS_APPROVED)->count(),
-            'revoked_count'    => $boundWorkstations->where('status', UserWorkstation::STATUS_REVOKED)->count(),
+            'approved_count'   => UserWorkstation::where('status', UserWorkstation::STATUS_APPROVED)->count(),
+            'revoked_count'    => UserWorkstation::where('status', UserWorkstation::STATUS_REVOKED)->count(),
             'active_sessions'  => $activeSessions->count(),
             'max_per_user'     => UserWorkstation::MAX_PER_USER,
         ];

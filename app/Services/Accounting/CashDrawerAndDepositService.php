@@ -53,7 +53,7 @@ final class CashDrawerAndDepositService
     public function closeShift(int $shiftId, string $actualCashCounted, ?string $notes = null): CashierShift
     {
         return DB::transaction(function () use ($shiftId, $actualCashCounted, $notes): CashierShift {
-            $shift = CashierShift::findOrFail($shiftId);
+            $shift = CashierShift::where('id', $shiftId)->lockForUpdate()->firstOrFail();
 
             if ($shift->status !== 'OPEN') {
                 throw new DomainException("Shift [{$shift->shift_code}] is already closed.");
@@ -86,7 +86,7 @@ final class CashDrawerAndDepositService
         ?string $teller = null
     ): BankDeposit {
         return DB::transaction(function () use ($bankAccountId, $cashAmount, $checkAmount, $cashierShiftId, $bankRef, $teller): BankDeposit {
-            $bank = BankAccount::findOrFail($bankAccountId);
+            $bank = BankAccount::where('id', $bankAccountId)->lockForUpdate()->firstOrFail();
             $totalDeposited = bcadd($cashAmount, $checkAmount, 4);
 
             $depositRef = 'DEP-' . date('Ymd') . '-' . strtoupper(bin2hex(random_bytes(3)));

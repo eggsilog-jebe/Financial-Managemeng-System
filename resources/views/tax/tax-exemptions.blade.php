@@ -6,6 +6,12 @@
 
 @section('content')
 <div class="space-y-6" x-data="{
+  init() {
+    this.$watch('exemptionDetailsOpen', val => {
+      document.body.classList.toggle('overflow-hidden', val);
+      document.body.classList.toggle('modal-open', val);
+    });
+  },
   search: '',
   catFilter: '',
   statusFilter: '',
@@ -251,6 +257,7 @@
   </div>
 
   <!-- Slide-Over Drawer: In-Depth Exemption Details -->
+  <template x-teleport="body">
   <div 
     x-show="exemptionDetailsOpen" 
     x-cloak 
@@ -261,7 +268,8 @@
     <div 
       x-show="exemptionDetailsOpen" 
       x-transition.opacity.duration.300ms 
-      class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
+      class="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity"
+      @click="exemptionDetailsOpen = false"
     ></div>
 
     <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
@@ -370,6 +378,7 @@
       </div>
     </div>
   </div>
+  </template>
 
   <!-- Modal: Register Tax Exemption Rule -->
   <x-modal 

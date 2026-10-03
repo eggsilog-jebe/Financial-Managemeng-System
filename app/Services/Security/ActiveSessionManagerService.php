@@ -197,13 +197,38 @@ final class ActiveSessionManagerService
     public function terminateCurrentSession(string $sessionId): void
     {
         Cache::put("session:terminated:{$sessionId}", UserActiveSession::REASON_MANUAL_LOGOUT, 3600);
+        $this->l1->forget("session:valid:{$sessionId}");
 
-        UserActiveSession::where('session_id', $sessionId)
-            ->where('is_terminated', false)
-            ->each(function ($session) {
-                $session->terminate(UserActiveSession::REASON_MANUAL_LOGOUT);
-                Cache::forget("user:active_session:{$session->user_id}");
-            });
+        $this->terminateSessions(
+            UserActiveSession::where('session_id', $sessionId)->where('is_terminated', false)->get(),
+            UserActiveSession::REASON_MANUAL_LOGOUT
+        );
+    }
+
+    /**
+     * Terminate a set of sessions and invalidate every cache layer so the
+     * middleware rejects them on the very next request.
+     *
+     * @param  iterable<int, UserActiveSession>  $sessions
+     */
+    public function terminateSessions(iterable $sessions, string $reason): int
+    {
+        $count = 0;
+
+        foreach ($sessions as $session) {
+            if ($session->is_terminated) {
+                continue;
+            }
+
+            $session->terminate($reason);
+            Cache::put("session:terminated:{$session->session_id}", $reason, 3600);
+            Cache::forget("user:active_session:{$session->user_id}");
+            $this->l1->forget("session:valid:{$session->session_id}");
+            $this->l1->put("session:terminated:{$session->session_id}", $reason, 60);
+            $count++;
+        }
+
+        return $count;
     }
 
     /**

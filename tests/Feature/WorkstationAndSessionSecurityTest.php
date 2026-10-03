@@ -433,5 +433,34 @@ final class WorkstationAndSessionSecurityTest extends TestCase
         $response->assertSessionHas('success');
         $this->assertSame(0, UserWorkstation::count());
     }
+
+    public function test_bound_workstations_registry_paginates_at_five_per_page(): void
+    {
+        $admin = User::factory()->create(['role' => 'CFO']);
+        $user  = User::factory()->create(['role' => 'BillingClerk']);
+
+        // Create 8 approved workstations
+        for ($i = 1; $i <= 8; $i++) {
+            UserWorkstation::create([
+                'user_id'          => $user->id,
+                'device_uuid'      => "ws-paginate-{$i}",
+                'workstation_name' => "Workstation {$i}",
+                'status'           => UserWorkstation::STATUS_APPROVED,
+                'last_seen_at'     => now()->subMinutes($i),
+            ]);
+        }
+
+        $response = $this->actingAs($admin)->get(route('user-security.workstations'));
+
+        $response->assertOk();
+        $response->assertViewHas('boundWorkstations');
+
+        $boundWorkstations = $response->viewData('boundWorkstations');
+        $this->assertInstanceOf(\Illuminate\Contracts\Pagination\LengthAwarePaginator::class, $boundWorkstations);
+        $this->assertSame(5, $boundWorkstations->perPage());
+        $this->assertCount(5, $boundWorkstations->items());
+        $this->assertSame(8, $boundWorkstations->total());
+        $this->assertTrue($boundWorkstations->hasPages());
+    }
 }
 

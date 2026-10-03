@@ -6,6 +6,15 @@
 
 @section('content')
 <div class="space-y-6" x-data="{
+  init() {
+    this.$watch('openShiftModal', () => this.syncBodyLock());
+    this.$watch('closeShiftModal', () => this.syncBodyLock());
+  },
+  syncBodyLock() {
+    const anyOpen = this.openShiftModal || this.closeShiftModal;
+    document.body.classList.toggle('overflow-hidden', anyOpen);
+    document.body.classList.toggle('modal-open', anyOpen);
+  },
   openShiftModal: false,
   closeShiftModal: false,
   modalActualCash: '',
@@ -192,7 +201,7 @@
                     $copayVal = (float) $copayFormatted;
                     $isZeroCopay = ($copayVal <= 0.00);
                   @endphp
-                  <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors {{ $isZeroCopay ? 'opacity-60 bg-slate-50/40' : '' }}" x-data="{ payModalOpen: false }">
+                  <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors {{ $isZeroCopay ? 'opacity-60 bg-slate-50/40' : '' }}" x-data="{ payModalOpen: false, init() { this.$watch('payModalOpen', val => { document.body.classList.toggle('overflow-hidden', val); document.body.classList.toggle('modal-open', val); }); } }">
                     <td class="py-3.5 px-4">
                       <span class="font-mono font-semibold text-slate-900 dark:text-white">{{ $inv->invoice_number }}</span>
                       <span class="block text-[10px] text-slate-400">{{ $inv->invoice_date ? $inv->invoice_date->format('M d, Y') : '-' }}</span>
@@ -220,11 +229,12 @@
                         </button>
 
                         {{-- Settle Payment Alpine Modal --}}
-                        <div x-show="payModalOpen" x-cloak class="relative z-50 text-left" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-                          <div x-show="payModalOpen" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity"></div>
+                        <template x-teleport="body">
+                        <div x-show="payModalOpen" x-cloak class="fixed inset-0 z-50 overflow-y-auto text-left" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                          <div x-show="payModalOpen" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity" @click="payModalOpen = false"></div>
 
-                          <div class="fixed inset-0 z-10 w-screen overflow-y-auto p-4 sm:p-6 md:p-20">
-                            <div x-show="payModalOpen" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" @click.away="payModalOpen = false" class="relative mx-auto max-w-lg transform rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 transition-all text-left"
+                          <div class="fixed inset-0 z-10 w-screen overflow-y-auto p-4 sm:p-6 md:p-20 flex min-h-full items-center justify-center pointer-events-none">
+                            <div x-show="payModalOpen" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" @click.outside="payModalOpen = false" class="pointer-events-auto relative mx-auto w-full max-w-lg transform rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 transition-all text-left"
                                  x-data="{
                                     settlementAmount: '{{ $copayFormatted }}',
                                     paymentMethod: 'CASH',
@@ -439,6 +449,7 @@
                             </div>
                           </div>
                         </div>
+                        </template>
                       @endif
                     </td>
                   </tr>
@@ -619,11 +630,12 @@
   </div>
 
   {{-- Modal: Open Terminal Shift --}}
-  <div x-show="openShiftModal" x-cloak class="relative z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div x-show="openShiftModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity"></div>
+  <template x-teleport="body">
+  <div x-show="openShiftModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div x-show="openShiftModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity" @click="openShiftModal = false"></div>
 
-    <div class="fixed inset-0 z-10 w-screen overflow-y-auto p-4 sm:p-6 md:p-20">
-      <div x-show="openShiftModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" @click.away="openShiftModal = false" class="relative mx-auto max-w-md transform rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 transition-all text-left">
+    <div class="fixed inset-0 z-10 w-screen overflow-y-auto p-4 sm:p-6 md:p-20 flex min-h-full items-center justify-center pointer-events-none">
+      <div x-show="openShiftModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" @click.outside="openShiftModal = false" class="pointer-events-auto relative mx-auto w-full max-w-md transform rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 transition-all text-left">
 
         <form method="POST" action="{{ route('collection.shifts.open') }}">
           @csrf
@@ -680,14 +692,16 @@
       </div>
     </div>
   </div>
+  </template>
 
   {{-- Modal: Close Shift & Turnover --}}
   @if($activeShift)
-    <div x-show="closeShiftModal" x-cloak class="relative z-50" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-      <div x-show="closeShiftModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity"></div>
+    <template x-teleport="body">
+    <div x-show="closeShiftModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+      <div x-show="closeShiftModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity" @click="closeShiftModal = false"></div>
 
-      <div class="fixed inset-0 z-10 w-screen overflow-y-auto p-4 sm:p-6 md:p-20">
-        <div x-show="closeShiftModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" @click.away="closeShiftModal = false" class="relative mx-auto max-w-lg transform rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 transition-all text-left">
+      <div class="fixed inset-0 z-10 w-screen overflow-y-auto p-4 sm:p-6 md:p-20 flex min-h-full items-center justify-center pointer-events-none">
+        <div x-show="closeShiftModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95" @click.outside="closeShiftModal = false" class="pointer-events-auto relative mx-auto w-full max-w-lg transform rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 transition-all text-left">
 
           <form method="POST" action="{{ route('collection.shifts.close') }}">
             @csrf
@@ -771,12 +785,13 @@
         </div>
       </div>
     </div>
+    </template>
   @endif
 
   {{-- Printable Shift Turnover / Bag Tag Summary Modal --}}
   @if(session('turnover_summary'))
     @php $t = session('turnover_summary'); @endphp
-    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md">
       <div class="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 text-left">
         <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
           <div class="flex items-center gap-2">

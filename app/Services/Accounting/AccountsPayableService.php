@@ -201,31 +201,36 @@ final class AccountsPayableService
      */
     public function postApprovedBillDoubleEntry(PurchaseBill $bill): void
     {
-        if (JournalEntry::where('reference_number', 'JE-AP-' . $bill->bill_number)->exists()) {
-            return;
-        }
+        DB::transaction(function () use ($bill): void {
+            // Serialize on the bill row so concurrent approvals cannot double-post the accrual
+            PurchaseBill::where('id', $bill->id)->lockForUpdate()->firstOrFail();
 
-        $bill->loadMissing(['vendor', 'items']);
-        $billDate = $bill->bill_date instanceof \DateTimeInterface
-            ? $bill->bill_date->format('Y-m-d')
-            : (string) $bill->bill_date;
+            if (JournalEntry::where('reference_number', 'JE-AP-' . $bill->bill_number)->exists()) {
+                return;
+            }
 
-        $totalGross = (string) $bill->total_amount;
-        $totalEwt = '0.0000';
-        foreach ($bill->items as $item) {
-            $totalEwt = bcadd($totalEwt, (string) $item->ewt_amount, 4);
-        }
-        $totalNetPayable = bcsub($totalGross, $totalEwt, 4);
+            $bill->loadMissing(['vendor', 'items']);
+            $billDate = $bill->bill_date instanceof \DateTimeInterface
+                ? $bill->bill_date->format('Y-m-d')
+                : (string) $bill->bill_date;
 
-        $this->postAPDoubleEntry(
-            bill: $bill,
-            billDate: $billDate,
-            vendor: $bill->vendor,
-            totalGross: $totalGross,
-            netPayable: $totalNetPayable,
-            ewtAmount: $totalEwt,
-            items: $bill->items
-        );
+            $totalGross = (string) $bill->total_amount;
+            $totalEwt = '0.0000';
+            foreach ($bill->items as $item) {
+                $totalEwt = bcadd($totalEwt, (string) $item->ewt_amount, 4);
+            }
+            $totalNetPayable = bcsub($totalGross, $totalEwt, 4);
+
+            $this->postAPDoubleEntry(
+                bill: $bill,
+                billDate: $billDate,
+                vendor: $bill->vendor,
+                totalGross: $totalGross,
+                netPayable: $totalNetPayable,
+                ewtAmount: $totalEwt,
+                items: $bill->items
+            );
+        });
     }
 
     private function postAPDoubleEntry(

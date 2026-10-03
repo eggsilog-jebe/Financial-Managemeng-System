@@ -28,7 +28,7 @@ final class PettyCashService
     public function recordExpense(PettyCashExpenseData $dto): PettyCashExpense
     {
         return DB::transaction(function () use ($dto): PettyCashExpense {
-            $fund = PettyCashFund::findOrFail($dto->pettyCashFundId);
+            $fund = PettyCashFund::where('id', $dto->pettyCashFundId)->lockForUpdate()->firstOrFail();
 
             if (bccomp((string) $fund->current_balance, (string) $dto->amount, 4) < 0) {
                 throw new DomainException("Insufficient petty cash balance (₱{$fund->current_balance}) for expense amount (₱{$dto->amount}).");
@@ -72,11 +72,12 @@ final class PettyCashService
     public function replenishFund(int $fundId, int $bankAccountId, int $userId): DisbursementVoucher
     {
         return DB::transaction(function () use ($fundId, $bankAccountId, $userId): DisbursementVoucher {
-            $fund = PettyCashFund::findOrFail($fundId);
+            $fund = PettyCashFund::where('id', $fundId)->lockForUpdate()->firstOrFail();
             $bank = BankAccount::findOrFail($bankAccountId);
 
             $unreplenished = PettyCashExpense::where('petty_cash_fund_id', $fund->id)
                 ->where('status', 'UNREPLENISHED')
+                ->lockForUpdate()
                 ->get();
 
             if ($unreplenished->isEmpty()) {
@@ -113,8 +114,9 @@ final class PettyCashService
                 ]);
             }
 
-            // 3. Restore Petty Cash Fund Balance to Float Limit
-            $fund->update(['current_balance' => $fund->float_limit]);
+            // 3. Restore Petty Cash Fund Balance by exactly the amount reimbursed
+            $restoredBalance = bcadd((string) $fund->current_balance, $totalExpense, 4);
+            $fund->update(['current_balance' => $restoredBalance]);
 
             // 4. Post Double-Entry Journal Entry: DR 5030 Operating Expenses, CR 1020 Cash in Bank
             $expenseAcc = Account::firstOrCreate(['code' => '5030'], ['name' => 'Administrative & Operating Expenses', 'category' => 'EXPENSE', 'normal_balance' => 'DEBIT']);
@@ -151,7 +153,7 @@ final class PettyCashService
                 auditable: $fund,
                 action: 'UPDATE',
                 oldValues: ['unreplenished_count' => $unreplenished->count()],
-                newValues: ['replenished_amount' => $totalExpense, 'new_balance' => $fund->float_limit],
+                newValues: ['replenished_amount' => $totalExpense, 'new_balance' => $restoredBalance],
                 userId: $userId,
                 userName: auth()->user()?->name ?? 'Finance Approver',
                 ipAddress: request()?->ip() ?? '127.0.0.1',

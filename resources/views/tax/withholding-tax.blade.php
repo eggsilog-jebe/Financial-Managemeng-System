@@ -6,6 +6,12 @@
 
 @section('content')
 <div class="space-y-6" x-data="{
+  init() {
+    this.$watch('certDetailsOpen', val => {
+      document.body.classList.toggle('overflow-hidden', val);
+      document.body.classList.toggle('modal-open', val);
+    });
+  },
   search: '',
   formFilter: '',
   payeeFilter: '',
@@ -275,6 +281,7 @@
   </div>
 
   <!-- Slide-Over Drawer: In-Depth Certificate Details -->
+  <template x-teleport="body">
   <div 
     x-show="certDetailsOpen" 
     x-cloak 
@@ -285,7 +292,8 @@
     <div 
       x-show="certDetailsOpen" 
       x-transition.opacity.duration.300ms 
-      class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
+      class="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity"
+      @click="certDetailsOpen = false"
     ></div>
 
     <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
@@ -398,6 +406,7 @@
       </div>
     </div>
   </div>
+  </template>
 
   <!-- Modal: Issue BIR Form 2307 Withholding Certificate -->
   <x-modal 

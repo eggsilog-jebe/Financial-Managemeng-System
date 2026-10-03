@@ -8,6 +8,7 @@ use App\Models\ActivityLog;
 use App\Models\User;
 use App\Models\UserActiveSession;
 use App\Models\UserWorkstation;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
@@ -26,6 +27,10 @@ use Symfony\Component\HttpFoundation\Cookie as SymfonyCookie;
 final class WorkstationBindingService
 {
     public const COOKIE_NAME = 'fms_workstation_token';
+
+    public function __construct(
+        private readonly ActiveSessionManagerService $sessionManager,
+    ) {}
 
     /**
      * Resolve or generate a persistent workstation device UUID.
@@ -309,12 +314,11 @@ final class WorkstationBindingService
             'revoked_by' => $admin->id,
         ]);
 
-        // Terminate any active sessions connected to this workstation
-        $workstation->activeSessions()
-            ->where('is_terminated', false)
-            ->each(function ($session) {
-                $session->terminate(UserActiveSession::REASON_WORKSTATION_REVOKED);
-            });
+        // Terminate any active sessions connected to this workstation (cache-aware)
+        $this->sessionManager->terminateSessions(
+            $workstation->activeSessions()->where('is_terminated', false)->get(),
+            UserActiveSession::REASON_WORKSTATION_REVOKED
+        );
 
         ActivityLog::logAuth(
             event:       'workstation_revoked',
@@ -357,6 +361,24 @@ final class WorkstationBindingService
     }
 
     /**
+     * Retrieve paginated bound workstations, optionally filtered by user ID.
+     *
+     * @return LengthAwarePaginator
+     */
+    public function getPaginatedBoundWorkstations(int $perPage = 5, ?int $userId = null): LengthAwarePaginator
+    {
+        $query = UserWorkstation::with(['user', 'approver', 'revoker'])
+            ->whereIn('status', [UserWorkstation::STATUS_APPROVED, UserWorkstation::STATUS_REVOKED, UserWorkstation::STATUS_REJECTED])
+            ->orderByDesc('last_seen_at');
+
+        if ($userId !== null) {
+            $query->where('user_id', $userId);
+        }
+
+        return $query->paginate($perPage)->withQueryString();
+    }
+
+    /**
      * Super Admin action: Permanently delete a workstation binding record.
      */
     public function deleteWorkstation(UserWorkstation $workstation, User $admin): void
@@ -364,12 +386,11 @@ final class WorkstationBindingService
         $user = $workstation->user;
         $name = $workstation->workstation_name;
 
-        // Terminate any active sessions connected to this workstation
-        $workstation->activeSessions()
-            ->where('is_terminated', false)
-            ->each(function ($session): void {
-                $session->terminate(UserActiveSession::REASON_WORKSTATION_REVOKED);
-            });
+        // Terminate any active sessions connected to this workstation (cache-aware)
+        $this->sessionManager->terminateSessions(
+            $workstation->activeSessions()->where('is_terminated', false)->get(),
+            UserActiveSession::REASON_WORKSTATION_REVOKED
+        );
 
         $workstation->delete();
 
@@ -389,7 +410,18 @@ final class WorkstationBindingService
     {
         $count = UserWorkstation::count();
 
-        // Unlink active sessions from workstations
+        // Terminate active workstation-bound sessions (except the acting admin's own current session)
+        $currentSessionId = request()->hasSession() ? request()->session()->getId() : null;
+
+        $this->sessionManager->terminateSessions(
+            UserActiveSession::whereNotNull('workstation_id')
+                ->where('is_terminated', false)
+                ->when($currentSessionId, fn ($q) => $q->where('session_id', '!=', $currentSessionId))
+                ->get(),
+            UserActiveSession::REASON_WORKSTATION_REVOKED
+        );
+
+        // Unlink sessions from workstations
         UserActiveSession::whereNotNull('workstation_id')
             ->update(['workstation_id' => null]);
 

@@ -5,7 +5,15 @@
 @section('page', 'ar-aging')
 
 @section('content')
-<div class="space-y-6" x-data="{ activeDrawer: null }">
+<div class="space-y-6" x-data="{
+  activeDrawer: null,
+  init() {
+    this.$watch('activeDrawer', val => {
+      document.body.classList.toggle('overflow-hidden', val !== null);
+      document.body.classList.toggle('modal-open', val !== null);
+    });
+  }
+}">
 
   <!-- Page Header -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
@@ -274,6 +282,7 @@
 
   <!-- Itemized Invoices Slide-Over Drawers (Alpine.js) -->
   @foreach($debtors as $d)
+    <template x-teleport="body">
     <div 
       x-show="activeDrawer === {{ $loop->index }}" 
       x-cloak 
@@ -285,7 +294,8 @@
       <div 
         x-show="activeDrawer === {{ $loop->index }}" 
         x-transition.opacity.duration.300ms 
-        class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
+        class="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity"
+        @click="activeDrawer = null"
       ></div>
 
       <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
@@ -410,6 +420,7 @@
         </div>
       </div>
     </div>
+    </template>
   @endforeach
 
 </div>

@@ -35,7 +35,7 @@ final class AuditLogController extends Controller
             ->dateRange($dateFrom, $dateTo)
             ->latest('id');
 
-        $logs = $query->paginate(25)->withQueryString();
+        $logs = $query->paginate(5)->withQueryString();
 
         // High-level KPI telemetry cached with multi-layer single-flight lock
         $today = now()->toDateString();

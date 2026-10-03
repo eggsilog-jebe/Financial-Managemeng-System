@@ -44,7 +44,7 @@ final class UserManagementController extends Controller
 
         $users = $query->orderBy('role')
             ->orderBy('name')
-            ->paginate(15)
+            ->paginate(5)
             ->withQueryString();
 
         $metrics = [

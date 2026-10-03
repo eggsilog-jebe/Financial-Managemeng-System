@@ -23,8 +23,9 @@ final class CheckRegisterService
     public function issueCheck(CheckIssueData $dto): CheckRegister
     {
         return DB::transaction(function () use ($dto): CheckRegister {
-            $voucher = DisbursementVoucher::findOrFail($dto->disbursementVoucherId);
-            $bank = BankAccount::findOrFail($dto->bankAccountId);
+            $voucher = DisbursementVoucher::where('id', $dto->disbursementVoucherId)->lockForUpdate()->firstOrFail();
+            // Lock bank row to serialize check-number uniqueness validation
+            $bank = BankAccount::where('id', $dto->bankAccountId)->lockForUpdate()->firstOrFail();
 
             $existing = CheckRegister::where('bank_account_id', $bank->id)
                 ->where('check_number', $dto->checkNumber)
@@ -69,7 +70,7 @@ final class CheckRegisterService
     public function clearCheck(int $checkId): CheckRegister
     {
         return DB::transaction(function () use ($checkId): CheckRegister {
-            $check = CheckRegister::findOrFail($checkId);
+            $check = CheckRegister::where('id', $checkId)->lockForUpdate()->firstOrFail();
 
             if ($check->status === 'CLEARED') {
                 throw new DomainException("Check [{$check->check_number}] is already CLEARED.");

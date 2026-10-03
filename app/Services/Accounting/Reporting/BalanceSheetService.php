@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services\Accounting\Reporting;
 
 use App\Models\Account;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 final class BalanceSheetService
@@ -22,10 +23,10 @@ final class BalanceSheetService
         $compDate = null;
 
         if ($comparison === 'prior_year') {
-            $compDate = date('Y-m-d', strtotime($cutoff . ' -1 year'));
+            $compDate = Carbon::parse($cutoff)->subYearNoOverflow()->toDateString();
             $comparisonData = $this->calculateBalancesForDate($compDate);
         } elseif ($comparison === 'prior_quarter') {
-            $compDate = date('Y-m-d', strtotime($cutoff . ' -3 months'));
+            $compDate = Carbon::parse($cutoff)->subMonthsNoOverflow(3)->toDateString();
             $comparisonData = $this->calculateBalancesForDate($compDate);
         }
 

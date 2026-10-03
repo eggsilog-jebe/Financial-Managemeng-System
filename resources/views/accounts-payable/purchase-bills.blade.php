@@ -6,6 +6,12 @@
 
 @section('content')
 <div class="space-y-6" x-data="{
+  init() {
+    this.$watch('inspectOpen', val => {
+      document.body.classList.toggle('overflow-hidden', val);
+      document.body.classList.toggle('modal-open', val);
+    });
+  },
   inspectOpen: false,
   inspectData: {
     id: null,
@@ -311,6 +317,7 @@
   </div>
 
   <!-- 3-Way Matching Visual Inspection Drawer (Blueprint 6) -->
+  <template x-teleport="body">
   <div 
     x-show="inspectOpen" 
     x-cloak 
@@ -321,7 +328,8 @@
     <div 
       x-show="inspectOpen" 
       x-transition.opacity.duration.300ms 
-      class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm"
+      class="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity"
+      @click="inspectOpen = false"
     ></div>
 
     <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
@@ -478,6 +486,7 @@
       </div>
     </div>
   </div>
+  </template>
 
   <!-- Modal: Record New Supplier Bill (With Live 3-Way Match Verification) -->
   <x-modal 

@@ -6,10 +6,10 @@
   <title>Terms and Conditions &bull; Hospital Financial Management System (HFMS)</title>
   <x-favicon />
 
-  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <!-- Google Fonts: Plus Jakarta Sans, Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- Immediate Theme Boot -->
   <script>
@@ -39,7 +39,7 @@
   x-data="{ 
     darkMode: document.documentElement.classList.contains('dark')
   }" 
-  class="min-h-full bg-slate-50 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-100 antialiased selection:bg-emerald-500 selection:text-white flex flex-col"
+  class="min-h-full bg-slate-50 dark:bg-slate-950 font-sans text-slate-800 dark:text-slate-100 antialiased selection:bg-slate-800 selection:text-white dark:selection:bg-slate-200 dark:selection:text-slate-900 flex flex-col"
 >
 
   <!-- Sticky Top Navigation Bar -->
@@ -48,21 +48,21 @@
       
       <!-- Left Logo & Breadcrumb -->
       <div class="flex items-center gap-3">
-        <a href="{{ route('login') }}" class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-500/30 text-lg hover:bg-emerald-700 transition-colors">
+        <a href="{{ route('login') }}" class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-slate-100 dark:bg-slate-800 dark:text-slate-200 ring-1 ring-slate-800 dark:ring-slate-700 shadow-xs text-base hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors" title="Return to Login">
           <i class="ph-bold ph-arrow-left"></i>
         </a>
         <div>
           <div class="flex items-center gap-2">
-            <span class="font-bold text-sm text-slate-900 dark:text-white">HFMS Compliance</span>
-            <span class="rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 font-mono">DOH NETWORK</span>
+            <span class="font-bold text-sm tracking-tight text-slate-900 dark:text-white">HFMS Compliance</span>
+            <span class="rounded border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-semibold text-slate-700 dark:text-slate-300 font-mono tracking-wider uppercase">DOH NETWORK</span>
           </div>
-          <p class="text-[11px] text-slate-400">Terms &amp; Conditions of System Use</p>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400">Terms &amp; Conditions of System Use</p>
         </div>
       </div>
 
       <!-- Right Actions -->
       <div class="flex items-center gap-2">
-        <a href="{{ route('legal.privacy') }}" class="text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+        <a href="{{ route('legal.privacy') }}" class="text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
           Privacy Policy
         </a>
 

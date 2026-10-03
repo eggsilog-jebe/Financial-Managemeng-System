@@ -19,6 +19,13 @@ final class InitializeFiscalYearRequest extends FormRequest
         return in_array($role, ['FinanceManager', 'CFO', 'FinanceDirector'], true);
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('year') && ! $this->has('fiscal_year')) {
+            $this->merge(['fiscal_year' => (string) $this->input('year')]);
+        }
+    }
+
     public function rules(): array
     {
         return [

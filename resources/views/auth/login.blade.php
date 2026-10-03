@@ -6,10 +6,10 @@
   <title>Sign in &bull; Hospital Financial Management System (FMS)</title>
   <x-favicon />
 
-  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <!-- Google Fonts: Plus Jakarta Sans, Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- Immediate Theme Boot (Default: Light, Synced with fms_theme & colorScheme) -->
   <script>
@@ -376,7 +376,7 @@
               :disabled="isLocked"
               :class="isLocked 
                 ? 'bg-slate-300 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed border border-slate-300/80 dark:border-slate-700 shadow-none' 
-                : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-900/20 focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2 dark:focus:ring-offset-slate-900 cursor-pointer'"
+                : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm ring-1 ring-emerald-600/20 focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2 dark:focus:ring-offset-slate-900 cursor-pointer'"
               class="login-submit w-full inline-flex items-center justify-center gap-2 rounded-xl py-2.5 px-4 text-sm font-semibold transition-all focus:outline-none"
             >
               <span x-show="!isLocked" class="inline-flex items-center gap-2">

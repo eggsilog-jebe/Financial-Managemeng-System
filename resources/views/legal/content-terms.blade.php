@@ -2,18 +2,18 @@
 <div class="space-y-8 text-slate-700 dark:text-slate-300 leading-relaxed text-sm">
 
   <!-- Executive Legal Header Seal -->
-  <div class="rounded-2xl border border-emerald-500/20 bg-emerald-50/60 p-5 dark:border-emerald-500/30 dark:bg-emerald-950/30">
+  <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 dark:border-slate-800 dark:bg-slate-900/60">
     <div class="flex items-start gap-4">
       <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-500/20 text-xl">
         <i class="ph-bold ph-scales"></i>
       </div>
       <div>
         <div class="flex flex-wrap items-center gap-2">
-          <span class="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-xs">Official Statutory Disclosure</span>
-          <span class="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 font-mono">GAM &bull; COA COMPLIANT</span>
-          <span class="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 font-mono">RA 11463 &bull; RA 10173</span>
+          <span class="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">Official Statutory Disclosure</span>
+          <span class="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 font-mono">GAM &bull; COA COMPLIANT</span>
+          <span class="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 font-mono">RA 11463 &bull; RA 10173</span>
         </div>
-        <h3 class="mt-1 text-base font-bold text-slate-900 dark:text-white">
+        <h3 class="mt-1 text-base font-bold tracking-tight text-slate-900 dark:text-white">
           Hospital Financial Management System (HFMS) Terms and Conditions of Use
         </h3>
         <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
@@ -26,8 +26,8 @@
   <!-- Section 1: Legal Character & Administrative Scope -->
   <section id="tc-section-1" class="space-y-3">
     <div class="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-slate-800">
-      <span class="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 font-mono text-xs font-bold text-slate-700 dark:text-slate-300">1</span>
-      <h4 class="text-base font-bold text-slate-900 dark:text-white">Legal Character, Administrative Scope &amp; Binding Nature</h4>
+      <span class="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 font-mono text-xs font-semibold text-slate-700 dark:text-slate-300">1</span>
+      <h4 class="text-base font-bold tracking-tight text-slate-900 dark:text-white">Legal Character, Administrative Scope &amp; Binding Nature</h4>
     </div>
     <p>
       These Terms and Conditions constitute a legally binding administrative contract between the <strong>Hospital Authority / Department of Health (DOH) Healthcare Network</strong> and all authorized users accessing the <strong>Hospital Financial Management System (HFMS)</strong>. Authorized users encompass hospital accounting officers, billing personnel, cashiers, medical social workers, internal auditors, system administrators, and citizens or their authorized representatives utilizing patient billing and social welfare assistance interfaces.
@@ -53,8 +53,8 @@
   <!-- Section 2: User Identification, MFA & Workstation Binding -->
   <section id="tc-section-2" class="space-y-3">
     <div class="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-slate-800">
-      <span class="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 font-mono text-xs font-bold text-slate-700 dark:text-slate-300">2</span>
-      <h4 class="text-base font-bold text-slate-900 dark:text-white">User Authentication, Workstation Binding &amp; Individual Non-Repudiation</h4>
+      <span class="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 font-mono text-xs font-semibold text-slate-700 dark:text-slate-300">2</span>
+      <h4 class="text-base font-bold tracking-tight text-slate-900 dark:text-white">User Authentication, Workstation Binding &amp; Individual Non-Repudiation</h4>
     </div>
     <p>
       In compliance with Section 3(A) and Section 17 of <strong>NPC Circular No. 2016-01</strong> (Security of Personal Data in Government Agencies):
@@ -62,7 +62,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
       <div class="rounded-xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900">
         <div class="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white mb-1">
-          <i class="ph-bold ph-key text-emerald-600 dark:text-emerald-400"></i>
+          <i class="ph-bold ph-key text-slate-700 dark:text-slate-300"></i>
           Mandatory MFA &amp; Zero Credential Sharing
         </div>
         <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
@@ -72,7 +72,7 @@
 
       <div class="rounded-xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900">
         <div class="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white mb-1">
-          <i class="ph-bold ph-desktop text-emerald-600 dark:text-emerald-400"></i>
+          <i class="ph-bold ph-desktop text-slate-700 dark:text-slate-300"></i>
           Workstation Hardware UUID Binding
         </div>
         <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
@@ -82,7 +82,7 @@
 
       <div class="rounded-xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900">
         <div class="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white mb-1">
-          <i class="ph-bold ph-prohibit text-rose-600 dark:text-rose-400"></i>
+          <i class="ph-bold ph-prohibit text-slate-700 dark:text-slate-300"></i>
           Data Export &amp; Download Prohibition
         </div>
         <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
@@ -92,7 +92,7 @@
 
       <div class="rounded-xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900">
         <div class="flex items-center gap-2 text-xs font-bold text-slate-900 dark:text-white mb-1">
-          <i class="ph-bold ph-clock-countdown text-amber-600 dark:text-amber-400"></i>
+          <i class="ph-bold ph-clock-countdown text-slate-700 dark:text-slate-300"></i>
           15-Minute Idle Session Termination
         </div>
         <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
@@ -105,8 +105,8 @@
   <!-- Section 3: COA Auditability, Immutable Logs & General Ledger Integrity -->
   <section id="tc-section-3" class="space-y-3">
     <div class="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-slate-800">
-      <span class="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 font-mono text-xs font-bold text-slate-700 dark:text-slate-300">3</span>
-      <h4 class="text-base font-bold text-slate-900 dark:text-white">Commission on Audit (COA) Auditing &amp; Ledger Immutability</h4>
+      <span class="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 font-mono text-xs font-semibold text-slate-700 dark:text-slate-300">3</span>
+      <h4 class="text-base font-bold tracking-tight text-slate-900 dark:text-white">Commission on Audit (COA) Auditing &amp; Ledger Immutability</h4>
     </div>
     <p>
       All financial transactions, patient invoices, journal vouchers, disbursement releases, cashier collections, and credit adjustments are subject to <strong>continuous, unannounced electronic auditing by the Commission on Audit (COA)</strong> pursuant to Presidential Decree No. 1445 and the Government Accounting Manual.
@@ -122,32 +122,32 @@
   <!-- Section 4: RA 11463 Malasakit Centers Act Fraud & Penal Sanctions -->
   <section id="tc-section-4" class="space-y-3">
     <div class="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-slate-800">
-      <span class="flex h-6 w-6 items-center justify-center rounded-lg bg-rose-100 dark:bg-rose-950/60 font-mono text-xs font-bold text-rose-700 dark:text-rose-400">4</span>
-      <h4 class="text-base font-bold text-slate-900 dark:text-white">Socialized Medical Assistance Integrity &amp; Statutory Penal Provisions</h4>
+      <span class="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 font-mono text-xs font-semibold text-slate-700 dark:text-slate-300">4</span>
+      <h4 class="text-base font-bold tracking-tight text-slate-900 dark:text-white">Socialized Medical Assistance Integrity &amp; Statutory Penal Provisions</h4>
     </div>
-    <div class="rounded-2xl border border-rose-300/80 bg-rose-50/70 p-4 dark:border-rose-900/60 dark:bg-rose-950/40">
-      <div class="flex items-start gap-3">
-        <i class="ph-fill ph-warning-octagon text-2xl text-rose-600 dark:text-rose-400 shrink-0 mt-0.5"></i>
-        <div class="space-y-2 text-xs text-rose-900 dark:text-rose-200">
-          <strong class="text-sm font-bold block">Statutory Warning under Section 14, Republic Act No. 11463 (Malasakit Centers Act):</strong>
-          <p class="leading-relaxed">
+    <div class="rounded-2xl border border-slate-300 dark:border-slate-800 bg-slate-50/90 dark:bg-slate-900/70 p-5 border-l-4 border-l-rose-600 dark:border-l-rose-500">
+      <div class="flex items-start gap-3.5">
+        <i class="ph-bold ph-warning-octagon text-xl text-rose-600 dark:text-rose-400 shrink-0 mt-0.5"></i>
+        <div class="space-y-2 text-xs text-slate-800 dark:text-slate-200">
+          <strong class="text-sm font-bold block text-slate-900 dark:text-white">Statutory Warning under Section 14, Republic Act No. 11463 (Malasakit Centers Act):</strong>
+          <p class="leading-relaxed text-slate-600 dark:text-slate-300">
             Any user—whether a patient, guarantor, relative, or hospital personnel—who submits falsified income declarations, fraudulent Certificates of Indigency, forged Social Case Study Reports (SCSR), or altered medical documentation to claim government medical assistance through the Malasakit Center, DOH-MAIP, DSWD-AICS, or PCSO will face immediate revocation of assistance and severe penal prosecution:
           </p>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-            <div class="bg-white/80 dark:bg-slate-900/80 p-3 rounded-xl border border-rose-200 dark:border-rose-900">
-              <span class="font-bold text-rose-700 dark:text-rose-300 block mb-1">Civil &amp; Restitution Liability</span>
-              <p class="text-[11px] text-slate-700 dark:text-slate-300">
+            <div class="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
+              <span class="font-bold text-slate-900 dark:text-white block mb-1">Civil &amp; Restitution Liability</span>
+              <p class="text-[11px] text-slate-600 dark:text-slate-400">
                 Any individual committing fraud or misrepresentation as to indigency or financial incapacity is legally liable to pay <strong>TWICE (2x) the amount of financial assistance granted</strong>.
               </p>
             </div>
-            <div class="bg-white/80 dark:bg-slate-900/80 p-3 rounded-xl border border-rose-200 dark:border-rose-900">
-              <span class="font-bold text-rose-700 dark:text-rose-300 block mb-1">Criminal Imprisonment</span>
-              <p class="text-[11px] text-slate-700 dark:text-slate-300">
+            <div class="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
+              <span class="font-bold text-slate-900 dark:text-white block mb-1">Criminal Imprisonment</span>
+              <p class="text-[11px] text-slate-600 dark:text-slate-400">
                 Perpetrators face criminal prosecution resulting in imprisonment ranging from <strong>six (6) months to two (2) years</strong>.
               </p>
             </div>
           </div>
-          <p class="text-[11px] pt-1">
+          <p class="text-[11px] pt-1 text-slate-600 dark:text-slate-400">
             <strong>Liability for Public Officers:</strong> Public officers or hospital personnel who convert Malasakit or MAIP funds, misappropriate socialized subsidies, or negligently consent to the improper disposition of assistance funds face a <strong>fine equivalent to TRIPLE (3x) the amount misappropriated per count</strong>, administrative suspension, and perpetual disqualification from public office.
           </p>
         </div>
@@ -158,8 +158,8 @@
   <!-- Section 5: Multi-Agency Routing & Limitation of Liability -->
   <section id="tc-section-5" class="space-y-3">
     <div class="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-slate-800">
-      <span class="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 font-mono text-xs font-bold text-slate-700 dark:text-slate-300">5</span>
-      <h4 class="text-base font-bold text-slate-900 dark:text-white">Inter-Agency Financial Routing &amp; Disclaimers</h4>
+      <span class="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 font-mono text-xs font-semibold text-slate-700 dark:text-slate-300">5</span>
+      <h4 class="text-base font-bold tracking-tight text-slate-900 dark:text-white">Inter-Agency Financial Routing &amp; Disclaimers</h4>
     </div>
     <p>
       The HFMS operates as a centralized consolidation and routing engine that integrates subsidies from PhilHealth (RA 11223), DOH-MAIP, DSWD-AICS, PCSO Guarantee Letters, and LGU assistance funds. Users acknowledge and agree that:
@@ -174,8 +174,8 @@
   <!-- Section 6: Public Archival & Open Audit Disallowance Blockers -->
   <section id="tc-section-6" class="space-y-3">
     <div class="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-slate-800">
-      <span class="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 font-mono text-xs font-bold text-slate-700 dark:text-slate-300">6</span>
-      <h4 class="text-base font-bold text-slate-900 dark:text-white">Archival Governance &amp; COA Disallowance Soft-Deletion Blockers</h4>
+      <span class="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 font-mono text-xs font-semibold text-slate-700 dark:text-slate-300">6</span>
+      <h4 class="text-base font-bold tracking-tight text-slate-900 dark:text-white">Archival Governance &amp; COA Disallowance Soft-Deletion Blockers</h4>
     </div>
     <p>
       In compliance with <strong>Republic Act No. 9470</strong> (National Archives of the Philippines Act of 2007) and the General Records Disposition Schedule (GRDS):

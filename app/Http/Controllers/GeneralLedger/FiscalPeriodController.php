@@ -53,6 +53,7 @@ final class FiscalPeriodController extends Controller
         return view('general-ledger.period-end-closing', [
             'periods'              => $periods,
             'selectedYear'         => $fiscalYear,
+            'availableYears'       => $allYears,
             'allYears'             => $allYears,
             'activePeriod'         => $activePeriod,
             'unpostedEntriesCount' => $unpostedEntriesCount,

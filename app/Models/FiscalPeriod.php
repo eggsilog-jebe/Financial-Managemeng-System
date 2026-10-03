@@ -32,6 +32,34 @@ final class FiscalPeriod extends Model
         return $this->belongsTo(User::class, 'closed_by');
     }
 
+    public function closedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'closed_by');
+    }
+
+    public function lockedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'closed_by');
+    }
+
+    public function getPeriodNameAttribute(): string
+    {
+        if (! empty($this->attributes['period_name'] ?? null)) {
+            return (string) $this->attributes['period_name'];
+        }
+
+        if ($this->start_date) {
+            return $this->start_date->format('F Y');
+        }
+
+        return (string) ($this->period_code ?? ('Period #' . $this->period_number));
+    }
+
+    public function getLockedAtAttribute(): ?\Carbon\Carbon
+    {
+        return $this->status === 'LOCKED' ? $this->closed_at : null;
+    }
+
     public function closingJournalEntry(): BelongsTo
     {
         return $this->belongsTo(JournalEntry::class, 'closing_journal_entry_id');

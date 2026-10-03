@@ -235,7 +235,8 @@ final class FinancialReportingModuleTest extends TestCase
 
         $response = $this->get('/financial-reporting/executive-reports?cutoff_date=2026-01-31');
         $response->assertStatus(200);
-        $response->assertSee('St. Jude General Hospital');
+        $response->assertSee('Financial Management System');
+        $response->assertDontSee('St. Jude');
         $response->assertSee('Executive Financial');
         $response->assertSee('Condensed Statement of Financial Position');
         $response->assertSee('Condensed Statement of Comprehensive Income');

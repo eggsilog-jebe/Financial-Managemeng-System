@@ -543,7 +543,7 @@
       }
     }"
   >
-    <form :action="'{{ url('/gl/journal-entries') }}/' + entryId + '/reverse'" method="POST" class="space-y-4">
+    <form :action="'{{ url('/general-ledger/journal-entries') }}/' + entryId + '/reverse'" method="POST" class="space-y-4">
       @csrf
       <p class="text-xs text-slate-600 dark:text-slate-300">
         You are reversing posted journal entry <strong class="font-mono text-slate-900 dark:text-white" x-text="ref"></strong>. 

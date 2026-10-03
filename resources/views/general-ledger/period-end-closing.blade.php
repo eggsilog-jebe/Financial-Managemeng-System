@@ -144,7 +144,7 @@
           onchange="this.form.submit()" 
           class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
         >
-          @foreach($availableYears as $year)
+          @foreach($availableYears ?? $allYears ?? [(string)date('Y')] as $year)
             <option value="{{ $year }}" {{ (int)$selectedYear === (int)$year ? 'selected' : '' }}>FY {{ $year }}</option>
           @endforeach
         </select>
@@ -267,7 +267,7 @@
       <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Fiscal Year (YYYY) <span class="text-rose-500">*</span></label>
       <input 
         type="number" 
-        name="year" 
+        name="fiscal_year" 
         value="{{ (int)date('Y') + 1 }}" 
         min="2020" 
         max="2035" 

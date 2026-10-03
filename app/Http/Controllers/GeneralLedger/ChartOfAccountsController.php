@@ -68,6 +68,7 @@ final class ChartOfAccountsController extends Controller
             'liabilityTotal' => $totals['liabilityTotal'],
             'equityTotal'    => $totals['equityTotal'],
             'revenueTotal'   => $totals['revenueTotal'],
+            'expenseTotal'   => $totals['expenseTotal'],
         ]);
     }
 

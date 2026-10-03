@@ -27,8 +27,8 @@ final class ReportBundleService
         $kpis = $this->kpiService->getKpiMetrics();
 
         return [
-            'hospital_name'   => 'St. Jude General Hospital & Medical Center',
-            'hospital_tin'    => '004-982-114-000-VAT',
+            'hospital_name'   => 'Financial Management System',
+            'hospital_tin'    => null,
             'dossier_title'   => 'Executive Financial & Operational Dossier',
             'fiscal_year'     => date('Y', strtotime($cutoff)),
             'as_of_date'      => $cutoff,
@@ -38,11 +38,7 @@ final class ReportBundleService
             'profit_and_loss' => $pnl,
             'cash_flow'       => $cashFlow,
             'kpis'            => $kpis,
-            'signatories'     => [
-                ['role' => 'Chief Accountant / Comptroller', 'name' => 'Maria Santos, CPA', 'title' => 'Comptroller & Financial Reporting Officer'],
-                ['role' => 'Finance Director', 'name' => 'Arthur Pendelton, MBA', 'title' => 'Director of Financial Operations'],
-                ['role' => 'Chief Financial Officer', 'name' => 'Dr. Victoria Valderama, MD, CFO', 'title' => 'Executive VP & Chief Financial Officer'],
-            ],
+            'signatories'     => [],
         ];
     }
 }

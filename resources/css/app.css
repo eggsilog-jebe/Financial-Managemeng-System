@@ -14,7 +14,7 @@
 @import '@phosphor-icons/web/duotone';
 
 @theme {
-    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
     /* Hospital & Healthcare Emerald / Slate Fintech Palette */
@@ -120,8 +120,8 @@ input:-webkit-autofill:focus {
 }
 
 /* ==========================================================================
-   Global Interactive Button System: Soft Subtle Glow & Surface Pop
-   Applies smooth elevation, subtle glow, micro-scale pop, and tactile press
+   Executive Interactive Button System: Serious, Restrained Micro-Elevation
+   Applies subtle elevation, zero juvenile ballooning, and crisp tactile press
    ========================================================================== */
 @layer components {
     /* Target all standard action buttons, submit buttons, and standalone action triggers (excluding sidebar navigation) */
@@ -132,13 +132,13 @@ input:-webkit-autofill:focus {
     button[type="button"]:not([disabled]):not(.sidebar-toggle-btn):not(aside button),
     a[class*="rounded"]:has(i[class*="ph"]):not([class*="pointer-events-none"]):not(.sidebar-link):not(aside a),
     button[class*="rounded"]:not([disabled]):not(.sidebar-toggle-btn):not(aside button) {
-        transition-property: all;
+        transition-property: background-color, border-color, color, box-shadow, transform;
         transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-        transition-duration: 200ms;
+        transition-duration: 150ms;
         will-change: transform, box-shadow;
     }
 
-    /* Subtle Surface Pop & Glow on Hover for Action Buttons */
+    /* Subtle, Disciplined Surface Elevation on Hover (No Scale Distortion) */
     button:not([disabled]):not([role="tab"]):not([aria-hidden="true"]):not(.sidebar-toggle-btn):not(aside button):hover,
     a.btn:hover,
     .btn:hover,
@@ -146,39 +146,18 @@ input:-webkit-autofill:focus {
     button[type="button"]:not([disabled]):not(.sidebar-toggle-btn):not(aside button):hover,
     a[class*="rounded"]:has(i[class*="ph"]):not([class*="pointer-events-none"]):not(.sidebar-link):not(aside a):hover,
     button[class*="rounded"]:not([disabled]):not(.sidebar-toggle-btn):not(aside button):hover {
-        transform: translateY(-1px) scale(1.04);
-        box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+        transform: translateY(-0.5px);
+        box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
     }
 
-    /* Specific Theme/Color Glows */
-    button[class*="bg-emerald"]:not([disabled]):hover,
-    .btn-emerald:hover {
-        box-shadow: 0 4px 14px -1px rgba(16, 185, 129, 0.35), 0 2px 6px -1px rgba(16, 185, 129, 0.2) !important;
-    }
-
-    button[class*="text-amber"]:not([disabled]):hover,
-    button[class*="bg-amber"]:not([disabled]):hover {
-        box-shadow: 0 4px 14px -1px rgba(245, 158, 11, 0.3), 0 2px 6px -1px rgba(245, 158, 11, 0.15) !important;
-    }
-
-    button[class*="text-rose"]:not([disabled]):hover,
-    button[class*="bg-rose"]:not([disabled]):hover {
-        box-shadow: 0 4px 14px -1px rgba(244, 63, 94, 0.3), 0 2px 6px -1px rgba(244, 63, 94, 0.15) !important;
-    }
-
-    button[class*="text-blue"]:not([disabled]):hover,
-    button[class*="bg-blue"]:not([disabled]):hover {
-        box-shadow: 0 4px 14px -1px rgba(59, 130, 246, 0.3), 0 2px 6px -1px rgba(59, 130, 246, 0.15) !important;
-    }
-
-    /* Tactile Press State */
+    /* Tactile Press State: Firm and Grounded */
     button:not([disabled]):not(.sidebar-toggle-btn):not(aside button):active,
     a.btn:active,
     .btn:active,
     button[type="submit"]:not([disabled]):active,
     button[type="button"]:not([disabled]):not(.sidebar-toggle-btn):not(aside button):active {
-        transform: translateY(0) scale(0.97) !important;
-        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1) !important;
+        transform: translateY(0) !important;
+        box-shadow: none !important;
     }
 
     /* Sidebar Navigation Links: Clean, Stationary, Zero-Wobble Transitions */

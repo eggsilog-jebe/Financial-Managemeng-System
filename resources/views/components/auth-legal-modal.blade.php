@@ -53,10 +53,10 @@
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <h3 id="legal-modal-title" class="text-base font-bold text-slate-900 dark:text-white">
+              <h3 id="legal-modal-title" class="text-base font-bold tracking-tight text-slate-900 dark:text-white">
                 Hospital Legal &amp; Regulatory Framework
               </h3>
-              <span class="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-mono">
+              <span class="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 font-mono">
                 PH STATUTORY
               </span>
             </div>
@@ -72,7 +72,7 @@
           <button 
             type="button" 
             onclick="window.print()" 
-            class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+            class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors cursor-pointer"
             title="Print Official Document"
           >
             <i class="ph-bold ph-printer text-sm"></i>
@@ -84,7 +84,7 @@
             :href="legalActiveTab === 'privacy' ? '{{ route('legal.privacy') }}' : '{{ route('legal.terms') }}'" 
             target="_blank" 
             rel="noopener noreferrer" 
-            class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+            class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors cursor-pointer"
             title="Open in Full Screen / New Window"
           >
             <i class="ph-bold ph-arrow-square-out text-sm"></i>
@@ -95,7 +95,7 @@
           <button 
             type="button" 
             @click="legalModalOpen = false" 
-            class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
+            class="rounded-xl p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer"
             aria-label="Close modal"
           >
             <i class="ph-bold ph-x text-lg"></i>
@@ -109,30 +109,30 @@
         <button 
           type="button" 
           @click="legalActiveTab = 'terms'" 
-          :class="legalActiveTab === 'terms' ? 'bg-white text-emerald-600 dark:bg-slate-800 dark:text-emerald-400 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'" 
-          class="flex items-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-semibold transition-all cursor-pointer"
+          :class="legalActiveTab === 'terms' ? 'bg-white text-emerald-600 dark:bg-slate-800 dark:text-emerald-400 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700 font-semibold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'" 
+          class="flex items-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-xs transition-all cursor-pointer"
         >
-          <i class="ph-bold ph-scales text-sm"></i>
+          <i class="ph-bold ph-scales text-sm" :class="legalActiveTab === 'terms' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'"></i>
           <span>Terms &amp; Conditions</span>
         </button>
 
         <button 
           type="button" 
           @click="legalActiveTab = 'privacy'" 
-          :class="legalActiveTab === 'privacy' ? 'bg-white text-emerald-600 dark:bg-slate-800 dark:text-emerald-400 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'" 
-          class="flex items-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-semibold transition-all cursor-pointer"
+          :class="legalActiveTab === 'privacy' ? 'bg-white text-emerald-600 dark:bg-slate-800 dark:text-emerald-400 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700 font-semibold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'" 
+          class="flex items-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-xs transition-all cursor-pointer"
         >
-          <i class="ph-bold ph-shield-check text-sm"></i>
+          <i class="ph-bold ph-shield-check text-sm" :class="legalActiveTab === 'privacy' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'"></i>
           <span>Privacy Policy (RA 10173)</span>
         </button>
 
         <button 
           type="button" 
           @click="legalActiveTab = 'aup'" 
-          :class="legalActiveTab === 'aup' ? 'bg-white text-emerald-600 dark:bg-slate-800 dark:text-emerald-400 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'" 
-          class="flex items-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-semibold transition-all cursor-pointer"
+          :class="legalActiveTab === 'aup' ? 'bg-white text-emerald-600 dark:bg-slate-800 dark:text-emerald-400 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700 font-semibold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium'" 
+          class="flex items-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-xs transition-all cursor-pointer"
         >
-          <i class="ph-bold ph-shield-warning text-sm"></i>
+          <i class="ph-bold ph-shield-warning text-sm" :class="legalActiveTab === 'aup' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'"></i>
           <span>Acceptable Use &amp; Penalties</span>
         </button>
       </div>
@@ -177,7 +177,7 @@
           <button 
             type="button" 
             @click="legalModalOpen = false" 
-            class="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-all cursor-pointer"
+            class="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 text-xs font-semibold shadow-sm ring-1 ring-emerald-600/20 transition-all cursor-pointer"
           >
             <i class="ph-bold ph-check text-sm"></i>
             <span>Understood</span>

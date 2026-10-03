@@ -60,21 +60,18 @@
 
   <!-- Branded Printable Dossier Container -->
   <div class="rounded-3xl bg-white p-6 sm:p-10 shadow-lg ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800 space-y-8">
-    <!-- Hospital Header -->
+    <!-- Dossier Header -->
     <div class="border-b border-slate-200 pb-6 text-center dark:border-slate-800">
       <div class="flex items-center justify-center gap-2.5 mb-2">
-        <i class="ph-bold ph-hospital text-3xl text-blue-600"></i>
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-500/30 text-xl">
+          <i class="ph-bold ph-chart-line-up"></i>
+        </div>
         <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          {{ $hospital_name ?? 'St. Jude General Hospital & Medical Center' }}
+          Financial Management System
         </h2>
       </div>
-      <div class="text-xs text-slate-500 dark:text-slate-400 space-x-2">
-        <span>TIN: {{ $hospital_tin ?? '004-982-114-000-VAT' }}</span>
-        <span>&bull;</span>
-        <span>Accredited Healthcare Provider &bull; ISO 9001:2015</span>
-      </div>
-      <div class="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800 mt-3">
-        {{ $dossier_title ?? 'Executive Financial Dossier' }} &bull; FY {{ $fiscal_year ?? date('Y') }}
+      <div class="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700 mt-2 font-mono">
+        {{ $dossier_title ?? 'Executive Financial & Operational Dossier' }} &bull; FY {{ $fiscal_year ?? date('Y') }}
       </div>
       <div class="text-xs text-slate-400 mt-1.5 font-mono">
         Period Covered: {{ $period_covered ?? date('Y-m-d') }}
@@ -213,28 +210,6 @@
       </div>
     </div>
 
-    <!-- Section 4: Sign-off & Signature Blocks -->
-    <div class="border-t border-slate-200 pt-6 dark:border-slate-800">
-      <h6 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-6 text-center">
-        Executive Financial Statement Verification &amp; Attestation
-      </h6>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
-        @foreach($signatories ?? [] as $sig)
-        <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-5 dark:border-slate-800 dark:bg-slate-800/40">
-          <div class="h-10 flex items-center justify-center">
-            <span class="font-serif italic text-slate-400 text-sm">Signed electronically</span>
-          </div>
-          <div class="border-t border-slate-300 pt-3 dark:border-slate-700">
-            <div class="font-bold text-xs text-slate-900 dark:text-white">{{ $sig['name'] }}</div>
-            <div class="text-[11px] text-slate-400">{{ $sig['title'] }}</div>
-            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 mt-2">
-              <i class="ph-bold ph-check"></i> Verified &amp; Certified
-            </span>
-          </div>
-        </div>
-        @endforeach
-      </div>
-    </div>
   </div>
 </div>
 @endsection

@@ -24,7 +24,7 @@
       </a>
       <a 
         href="{{ route('reporting.executive-reports') }}" 
-        class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 ring-1 ring-blue-600/20 transition-all cursor-pointer"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20 transition-all cursor-pointer"
       >
         <i class="ph-bold ph-briefcase"></i>
         <span>Executive Dossier</span>

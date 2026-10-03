@@ -19,14 +19,14 @@
         href="{{ route('cash.bank-accounts') }}" 
         class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
       >
-        <i class="ph-bold ph-bank text-purple-600"></i>
+        <i class="ph-bold ph-bank text-emerald-600"></i>
         <span>Bank Accounts</span>
       </a>
       <button 
         type="button" 
         id="btnNewTransfer" 
         @click="$dispatch('open-modal', 'newTransferModal')"
-        class="inline-flex items-center gap-1.5 rounded-xl bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-purple-700 ring-1 ring-purple-600/20 transition-all cursor-pointer"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20 transition-all cursor-pointer"
       >
         <i class="ph-bold ph-arrows-left-right"></i>
         <span>Execute Fund Transfer</span>
@@ -65,17 +65,17 @@
     <x-stat-card 
       title="Transfer Transactions" 
       :value="$transfers->total() ?? count($transfers ?? [])" 
-      :isCurrency="false"
+      :isCurrency="false" 
       icon="ph-files" 
-      color="purple" 
+      color="slate" 
       subtitle="Completed internal treasury transfers"
     />
     <x-stat-card 
       title="Transfer Channels" 
       value="PESONet • InstaPay • Book" 
-      :isCurrency="false"
+      :isCurrency="false" 
       icon="ph-globe-hemisphere-west" 
-      color="blue" 
+      color="emerald" 
       subtitle="Active banking rails"
     />
   </div>
@@ -98,18 +98,18 @@
             type="date" 
             name="date_from" 
             value="{{ request('date_from') }}" 
-            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-purple-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
           >
           <span class="text-xs text-slate-400">to</span>
           <input 
             type="date" 
             name="date_to" 
             value="{{ request('date_to') }}" 
-            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-purple-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
           >
           <button 
             type="submit" 
-            class="inline-flex items-center gap-1 rounded-xl bg-purple-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-purple-700 transition-all cursor-pointer"
+            class="inline-flex items-center gap-1 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-all cursor-pointer"
           >
             <i class="ph-bold ph-funnel"></i>
             <span>Filter</span>
@@ -132,7 +132,7 @@
             name="search" 
             value="{{ request('search') }}" 
             placeholder="Search reference #, bank, memo..." 
-            class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-purple-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+            class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
           >
         </div>
       </form>
@@ -157,7 +157,7 @@
           @forelse($transfers ?? [] as $t)
           <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
             <td class="py-3.5 px-4">
-              <span class="font-mono font-bold text-purple-600 dark:text-purple-400">{{ $t->reference_number }}</span>
+              <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400">{{ $t->reference_number }}</span>
               @if($t->memo)
                 <span class="block text-[11px] text-slate-400 truncate max-w-xs">{{ $t->memo }}</span>
               @endif
@@ -243,7 +243,7 @@
       <select 
         name="source_bank_account_id" 
         id="sourceBankSelect" 
-        class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-purple-500 focus:bg-white focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+        class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
         required 
         onchange="validateDifferentBanks()"
       >
@@ -263,7 +263,7 @@
       <select 
         name="destination_bank_account_id" 
         id="destBankSelect" 
-        class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-purple-500 focus:bg-white focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+        class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
         required 
         onchange="validateDifferentBanks()"
       >
@@ -288,7 +288,7 @@
             step="0.01" 
             min="0.01" 
             name="amount" 
-            class="w-full rounded-xl border-slate-200 bg-slate-50 py-2 pl-7 pr-3 text-xs font-mono font-bold text-slate-900 shadow-sm focus:border-purple-500 focus:bg-white focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white" 
+            class="w-full rounded-xl border-slate-200 bg-slate-50 py-2 pl-7 pr-3 text-xs font-mono font-bold text-slate-900 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white" 
             placeholder="0.00" 
             required
           >
@@ -302,7 +302,7 @@
         <input 
           type="date" 
           name="transfer_date" 
-          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 shadow-sm focus:border-purple-500 focus:bg-white focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
           value="{{ date('Y-m-d') }}" 
           required
         >
@@ -313,7 +313,7 @@
       <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Transfer Protocol / Channel</label>
       <select 
         name="transfer_method" 
-        class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-purple-500 focus:bg-white focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+        class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
       >
         <option value="INSTAPAY_PESONET">PESONet / InstaPay Commercial Routing</option>
         <option value="INTERNAL_BOOK_TRANSFER">Internal Bank Intragroup Book Transfer</option>
@@ -327,7 +327,7 @@
       <input 
         type="text" 
         name="memo" 
-        class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 shadow-sm focus:border-purple-500 focus:bg-white focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+        class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
         placeholder="e.g. Funding payroll account for 15th cutoff"
       >
     </div>

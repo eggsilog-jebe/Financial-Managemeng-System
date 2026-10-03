@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Official Receipt - {{ $payment->officialReceipt?->or_number ?? $payment->payment_reference }}</title>
+  <x-favicon />
   <style>
     @media print {
       body { margin: 0; padding: 10px; font-size: 11px; }

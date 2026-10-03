@@ -55,28 +55,28 @@
     <div class="flex flex-wrap items-center gap-1.5">
       <a 
         href="{{ route('accounting.reports.index', ['tab' => 'trial-balance']) }}"
-        class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all {{ $tab === 'trial-balance' ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-600/20' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800' }}"
+        class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all {{ $tab === 'trial-balance' ? 'bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-600/20' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800' }}"
       >
         <i class="ph-bold ph-scales"></i>
         <span>Trial Balance</span>
       </a>
       <a 
         href="{{ route('accounting.reports.index', ['tab' => 'pnl']) }}"
-        class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all {{ $tab === 'pnl' ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-600/20' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800' }}"
+        class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all {{ $tab === 'pnl' ? 'bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-600/20' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800' }}"
       >
         <i class="ph-bold ph-chart-line-up"></i>
         <span>Income Statement (P&amp;L)</span>
       </a>
       <a 
         href="{{ route('accounting.reports.index', ['tab' => 'balance-sheet']) }}"
-        class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all {{ $tab === 'balance-sheet' ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-600/20' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800' }}"
+        class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all {{ $tab === 'balance-sheet' ? 'bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-600/20' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800' }}"
       >
         <i class="ph-bold ph-shield-check"></i>
         <span>Balance Sheet</span>
       </a>
       <a 
         href="{{ route('accounting.reports.index', ['tab' => 'bir-schedules']) }}"
-        class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all {{ $tab === 'bir-schedules' ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-600/20' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800' }}"
+        class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all {{ $tab === 'bir-schedules' ? 'bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-600/20' : 'text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800' }}"
       >
         <i class="ph-bold ph-file-text"></i>
         <span>BIR Tax Returns</span>

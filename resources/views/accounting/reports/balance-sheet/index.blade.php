@@ -80,7 +80,7 @@
           <input 
             type="date" 
             name="as_of_date" 
-            class="rounded-xl border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 shadow-sm focus:border-blue-500 focus:bg-white focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+            class="rounded-xl border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
             value="{{ $asOfDate ?? date('Y-m-d') }}"
           >
         </div>
@@ -91,7 +91,7 @@
           </label>
           <select 
             name="comparison" 
-            class="rounded-xl border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm focus:border-blue-500 focus:bg-white focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            class="rounded-xl border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
           >
             <option value="none" {{ ($comparison ?? '') === 'none' ? 'selected' : '' }}>Standard Single Period</option>
             <option value="prior_year" {{ ($comparison ?? '') === 'prior_year' ? 'selected' : '' }}>Compare Prior Year (1 Year Prior)</option>
@@ -103,7 +103,7 @@
       <div class="flex items-center gap-2">
         <button 
           type="submit" 
-          class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 ring-1 ring-blue-600/20 transition-all cursor-pointer"
+          class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20 transition-all cursor-pointer"
         >
           <i class="ph-bold ph-arrows-clockwise"></i>
           <span>Recompute</span>

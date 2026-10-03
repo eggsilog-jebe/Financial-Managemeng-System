@@ -22,33 +22,36 @@
 ></div>
 
 <aside 
+  id="fms-sidebar"
   :class="[
     sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
     sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'
   ]"
-  class="fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-white border-r border-slate-200/80 dark:bg-slate-900 dark:border-slate-800 transition-all duration-300 ease-in-out lg:static lg:translate-x-0 select-none shadow-sm lg:shadow-none"
+  class="fixed inset-y-0 left-0 z-40 flex w-64 flex-col bg-white border-r border-slate-200/80 dark:bg-slate-900 dark:border-slate-800 lg:static lg:translate-x-0 select-none shadow-sm lg:shadow-none overflow-hidden"
   aria-label="Primary navigation"
 >
   <!-- Brand Header -->
   <div 
-    class="flex h-16 flex-shrink-0 items-center border-b border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 transition-all duration-300"
-    :class="sidebarCollapsed ? 'lg:justify-center lg:px-2 px-5 justify-between' : 'justify-between px-5'"
+    class="flex h-16 flex-shrink-0 items-center border-b border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 transition-all duration-300 ease-in-out px-4 overflow-hidden"
+    :class="sidebarCollapsed ? 'lg:justify-center' : 'justify-between'"
   >
     <!-- Brand Info (Visible when expanded or on mobile) -->
     <a 
       href="{{ url('/') }}" 
-      class="items-center gap-3 group min-w-0" 
-      :class="sidebarCollapsed ? 'flex lg:hidden' : 'flex'"
+      class="flex items-center gap-3 min-w-0 group transition-all duration-300 ease-in-out overflow-hidden"
+      :class="sidebarCollapsed ? 'lg:w-0 lg:opacity-0 lg:pointer-events-none' : 'w-auto opacity-100'"
     >
-      <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-500/20 group-hover:bg-emerald-700 transition-colors">
-        <i class="ph-bold ph-first-aid text-lg"></i>
+      <div class="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl overflow-hidden shadow-xs ring-1 ring-slate-900/5 dark:ring-white/10 group-hover:scale-105 transition-transform duration-200">
+        <img src="{{ asset('favicon.svg') }}" alt="Hospital FMS" class="h-full w-full object-contain select-none">
       </div>
-      <div class="flex flex-col min-w-0">
-        <div class="flex items-center gap-1.5">
-          <span class="font-bold text-sm tracking-tight text-slate-900 dark:text-white">FMS</span>
-          <span class="inline-flex items-center rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-500/30">HIMS</span>
+      <div 
+        class="flex flex-col min-w-0 transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap"
+        :class="sidebarCollapsed ? 'lg:max-w-0 lg:opacity-0' : 'max-w-[150px] opacity-100'"
+      >
+        <div class="flex items-center gap-1.5 leading-tight">
+          <span class="font-bold text-sm tracking-tight text-slate-900 dark:text-white">Hospital FMS</span>
         </div>
-        <span class="text-xs text-slate-500 dark:text-slate-400 truncate font-normal">Financial Core</span>
+        <span class="text-[11px] font-medium text-slate-400 dark:text-slate-500 truncate">Financial Management</span>
       </div>
     </a>
 
@@ -56,7 +59,7 @@
     <button 
       type="button" 
       @click="toggleSidebarCollapse()" 
-      class="hidden lg:inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition-colors focus:outline-none" 
+      class="sidebar-toggle-btn hidden lg:inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800 transition-all duration-300 ease-in-out focus:outline-none" 
       :title="sidebarCollapsed ? 'Expand sidebar (Ctrl+B)' : 'Minimize sidebar (Ctrl+B)'" 
       :aria-label="sidebarCollapsed ? 'Expand sidebar' : 'Minimize sidebar'"
     >
@@ -76,23 +79,30 @@
 
   <!-- Navigation Links -->
   <nav 
-    class="flex-1 overflow-y-auto py-4 space-y-1 custom-scrollbar transition-all duration-300" 
+    class="flex-1 overflow-y-auto py-4 space-y-1 custom-scrollbar transition-all duration-300 ease-in-out" 
     :class="sidebarCollapsed ? 'lg:px-2 px-3.5' : 'px-3.5'"
     aria-label="Main menu"
   >
     
+    <!-- 0. Dashboard -->
     @can('access-general-ledger')
     <a 
       href="{{ route('accounting.dashboard') }}" 
-      class="group relative flex items-center rounded-xl text-sm font-medium transition-all {{ $isDashboard ? 'bg-emerald-50 text-emerald-800 font-semibold ring-1 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800/60' }}"
-      :class="sidebarCollapsed ? 'lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5 justify-between' : 'px-3 py-2.5 justify-between'"
+      class="sidebar-link group relative flex items-center rounded-xl text-sm font-medium transition-colors duration-150 py-2.5 overflow-hidden {{ $isDashboard ? 'bg-emerald-50 text-emerald-800 font-semibold ring-1 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-slate-800/60' }}"
+      :class="sidebarCollapsed ? 'lg:px-0 lg:justify-center' : 'px-3 justify-between'"
     >
-      <div class="flex items-center gap-3 min-w-0" :class="sidebarCollapsed ? 'lg:gap-0' : 'gap-3'">
+      <div class="flex items-center min-w-0 transition-all duration-300 ease-in-out" :class="sidebarCollapsed ? 'lg:gap-0' : 'gap-3'">
         <i class="ph-bold ph-squares-four text-lg shrink-0 {{ $isDashboard ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300' }}"></i>
-        <span class="truncate" :class="{ 'lg:hidden': sidebarCollapsed }">Dashboard</span>
+        <span 
+          class="sidebar-label whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out"
+          :class="sidebarCollapsed ? 'lg:max-w-0 lg:opacity-0 lg:-translate-x-2' : 'max-w-[160px] opacity-100 translate-x-0'"
+        >Dashboard</span>
       </div>
       @if($isDashboard)
-        <span class="h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 shrink-0" :class="{ 'lg:hidden': sidebarCollapsed }"></span>
+        <span 
+          class="sidebar-indicator h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 shrink-0 transition-all duration-300 ease-in-out"
+          :class="sidebarCollapsed ? 'lg:opacity-0 lg:scale-0' : 'opacity-100 scale-100'"
+        ></span>
       @endif
 
       <!-- Floating Tooltip on Hover (Desktop Collapsed Mode) -->
@@ -111,15 +121,21 @@
     @can('access-ap-procurement')
     <a 
       href="{{ route('ap.vendors') }}" 
-      class="group relative flex items-center rounded-xl text-sm font-medium transition-all {{ $isAp ? 'bg-emerald-50 text-emerald-800 font-semibold ring-1 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50' }}"
-      :class="sidebarCollapsed ? 'lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5 justify-between' : 'px-3 py-2.5 justify-between'"
+      class="sidebar-link group relative flex items-center rounded-xl text-sm font-medium transition-colors duration-150 py-2.5 overflow-hidden {{ $isAp ? 'bg-emerald-50 text-emerald-800 font-semibold ring-1 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50' }}"
+      :class="sidebarCollapsed ? 'lg:px-0 lg:justify-center' : 'px-3 justify-between'"
     >
-      <div class="flex items-center gap-3 min-w-0" :class="sidebarCollapsed ? 'lg:gap-0' : 'gap-3'">
+      <div class="flex items-center min-w-0 transition-all duration-300 ease-in-out" :class="sidebarCollapsed ? 'lg:gap-0' : 'gap-3'">
         <i class="ph-bold ph-receipt text-lg shrink-0 {{ $isAp ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300' }}"></i>
-        <span class="truncate" :class="{ 'lg:hidden': sidebarCollapsed }">Accounts Payable</span>
+        <span 
+          class="sidebar-label whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out"
+          :class="sidebarCollapsed ? 'lg:max-w-0 lg:opacity-0 lg:-translate-x-2' : 'max-w-[160px] opacity-100 translate-x-0'"
+        >Accounts Payable</span>
       </div>
       @if($isAp)
-        <span class="h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 shrink-0" :class="{ 'lg:hidden': sidebarCollapsed }"></span>
+        <span 
+          class="sidebar-indicator h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 shrink-0 transition-all duration-300 ease-in-out"
+          :class="sidebarCollapsed ? 'lg:opacity-0 lg:scale-0' : 'opacity-100 scale-100'"
+        ></span>
       @endif
 
       <!-- Floating Tooltip on Hover (Desktop Collapsed Mode) -->
@@ -138,15 +154,21 @@
     @can('access-ar-billing')
     <a 
       href="{{ route('ar.billing') }}" 
-      class="group relative flex items-center rounded-xl text-sm font-medium transition-all {{ $isAr ? 'bg-emerald-50 text-emerald-800 font-semibold ring-1 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50' }}"
-      :class="sidebarCollapsed ? 'lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5 justify-between' : 'px-3 py-2.5 justify-between'"
+      class="sidebar-link group relative flex items-center rounded-xl text-sm font-medium transition-colors duration-150 py-2.5 overflow-hidden {{ $isAr ? 'bg-emerald-50 text-emerald-800 font-semibold ring-1 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50' }}"
+      :class="sidebarCollapsed ? 'lg:px-0 lg:justify-center' : 'px-3 justify-between'"
     >
-      <div class="flex items-center gap-3 min-w-0" :class="sidebarCollapsed ? 'lg:gap-0' : 'gap-3'">
+      <div class="flex items-center min-w-0 transition-all duration-300 ease-in-out" :class="sidebarCollapsed ? 'lg:gap-0' : 'gap-3'">
         <i class="ph-bold ph-currency-circle-dollar text-lg shrink-0 {{ $isAr ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300' }}"></i>
-        <span class="truncate" :class="{ 'lg:hidden': sidebarCollapsed }">Accounts Receivable</span>
+        <span 
+          class="sidebar-label whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out"
+          :class="sidebarCollapsed ? 'lg:max-w-0 lg:opacity-0 lg:-translate-x-2' : 'max-w-[160px] opacity-100 translate-x-0'"
+        >Accounts Receivable</span>
       </div>
       @if($isAr)
-        <span class="h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 shrink-0" :class="{ 'lg:hidden': sidebarCollapsed }"></span>
+        <span 
+          class="sidebar-indicator h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 shrink-0 transition-all duration-300 ease-in-out"
+          :class="sidebarCollapsed ? 'lg:opacity-0 lg:scale-0' : 'opacity-100 scale-100'"
+        ></span>
       @endif
 
       <!-- Floating Tooltip on Hover (Desktop Collapsed Mode) -->
@@ -165,15 +187,21 @@
     @can('access-disbursements')
     <a 
       href="{{ route('disbursement.payment-requests') }}" 
-      class="group relative flex items-center rounded-xl text-sm font-medium transition-all {{ $isDisbursement ? 'bg-emerald-50 text-emerald-800 font-semibold ring-1 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50' }}"
-      :class="sidebarCollapsed ? 'lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5 justify-between' : 'px-3 py-2.5 justify-between'"
+      class="sidebar-link group relative flex items-center rounded-xl text-sm font-medium transition-colors duration-150 py-2.5 overflow-hidden {{ $isDisbursement ? 'bg-emerald-50 text-emerald-800 font-semibold ring-1 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50' }}"
+      :class="sidebarCollapsed ? 'lg:px-0 lg:justify-center' : 'px-3 justify-between'"
     >
-      <div class="flex items-center gap-3 min-w-0" :class="sidebarCollapsed ? 'lg:gap-0' : 'gap-3'">
+      <div class="flex items-center min-w-0 transition-all duration-300 ease-in-out" :class="sidebarCollapsed ? 'lg:gap-0' : 'gap-3'">
         <i class="ph-bold ph-arrows-out text-lg shrink-0 {{ $isDisbursement ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300' }}"></i>
-        <span class="truncate" :class="{ 'lg:hidden': sidebarCollapsed }">Disbursement Management</span>
+        <span 
+          class="sidebar-label whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out"
+          :class="sidebarCollapsed ? 'lg:max-w-0 lg:opacity-0 lg:-translate-x-2' : 'max-w-[160px] opacity-100 translate-x-0'"
+        >Disbursement Management</span>
       </div>
       @if($isDisbursement)
-        <span class="h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 shrink-0" :class="{ 'lg:hidden': sidebarCollapsed }"></span>
+        <span 
+          class="sidebar-indicator h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 shrink-0 transition-all duration-300 ease-in-out"
+          :class="sidebarCollapsed ? 'lg:opacity-0 lg:scale-0' : 'opacity-100 scale-100'"
+        ></span>
       @endif
 
       <!-- Floating Tooltip on Hover (Desktop Collapsed Mode) -->
@@ -192,15 +220,21 @@
     @can('access-cashier-pos')
     <a 
       href="{{ route('collection.cashier-desk') }}" 
-      class="group relative flex items-center rounded-xl text-sm font-medium transition-all {{ $isCollection ? 'bg-emerald-50 text-emerald-800 font-semibold ring-1 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50' }}"
-      :class="sidebarCollapsed ? 'lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5 justify-between' : 'px-3 py-2.5 justify-between'"
+      class="sidebar-link group relative flex items-center rounded-xl text-sm font-medium transition-colors duration-150 py-2.5 overflow-hidden {{ $isCollection ? 'bg-emerald-50 text-emerald-800 font-semibold ring-1 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50' }}"
+      :class="sidebarCollapsed ? 'lg:px-0 lg:justify-center' : 'px-3 justify-between'"
     >
-      <div class="flex items-center gap-3 min-w-0" :class="sidebarCollapsed ? 'lg:gap-0' : 'gap-3'">
+      <div class="flex items-center min-w-0 transition-all duration-300 ease-in-out" :class="sidebarCollapsed ? 'lg:gap-0' : 'gap-3'">
         <i class="ph-bold ph-hand-coins text-lg shrink-0 {{ $isCollection ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300' }}"></i>
-        <span class="truncate" :class="{ 'lg:hidden': sidebarCollapsed }">Collection Management</span>
+        <span 
+          class="sidebar-label whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out"
+          :class="sidebarCollapsed ? 'lg:max-w-0 lg:opacity-0 lg:-translate-x-2' : 'max-w-[160px] opacity-100 translate-x-0'"
+        >Collection Management</span>
       </div>
       @if($isCollection)
-        <span class="h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 shrink-0" :class="{ 'lg:hidden': sidebarCollapsed }"></span>
+        <span 
+          class="sidebar-indicator h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 shrink-0 transition-all duration-300 ease-in-out"
+          :class="sidebarCollapsed ? 'lg:opacity-0 lg:scale-0' : 'opacity-100 scale-100'"
+        ></span>
       @endif
 
       <!-- Floating Tooltip on Hover (Desktop Collapsed Mode) -->
@@ -219,15 +253,21 @@
     @can('access-budget')
     <a 
       href="{{ route('budget.fiscal-planning') }}" 
-      class="group relative flex items-center rounded-xl text-sm font-medium transition-all {{ $isBudget ? 'bg-emerald-50 text-emerald-800 font-semibold ring-1 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50' }}"
-      :class="sidebarCollapsed ? 'lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5 justify-between' : 'px-3 py-2.5 justify-between'"
+      class="sidebar-link group relative flex items-center rounded-xl text-sm font-medium transition-colors duration-150 py-2.5 overflow-hidden {{ $isBudget ? 'bg-emerald-50 text-emerald-800 font-semibold ring-1 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50' }}"
+      :class="sidebarCollapsed ? 'lg:px-0 lg:justify-center' : 'px-3 justify-between'"
     >
-      <div class="flex items-center gap-3 min-w-0" :class="sidebarCollapsed ? 'lg:gap-0' : 'gap-3'">
+      <div class="flex items-center min-w-0 transition-all duration-300 ease-in-out" :class="sidebarCollapsed ? 'lg:gap-0' : 'gap-3'">
         <i class="ph-bold ph-calculator text-lg shrink-0 {{ $isBudget ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300' }}"></i>
-        <span class="truncate" :class="{ 'lg:hidden': sidebarCollapsed }">Budget Management</span>
+        <span 
+          class="sidebar-label whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out"
+          :class="sidebarCollapsed ? 'lg:max-w-0 lg:opacity-0 lg:-translate-x-2' : 'max-w-[160px] opacity-100 translate-x-0'"
+        >Budget Management</span>
       </div>
       @if($isBudget)
-        <span class="h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 shrink-0" :class="{ 'lg:hidden': sidebarCollapsed }"></span>
+        <span 
+          class="sidebar-indicator h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 shrink-0 transition-all duration-300 ease-in-out"
+          :class="sidebarCollapsed ? 'lg:opacity-0 lg:scale-0' : 'opacity-100 scale-100'"
+        ></span>
       @endif
 
       <!-- Floating Tooltip on Hover (Desktop Collapsed Mode) -->
@@ -246,15 +286,21 @@
     @can('access-general-ledger')
     <a 
       href="{{ route('gl.journal-entries') }}" 
-      class="group relative flex items-center rounded-xl text-sm font-medium transition-all {{ $isGl ? 'bg-emerald-50 text-emerald-800 font-semibold ring-1 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50' }}"
-      :class="sidebarCollapsed ? 'lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5 justify-between' : 'px-3 py-2.5 justify-between'"
+      class="sidebar-link group relative flex items-center rounded-xl text-sm font-medium transition-colors duration-150 py-2.5 overflow-hidden {{ $isGl ? 'bg-emerald-50 text-emerald-800 font-semibold ring-1 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50' }}"
+      :class="sidebarCollapsed ? 'lg:px-0 lg:justify-center' : 'px-3 justify-between'"
     >
-      <div class="flex items-center gap-3 min-w-0" :class="sidebarCollapsed ? 'lg:gap-0' : 'gap-3'">
+      <div class="flex items-center min-w-0 transition-all duration-300 ease-in-out" :class="sidebarCollapsed ? 'lg:gap-0' : 'gap-3'">
         <i class="ph-bold ph-book-open-text text-lg shrink-0 {{ $isGl ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300' }}"></i>
-        <span class="truncate" :class="{ 'lg:hidden': sidebarCollapsed }">General Ledger</span>
+        <span 
+          class="sidebar-label whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out"
+          :class="sidebarCollapsed ? 'lg:max-w-0 lg:opacity-0 lg:-translate-x-2' : 'max-w-[160px] opacity-100 translate-x-0'"
+        >General Ledger</span>
       </div>
       @if($isGl)
-        <span class="h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 shrink-0" :class="{ 'lg:hidden': sidebarCollapsed }"></span>
+        <span 
+          class="sidebar-indicator h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 shrink-0 transition-all duration-300 ease-in-out"
+          :class="sidebarCollapsed ? 'lg:opacity-0 lg:scale-0' : 'opacity-100 scale-100'"
+        ></span>
       @endif
 
       <!-- Floating Tooltip on Hover (Desktop Collapsed Mode) -->
@@ -273,15 +319,21 @@
     @can('access-financial-reports')
     <a 
       href="{{ route('reporting.balance-sheet') }}" 
-      class="group relative flex items-center rounded-xl text-sm font-medium transition-all {{ $isReporting ? 'bg-emerald-50 text-emerald-800 font-semibold ring-1 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50' }}"
-      :class="sidebarCollapsed ? 'lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5 justify-between' : 'px-3 py-2.5 justify-between'"
+      class="sidebar-link group relative flex items-center rounded-xl text-sm font-medium transition-colors duration-150 py-2.5 overflow-hidden {{ $isReporting ? 'bg-emerald-50 text-emerald-800 font-semibold ring-1 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50' }}"
+      :class="sidebarCollapsed ? 'lg:px-0 lg:justify-center' : 'px-3 justify-between'"
     >
-      <div class="flex items-center gap-3 min-w-0" :class="sidebarCollapsed ? 'lg:gap-0' : 'gap-3'">
+      <div class="flex items-center min-w-0 transition-all duration-300 ease-in-out" :class="sidebarCollapsed ? 'lg:gap-0' : 'gap-3'">
         <i class="ph-bold ph-chart-line-up text-lg shrink-0 {{ $isReporting ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300' }}"></i>
-        <span class="truncate" :class="{ 'lg:hidden': sidebarCollapsed }">Financial Reporting</span>
+        <span 
+          class="sidebar-label whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out"
+          :class="sidebarCollapsed ? 'lg:max-w-0 lg:opacity-0 lg:-translate-x-2' : 'max-w-[160px] opacity-100 translate-x-0'"
+        >Financial Reporting</span>
       </div>
       @if($isReporting)
-        <span class="h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 shrink-0" :class="{ 'lg:hidden': sidebarCollapsed }"></span>
+        <span 
+          class="sidebar-indicator h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 shrink-0 transition-all duration-300 ease-in-out"
+          :class="sidebarCollapsed ? 'lg:opacity-0 lg:scale-0' : 'opacity-100 scale-100'"
+        ></span>
       @endif
 
       <!-- Floating Tooltip on Hover (Desktop Collapsed Mode) -->
@@ -300,15 +352,21 @@
     @can('access-cash-management')
     <a 
       href="{{ route('cash.bank-accounts') }}" 
-      class="group relative flex items-center rounded-xl text-sm font-medium transition-all {{ $isCash ? 'bg-emerald-50 text-emerald-800 font-semibold ring-1 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50' }}"
-      :class="sidebarCollapsed ? 'lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5 justify-between' : 'px-3 py-2.5 justify-between'"
+      class="sidebar-link group relative flex items-center rounded-xl text-sm font-medium transition-colors duration-150 py-2.5 overflow-hidden {{ $isCash ? 'bg-emerald-50 text-emerald-800 font-semibold ring-1 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50' }}"
+      :class="sidebarCollapsed ? 'lg:px-0 lg:justify-center' : 'px-3 justify-between'"
     >
-      <div class="flex items-center gap-3 min-w-0" :class="sidebarCollapsed ? 'lg:gap-0' : 'gap-3'">
+      <div class="flex items-center min-w-0 transition-all duration-300 ease-in-out" :class="sidebarCollapsed ? 'lg:gap-0' : 'gap-3'">
         <i class="ph-bold ph-coins text-lg shrink-0 {{ $isCash ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300' }}"></i>
-        <span class="truncate" :class="{ 'lg:hidden': sidebarCollapsed }">Cash &amp; Banking</span>
+        <span 
+          class="sidebar-label whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out"
+          :class="sidebarCollapsed ? 'lg:max-w-0 lg:opacity-0 lg:-translate-x-2' : 'max-w-[160px] opacity-100 translate-x-0'"
+        >Cash &amp; Banking</span>
       </div>
       @if($isCash)
-        <span class="h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 shrink-0" :class="{ 'lg:hidden': sidebarCollapsed }"></span>
+        <span 
+          class="sidebar-indicator h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 shrink-0 transition-all duration-300 ease-in-out"
+          :class="sidebarCollapsed ? 'lg:opacity-0 lg:scale-0' : 'opacity-100 scale-100'"
+        ></span>
       @endif
 
       <!-- Floating Tooltip on Hover (Desktop Collapsed Mode) -->
@@ -327,19 +385,25 @@
     @can('access-user-management')
     <a 
       href="{{ route('user-security.users') }}" 
-      class="group relative flex items-center rounded-xl text-sm font-medium transition-all {{ $isUserSecurity ? 'bg-emerald-50 text-emerald-800 font-semibold ring-1 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50' }}"
-      :class="sidebarCollapsed ? 'lg:justify-center lg:px-0 lg:py-2.5 px-3 py-2.5 justify-between' : 'px-3 py-2.5 justify-between'"
+      class="sidebar-link group relative flex items-center rounded-xl text-sm font-medium transition-colors duration-150 py-2.5 overflow-hidden {{ $isUserSecurity ? 'bg-emerald-50 text-emerald-800 font-semibold ring-1 ring-emerald-600/20 dark:bg-emerald-950/50 dark:text-emerald-300 dark:ring-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50' }}"
+      :class="sidebarCollapsed ? 'lg:px-0 lg:justify-center' : 'px-3 justify-between'"
     >
-      <div class="flex items-center gap-3 min-w-0" :class="sidebarCollapsed ? 'lg:gap-0' : 'gap-3'">
+      <div class="flex items-center min-w-0 transition-all duration-300 ease-in-out" :class="sidebarCollapsed ? 'lg:gap-0' : 'gap-3'">
         <i class="ph-bold ph-shield-check text-lg shrink-0 {{ $isUserSecurity ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 group-hover:text-slate-600 dark:text-slate-500 dark:group-hover:text-slate-300' }}"></i>
-        <span class="truncate" :class="{ 'lg:hidden': sidebarCollapsed }">User &amp; Security</span>
+        <span 
+          class="sidebar-label whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out"
+          :class="sidebarCollapsed ? 'lg:max-w-0 lg:opacity-0 lg:-translate-x-2' : 'max-w-[160px] opacity-100 translate-x-0'"
+        >User &amp; Security</span>
       </div>
-      <div class="flex items-center gap-1.5" :class="{ 'lg:hidden': sidebarCollapsed }">
+      <div 
+        class="flex items-center gap-1.5 transition-all duration-300 ease-in-out"
+        :class="sidebarCollapsed ? 'lg:max-w-0 lg:opacity-0 lg:scale-0' : 'max-w-[60px] opacity-100 scale-100'"
+      >
         @if(($pendingWorkstationsCount ?? 0) > 0)
           <span class="rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 ring-1 ring-amber-600/20 dark:bg-amber-950/60 dark:text-amber-300">{{ $pendingWorkstationsCount }}</span>
         @endif
         @if($isUserSecurity)
-          <span class="h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 shrink-0"></span>
+          <span class="sidebar-indicator h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 shrink-0"></span>
         @endif
       </div>
 
@@ -371,22 +435,32 @@
 
   <!-- Sidebar Footer: System Status & Version Badge -->
   <div 
-    class="p-3 border-t border-slate-200/80 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/60 transition-all duration-300"
+    class="p-3 border-t border-slate-200/80 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/60 transition-all duration-300 ease-in-out overflow-hidden"
     :class="sidebarCollapsed ? 'lg:p-2 lg:flex lg:justify-center' : ''"
   >
     <div 
-      class="flex items-center justify-between px-2 py-1 text-[11px] text-slate-500 dark:text-slate-400"
+      class="flex items-center justify-between px-2 py-1 text-[11px] text-slate-500 dark:text-slate-400 w-full transition-all duration-300 ease-in-out"
       :class="sidebarCollapsed ? 'lg:px-0 lg:justify-center' : ''"
       :title="sidebarCollapsed ? 'Terminal Online • v2.4 CAS' : ''"
     >
       <div class="flex items-center gap-2" :class="sidebarCollapsed ? 'lg:gap-0' : ''">
-        <span class="relative flex h-2 w-2">
+        <span class="relative flex h-2 w-2 shrink-0">
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
           <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
         </span>
-        <span class="font-medium text-slate-600 dark:text-slate-300" :class="{ 'lg:hidden': sidebarCollapsed }">Terminal Online</span>
+        <span 
+          class="font-medium text-slate-600 dark:text-slate-300 whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out"
+          :class="sidebarCollapsed ? 'lg:max-w-0 lg:opacity-0' : 'max-w-[120px] opacity-100'"
+        >
+          Terminal Online
+        </span>
       </div>
-      <span class="font-mono text-[10px] text-slate-400" :class="{ 'lg:hidden': sidebarCollapsed }">v2.4 CAS</span>
+      <span 
+        class="font-mono text-[10px] text-slate-400 whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out"
+        :class="sidebarCollapsed ? 'lg:max-w-0 lg:opacity-0' : 'max-w-[80px] opacity-100'"
+      >
+        v2.4 CAS
+      </span>
     </div>
   </div>
 </aside>

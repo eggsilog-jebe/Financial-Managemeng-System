@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BIR Form 2307 - Certificate of Creditable Tax Withheld</title>
+  <x-favicon />
   <style>
     @media print {
       body { margin: 0; padding: 10px; font-size: 11px; }

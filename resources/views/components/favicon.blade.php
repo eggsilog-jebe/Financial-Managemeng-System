@@ -1,0 +1,14 @@
+@props(['version' => '1.0'])
+
+<!-- Favicon & Universal Brand Icons (HIMS • FMS) -->
+<link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}?v={{ $version }}">
+<link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}?v={{ $version }}">
+<link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}?v={{ $version }}">
+<link rel="shortcut icon" href="{{ asset('favicon.ico') }}?v={{ $version }}">
+<link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}?v={{ $version }}">
+<link rel="manifest" href="{{ asset('site.webmanifest') }}">
+<meta name="theme-color" content="#059669">
+<meta name="apple-mobile-web-app-title" content="HIMS &bull; FMS">
+<meta name="application-name" content="Hospital Financial Management System">
+<meta name="msapplication-TileColor" content="#059669">
+<meta name="msapplication-config" content="{{ asset('browserconfig.xml') }}">

@@ -46,7 +46,7 @@
     $submitBtnClass = match($submitVariant) {
         'warning', 'amber' => 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm ring-1 ring-amber-600/20',
         'danger', 'rose'   => 'bg-rose-600 hover:bg-rose-700 text-white shadow-sm ring-1 ring-rose-600/20',
-        'blue', 'primary'  => 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm ring-1 ring-blue-600/20',
+        'blue'             => 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm ring-1 ring-blue-600/20',
         'slate', 'dark'    => 'bg-slate-800 hover:bg-slate-900 text-white shadow-sm ring-1 ring-slate-700',
         default            => 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm ring-1 ring-emerald-600/20',
     };

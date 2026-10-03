@@ -591,7 +591,7 @@
                 @if($status === 'CLOSED')
                   <form method="POST" action="{{ route('collection.shifts.reconcile', $t->id) }}" class="inline">
                     @csrf
-                    <button class="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 transition-all" type="submit" title="Reconcile as Supervisor">
+                    <button class="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-all cursor-pointer" type="submit" title="Reconcile as Supervisor">
                       <i class="ph ph-shield-check"></i> Reconcile
                     </button>
                   </form>

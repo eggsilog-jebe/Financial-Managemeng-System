@@ -20,14 +20,14 @@
         onclick="alert('Viewing Department Summary Chart...');" 
         class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
       >
-        <i class="ph-bold ph-chart-pie-slice text-blue-600"></i>
+        <i class="ph-bold ph-chart-pie-slice text-emerald-600"></i>
         <span>Department Summary</span>
       </button>
       <button 
         type="button" 
         id="btnEditDept"
         @click="$dispatch('open-modal', 'editDepartmentModal')"
-        class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 ring-1 ring-blue-600/20 transition-all cursor-pointer"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20 transition-all cursor-pointer"
       >
         <i class="ph-bold ph-pencil-line"></i>
         <span>Set Department Cap</span>
@@ -109,7 +109,7 @@
           </div>
           <select 
             id="wingSelect" 
-            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-blue-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
           >
             <option value="" selected>All Hospital Wings</option>
             <option value="cardiology">Clinical (Cardiology &amp; ICU)</option>
@@ -122,7 +122,7 @@
           </div>
           <select 
             id="burnRateSelect" 
-            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-blue-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
           >
             <option value="" selected>All Burn Statuses</option>
             <option value="normal">Normal (&lt; 75%)</option>
@@ -137,7 +137,7 @@
           <input 
             type="search" 
             id="deptSearchInput" 
-            class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-blue-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700" 
+            class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700" 
             placeholder="Search department, head, code..."
           >
         </div>
@@ -168,10 +168,10 @@
               'spent' => '₱' . number_format($d->amount_spent ?? 0, 2),
               'available' => '₱' . number_format(($d->budget_cap ?? 0) - ($d->amount_spent ?? 0), 2),
               'burn' => number_format($d->burn_rate ?? 0, 1) . '%',
-              'burn_val' => $d->burn_rate ?? 0, 'burn_class' => 'bg-blue-600', 'burn_status' => 'normal',
+              'burn_val' => $d->burn_rate ?? 0, 'burn_class' => 'bg-emerald-600', 'burn_status' => 'normal',
             ];
             $burnPct = (float) $dArr['burn_val'];
-            $barColor = $burnPct > 85 ? 'bg-rose-500' : ($burnPct > 70 ? 'bg-amber-500' : 'bg-blue-600');
+            $barColor = $burnPct > 85 ? 'bg-rose-500' : ($burnPct > 70 ? 'bg-amber-500' : 'bg-emerald-600');
           @endphp
           <tr 
             class="dept-row hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors cursor-pointer" 
@@ -316,7 +316,7 @@
       </label>
       <select 
         id="modalDeptSelect" 
-        class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-blue-500 focus:bg-white focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+        class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
         required
       >
         <option value="Cardiology & ICU Care">Cardiology &amp; ICU Care (Dr. Alejandro Santos)</option>
@@ -336,7 +336,7 @@
           id="modalDeptCap" 
           step="0.01" 
           min="0" 
-          class="w-full rounded-xl border-slate-200 bg-slate-50 py-2 pl-7 pr-3 text-xs font-mono font-bold text-slate-900 shadow-sm focus:border-blue-500 focus:bg-white focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 py-2 pl-7 pr-3 text-xs font-mono font-bold text-slate-900 shadow-sm focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:border-slate-700 dark:bg-slate-800 dark:text-white" 
           value="28000000.00" 
           required
         >

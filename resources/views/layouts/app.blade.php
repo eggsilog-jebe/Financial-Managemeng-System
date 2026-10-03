@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="color-scheme" content="light dark">
     <title>@yield('title', 'Financial Management System (FMS)')</title>
-    <link rel="icon" href="{{ asset('favicon.ico') }}">
+    <x-favicon />
 
     <!-- Google Fonts: Inter & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -71,6 +71,39 @@
       })();
     </script>
 
+    <!-- Preload Transition Guard & Instant Collapsed Layout Stability -->
+    <style id="fms-preload-guard">
+      /* Disable transition flicker during initial page paint */
+      html.fms-preload *,
+      html.fms-preload *::before,
+      html.fms-preload *::after {
+        transition: none !important;
+        animation-duration: 0.001ms !important;
+      }
+      /* Instant sidebar collapsed layout before Alpine boots */
+      html.sidebar-collapsed aside#fms-sidebar {
+        width: 5rem !important;
+      }
+      html.sidebar-collapsed aside#fms-sidebar .sidebar-label,
+      html.sidebar-collapsed aside#fms-sidebar .sidebar-indicator,
+      html.sidebar-collapsed aside#fms-sidebar .sidebar-brand-text {
+        display: none !important;
+      }
+      html.sidebar-collapsed aside#fms-sidebar .sidebar-link {
+        justify-content: center !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+      }
+    </style>
+    <script>
+      document.documentElement.classList.add('fms-preload');
+      window.addEventListener('DOMContentLoaded', function() {
+        requestAnimationFrame(function() {
+          document.documentElement.classList.remove('fms-preload');
+        });
+      });
+    </script>
+
     <!-- Tailwind CSS v4 & Localized Alpine.js / Phosphor Icons Bundle -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -116,6 +149,18 @@
     data-module="@yield('module', 'main')" 
     data-page="@yield('page', 'dashboard')"
   >
+    <!-- Executive Top Loading Progress Bar -->
+    <div 
+      id="fms-top-progress" 
+      class="fixed top-0 left-0 right-0 h-[2.5px] z-[9999] pointer-events-none transition-opacity duration-200 opacity-0"
+      aria-hidden="true"
+    >
+      <div 
+        id="fms-top-progress-bar" 
+        class="h-full w-0 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-600 shadow-[0_0_10px_rgba(16,185,129,0.7)] transition-all duration-300 ease-out"
+      ></div>
+    </div>
+
     <div class="min-h-screen flex bg-slate-50 dark:bg-slate-950 transition-colors">
       <!-- Master Navigation Sidebar -->
       @include('partials.sidebar')
@@ -124,7 +169,7 @@
       <div class="flex-1 flex flex-col min-w-0 overflow-x-hidden">
         @include('partials.headbar')
 
-        <main class="flex-1 w-full px-6 lg:px-8 py-6" id="main-content">
+        <main class="flex-1 w-full px-6 lg:px-8 py-6 animate-fade-in" id="main-content">
           @yield('content')
         </main>
 
@@ -361,6 +406,59 @@
 
     <!-- Session Security & Idle Timeout Monitor -->
     <script src="{{ asset('assets/js/auth/idle-monitor.js') }}"></script>
+
+    <!-- Executive Page Navigation & Sidebar Loading Transition Controller -->
+    <script>
+      (function() {
+        const progressBar = document.getElementById('fms-top-progress-bar');
+        const progressContainer = document.getElementById('fms-top-progress');
+
+        function startProgress() {
+          if (!progressBar || !progressContainer) return;
+          progressBar.style.transition = 'width 300ms cubic-bezier(0.1, 0.7, 0.1, 1)';
+          progressContainer.style.opacity = '1';
+          progressBar.style.width = '75%';
+        }
+
+        function completeProgress() {
+          if (!progressBar || !progressContainer) return;
+          progressBar.style.transition = 'width 140ms ease-out';
+          progressBar.style.width = '100%';
+          setTimeout(() => {
+            progressContainer.style.opacity = '0';
+            setTimeout(() => {
+              progressBar.style.transition = 'none';
+              progressBar.style.width = '0%';
+            }, 180);
+          }, 140);
+          document.querySelectorAll('.sidebar-link.is-navigating').forEach(el => el.classList.remove('is-navigating'));
+        }
+
+        // Complete progress on initial page load and when restored from bfcache
+        window.addEventListener('pageshow', completeProgress);
+
+        // Immediate tactile feedback on navigation clicks
+        document.addEventListener('click', function(e) {
+          const link = e.target.closest('a');
+          if (!link) return;
+          if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+          if (link.target && link.target !== '_self') return;
+          const hrefAttr = link.getAttribute('href');
+          if (!hrefAttr || hrefAttr.startsWith('#') || hrefAttr.startsWith('javascript:')) return;
+          if (link.hasAttribute('download')) return;
+
+          try {
+            const url = new URL(link.href, window.location.origin);
+            if (url.origin === window.location.origin && (url.pathname !== window.location.pathname || url.search !== window.location.search)) {
+              startProgress();
+              if (link.classList.contains('sidebar-link')) {
+                link.classList.add('is-navigating');
+              }
+            }
+          } catch (err) {}
+        });
+      })();
+    </script>
 
     @stack('scripts')
   </body>

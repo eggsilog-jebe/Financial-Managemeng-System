@@ -389,7 +389,7 @@
           <button 
             type="button" 
             onclick="alert('Exporting Official BIR Form 2307 PDF...');"
-            class="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 ring-1 ring-indigo-600/20"
+            class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20"
           >
             <i class="ph-bold ph-printer"></i>
             <span>Print 2307 PDF</span>
@@ -405,7 +405,7 @@
     title="Issue BIR Form 2307 Withholding Certificate" 
     subtitle="Creditable withholding tax at source certificate generation" 
     icon="ph-receipt" 
-    iconVariant="indigo" 
+    iconVariant="emerald" 
     size="xl" 
     :showFooter="false"
   >
@@ -516,7 +516,7 @@
           </button>
           <button 
             type="submit" 
-            class="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 ring-1 ring-indigo-600/20"
+            class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20"
           >
             <i class="ph-bold ph-printer"></i>
             <span>Generate &amp; Sign 2307 PDF</span>

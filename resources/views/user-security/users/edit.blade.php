@@ -32,14 +32,14 @@
 
     {{-- Current Info Badge --}}
     <div class="flex items-center gap-4 rounded-xl border border-slate-100 bg-slate-50 p-4 mb-6 dark:border-slate-800 dark:bg-slate-950/60">
-      <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-600 font-bold text-white shadow-sm text-sm">
+      <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-600 font-bold text-white shadow-sm text-sm">
         {{ strtoupper(substr($user->name, 0, 2)) }}
       </div>
       <div class="min-w-0 flex-1">
         <div class="text-sm font-bold text-slate-900 dark:text-white truncate">{{ $user->name }}</div>
         <div class="text-xs font-mono text-slate-500 dark:text-slate-400 truncate">{{ $user->email }}</div>
         <div class="mt-1.5 flex items-center gap-2">
-          <span class="inline-flex items-center gap-1 rounded-md bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700 ring-1 ring-inset ring-blue-700/10 dark:bg-blue-950/60 dark:text-blue-300 dark:ring-blue-500/20">
+          <span class="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-700/10 dark:bg-emerald-950/60 dark:text-emerald-300 dark:ring-emerald-500/20">
             <i class="ph ph-shield-check text-[10px]"></i>
             {{ $user->roleLabel() }}
           </span>

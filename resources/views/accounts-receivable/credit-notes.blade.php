@@ -18,7 +18,7 @@
       <button 
         type="button" 
         @click="$dispatch('open-modal', 'createCreditNoteModal')"
-        class="inline-flex items-center gap-1.5 rounded-xl bg-purple-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-purple-700 ring-1 ring-purple-600/20 transition-all cursor-pointer"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20 transition-all cursor-pointer"
       >
         <i class="ph-bold ph-plus-circle"></i>
         <span>Issue Credit Adjustment</span>
@@ -79,7 +79,7 @@
           </div>
           <select 
             name="status" 
-            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-purple-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
             onchange="this.form.submit()"
           >
             <option value="" {{ request('status') === null || request('status') === '' ? 'selected' : '' }}>All Statuses</option>
@@ -96,7 +96,7 @@
           <input 
             type="search" 
             name="search" 
-            class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-purple-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700" 
+            class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700" 
             placeholder="Search CN #, invoice, patient..." 
             value="{{ request('search') }}"
           >
@@ -205,7 +205,7 @@
   title="Issue Credit Note & Statutory Discount" 
   subtitle="Apply Senior Citizen / PWD 20% discount, charity relief, or balance write-offs" 
   icon="ph-receipt-x" 
-  iconVariant="purple" 
+  iconVariant="emerald" 
   size="lg" 
   :scrollable="true" 
   :centered="true" 
@@ -225,7 +225,7 @@
         <select 
           name="invoice_id" 
           id="target_invoice_select" 
-          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-purple-500 focus:bg-white focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
           required
         >
           <option value="" data-gross="0" data-balance="0" data-has-statutory="0" data-statutory-type="" data-statutory-ref="">-- Choose Open Patient Invoice --</option>
@@ -255,7 +255,7 @@
         <select 
           name="reason" 
           id="credit_reason_select" 
-          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-purple-500 focus:bg-white focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
           required
         >
           <option value="SENIOR_CITIZEN_DISCOUNT">Statutory Senior Citizen Discount (20%)</option>
@@ -350,7 +350,7 @@
             min="0.01" 
             name="amount" 
             id="credit_amount_input" 
-            class="w-full rounded-xl border-slate-200 bg-slate-50 py-2 pl-7 pr-3 text-xs font-mono font-bold text-rose-600 shadow-sm focus:border-purple-500 focus:bg-white focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-rose-400" 
+            class="w-full rounded-xl border-slate-200 bg-slate-50 py-2 pl-7 pr-3 text-xs font-mono font-bold text-rose-600 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-rose-400" 
             placeholder="0.00" 
             required
           >
@@ -368,7 +368,7 @@
           type="date" 
           name="issue_date" 
           id="issue_date_input" 
-          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-purple-500 focus:bg-white focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
           value="{{ date('Y-m-d') }}" 
           required
         >
@@ -383,7 +383,7 @@
         name="save_as_draft" 
         value="1" 
         checked 
-        class="h-4 w-4 rounded border-slate-300 text-purple-600 focus:ring-purple-500 dark:border-slate-700 dark:bg-slate-800"
+        class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800"
       >
       <label class="text-xs text-slate-600 dark:text-slate-400" for="save_as_draft">
         Save as Draft for Management Approval (Uncheck for immediate posting if authorized)

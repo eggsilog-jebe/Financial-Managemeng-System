@@ -19,13 +19,13 @@
         href="{{ route('user-security.audit-trail') }}" 
         class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
       >
-        <i class="ph-bold ph-clock-countdown text-blue-600"></i>
+        <i class="ph-bold ph-clock-countdown text-emerald-600"></i>
         <span>Audit Trail</span>
       </a>
       <a 
         href="{{ route('user-security.users.create') }}" 
         id="btn-add-user"
-        class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 ring-1 ring-blue-600/20 transition-all cursor-pointer"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20 transition-all cursor-pointer"
       >
         <i class="ph-bold ph-user-plus"></i>
         <span>Add Personnel User</span>

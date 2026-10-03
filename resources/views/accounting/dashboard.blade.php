@@ -44,9 +44,6 @@
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
       <h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Executive Financial Overview</h1>
-      <p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-        Executive financial overview · <span class="font-medium">{{ now()->format('l, F d Y') }}</span>
-      </p>
     </div>
     <div class="flex items-center gap-2">
       <a href="{{ route('accounting.reports.index') }}"

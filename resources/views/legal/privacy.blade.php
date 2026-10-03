@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Privacy Policy &bull; Hospital Financial Management System (HFMS)</title>
-  <link rel="icon" href="{{ asset('favicon.ico') }}">
+  <x-favicon />
 
   <!-- Google Fonts: Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">

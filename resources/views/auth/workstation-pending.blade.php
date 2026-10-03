@@ -6,7 +6,7 @@
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>Workstation Authorization Pending &mdash; HIMS &bull; FMS</title>
   <meta name="description" content="This computer is not yet authorized. An authorization request has been dispatched in real-time to the Super Administrator.">
-  <link rel="icon" href="{{ asset('favicon.ico') }}">
+  <x-favicon />
 
   <!-- Google Fonts: Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">

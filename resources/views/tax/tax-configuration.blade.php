@@ -20,14 +20,14 @@
         onclick="alert('Syncing tax rates with BIR online portal...');" 
         class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
       >
-        <i class="ph-bold ph-arrow-counter-clockwise text-indigo-600"></i>
+        <i class="ph-bold ph-arrow-counter-clockwise text-emerald-600"></i>
         <span>Sync Tax Rates</span>
       </button>
       <button 
         type="button" 
         id="btnAddTaxRule" 
         @click="$dispatch('open-modal', 'addTaxRuleModal')"
-        class="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 ring-1 ring-indigo-600/20 transition-all cursor-pointer"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20 transition-all cursor-pointer"
       >
         <i class="ph-bold ph-plus-circle"></i>
         <span>Add Tax Rate Rule</span>
@@ -116,7 +116,7 @@
           </div>
           <select 
             id="taxCatSelect" 
-            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-indigo-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
           >
             <option value="" selected>All Tax Categories</option>
             <option value="ewt">Expanded Withholding Tax (EWT)</option>
@@ -129,7 +129,7 @@
           </div>
           <select 
             id="taxStatusSelect" 
-            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-indigo-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
           >
             <option value="" selected>All Statuses</option>
             <option value="active">Active Rules</option>
@@ -145,7 +145,7 @@
             type="search" 
             id="taxSearchInput" 
             placeholder="Search tax code, ATC, scope..." 
-            class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+            class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
           >
         </div>
       </div>
@@ -255,7 +255,7 @@
       </span>
       <nav class="flex items-center gap-1">
         <button class="inline-flex items-center justify-center px-2 py-1 rounded text-xs text-slate-400 cursor-not-allowed">Previous</button>
-        <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-600 text-white">1</span>
+        <span class="inline-flex items-center justify-center px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-600 text-white">1</span>
         <button class="inline-flex items-center justify-center px-2 py-1 rounded text-xs text-slate-400 cursor-not-allowed">Next</button>
       </nav>
     </div>
@@ -340,7 +340,7 @@
     <button 
       type="button" 
       onclick="alert('Exporting Tax Rule Configuration Schedule...');" 
-      class="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 transition-all cursor-pointer"
+      class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-all cursor-pointer"
     >
       <i class="ph-bold ph-file-text"></i>
       <span>Export Rule Audit</span>
@@ -370,7 +370,7 @@
           type="text" 
           name="tax_code" 
           id="modalTaxCode" 
-          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-mono font-bold text-slate-900 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-mono font-bold text-slate-900 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white" 
           placeholder="e.g. WC158" 
           required
         >
@@ -384,7 +384,7 @@
           type="text" 
           name="name" 
           id="modalTaxName" 
-          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
           placeholder="e.g. EWT - Medical Goods 1%" 
           required
         >
@@ -400,7 +400,7 @@
           type="text" 
           name="atc_code" 
           id="modalTaxAtc" 
-          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-mono font-bold text-slate-900 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-mono font-bold text-slate-900 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white" 
           placeholder="e.g. WC158" 
           required
         >
@@ -413,7 +413,7 @@
         <select 
           name="category" 
           id="modalTaxCategory" 
-          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
           required
         >
           <option value="WITHHOLDING_TAX">Expanded Withholding Tax (EWT)</option>
@@ -435,7 +435,7 @@
           step="0.0001" 
           min="0" 
           max="100" 
-          class="w-full rounded-xl border-slate-200 bg-slate-50 py-2 px-3 text-xs font-mono font-bold text-slate-900 text-right shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 py-2 px-3 text-xs font-mono font-bold text-slate-900 text-right shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white" 
           placeholder="0.0100" 
           value="0.0100" 
           required
@@ -450,7 +450,7 @@
           type="text" 
           name="scope" 
           id="modalTaxScope" 
-          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
           placeholder="e.g. Hospital suppliers of goods"
         >
       </div>

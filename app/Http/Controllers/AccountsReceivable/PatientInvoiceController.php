@@ -43,8 +43,12 @@ final class PatientInvoiceController extends Controller
 
         $totalBilled = Invoice::sum('total_amount');
         $totalPending = Invoice::whereIn('status', ['UNPAID', 'PARTIAL'])->sum('patient_payable');
-        $totalPaid = Invoice::where('status', 'PAID')->orWhere('status', 'SETTLED')->sum('total_amount');
-        $patients = PatientAccount::where('status', 'Active')->orderBy('full_name')->get();
+        $totalPaid = Invoice::whereIn('status', ['PAID', 'SETTLED'])->sum('total_amount');
+        $patients = PatientAccount::query()
+            ->where('status', 'Active')
+            ->select(['id', 'full_name', 'patient_id_number'])
+            ->orderBy('full_name')
+            ->get();
 
         return view('accounts-receivable.invoicing-billing', compact(
             'invoices',

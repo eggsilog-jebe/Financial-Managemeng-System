@@ -20,14 +20,14 @@
         onclick="alert('Verifying cryptographic SHA-256 hash integrity across log chain... Hash validated!');" 
         class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition-all dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
       >
-        <i class="ph-bold ph-shield-check text-indigo-600"></i>
+        <i class="ph-bold ph-shield-check text-emerald-600"></i>
         <span>Verify Hash Chain</span>
       </button>
       <button 
         type="button" 
         id="btnExportAudit" 
         @click="$dispatch('open-modal', 'exportAuditModal')"
-        class="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 ring-1 ring-indigo-600/20 transition-all cursor-pointer"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20 transition-all cursor-pointer"
       >
         <i class="ph-bold ph-file-arrow-down"></i>
         <span>Export Audit Log</span>
@@ -87,7 +87,7 @@
           </div>
           <select 
             id="auditCategorySelect" 
-            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-indigo-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
           >
             <option value="" selected>All Event Categories</option>
             <option value="ewt">EWT 2307 Form Generation</option>
@@ -99,7 +99,7 @@
           </div>
           <select 
             id="auditUserSelect" 
-            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-indigo-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+            class="rounded-xl border-0 bg-slate-50 py-1.5 px-3 text-xs font-semibold text-slate-800 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
           >
             <option value="" selected>All Officers / Users</option>
             <option value="tax_officer_1">tax_officer_1</option>
@@ -115,7 +115,7 @@
             type="search" 
             id="auditSearchInput" 
             placeholder="Search voucher ID, user, event..." 
-            class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
+            class="w-full rounded-xl border-0 bg-slate-50 py-1.5 pl-9 pr-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
           >
         </div>
       </div>
@@ -275,7 +275,7 @@
     <button 
       type="button" 
       onclick="alert('Exporting Encrypted Log Entry Snapshot...');" 
-      class="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 transition-all cursor-pointer"
+      class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-all cursor-pointer"
     >
       <i class="ph-bold ph-file-text"></i>
       <span>Export Entry Certificate</span>
@@ -292,7 +292,7 @@
   <div class="space-y-3.5">
     <div>
       <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Audit Date Range</label>
-      <select class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+      <select class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
         <option value="ytd">Year-To-Date FY 2026</option>
         <option value="q2">Q2 2026</option>
         <option value="all">Full Audit Chain</option>
@@ -301,7 +301,7 @@
 
     <div>
       <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Export Format</label>
-      <select class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+      <select class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-emerald-500 focus:bg-white focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
         <option value="pdf">Auditor Signed PDF Package</option>
         <option value="csv">Encrypted CSV Audit Dump</option>
       </select>
@@ -319,7 +319,7 @@
     <button 
       type="button" 
       onclick="alert('Signed Tax Audit Log exported!'); $dispatch('close-modal', 'exportAuditModal');" 
-      class="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 transition-all cursor-pointer"
+      class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-all cursor-pointer"
     >
       <i class="ph-bold ph-download"></i>
       <span>Generate &amp; Download</span>

@@ -6,7 +6,7 @@
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>Set Up Google Authenticator &bull; Two-Factor Authentication &bull; HIMS &bull; FMS</title>
   <meta name="description" content="Scan the QR code with your authenticator app and enter the 6-digit code to activate 2FA.">
-  <link rel="icon" href="{{ asset('favicon.ico') }}">
+  <x-favicon />
 
   <!-- Google Fonts: Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">

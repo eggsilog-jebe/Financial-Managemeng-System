@@ -239,7 +239,7 @@
                       @csrf
                       <button 
                         type="submit" 
-                        class="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 transition-all"
+                        class="inline-flex items-center gap-1 rounded-lg bg-teal-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-teal-700 transition-all cursor-pointer"
                         title="CFO Release Payout & Post to Bank"
                       >
                         <i class="ph-bold ph-paper-plane-tilt"></i>

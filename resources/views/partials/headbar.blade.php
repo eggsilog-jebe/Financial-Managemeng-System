@@ -1,5 +1,5 @@
 <header class="sticky top-0 z-30 flex h-14 sm:h-16 w-full items-center justify-between border-b border-slate-200/80 bg-white/90 px-6 lg:px-8 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/90 transition-colors">
-  <!-- Left: Mobile Toggle (Mobile Only) & App Identity -->
+  <!-- Left: Mobile Toggle (Mobile Only) -->
   <div class="flex items-center gap-3">
     <button 
       @click="sidebarOpen = !sidebarOpen" 
@@ -9,20 +9,6 @@
     >
       <i class="ph-bold ph-list text-xl"></i>
     </button>
-
-    <div class="hidden sm:flex flex-col">
-      <div class="flex items-center gap-2">
-        <span class="text-sm font-bold tracking-tight text-slate-900 dark:text-white">
-          Financial Management System
-        </span>
-        <span class="inline-flex items-center rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 ring-1 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300">
-          GAAP / IFRS
-        </span>
-      </div>
-      <span class="text-[11px] text-slate-500 dark:text-slate-400">
-        Hospital Clinical &amp; Transaction Ledger Core
-      </span>
-    </div>
   </div>
 
 <script>

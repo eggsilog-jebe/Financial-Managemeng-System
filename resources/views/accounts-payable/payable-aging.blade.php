@@ -35,89 +35,54 @@
 
   <!-- Aging Buckets (5-Tier + Grand Total) -->
   <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-    <!-- Current (Not Due) -->
-    <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Current (0-30d)</span>
-        <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
-          <i class="ph-bold ph-check-circle"></i>
-        </span>
-      </div>
-      <div class="mt-2 kpi-value font-sans text-lg font-bold text-slate-900 dark:text-white tabular-nums">
-        ₱{{ number_format((float) $totalCurrent, 2) }}
-      </div>
-      <span class="text-[11px] text-slate-500">Within Credit Terms</span>
-    </div>
+    <x-stat-card 
+      title="Current (0-30d)" 
+      :value="$totalCurrent" 
+      icon="ph-check-circle" 
+      color="emerald" 
+      subtitle="Within credit terms"
+    />
 
-    <!-- 1 - 30 Days -->
-    <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">1 - 30 Days</span>
-        <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
-          <i class="ph-bold ph-clock"></i>
-        </span>
-      </div>
-      <div class="mt-2 kpi-value font-sans text-lg font-bold text-slate-900 dark:text-white tabular-nums">
-        ₱{{ number_format((float) $total1To30, 2) }}
-      </div>
-      <span class="text-[11px] text-slate-500">Early Overdue</span>
-    </div>
+    <x-stat-card 
+      title="1 - 30 Days" 
+      :value="$total1To30" 
+      icon="ph-clock" 
+      color="blue" 
+      subtitle="Early overdue"
+    />
 
-    <!-- 31 - 60 Days -->
-    <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">31 - 60 Days</span>
-        <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400">
-          <i class="ph-bold ph-hourglass"></i>
-        </span>
-      </div>
-      <div class="mt-2 kpi-value font-sans text-lg font-bold text-amber-600 dark:text-amber-400 tabular-nums">
-        ₱{{ number_format((float) $total31To60, 2) }}
-      </div>
-      <span class="text-[11px] text-slate-500">Notice Received</span>
-    </div>
+    <x-stat-card 
+      title="31 - 60 Days" 
+      :value="$total31To60" 
+      icon="ph-hourglass" 
+      color="amber" 
+      subtitle="Notice received"
+    />
 
-    <!-- 61 - 90 Days -->
-    <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-bold uppercase tracking-wider text-orange-600 dark:text-orange-400">61 - 90 Days</span>
-        <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-orange-50 text-orange-600 dark:bg-orange-950/50 dark:text-orange-400">
-          <i class="ph-bold ph-warning"></i>
-        </span>
-      </div>
-      <div class="mt-2 kpi-value font-sans text-lg font-bold text-orange-600 dark:text-orange-400 tabular-nums">
-        ₱{{ number_format((float) $total61To90, 2) }}
-      </div>
-      <span class="text-[11px] text-slate-500">Urgent Settlement</span>
-    </div>
+    <x-stat-card 
+      title="61 - 90 Days" 
+      :value="$total61To90" 
+      icon="ph-warning" 
+      color="amber" 
+      subtitle="Urgent settlement"
+    />
 
-    <!-- 90+ Days -->
-    <div class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-800">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400">&gt; 90 Days</span>
-        <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400">
-          <i class="ph-bold ph-shield-warning"></i>
-        </span>
-      </div>
-      <div class="mt-2 kpi-value font-sans text-lg font-bold text-rose-600 dark:text-rose-400 tabular-nums">
-        ₱{{ number_format((float) $total90Plus, 2) }}
-      </div>
-      <span class="text-[11px] text-rose-500 font-semibold">Critical Overdue</span>
-    </div>
+    <x-stat-card 
+      title="> 90 Days" 
+      :value="$total90Plus" 
+      icon="ph-shield-warning" 
+      color="rose" 
+      badge="Critical"
+      subtitle="Critical overdue"
+    />
 
-    <!-- Grand Total AP -->
-    <div class="rounded-2xl bg-slate-900 p-4 shadow-sm ring-1 ring-slate-800 text-white">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Grand Total AP</span>
-        <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-slate-800 text-emerald-400">
-          <i class="ph-bold ph-trend-down"></i>
-        </span>
-      </div>
-      <div class="mt-2 kpi-value font-sans text-lg font-bold text-emerald-400 tabular-nums">
-        ₱{{ number_format((float) $grandTotalPayable, 2) }}
-      </div>
-      <span class="text-[11px] text-slate-400">All Aging Brackets</span>
-    </div>
+    <x-stat-card 
+      title="Grand Total AP" 
+      :value="$grandTotalPayable" 
+      icon="ph-trend-down" 
+      color="slate" 
+      subtitle="All aging brackets"
+    />
   </div>
 
   <!-- Aging Schedule Table Card -->

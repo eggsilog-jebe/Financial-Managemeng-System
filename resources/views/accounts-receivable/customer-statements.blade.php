@@ -36,7 +36,7 @@
         <a 
           href="{{ route('ar.statements.print', ['patient_id' => $selectedAccount->id, 'start_date' => $startDate, 'end_date' => $endDate]) }}" 
           target="_blank" 
-          class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 ring-1 ring-blue-600/20 transition-all"
+          class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20 transition-all"
         >
           <i class="ph-bold ph-printer"></i>
           <span>Print Official SOA</span>
@@ -50,12 +50,12 @@
     <form method="GET" action="{{ route('ar.statements') }}" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end" id="soaFilterForm">
       <div class="sm:col-span-3">
         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-          <i class="ph-bold ph-buildings text-blue-500 mr-1"></i> Care Setting / Admission:
+          <i class="ph-bold ph-buildings text-emerald-600 dark:text-emerald-400 mr-1"></i> Care Setting / Admission:
         </label>
         <select 
           name="admission_type" 
           id="admissionTypeFilter" 
-          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-blue-500 focus:bg-white focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
         >
           <option value="" {{ empty($admissionType) ? 'selected' : '' }}>All Care Settings</option>
           <option value="OUTPATIENT" {{ strtoupper((string)($admissionType ?? '')) === 'OUTPATIENT' ? 'selected' : '' }}>Outpatient (OPD)</option>
@@ -66,12 +66,12 @@
 
       <div class="sm:col-span-5">
         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-          <i class="ph-bold ph-user text-blue-500 mr-1"></i> Select Patient / Debtor Account:
+          <i class="ph-bold ph-user text-emerald-600 dark:text-emerald-400 mr-1"></i> Select Patient / Debtor Account:
         </label>
         <select 
           name="patient_id" 
           id="patientSelect" 
-          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-blue-500 focus:bg-white focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
           onchange="if(this.value) this.form.submit();" 
           required
         >
@@ -98,12 +98,12 @@
 
       <div class="sm:col-span-2">
         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-          <i class="ph-bold ph-calendar text-blue-500 mr-1"></i> Period Start:
+          <i class="ph-bold ph-calendar text-emerald-600 dark:text-emerald-400 mr-1"></i> Period Start:
         </label>
         <input 
           type="date" 
           name="start_date" 
-          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-blue-500 focus:bg-white focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
           value="{{ $startDate }}" 
           onchange="if(document.getElementById('patientSelect').value) this.form.submit();"
         >
@@ -111,12 +111,12 @@
 
       <div class="sm:col-span-2">
         <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
-          <i class="ph-bold ph-calendar text-blue-500 mr-1"></i> Period End:
+          <i class="ph-bold ph-calendar text-emerald-600 dark:text-emerald-400 mr-1"></i> Period End:
         </label>
         <input 
           type="date" 
           name="end_date" 
-          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-blue-500 focus:bg-white focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
+          class="w-full rounded-xl border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-700 shadow-sm focus:border-emerald-600 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" 
           value="{{ $endDate }}" 
           onchange="if(document.getElementById('patientSelect').value) this.form.submit();"
         >
@@ -326,7 +326,7 @@
             <td class="px-4 py-3 text-right" onclick="event.stopPropagation();">
               <a 
                 href="{{ route('ar.statements', ['patient_id' => $acc->id, 'start_date' => $startDate, 'end_date' => $endDate]) }}" 
-                class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 ring-1 ring-blue-600/20 transition-all"
+                class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20 transition-all"
               >
                 <i class="ph-bold ph-receipt"></i>
                 <span>View Full SOA</span>

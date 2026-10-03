@@ -184,7 +184,7 @@
                     @csrf
                     <button 
                       type="submit" 
-                      class="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 transition-all cursor-pointer" 
+                      class="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-all cursor-pointer" 
                       title="Finance Management Approval"
                     >
                       <i class="ph-bold ph-stamp"></i>
@@ -194,7 +194,7 @@
                 @elseif($v->status === 'APPROVED')
                   <button 
                     type="button" 
-                    class="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition-all cursor-pointer" 
+                    class="inline-flex items-center gap-1 rounded-lg bg-teal-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-teal-700 transition-all cursor-pointer" 
                     onclick="openDisburseReleaseModal({{ $v->id }}, '{{ $v->voucher_number }}', '{{ addslashes($v->payee_name) }}', '{{ $v->payment_method }}', {{ $amt }})"
                   >
                     <i class="ph-bold ph-paper-plane-tilt"></i>

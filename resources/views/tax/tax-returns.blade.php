@@ -495,7 +495,7 @@
           <button 
             type="button" 
             onclick="alert('Downloading BIR Filing PDF Brief...');"
-            class="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 ring-1 ring-indigo-600/20"
+            class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20"
           >
             <i class="ph-bold ph-file-pdf"></i>
             <span>Download Return PDF</span>
@@ -511,7 +511,7 @@
     title="Record Statutory Tax Return Filing" 
     subtitle="File BIR Form with CAS audit trail and remittance schedule" 
     icon="ph-file-arrow-up" 
-    iconVariant="indigo" 
+    iconVariant="emerald" 
     size="xl" 
     :showFooter="false"
   >
@@ -525,7 +525,7 @@
           <select 
             name="form_type" 
             id="modalReturnForm" 
-            class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-indigo-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700" 
+            class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700" 
             required
           >
             <option value="2550Q">BIR Form 2550Q (Quarterly VAT Return)</option>
@@ -543,7 +543,7 @@
             type="text" 
             name="period_covered" 
             id="modalReturnPeriod" 
-            class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-indigo-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700" 
+            class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700" 
             placeholder="e.g. Q3 2026 (Jul - Sep)" 
             value="Q3 2026" 
             required
@@ -558,7 +558,7 @@
             type="date" 
             name="filing_date" 
             id="modalReturnDue" 
-            class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-indigo-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700" 
+            class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs text-slate-900 ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-white dark:ring-slate-700" 
             value="{{ date('Y-m-d') }}" 
             required
           >
@@ -574,7 +574,7 @@
             id="modalReturnPayable" 
             step="0.01" 
             min="0" 
-            class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs font-mono text-right text-rose-600 font-bold ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-indigo-600 dark:bg-slate-800 dark:text-rose-400 dark:ring-slate-700" 
+            class="w-full rounded-xl border-0 bg-slate-50 py-2 px-3 text-xs font-mono text-right text-rose-600 font-bold ring-1 ring-inset ring-slate-300 focus:bg-white focus:ring-2 focus:ring-emerald-600 dark:bg-slate-800 dark:text-rose-400 dark:ring-slate-700" 
             placeholder="0.00" 
             value="0.00" 
             required
@@ -592,7 +592,7 @@
         </button>
         <button 
           type="submit" 
-          class="inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 ring-1 ring-indigo-600/20"
+          class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 ring-1 ring-emerald-600/20"
         >
           <i class="ph-bold ph-check"></i>
           <span>Post Statutory Return</span>

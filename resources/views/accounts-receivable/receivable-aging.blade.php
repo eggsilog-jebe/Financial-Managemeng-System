@@ -75,18 +75,13 @@
     />
 
     <!-- Grand Total AR -->
-    <div class="relative overflow-hidden rounded-2xl bg-slate-900 p-5 shadow-sm ring-1 ring-slate-800 transition-all hover:shadow-md dark:bg-slate-950">
-      <div class="flex items-center justify-between">
-        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Grand Total AR</span>
-        <span class="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-rose-500/20 text-rose-300 ring-1 ring-rose-500/30">
-          <i class="ph-bold ph-coins text-lg"></i>
-        </span>
-      </div>
-      <div class="mt-4 kpi-value font-sans text-2xl font-bold tracking-tight text-white tabular-nums">
-        ₱{{ number_format((float) ($grandTotalAR ?? 0), 2) }}
-      </div>
-      <p class="mt-1 text-xs text-slate-400">Gross outstanding claims</p>
-    </div>
+    <x-stat-card 
+      title="Grand Total AR" 
+      :value="$grandTotalAR ?? 0" 
+      icon="ph-coins" 
+      color="rose" 
+      subtitle="Gross outstanding claims"
+    />
   </div>
 
   <!-- Segment Filter Tabs -->

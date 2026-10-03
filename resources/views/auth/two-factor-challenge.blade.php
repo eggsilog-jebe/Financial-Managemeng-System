@@ -6,7 +6,7 @@
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>Security Verification &mdash; Two-Factor Authentication &mdash; HIMS &bull; FMS</title>
   <meta name="description" content="Enter the 6-digit code from Google Authenticator on your mobile phone to proceed.">
-  <link rel="icon" href="{{ asset('favicon.ico') }}">
+  <x-favicon />
 
   <!-- Google Fonts: Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
